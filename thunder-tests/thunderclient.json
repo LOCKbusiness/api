@@ -1,0 +1,21 @@
+[
+  {
+    "_id": "65c63180-3937-4377-a21f-82cf1d92ba75",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "51d0598a-06b6-4d37-870c-9cac69583cd0",
+    "name": "Command",
+    "url": "localhost:3000/v1/node/rew/cmd",
+    "method": "POST",
+    "sortNum": 20000,
+    "created": "2022-09-14T14:33:02.730Z",
+    "modified": "2022-09-14T14:41:33.599Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"command\": \"getblockcount\",\n  \"noAutoUnlock\": true\n}",
+      "form": []
+    },
+    "tests": []
+  }
+]
