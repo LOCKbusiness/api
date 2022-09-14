@@ -1,0 +1,18 @@
+version: '3.7'
+
+services:
+  mainnet-node:
+    image: defi/defichain:2.10.0
+    restart: always
+    ports:
+      - '8000:8554'
+    volumes:
+      - node-data:/data
+    command: >
+      defid
+      -rpcallowip=0.0.0.0/0
+      -rpcbind=0.0.0.0
+      -rpcauth=lock-api:TODO
+      -wallet=lock-api
+      -addresstype=bech32
+      -spv=0
