@@ -2,8 +2,6 @@ import { Injectable, Optional } from '@nestjs/common';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { I18nJsonParser, I18nOptions } from 'nestjs-i18n';
 import * as path from 'path';
-import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
-import { MailOptions } from 'src/shared/services/mail.service';
 
 export function GetConfig(): Configuration {
   return new Configuration();
@@ -18,8 +16,6 @@ export class Configuration {
   defaultCurrency = 'EUR';
   defaultVolumeDecimal = 2;
   defaultPercentageDecimal = 2;
-
-  colors = {};
 
   database: TypeOrmModuleOptions = {
     type: 'mssql',
@@ -75,36 +71,6 @@ export class Configuration {
         active: process.env.NODE_REW_URL_ACTIVE,
         passive: process.env.NODE_REW_URL_PASSIVE,
       },
-    },
-  };
-
-  mail: MailOptions = {
-    options: {
-      transport: {
-        host: 'gateway.lock.space',
-        secure: true,
-        port: 465,
-        auth: {
-          user: process.env.MAIL_USER,
-          pass: process.env.MAIL_PASS,
-        },
-        tls: {
-          rejectUnauthorized: false,
-        },
-      },
-      template: {
-        dir: path.join(__dirname, '../shared/assets/mails'),
-        adapter: new HandlebarsAdapter(),
-        options: {
-          strict: true,
-        },
-      },
-    },
-    defaultMailTemplate: 'personal',
-    contact: {
-      supportMail: process.env.SUPPORT_MAIL || 'support@lock.space',
-      monitoringMail: process.env.MONITORING_MAIL || 'monitoring@lock.space',
-      noReplyMail: process.env.NOREPLY_MAIL || 'noreply@lock.space',
     },
   };
 

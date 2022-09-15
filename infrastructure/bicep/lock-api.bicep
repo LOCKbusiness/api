@@ -13,13 +13,6 @@ param dbCapacity int
 @secure()
 param jwtSecret string = newGuid()
 
-param mailUser string
-@secure()
-param mailPass string
-
-@secure()
-param githubToken string
-
 param nodeAllowAllIps bool
 @secure()
 param nodePassword string
@@ -34,7 +27,6 @@ param hasBackupNodes bool
 param myDeFiChainUser string
 @secure()
 param myDeFiChainPassword string
-
 
 // --- VARIABLES --- //
 var compName = 'lock'
@@ -53,7 +45,6 @@ var sqlDbName = 'sqldb-${compName}-${apiName}-${env}'
 var apiServicePlanName = 'plan-${compName}-${apiName}-${env}'
 var apiAppName = 'app-${compName}-${apiName}-${env}'
 var appInsightsName = 'appi-${compName}-${apiName}-${env}'
-
 
 var nodeProps = [
   {
@@ -119,7 +110,6 @@ resource virtualNet 'Microsoft.Network/virtualNetworks@2020-11-01' = {
   }
 }
 
-
 // Storage Account
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: storageAccountName
@@ -140,7 +130,6 @@ resource dbBackupContainer 'Microsoft.Storage/storageAccounts/blobServices/conta
   name: '${storageAccount.name}/default/${dbBackupContainerName}'
 }
 
-
 // SQL Database
 resource sqlServer 'Microsoft.Sql/servers@2021-02-01-preview' = {
   name: sqlServerName
@@ -152,11 +141,11 @@ resource sqlServer 'Microsoft.Sql/servers@2021-02-01-preview' = {
 }
 
 resource sqlVNetRule 'Microsoft.Sql/servers/virtualNetworkRules@2021-02-01-preview' = {
- parent: sqlServer
- name: 'apiVNetRule'
- properties: {
-   virtualNetworkSubnetId: virtualNet.properties.subnets[0].id
- }
+  parent: sqlServer
+  name: 'apiVNetRule'
+  properties: {
+    virtualNetworkSubnetId: virtualNet.properties.subnets[0].id
+  }
 }
 
 resource sqlAllRule 'Microsoft.Sql/servers/firewallRules@2021-02-01-preview' = if (dbAllowAllIps) {
@@ -199,14 +188,13 @@ resource sqlDbLtrPolicy 'Microsoft.Sql/servers/databases/backupLongTermRetention
   }
 }
 
-
 // API App Service
 resource appServicePlan 'Microsoft.Web/serverfarms@2018-02-01' = if (env != 'loc') {
   name: apiServicePlanName
   location: location
   kind: 'linux'
   properties: {
-      reserved: true
+    reserved: true
   }
   sku: {
     name: 'P1v2'
@@ -223,7 +211,7 @@ resource apiAppService 'Microsoft.Web/sites@2018-11-01' = if (env != 'loc') {
     serverFarmId: appServicePlan.id
     httpsOnly: true
     virtualNetworkSubnetId: virtualNet.properties.subnets[0].id
-    
+
     siteConfig: {
       alwaysOn: true
       linuxFxVersion: 'NODE|16-lts'
@@ -232,7 +220,7 @@ resource apiAppService 'Microsoft.Web/sites@2018-11-01' = if (env != 'loc') {
       logsDirectorySizeLimit: 100
       vnetRouteAllEnabled: true
       scmIpSecurityRestrictionsUseMain: true
-      
+
       appSettings: [
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
@@ -277,18 +265,6 @@ resource apiAppService 'Microsoft.Web/sites@2018-11-01' = if (env != 'loc') {
         {
           name: 'SQL_MIGRATE'
           value: 'true'
-        }
-        {
-          name: 'MAIL_USER'
-          value: mailUser
-        }
-        {
-          name: 'MAIL_PASS'
-          value: mailPass
-        }
-        {
-          name: 'GH_TOKEN'
-          value: githubToken
         }
         {
           name: 'NODE_USER'
@@ -346,7 +322,6 @@ resource appInsights 'microsoft.insights/components@2020-02-02-preview' = if (en
     publicNetworkAccessForQuery: 'Enabled'
   }
 }
-
 
 // DeFi Nodes
 module nodes 'defi-node.bicep' = [for node in nodeProps: {
