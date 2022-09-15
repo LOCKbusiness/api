@@ -26,15 +26,6 @@
     "dbCapacity": {
       "value": 20
     },
-    "mailUser": {
-      "value": "xxx"
-    },
-    "mailPass": {
-      "value": "xxx"
-    },
-    "githubToken": {
-      "value": "xxx"
-    },
     "nodeAllowAllIps": {
       "value": false
     },
