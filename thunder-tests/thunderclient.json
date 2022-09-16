@@ -1,21 +1,16 @@
 [
   {
-    "_id": "65c63180-3937-4377-a21f-82cf1d92ba75",
+    "_id": "a33fded6-2ca7-4dc1-9e9e-a4618b37be20",
     "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
-    "containerId": "51d0598a-06b6-4d37-870c-9cac69583cd0",
-    "name": "Command",
-    "url": "localhost:3000/v1/node/rew/cmd",
-    "method": "POST",
-    "sortNum": 20000,
-    "created": "2022-09-14T14:33:02.730Z",
-    "modified": "2022-09-15T18:58:17.285Z",
+    "containerId": "4beb1a88-028a-4b2f-a78e-51a552acf1fc",
+    "name": "hello world",
+    "url": "{{url}}/v1/app",
+    "method": "GET",
+    "sortNum": 30000,
+    "created": "2022-09-16T15:00:13.602Z",
+    "modified": "2022-09-16T15:04:00.493Z",
     "headers": [],
     "params": [],
-    "body": {
-      "type": "json",
-      "raw": "{\n  \"command\": \"getblockcount\",\n  \"noAutoUnlock\": true\n}",
-      "form": []
-    },
     "tests": []
   }
 ]

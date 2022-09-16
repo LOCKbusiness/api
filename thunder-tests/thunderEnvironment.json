@@ -1,1 +1,56 @@
-[]
+[
+  {
+    "_id": "3628328b-582b-4dbd-98c3-fd6c21722812",
+    "name": "loc",
+    "default": true,
+    "sortNum": 10000,
+    "created": "2022-09-16T14:51:53.293Z",
+    "modified": "2022-09-16T14:52:34.096Z",
+    "data": [
+      {
+        "name": "url",
+        "value": "localhost:3000"
+      },
+      {
+        "name": "token",
+        "value": "changeMe"
+      }
+    ]
+  },
+  {
+    "_id": "0cc529a2-6466-4308-b0a9-00306dd5337c",
+    "name": "dev",
+    "default": false,
+    "sortNum": 20000,
+    "created": "2022-09-16T14:57:29.785Z",
+    "modified": "2022-09-16T14:57:44.154Z",
+    "data": [
+      {
+        "name": "url",
+        "value": "dev.api.lock.space"
+      },
+      {
+        "name": "token",
+        "value": "changeMe"
+      }
+    ]
+  },
+  {
+    "_id": "4ff5435f-7bf2-4c70-a7f6-f71ff46ab9a5",
+    "name": "prd",
+    "default": false,
+    "sortNum": 30000,
+    "created": "2022-09-16T14:58:13.092Z",
+    "modified": "2022-09-16T14:58:23.567Z",
+    "data": [
+      {
+        "name": "url",
+        "value": "api.lock.space"
+      },
+      {
+        "name": "token",
+        "value": "changeMe"
+      }
+    ]
+  }
+]
