@@ -64,7 +64,7 @@ export class NodeController {
   @Post(':node/:mode/cmd')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
+  // @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
   async cmdForMode(
     @Param('node') node: NodeType,
     @Param('mode') mode: NodeMode,
