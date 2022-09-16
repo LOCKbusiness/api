@@ -10,12 +10,7 @@ export function GetConfig(): Configuration {
 export class Configuration {
   environment = process.env.ENVIRONMENT;
   network = process.env.NETWORK;
-  githubToken = process.env.GH_TOKEN;
   defaultLanguage = 'en';
-  defaultCountry = 'DE';
-  defaultCurrency = 'EUR';
-  defaultVolumeDecimal = 2;
-  defaultPercentageDecimal = 2;
 
   database: TypeOrmModuleOptions = {
     type: 'mssql',
