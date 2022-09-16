@@ -1,0 +1,57 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "westeurope"
+    },
+    "env": {
+      "value": "dev"
+    },
+    "network": {
+      "value": "testnet"
+    },
+    "dbAllowAllIps": {
+      "value": true
+    },
+    "dbAdminLogin": {
+      "value": "xxx"
+    },
+    "dbAdminPassword": {
+      "value": "xxx"
+    },
+    "dbTier": {
+      "value": "Basic"
+    },
+    "dbCapacity": {
+      "value": 5
+    },
+    "nodeAllowAllIps": {
+      "value": false
+    },
+    "nodePassword": {
+      "value": "xxx"
+    },
+    "nodeWalletPassword": {
+      "value": "xxx"
+    },
+    "stakingWalletAddress": {
+      "value": "xxx"
+    },
+    "nodeServicePlanSkuName": {
+      "value": "P1v2"
+    },
+    "nodeServicePlanSkuTier": {
+      "value": "PremiumV2"
+    },
+    "hasBackupNodes": {
+      "value": true
+    },
+    "myDeFiChainUser": {
+      "value": "xxx"
+    },
+    "myDeFiChainPassword": {
+      "value": "xxx"
+    }
+  }
+}
