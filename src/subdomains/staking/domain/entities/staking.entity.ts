@@ -36,7 +36,7 @@ export class Staking extends IEntity {
 
   //*** PUBLIC API ***//
 
-  deposit(): this {
+  addDeposit(deposit: Deposit): this {
     return this;
   }
 

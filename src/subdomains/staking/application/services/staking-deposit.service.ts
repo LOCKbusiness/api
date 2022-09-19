@@ -2,12 +2,12 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { KYCStatus } from 'src/subdomains/user/domain/enums';
 import { Staking } from '../../domain/entities/staking.entity';
-import { CreateStakingDto } from '../dto/create-staking.dto';
+import { CreateDepositDto } from '../dto/create-deposit.dto';
 import { StakingFactory } from '../factories/staking.factory';
 import { StakingRepository } from '../repositories/staking.repository';
 
 @Injectable()
-export class StakingService {
+export class StakingDepositService {
   constructor(
     private readonly factory: StakingFactory,
     private readonly repository: StakingRepository,
@@ -16,24 +16,18 @@ export class StakingService {
 
   //*** PUBLIC API ***//
 
-  async createStaking(userId: number, dto: CreateStakingDto): Promise<Staking> {
-    await this.checkKYC(userId);
-
-    const staking = this.factory.createStaking(dto);
-
-    await this.repository.save(staking);
-
-    return staking;
-  }
-
-  async getBalance(userId: number, stakingId: string): Promise<number> {
+  async createDeposit(userId: number, stakingId: string, dto: CreateDepositDto): Promise<Staking> {
     await this.checkKYC(userId);
 
     const staking = await this.repository.findOne(stakingId);
 
     if (!staking) throw new NotFoundException();
 
-    return staking.getBalance();
+    const deposit = this.factory.createDeposit(dto);
+
+    staking.addDeposit(deposit);
+
+    return staking;
   }
 
   //*** HELPER METHODS ***//
