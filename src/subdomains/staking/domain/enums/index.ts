@@ -3,6 +3,14 @@ export enum StakingStatus {
   INACTIVE = 'Inactive',
 }
 
+export enum WithdrawalStatus {
+  PENDING = 'Pending',
+}
+
+export enum DepositStatus {
+  PENDING = 'Pending',
+}
+
 export enum RewardStatus {
   CREATED = 'Created',
   COMPLETE = 'Complete',
