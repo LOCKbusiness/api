@@ -4,7 +4,7 @@ import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { UserRole } from 'src/shared/auth/user-role.enum';
 import { StakingService } from '../../application/services/staking.service';
-import { StakingCreationDto } from '../../application/dto/staking-creation.dto';
+import { CreateStakingDto } from '../../application/dto/create-staking.dto';
 import { Staking } from '../../domain/entities/staking.entity';
 import { GetJwt } from 'src/shared/auth/get-jwt.decorator';
 import { JwtPayload } from 'src/shared/auth/jwt-payload.interface';
@@ -18,7 +18,7 @@ export class StakingController {
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
-  async createStaking(@GetJwt() jwt: JwtPayload, @Body() dto: StakingCreationDto): Promise<Staking> {
+  async createStaking(@GetJwt() jwt: JwtPayload, @Body() dto: CreateStakingDto): Promise<Staking> {
     return this.stakingService.createStaking(jwt.id, dto);
   }
 
