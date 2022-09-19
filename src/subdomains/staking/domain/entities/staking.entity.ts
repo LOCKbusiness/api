@@ -26,11 +26,15 @@ export class Staking extends IEntity {
   @OneToMany(() => Reward, (reward) => reward.staking, { cascade: true })
   rewards: Reward[];
 
+  //*** FACTORY METHODS ***//
+
   static create(): Staking {
     const stake = new Staking();
 
     return stake;
   }
+
+  //*** PUBLIC API ***//
 
   deposit(): this {
     return this;
@@ -46,5 +50,12 @@ export class Staking extends IEntity {
 
   distributeReward(): this {
     return this;
+  }
+
+  //*** GETTERS ***//
+
+  getBalance(): number {
+    // TODO - might need to diff between pending and real balance through params
+    return this.balance;
   }
 }

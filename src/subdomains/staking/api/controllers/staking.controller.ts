@@ -1,4 +1,4 @@
-import { Controller, UseGuards, Body, Post } from '@nestjs/common';
+import { Controller, UseGuards, Body, Post, Get, Param } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
@@ -18,7 +18,15 @@ export class StakingController {
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
-  async updateVolumes(@GetJwt() jwt: JwtPayload, @Body() dto: StakingCreationDto): Promise<Staking> {
-    return this.stakingService.createStaking(dto, jwt.id);
+  async createStaking(@GetJwt() jwt: JwtPayload, @Body() dto: StakingCreationDto): Promise<Staking> {
+    return this.stakingService.createStaking(jwt.id, dto);
+  }
+
+  @Get(':id')
+  @ApiBearerAuth()
+  @ApiExcludeEndpoint()
+  @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
+  async updateVolumes(@GetJwt() jwt: JwtPayload, @Param('id') id: string): Promise<number> {
+    return this.stakingService.getBalance(jwt.id, id);
   }
 }

@@ -14,15 +14,29 @@ export class StakingService {
     private readonly userService: UserService,
   ) {}
 
-  async createStaking(dto: StakingCreationDto, userId: number): Promise<Staking> {
-    const userKycStatus = await this.userService.getKYCStatus(userId);
-
-    if (userKycStatus !== KYCStatus.SUCCESS) throw new Error('Cannot proceed without KYC');
+  async createStaking(userId: number, dto: StakingCreationDto): Promise<Staking> {
+    await this.checkKYC(userId);
 
     const staking = this.factory.create(dto);
 
     await this.repository.save(staking);
 
     return staking;
+  }
+
+  async getBalance(userId: number, stakingId: string): Promise<number> {
+    await this.checkKYC(userId);
+
+    const staking = await this.repository.findOne(stakingId);
+
+    return staking.getBalance();
+  }
+
+  //*** HELPER METHODS ***//
+  // TODO - if got time - move to decorator
+  private async checkKYC(userId: number): Promise<void> {
+    const userKycStatus = await this.userService.getKYCStatus(userId);
+
+    if (userKycStatus !== KYCStatus.SUCCESS) throw new Error('Cannot proceed without KYC');
   }
 }
