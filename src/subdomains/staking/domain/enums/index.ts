@@ -1,3 +1,8 @@
+export enum StakingStatus {
+  ACTIVE = 'Active',
+  INACTIVE = 'Inactive',
+}
+
 export enum RewardStatus {
   CREATED = 'Created',
   COMPLETE = 'Complete',

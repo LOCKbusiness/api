@@ -4,9 +4,13 @@ import { Reward } from './reward.entity';
 import { Withdrawal } from './withdrawal.entity';
 import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { IEntity } from 'src/shared/entities/entity';
+import { StakingStatus } from '../enums';
 
 @Entity()
 export class Staking extends IEntity {
+  @Column({ length: 256, nullable: false })
+  status: StakingStatus;
+
   @ManyToOne(() => Asset, { eager: true, nullable: false })
   asset: Asset;
 
