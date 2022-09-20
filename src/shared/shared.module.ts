@@ -10,19 +10,21 @@ import { GetConfig } from 'src/config/config';
 import { ConfigModule } from 'src/config/config.module';
 import { I18nModule } from 'nestjs-i18n';
 import { CryptoService } from 'src/blockchain/crypto.service';
+import { SettingService } from './services/setting.service';
+import { SettingRepository } from './repositories/setting.repository';
 
 @Module({
   imports: [
     HttpModule,
     ConfigModule,
-    TypeOrmModule.forFeature([]),
+    TypeOrmModule.forFeature([SettingRepository]),
     PassportModule.register({ defaultStrategy: 'jwt', session: true }),
     JwtModule.register(GetConfig().auth.jwt),
     I18nModule.forRoot(GetConfig().i18n),
     ScheduleModule.forRoot(),
   ],
   controllers: [],
-  providers: [HttpService, JwtStrategy, CryptoService],
-  exports: [PassportModule, JwtModule, ScheduleModule, HttpService, CryptoService],
+  providers: [HttpService, JwtStrategy, CryptoService, SettingService],
+  exports: [PassportModule, JwtModule, ScheduleModule, HttpService, CryptoService, SettingService],
 })
 export class SharedModule {}

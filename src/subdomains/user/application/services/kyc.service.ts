@@ -60,15 +60,11 @@ export class KycService {
   }
 
   private async request<T>(url: string, method: Method, data?: any, accessToken?: string): Promise<T> {
-    try {
-      return await this.http.request<T>({
-        url: `${Config.kyc.apiUrl}/${url}`,
-        method: method,
-        data: data,
-        headers: accessToken ? { Authorization: 'Bearer ' + accessToken } : undefined,
-      });
-    } catch (e) {
-      throw e;
-    }
+    return await this.http.request<T>({
+      url: `${Config.kyc.apiUrl}/${url}`,
+      method: method,
+      data: data,
+      headers: accessToken ? { Authorization: 'Bearer ' + accessToken } : undefined,
+    });
   }
 }
