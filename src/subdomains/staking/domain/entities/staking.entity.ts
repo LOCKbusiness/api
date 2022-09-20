@@ -4,9 +4,10 @@ import { Reward } from './reward.entity';
 import { Withdrawal } from './withdrawal.entity';
 import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { IEntity } from 'src/shared/models/entity';
-import { StakingStatus } from '../enums';
+import { DepositStatus, RewardStatus, StakingStatus, WithdrawalStatus } from '../enums';
 import { BlockchainAddress } from 'src/shared/models/blockchain-address/blockchain-address.entity';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { Util } from 'src/shared/util';
 
 @Entity()
 export class Staking extends IEntity {
@@ -129,6 +130,19 @@ export class Staking extends IEntity {
   //*** HELPER METHODS ***//
 
   private updateBalance(): number {
+    const confirmedDeposits = this.getDepositsByStatus(DepositStatus.CONFIRMED);
+    const confirmedReinvestedRewards = this.getRewardsByStatus(RewardStatus.CONFIRMED);
+    const confirmedWithdrawals = this.getWithdrawalsByStatus(WithdrawalStatus.CONFIRMED);
+
+    const confirmedDepositsAmount = Util.sum(confirmedDeposits.map((d) => d.amount));
+    const confirmedReinvestedRewardsAmount = Util.sum(confirmedReinvestedRewards.map((r) => r.reinvestAmount));
+    const confirmedWithdrawalsAmount = Util.sum(confirmedWithdrawals.map((w) => w.amount));
+
+    this.balance = Util.round(
+      confirmedDepositsAmount + confirmedReinvestedRewardsAmount - confirmedWithdrawalsAmount,
+      8,
+    );
+
     return this.balance;
   }
 
@@ -143,21 +157,40 @@ export class Staking extends IEntity {
   }
 
   getDeposit(depositId: string): Deposit {
-    return this.deposits.find((w) => w.id === parseInt(depositId));
+    const deposit = this.deposits.find((w) => w.id === parseInt(depositId));
+
+    if (!deposit) throw new NotFoundException('Deposit not found');
+
+    return deposit;
   }
 
   getBalance(): number {
-    // TODO - might need to diff between pending and real balance through params
     return this.balance;
   }
 
   getPendingDepositsAmount(): number {
-    // TODO - might need to diff between pending and real balance through params
-    return this.balance;
+    const pendingDeposits = this.getDepositsByStatus(DepositStatus.PENDING);
+
+    return Util.sum(pendingDeposits.map((d) => d.amount));
   }
 
   getPendingWithdrawalsAmount(): number {
-    // TODO - might need to diff between pending and real balance through params
-    return this.balance;
+    const pendingWithdrawals = this.getWithdrawalsByStatus(WithdrawalStatus.PENDING);
+
+    return Util.sum(pendingWithdrawals.map((w) => w.amount));
+  }
+
+  //*** ***//
+
+  private getDepositsByStatus(status: DepositStatus): Deposit[] {
+    return this.deposits.filter((d) => d.status === status);
+  }
+
+  private getWithdrawalsByStatus(status: WithdrawalStatus): Withdrawal[] {
+    return this.withdrawals.filter((w) => w.status === status);
+  }
+
+  private getRewardsByStatus(status: RewardStatus): Reward[] {
+    return this.rewards.filter((r) => r.status === status);
   }
 }
