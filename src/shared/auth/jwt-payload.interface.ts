@@ -1,7 +1,9 @@
-import { UserRole } from './user-role.enum';
+import { Blockchain } from '../enums/blockchain.enum';
+import { WalletRole } from './wallet-role.enum';
 
 export interface JwtPayload {
   id: number;
   address: string;
-  role: UserRole;
+  role: WalletRole;
+  blockchains: Blockchain[];
 }

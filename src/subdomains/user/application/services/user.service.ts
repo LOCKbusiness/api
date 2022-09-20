@@ -1,9 +1,43 @@
-import { Injectable } from '@nestjs/common';
-import { KYCStatus } from '../../domain/enums';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Config } from 'src/config/config';
+import { User } from '../../domain/entities/user.entity';
+import { KycStatus } from '../../domain/enums';
+import { UpdateUserDto } from '../dto/update-user.dto';
+import { UserRepository } from '../repositories/user.repository';
+import { CountryService } from './country.service';
 
 @Injectable()
 export class UserService {
-  async getKYCStatus(userId: number): Promise<KYCStatus> {
-    return KYCStatus.SUCCESS;
+  constructor(private readonly userRepo: UserRepository, private readonly countryService: CountryService) {}
+  async createUser(): Promise<User> {
+    const user = await this.userRepo.save({
+      language: Config.defaultLanguage,
+    });
+
+    return user;
+  }
+  async updateUser(userDataId: number, dto: UpdateUserDto): Promise<User> {
+    const user = await this.userRepo.findOne(userDataId);
+    if (!user) throw new NotFoundException('User data not found');
+
+    if (dto.countryId) {
+      user.country = await this.countryService.getCountry(dto.countryId);
+      if (!user.country) throw new BadRequestException('Country not found');
+    }
+
+    return await this.userRepo.save({ ...user, ...dto });
+  }
+
+  async getUser(userId: number): Promise<User> {
+    return this.userRepo.findOne({ where: { id: userId }, relations: ['wallets'] });
+  }
+
+  async getAllUser(): Promise<User[]> {
+    return await this.userRepo.find();
+  }
+
+  async getKycStatus(userId: number): Promise<KycStatus> {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    return user.kycStatus;
   }
 }
