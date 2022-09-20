@@ -17,7 +17,7 @@ export class StakingController {
   @Post()
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
+  @UseGuards(AuthGuard(), new RoleGuard(UserRole.USER))
   async createStaking(@GetJwt() jwt: JwtPayload, @Body() dto: CreateStakingDto): Promise<Staking> {
     return this.stakingService.createStaking(jwt.id, dto);
   }
@@ -25,7 +25,7 @@ export class StakingController {
   @Get(':id')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
+  @UseGuards(AuthGuard(), new RoleGuard(UserRole.USER))
   async updateVolumes(@GetJwt() jwt: JwtPayload, @Param('id') id: string): Promise<number> {
     return this.stakingService.getBalance(jwt.id, id);
   }

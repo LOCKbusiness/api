@@ -6,13 +6,13 @@ import { UserRole } from 'src/shared/auth/user-role.enum';
 import { Staking } from '../../domain/entities/staking.entity';
 import { GetJwt } from 'src/shared/auth/get-jwt.decorator';
 import { JwtPayload } from 'src/shared/auth/jwt-payload.interface';
-import { CreateDepositDto } from '../../application/dto/create-deposit.dto';
-import { StakingDepositService } from '../../application/services/staking-deposit.service';
+import { StakingRewardService } from '../../application/services/staking-reward.service';
+import { CreateRewardDto } from '../../application/dto/create-reward.dto';
 
-@ApiTags('deposit')
-@Controller('staking/:stakingId/deposit')
+@ApiTags('reward')
+@Controller('staking/:stakingId/reward')
 export class DepositController {
-  constructor(private readonly stakingDepositService: StakingDepositService) {}
+  constructor(private readonly stakingRewardService: StakingRewardService) {}
 
   @Post()
   @ApiBearerAuth()
@@ -21,8 +21,8 @@ export class DepositController {
   async addDeposit(
     @GetJwt() jwt: JwtPayload,
     @Param('stakingId') stakingId: string,
-    @Body() dto: CreateDepositDto,
+    @Body() dto: CreateRewardDto,
   ): Promise<Staking> {
-    return this.stakingDepositService.createDeposit(jwt.id, stakingId, dto);
+    return this.stakingRewardService.createReward(jwt.id, stakingId, dto);
   }
 }

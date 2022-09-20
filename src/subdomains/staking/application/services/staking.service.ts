@@ -1,24 +1,20 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { UserService } from 'src/subdomains/user/application/services/user.service';
-import { KYCStatus } from 'src/subdomains/user/domain/enums';
 import { Staking } from '../../domain/entities/staking.entity';
+import { Authorize } from '../decorators/authorize.decorator';
+import { CheckKyc } from '../decorators/check-kyc.decorator';
 import { CreateStakingDto } from '../dto/create-staking.dto';
 import { StakingFactory } from '../factories/staking.factory';
 import { StakingRepository } from '../repositories/staking.repository';
 
 @Injectable()
 export class StakingService {
-  constructor(
-    private readonly factory: StakingFactory,
-    private readonly repository: StakingRepository,
-    private readonly userService: UserService,
-  ) {}
+  constructor(private readonly factory: StakingFactory, private readonly repository: StakingRepository) {}
 
   //*** PUBLIC API ***//
 
+  @Authorize()
+  @CheckKyc()
   async createStaking(userId: number, dto: CreateStakingDto): Promise<Staking> {
-    await this.checkKYC(userId);
-
     const staking = this.factory.createStaking(dto);
 
     await this.repository.save(staking);
@@ -26,21 +22,13 @@ export class StakingService {
     return staking;
   }
 
+  @Authorize()
+  @CheckKyc()
   async getBalance(userId: number, stakingId: string): Promise<number> {
-    await this.checkKYC(userId);
-
     const staking = await this.repository.findOne(stakingId);
 
     if (!staking) throw new NotFoundException();
 
     return staking.getBalance();
-  }
-
-  //*** HELPER METHODS ***//
-  // TODO - if got time - move to decorator - move to shared
-  private async checkKYC(userId: number): Promise<void> {
-    const userKycStatus = await this.userService.getKYCStatus(userId);
-
-    if (userKycStatus !== KYCStatus.SUCCESS) throw new Error('Cannot proceed without KYC');
   }
 }
