@@ -1,11 +1,14 @@
 import { IEntity } from 'src/shared/entities/entity';
-import { Column, Entity, Index, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { KycStatus } from '../enums';
 import { Country } from './country.entity';
 import { Wallet } from './wallet.entity';
 
 @Entity()
 export class User extends IEntity {
+  @Column({ length: 256, unique: true })
+  kycId: string;
+
   @Column({ length: 256, nullable: true })
   mail: string;
 
@@ -36,13 +39,12 @@ export class User extends IEntity {
   @Column({ length: 256, nullable: true })
   language: string;
 
-  @OneToMany(() => Wallet, (wallet) => wallet.user)
-  wallets: Wallet[];
-
   @Column({ length: 256, default: KycStatus.NA })
   kycStatus: KycStatus;
 
-  @Column()
-  @Index({ unique: true })
+  @Column({ length: 256, nullable: true })
   kycHash: string;
+
+  @OneToMany(() => Wallet, (wallet) => wallet.user)
+  wallets: Wallet[];
 }

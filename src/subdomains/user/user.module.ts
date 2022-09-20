@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SharedModule } from 'src/shared/shared.module';
+import { UserController } from './api/controllers/user.controller';
+import { HeaderApiKeyStrategy } from './application/dto/api-key.strategy';
 import { CountryRepository } from './application/repositories/country.repository';
 import { RefRepository } from './application/repositories/ref-repository';
 import { UserRepository } from './application/repositories/user.repository';
@@ -24,8 +26,16 @@ import { WalletService } from './application/services/wallet.service';
     ]),
     SharedModule,
   ],
-  controllers: [],
-  providers: [UserService, WalletService, CountryService, WalletProviderService, GeoLocationService, RefService],
+  controllers: [UserController],
+  providers: [
+    UserService,
+    WalletService,
+    CountryService,
+    WalletProviderService,
+    GeoLocationService,
+    RefService,
+    HeaderApiKeyStrategy,
+  ],
   exports: [UserService, WalletService],
 })
 export class UserModule {}

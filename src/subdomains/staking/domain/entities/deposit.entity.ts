@@ -20,5 +20,5 @@ export class Deposit extends IEntity {
   amount: number;
 
   @ManyToOne(() => BlockchainAddress, { eager: true, nullable: false })
-  depositAddress: BlockchainAddress<StakingAddressPurposes.DEPOSIT>;
+  depositAddress: BlockchainAddress;
 }

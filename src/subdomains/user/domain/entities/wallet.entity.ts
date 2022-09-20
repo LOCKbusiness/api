@@ -18,9 +18,6 @@ export class Wallet extends IEntity {
   @Column({ length: 256, unique: true })
   ref: string;
 
-  @Column({ length: 256, default: '000-000' })
-  usedRef: string;
-
   @Column({ length: 256, default: WalletRole.USER })
   role: WalletRole;
 
@@ -29,15 +26,6 @@ export class Wallet extends IEntity {
 
   @Column({ length: 256, nullable: true })
   ipCountry: string;
-
-  @Column({ length: 'MAX', nullable: true })
-  cfpVotes: string;
-
-  @Column({ type: 'float', nullable: true })
-  stakingFee: number;
-
-  @Column({ type: 'datetime2', nullable: true })
-  stakingStart: Date;
 
   @ManyToOne(() => User, { nullable: false })
   user: User;
