@@ -9,6 +9,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { GetConfig } from 'src/config/config';
 import { ConfigModule } from 'src/config/config.module';
 import { I18nModule } from 'nestjs-i18n';
+import { CryptoService } from 'src/blockchain/crypto.service';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { I18nModule } from 'nestjs-i18n';
     ScheduleModule.forRoot(),
   ],
   controllers: [],
-  providers: [HttpService, JwtStrategy],
-  exports: [PassportModule, JwtModule, ScheduleModule, HttpService],
+  providers: [HttpService, JwtStrategy, CryptoService],
+  exports: [PassportModule, JwtModule, ScheduleModule, HttpService, CryptoService],
 })
 export class SharedModule {}

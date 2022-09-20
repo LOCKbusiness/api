@@ -4,41 +4,45 @@ import { KycStatus } from '../../domain/enums';
 export class UpdateUserDto {
   @IsOptional()
   @IsEmail()
-  mail: string;
+  mail?: string;
 
   @IsOptional()
   @IsString()
-  phone: string;
+  phone?: string;
 
   @IsOptional()
   @IsString()
-  firstname: string;
+  firstName?: string;
 
   @IsOptional()
   @IsString()
-  surname: string;
+  surname?: string;
 
   @IsOptional()
   @IsString()
-  street: string;
+  street?: string;
 
   @IsOptional()
   @IsString()
-  houseNumber: string;
+  houseNumber?: string;
 
   @IsOptional()
   @IsString()
-  location: string;
+  location?: string;
 
   @IsOptional()
   @IsString()
-  zip: string;
+  zip?: string;
 
   @IsOptional()
   @IsInt()
-  countryId: number;
+  countryId?: number;
 
   @IsOptional()
   @IsEnum(KycStatus)
-  kycStatus: KycStatus;
+  kycStatus?: KycStatus;
+
+  @IsOptional()
+  @IsString()
+  kycHash?: string;
 }

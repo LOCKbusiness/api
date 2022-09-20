@@ -3,13 +3,19 @@ import { IsNotEmpty, IsString, Matches } from 'class-validator';
 import { GetConfig } from 'src/config/config';
 
 export class AuthCredentialsDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Address for login',
+    isArray: false,
+  })
   @IsNotEmpty()
   @IsString()
   @Matches(GetConfig().addressFormat)
   address: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Signature for login‚',
+    isArray: false,
+  })
   @IsNotEmpty()
   @IsString()
   @Matches(GetConfig().signatureFormat)

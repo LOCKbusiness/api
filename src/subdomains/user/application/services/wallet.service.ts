@@ -47,8 +47,8 @@ export class WalletService {
     wallet.ip = userIp;
     wallet.ipCountry = await this.checkIpCountry(userIp);
     wallet.walletProvider = await this.walletProviderService.getWalletOrDefault(dto.walletId);
-    wallet.ref = await this. getNextRef();
-     wallet.user = user ?? (await this.userService.createUser());
+    wallet.ref = await this.getNextRef();
+    wallet.user = user ?? (await this.userService.createUser());
 
     wallet = await this.walletRepo.save(wallet);
     return wallet;
