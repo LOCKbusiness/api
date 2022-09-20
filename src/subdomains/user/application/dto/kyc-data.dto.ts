@@ -10,7 +10,6 @@ export interface KycDataDto {
   zip: string;
   country: string;
   phone: string;
-  language: string;
   kycStatus: KycStatus;
   message?: string;
 }
