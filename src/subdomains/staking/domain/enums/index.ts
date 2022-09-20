@@ -9,6 +9,7 @@ export enum WithdrawalStatus {
 
 export enum DepositStatus {
   PENDING = 'Pending',
+  CONFIRMED = 'Confirmed',
 }
 
 export enum RewardStatus {

@@ -44,7 +44,11 @@ export class Staking extends IEntity {
     return this;
   }
 
-  addReward(): this {
+  addReward(reward: Reward): this {
+    if (!this.rewards) this.rewards = [];
+
+    this.rewards.push(reward);
+
     return this;
   }
 

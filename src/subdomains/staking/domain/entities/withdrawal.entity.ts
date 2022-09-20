@@ -17,5 +17,5 @@ export class Withdrawal extends IEntity {
   asset: Asset;
 
   @ManyToOne(() => BlockchainAddress, { eager: true, nullable: false })
-  withdrawalAddress: BlockchainAddress<StakingAddressPurposes.WITHDRAWAL>;
+  address: BlockchainAddress<StakingAddressPurposes.WITHDRAWAL>;
 }

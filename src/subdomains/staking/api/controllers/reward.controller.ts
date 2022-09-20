@@ -11,14 +11,14 @@ import { CreateRewardDto } from '../../application/dto/create-reward.dto';
 
 @ApiTags('reward')
 @Controller('staking/:stakingId/reward')
-export class DepositController {
+export class RewardController {
   constructor(private readonly stakingRewardService: StakingRewardService) {}
 
   @Post()
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(UserRole.USER))
-  async addDeposit(
+  async addReward(
     @GetJwt() jwt: JwtPayload,
     @Param('stakingId') stakingId: string,
     @Body() dto: CreateRewardDto,

@@ -17,9 +17,9 @@ export class StakingRewardService {
   async createReward(userId: number, stakingId: string, dto: CreateRewardDto): Promise<Staking> {
     const staking = await this.repository.findOne(stakingId);
 
-    const deposit = this.factory.createDeposit(dto);
+    const reward = this.factory.createReward(staking, dto);
 
-    staking.addDeposit(deposit);
+    staking.addReward(reward);
 
     return staking;
   }
