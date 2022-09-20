@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
 import { Blockchain } from '../enums/blockchain.enum';
 
 export class AuthMessageDto {
@@ -7,7 +6,6 @@ export class AuthMessageDto {
     description: 'Message to sign',
     isArray: false,
   })
-  @IsString()
   message: string;
 
   @ApiProperty({

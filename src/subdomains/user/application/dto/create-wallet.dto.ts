@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsInt, IsNotEmpty, IsOptional, IsString, Matches } from 'class-validator';
 import { GetConfig } from 'src/config/config';
 
@@ -19,7 +19,7 @@ export class CreateWalletDto {
   @Matches(GetConfig().signatureFormat)
   signature: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Used wallet for login',
   })
   @IsOptional()
