@@ -6,6 +6,7 @@ import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { IEntity } from 'src/shared/models/entity';
 import { StakingStatus } from '../enums';
 import { BlockchainAddress } from 'src/shared/models/blockchain-address/blockchain-address.entity';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 @Entity()
 export class Staking extends IEntity {
@@ -94,6 +95,7 @@ export class Staking extends IEntity {
 
   withdraw(withdrawal: Withdrawal): this {
     if (!this.withdrawals) this.withdrawals = [];
+    if (this.status !== StakingStatus.ACTIVE) throw new BadRequestException('Staking is inactive');
 
     this.withdrawals.push(withdrawal);
     this.updateBalance();
@@ -133,7 +135,11 @@ export class Staking extends IEntity {
   //*** GETTERS ***//
 
   getWithdrawal(withdrawalId: string): Withdrawal {
-    return this.withdrawals.find((w) => w.id === parseInt(withdrawalId));
+    const withdraw = this.withdrawals.find((w) => w.id === parseInt(withdrawalId));
+
+    if (!withdraw) throw new NotFoundException('Withdrawal not found');
+
+    return withdraw;
   }
 
   getDeposit(depositId: string): Deposit {

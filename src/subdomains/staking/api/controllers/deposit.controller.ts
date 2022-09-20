@@ -2,7 +2,7 @@ import { Controller, UseGuards, Body, Post, Param, Patch } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
-import { UserRole } from 'src/shared/auth/user-role.enum';
+import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { Staking } from '../../domain/entities/staking.entity';
 import { GetJwt } from 'src/shared/auth/get-jwt.decorator';
 import { JwtPayload } from 'src/shared/auth/jwt-payload.interface';
@@ -18,7 +18,7 @@ export class DepositController {
   @Post()
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.USER))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   async createDeposit(
     @GetJwt() jwt: JwtPayload,
     @Param('stakingId') stakingId: string,
@@ -31,7 +31,7 @@ export class DepositController {
   @Patch(':id')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.USER))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   async confirmDeposit(
     @GetJwt() jwt: JwtPayload,
     @Param('stakingId') stakingId: string,

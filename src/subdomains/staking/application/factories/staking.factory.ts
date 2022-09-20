@@ -36,8 +36,10 @@ export class StakingFactory {
     return Deposit.create(staking, amount, txId);
   }
 
-  createWithdrawal(dto: CreateWithdrawalDto): Withdrawal {
-    return new Withdrawal();
+  createWithdrawal(staking: Staking, dto: CreateWithdrawalDto): Withdrawal {
+    const { amount, signature } = dto;
+
+    return Withdrawal.create(staking, amount);
   }
 
   createReward(staking: Staking, dto: CreateRewardDto): Reward {

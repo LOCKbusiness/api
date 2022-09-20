@@ -23,20 +23,24 @@ export class StakingWithdrawalService {
   async createWithdrawal(userId: number, stakingId: string, dto: CreateWithdrawalDto): Promise<Staking> {
     const staking = await this.repository.findOne(stakingId);
 
-    const withdrawal = this.factory.createWithdrawal(dto);
+    const withdrawal = this.factory.createWithdrawal(staking, dto);
 
     staking.withdraw(withdrawal);
+
+    await this.repository.save(staking);
 
     return staking;
   }
 
   @Authorize()
   @CheckKyc()
-  async payoutWithdrawal(userId: number, stakingId: string, withdrawalId: string): Promise<Staking> {
+  async designateWithdrawalPayout(userId: number, stakingId: string, withdrawalId: string): Promise<Staking> {
     const staking = await this.repository.findOne(stakingId);
 
     const withdrawal = staking.getWithdrawal(withdrawalId);
-    withdrawal.payoutWithdrawal();
+    withdrawal.designateWithdrawalPayout();
+
+    await this.repository.save(staking);
 
     return staking;
   }
@@ -55,6 +59,8 @@ export class StakingWithdrawalService {
     const withdrawal = staking.getWithdrawal(withdrawalId);
     withdrawal.confirmWithdrawal(outputDate, txId);
 
+    await this.repository.save(staking);
+
     return staking;
   }
 
@@ -65,6 +71,8 @@ export class StakingWithdrawalService {
 
     const withdrawal = staking.getWithdrawal(withdrawalId);
     withdrawal.failWithdrawal();
+
+    await this.repository.save(staking);
 
     return staking;
   }

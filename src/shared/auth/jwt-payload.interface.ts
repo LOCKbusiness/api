@@ -1,7 +1,7 @@
-import { UserRole } from './user-role.enum';
+import { WalletRole } from './wallet-role.enum';
 
 export interface JwtPayload {
   id: number;
   address: string;
-  role: UserRole;
+  role: WalletRole;
 }

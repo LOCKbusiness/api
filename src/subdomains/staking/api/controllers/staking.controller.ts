@@ -2,7 +2,7 @@ import { Controller, UseGuards, Body, Post, Get, Param, Patch } from '@nestjs/co
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
-import { UserRole } from 'src/shared/auth/user-role.enum';
+import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { StakingService } from '../../application/services/staking.service';
 import { Staking } from '../../domain/entities/staking.entity';
 import { GetJwt } from 'src/shared/auth/get-jwt.decorator';
@@ -19,7 +19,7 @@ export class StakingController {
   @Post()
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.USER))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   async createStaking(@GetJwt() jwt: JwtPayload, @Body() dto: CreateStakingDto): Promise<Staking> {
     return this.stakingService.createStaking(jwt.id, dto);
   }
@@ -27,7 +27,7 @@ export class StakingController {
   @Get(':id/balance')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.USER))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   async getBalance(@GetJwt() jwt: JwtPayload, @Param('id') stakingId: string): Promise<StakingBalanceDto> {
     return this.stakingService.getBalance(jwt.id, stakingId);
   }
@@ -35,7 +35,7 @@ export class StakingController {
   @Get(':id/deposit-address')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.USER))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   async getDepositAddress(@GetJwt() jwt: JwtPayload, @Param('id') stakingId: string): Promise<string> {
     return this.stakingService.getDepositAddress(jwt.id, stakingId);
   }
@@ -43,7 +43,7 @@ export class StakingController {
   @Get(':id/minimum-stake')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.USER))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   async getMinimumStake(@GetJwt() jwt: JwtPayload, @Param('id') stakingId: string): Promise<number> {
     return this.stakingService.getMinimumStake(jwt.id, stakingId);
   }
@@ -51,7 +51,7 @@ export class StakingController {
   @Get(':id/minimum-deposit')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.USER))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   async getMinimumDeposit(@GetJwt() jwt: JwtPayload, @Param('id') stakingId: string): Promise<number> {
     return this.stakingService.getMinimumDeposit(jwt.id, stakingId);
   }
@@ -59,7 +59,7 @@ export class StakingController {
   @Get(':id/staking-fee')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.USER))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   async getStakingFee(@GetJwt() jwt: JwtPayload, @Param('id') stakingId: string): Promise<number> {
     return this.stakingService.getStakingFee(jwt.id, stakingId);
   }
@@ -67,7 +67,7 @@ export class StakingController {
   @Patch(':id/staking-fee')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async setStakingFee(
     @GetJwt() jwt: JwtPayload,
     @Param('id') stakingId: string,

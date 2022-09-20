@@ -39,6 +39,7 @@
     "applicationinsights": "^2.2.1",
     "axios": "^0.26.0",
     "bignumber.js": "^9.0.2",
+    "bitcoinjs-message": "^2.2.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",
     "fast-xml-parser": "^4.0.3",

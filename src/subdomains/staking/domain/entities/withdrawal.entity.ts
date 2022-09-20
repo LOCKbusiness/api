@@ -39,7 +39,7 @@ export class Withdrawal extends IEntity {
 
   //*** PUBLIC API ***//
 
-  payoutWithdrawal(): this {
+  designateWithdrawalPayout(): this {
     this.status = WithdrawalStatus.PAYING_OUT;
 
     return this;
