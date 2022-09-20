@@ -17,7 +17,6 @@ export class WithdrawalController {
 
   @Post()
   @ApiBearerAuth()
-  @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   async createWithdrawal(
     @GetJwt() jwt: JwtPayload,

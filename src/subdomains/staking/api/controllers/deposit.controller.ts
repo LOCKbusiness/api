@@ -1,13 +1,12 @@
 import { Controller, UseGuards, Body, Post, Param, Patch } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { Staking } from '../../domain/entities/staking.entity';
 import { GetJwt } from 'src/shared/auth/get-jwt.decorator';
 import { JwtPayload } from 'src/shared/auth/jwt-payload.interface';
 import { StakingDepositService } from '../../application/services/staking-deposit.service';
-import { ConfirmDepositDto } from '../../application/dto/input/confirm-deposit.dto';
 import { CreateDepositDto } from '../../application/dto/input/create-deposit.dto';
 
 @ApiTags('deposit')
@@ -17,7 +16,6 @@ export class DepositController {
 
   @Post()
   @ApiBearerAuth()
-  @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   async createDeposit(
     @GetJwt() jwt: JwtPayload,
@@ -25,19 +23,5 @@ export class DepositController {
     @Body() dto: CreateDepositDto,
   ): Promise<Staking> {
     return this.stakingDepositService.createDeposit(jwt.id, stakingId, dto);
-  }
-
-  // this is done by job
-  @Patch(':id')
-  @ApiBearerAuth()
-  @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  async confirmDeposit(
-    @GetJwt() jwt: JwtPayload,
-    @Param('stakingId') stakingId: string,
-    @Param('id') depositId: string,
-    @Body() dto: ConfirmDepositDto,
-  ): Promise<Staking> {
-    return this.stakingDepositService.confirmDeposit(jwt.id, stakingId, depositId, dto);
   }
 }

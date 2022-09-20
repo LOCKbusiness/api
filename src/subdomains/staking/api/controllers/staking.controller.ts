@@ -18,31 +18,30 @@ export class StakingController {
 
   @Post()
   @ApiBearerAuth()
-  @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   async createStaking(@GetJwt() jwt: JwtPayload, @Body() dto: CreateStakingDto): Promise<Staking> {
     return this.stakingService.createStaking(jwt.id, dto);
   }
 
-  @Get(':id/balance')
+  @Get(':id')
   @ApiBearerAuth()
-  @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  async getBalance(@GetJwt() jwt: JwtPayload, @Param('id') stakingId: string): Promise<StakingBalanceDto> {
+  async getBalance(@GetJwt() jwt: JwtPayload, @Param('id') stakingId: string): Promise<StakingDto> {
     return this.stakingService.getBalance(jwt.id, stakingId);
   }
 
+  // TODO - combine all in StakingDto
+  // swagger the return detail ->
   @Get(':id/deposit-address')
   @ApiBearerAuth()
-  @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
+  @ApiResponse({ status: 201, type: BankAccountDto })
   async getDepositAddress(@GetJwt() jwt: JwtPayload, @Param('id') stakingId: string): Promise<string> {
     return this.stakingService.getDepositAddress(jwt.id, stakingId);
   }
 
   @Get(':id/minimum-stake')
   @ApiBearerAuth()
-  @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   async getMinimumStake(@GetJwt() jwt: JwtPayload, @Param('id') stakingId: string): Promise<number> {
     return this.stakingService.getMinimumStake(jwt.id, stakingId);
@@ -50,7 +49,6 @@ export class StakingController {
 
   @Get(':id/minimum-deposit')
   @ApiBearerAuth()
-  @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   async getMinimumDeposit(@GetJwt() jwt: JwtPayload, @Param('id') stakingId: string): Promise<number> {
     return this.stakingService.getMinimumDeposit(jwt.id, stakingId);
@@ -58,7 +56,6 @@ export class StakingController {
 
   @Get(':id/staking-fee')
   @ApiBearerAuth()
-  @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   async getStakingFee(@GetJwt() jwt: JwtPayload, @Param('id') stakingId: string): Promise<number> {
     return this.stakingService.getStakingFee(jwt.id, stakingId);

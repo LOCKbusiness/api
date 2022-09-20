@@ -131,17 +131,12 @@ export class Staking extends IEntity {
 
   private updateBalance(): number {
     const confirmedDeposits = this.getDepositsByStatus(DepositStatus.CONFIRMED);
-    const confirmedReinvestedRewards = this.getRewardsByStatus(RewardStatus.CONFIRMED);
     const confirmedWithdrawals = this.getWithdrawalsByStatus(WithdrawalStatus.CONFIRMED);
 
     const confirmedDepositsAmount = Util.sum(confirmedDeposits.map((d) => d.amount));
-    const confirmedReinvestedRewardsAmount = Util.sum(confirmedReinvestedRewards.map((r) => r.reinvestAmount));
     const confirmedWithdrawalsAmount = Util.sum(confirmedWithdrawals.map((w) => w.amount));
 
-    this.balance = Util.round(
-      confirmedDepositsAmount + confirmedReinvestedRewardsAmount - confirmedWithdrawalsAmount,
-      8,
-    );
+    this.balance = Util.round(confirmedDepositsAmount - confirmedWithdrawalsAmount, 8);
 
     return this.balance;
   }
@@ -188,9 +183,5 @@ export class Staking extends IEntity {
 
   private getWithdrawalsByStatus(status: WithdrawalStatus): Withdrawal[] {
     return this.withdrawals.filter((w) => w.status === status);
-  }
-
-  private getRewardsByStatus(status: RewardStatus): Reward[] {
-    return this.rewards.filter((r) => r.status === status);
   }
 }

@@ -51,6 +51,8 @@ export class Configuration {
         expiresIn: process.env.JWT_EXPIRES_IN ?? 172800,
       },
     },
+    signMessage:
+      'By_signing_this_message,_you_confirm_that_you_are_the_sole_owner_of_the_provided_DeFiChain_address_and_are_in_possession_of_its_private_key._Your_ID:_',
   };
 
   blockchain = {

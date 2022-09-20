@@ -13,11 +13,19 @@ import { StakingDepositService } from './application/services/staking-deposit.se
 import { StakingRewardService } from './application/services/staking-reward.service';
 import { StakingWithdrawalService } from './application/services/staking-withdrawal.service';
 import { StakingService } from './application/services/staking.service';
+import { StakingDeFiChainService } from './infrastructre/staking-defichain.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([StakingRepository]), AinModule, SharedModule, UserModule],
   controllers: [StakingController, DepositController, RewardController, WithdrawalController],
-  providers: [StakingService, StakingDepositService, StakingRewardService, StakingWithdrawalService, StakingFactory],
+  providers: [
+    StakingService,
+    StakingDepositService,
+    StakingDeFiChainService,
+    StakingRewardService,
+    StakingWithdrawalService,
+    StakingFactory,
+  ],
   exports: [],
 })
 export class StakingModule {}

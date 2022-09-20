@@ -56,7 +56,8 @@ export class CryptoService {
   private verifyDefichain(message: string, address: string, signature: string): boolean {
     let isValid = verify(message, address, signature, MainNet.messagePrefix);
     if (!isValid) {
-      const fallbackMessage = 'Config.auth.signMessage' + address;
+      // TODO - make configurable for different signature messages
+      const fallbackMessage = Config.auth.signMessage + address;
       isValid = verify(fallbackMessage, address, signature, MainNet.messagePrefix);
     }
     return isValid;

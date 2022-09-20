@@ -9,18 +9,18 @@ export enum AssetCategory {
 }
 
 @Entity()
-@Index('nameBlockchain', (asset: Asset) => [asset.name, asset.blockchain], {
+@Index('nameBlockchain', (asset: Asset) => [asset.displayName, asset.blockchain], {
   unique: true,
 })
 export class Asset extends IEntity {
-  @Column({ length: 256 })
+  @Column({ nullable: true, length: 256 })
   name: string;
+
+  @Column({ length: 256 })
+  displayName: string;
 
   @Column({ length: 256, nullable: false, default: AssetCategory.STOCK })
   category: AssetCategory;
-
-  @Column({ nullable: true, length: 256 })
-  dexName: string;
 
   @Column({ length: 256, default: Blockchain.DEFICHAIN })
   blockchain: Blockchain;

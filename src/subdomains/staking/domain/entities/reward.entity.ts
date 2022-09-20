@@ -45,7 +45,7 @@ export class Reward extends IEntity {
     const reward = new Reward();
 
     reward.staking = staking;
-    reward.status = RewardStatus.CREATED;
+    reward.status = RewardStatus.CONFIRMED;
 
     reward.asset = staking.asset;
     reward.amount = amount;

@@ -5,7 +5,7 @@ import { In } from 'typeorm';
 import { Asset } from './asset.entity';
 
 export interface AssetQuery {
-  dexName: string;
+  name: string;
   blockchain: string;
   isToken?: boolean;
 }
@@ -24,10 +24,11 @@ export class AssetService {
   }
 
   async getAssetByQuery(query: AssetQuery): Promise<Asset> {
-    let { dexName } = query;
+    let { name: dexName } = query;
     const { blockchain, isToken } = query;
 
+    // TODO - remove it ->isToken
     if (dexName === 'DFI' && isToken) dexName = 'DFI-Token';
-    return this.assetRepo.findOne({ where: { dexName, blockchain } });
+    return this.assetRepo.findOne({ where: { name: dexName, blockchain } });
   }
 }

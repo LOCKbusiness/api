@@ -17,7 +17,6 @@ export enum DepositStatus {
 }
 
 export enum RewardStatus {
-  CREATED = 'Created',
   CONFIRMED = 'Confirmed',
 }
 
