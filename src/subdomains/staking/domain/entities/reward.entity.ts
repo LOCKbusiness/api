@@ -41,5 +41,5 @@ export class Reward extends IEntity {
   payoutAmount: number;
 
   @ManyToOne(() => BlockchainAddress, { eager: true, nullable: false })
-  payoutAddress: BlockchainAddress<StakingAddressPurposes.REWARD_PAYOUT>;
+  payoutAddress: BlockchainAddress;
 }

@@ -44,6 +44,8 @@ export class Configuration {
     password: process.env.MYDEFICHAIN_PASSWORD,
   };
 
+  kyc = { kycSecret: process.env.KYC_SECRET, allowedWebhookIps: process.env.KYC_WEBHOOK_IPS?.split(',') };
+
   auth = {
     jwt: {
       secret: process.env.JWT_SECRET,
@@ -51,8 +53,9 @@ export class Configuration {
         expiresIn: process.env.JWT_EXPIRES_IN ?? 172800,
       },
     },
+
     signMessage:
-      'By_signing_this_message,_you_confirm_that_you_are_the_sole_owner_of_the_provided_Blockchain_address._Your_ID:_',
+      'By_signing_this_message,_you_confirm_that_you_are_the_sole_owner_of_the_provided_DeFiChain_address_and_are_in_possession_of_its_private_key._Your_ID:_',
   };
 
   blockchain = {

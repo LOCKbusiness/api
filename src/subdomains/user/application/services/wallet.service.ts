@@ -22,14 +22,24 @@ export class WalletService {
   ) {}
 
   async getWalletDto(walletId: number): Promise<UserDto> {
-    const user = await this.walletRepo.findOne(walletId, { relations: ['user'] });
-    if (!user) throw new NotFoundException('Wallet not found');
+    const wallet = await this.walletRepo.findOne(walletId, { relations: ['user'] });
+    if (!wallet) throw new NotFoundException('Wallet not found');
 
-    return await this.toDto(user);
+    return await this.toDto(wallet);
   }
 
   async getByAddress(address: string, needsRelation = false): Promise<Wallet> {
-    return this.walletRepo.findOne({ where: { address }, relations: needsRelation ? ['userData', 'wallet'] : [] });
+    return this.walletRepo.findOne({ where: { address }, relations: needsRelation ? ['user', 'walletProvider'] : [] });
+  }
+
+  async getKycIdByAddress(address: string): Promise<string> {
+    const wallet = await this.walletRepo.findOne({
+      where: { address },
+      relations: ['user'],
+    });
+
+    if (!wallet) throw new NotFoundException('User not available');
+    return wallet.user.kycId;
   }
   async createWallet(dto: CreateWalletDto, userIp: string, user?: User): Promise<Wallet> {
     let wallet = this.walletRepo.create(dto);
@@ -37,8 +47,8 @@ export class WalletService {
     wallet.ip = userIp;
     wallet.ipCountry = await this.checkIpCountry(userIp);
     wallet.walletProvider = await this.walletProviderService.getWalletOrDefault(dto.walletId);
-    wallet.ref = await this.getNextRef();
-    wallet.user = user ?? (await this.userService.createUser());
+    wallet.ref = await this. getNextRef();
+     wallet.user = user ?? (await this.userService.createUser());
 
     wallet = await this.walletRepo.save(wallet);
     return wallet;
@@ -74,7 +84,6 @@ export class WalletService {
       address: wallet.address,
       mail: wallet.user?.mail,
       language: wallet.user?.language,
-
       kycStatus: wallet.user?.kycStatus,
       kycHash: wallet.user?.kycHash,
     };

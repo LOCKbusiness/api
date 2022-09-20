@@ -12,6 +12,7 @@ export class UserService {
   async createUser(): Promise<User> {
     const user = await this.userRepo.save({
       language: Config.defaultLanguage,
+      kycId: '2',
     });
 
     return user;
