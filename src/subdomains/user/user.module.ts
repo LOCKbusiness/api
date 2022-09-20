@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SharedModule } from 'src/shared/shared.module';
+import { KycController } from './api/controllers/kyc.controller';
 import { UserController } from './api/controllers/user.controller';
 import { HeaderApiKeyStrategy } from './application/dto/api-key.strategy';
 import { CountryRepository } from './application/repositories/country.repository';
@@ -10,6 +11,7 @@ import { WalletProviderRepository } from './application/repositories/wallet-prov
 import { WalletRepository } from './application/repositories/wallet.repository';
 import { CountryService } from './application/services/country.service';
 import { GeoLocationService } from './application/services/geo-location.service';
+import { KycService } from './application/services/kyc.service';
 import { RefService } from './application/services/ref.service';
 import { UserService } from './application/services/user.service';
 import { WalletProviderService } from './application/services/wallet-provider.service';
@@ -26,7 +28,7 @@ import { WalletService } from './application/services/wallet.service';
     ]),
     SharedModule,
   ],
-  controllers: [UserController],
+  controllers: [UserController, KycController],
   providers: [
     UserService,
     WalletService,
@@ -35,6 +37,7 @@ import { WalletService } from './application/services/wallet.service';
     GeoLocationService,
     RefService,
     HeaderApiKeyStrategy,
+    KycService,
   ],
   exports: [UserService, WalletService],
 })

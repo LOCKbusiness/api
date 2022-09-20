@@ -1,12 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { verify } from 'bitcoinjs-message';
-import { MainNet } from '@defichain/jellyfish-network';
+import { verify, sign } from 'bitcoinjs-message';
+import { MainNet, TestNet } from '@defichain/jellyfish-network';
 import { isEthereumAddress } from 'class-validator';
 import { verifyMessage } from 'ethers/lib/utils';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
+import { Network } from '@defichain/jellyfish-network';
+import { JellyfishWallet, WalletHdNode } from '@defichain/jellyfish-wallet';
+import { WhaleWalletAccount, WhaleWalletAccountProvider } from '@defichain/whale-api-wallet';
+import { Bip32Options, MnemonicHdNodeProvider } from '@defichain/jellyfish-wallet-mnemonic';
+import { Config } from 'src/config/config';
 
 @Injectable()
 export class CryptoService {
+  public static NEEDED_SEED_LENGTH = 24;
+  private wallet: JellyfishWallet<WhaleWalletAccount, WalletHdNode> | undefined;
   public verifySignature(message: string, address: string, signature: string): boolean {
     const blockchains = this.getBlockchainsBasedOn(address);
 
@@ -72,6 +79,36 @@ export class CryptoService {
       }
       throw e;
     }
+  }
+
+  public getAddress(userId: number): Promise<string> {
+    this.wallet = new JellyfishWallet(
+      MnemonicHdNodeProvider.fromWords(
+        Config.auth.lockSeed,
+        this.bip32OptionsBasedOn(Config.network == 'testnet' ? TestNet : MainNet),
+      ),
+      new WhaleWalletAccountProvider(undefined, Config.network == 'testnet' ? TestNet : MainNet), // if crashes occur change to ColdWalletClient, need to overwrite all properties
+      JellyfishWallet.COIN_TYPE_DFI,
+      JellyfishWallet.PURPOSE_LIGHT_WALLET,
+    );
+    if (!this.wallet) throw new Error('Wallet is not initialized');
+    return this.wallet.get(userId).getAddress();
+  }
+
+  public async signMessage(userId: number, message: string): Promise<string> {
+    const messagePrefix = MainNet.messagePrefix;
+    const privKey = await this.wallet.get(userId).privateKey();
+    return sign(message, privKey, true, messagePrefix).toString('base64');
+  }
+
+  private bip32OptionsBasedOn(network: Network): Bip32Options {
+    return {
+      bip32: {
+        public: network.bip32.publicPrefix,
+        private: network.bip32.privatePrefix,
+      },
+      wif: network.wifPrefix,
+    };
   }
 
   private verifyDefichain(message: string, address: string, signature: string): boolean {

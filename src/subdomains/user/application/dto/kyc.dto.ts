@@ -1,40 +1,36 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { KycStatus } from '../../domain/enums';
 
-export class UserDto {
-  @ApiProperty({
-    description: 'Address from the user',
-  })
-  @IsOptional()
-  @IsString()
-  address: string;
-
+export class KycDto {
   @ApiProperty({
     description: 'Mail from the user',
+    isArray: false,
   })
-  @IsOptional()
   @IsString()
+  @IsOptional()
   mail: string;
 
   @ApiProperty({
     description: 'Language from the user',
+    isArray: false,
   })
-  @IsOptional()
   @IsString()
+  @IsOptional()
   language: string;
 
   @ApiProperty({
     description: 'KycStatus from the user',
+    isArray: false,
   })
-  @IsOptional()
   @IsEnum(KycStatus)
   kycStatus: KycStatus;
 
   @ApiProperty({
     description: 'KycHash from the user',
+    isArray: false,
   })
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
   kycHash: string;
 }

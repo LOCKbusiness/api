@@ -6,7 +6,7 @@ import { Wallet } from './wallet.entity';
 
 @Entity()
 export class User extends IEntity {
-  @Column({ length: 256, unique: true })
+  @Column({ length: 256, nullable: true })
   kycId: string;
 
   @Column({ length: 256, nullable: true })

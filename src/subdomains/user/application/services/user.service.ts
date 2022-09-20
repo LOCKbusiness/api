@@ -10,13 +10,11 @@ import { CountryService } from './country.service';
 export class UserService {
   constructor(private readonly userRepo: UserRepository, private readonly countryService: CountryService) {}
   async createUser(): Promise<User> {
-    const user = await this.userRepo.save({
+    return await this.userRepo.save({
       language: Config.defaultLanguage,
-      kycId: '2',
     });
-
-    return user;
   }
+
   async updateUser(userDataId: number, dto: UpdateUserDto): Promise<User> {
     const user = await this.userRepo.findOne(userDataId);
     if (!user) throw new NotFoundException('User data not found');
