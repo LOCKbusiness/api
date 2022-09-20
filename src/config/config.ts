@@ -74,6 +74,12 @@ export class Configuration {
     network: this.network,
     url: 'https://ocean.defichain.com',
   };
+
+  staking = {
+    minimalStake: 1,
+    minimalDeposit: 0.01,
+    stakingFee: 0.05,
+  };
 }
 
 @Injectable()

@@ -1,6 +1,6 @@
 import { Entity, Column, Index } from 'typeorm';
-import { Blockchain } from '../enums/blockchain.enum';
-import { IEntity } from './entity';
+import { Blockchain } from '../../enums/blockchain.enum';
+import { IEntity } from '../entity';
 
 export enum AssetCategory {
   POOL_PAIR = 'PoolPair',

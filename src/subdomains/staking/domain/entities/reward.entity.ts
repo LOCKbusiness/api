@@ -1,8 +1,7 @@
-import { Asset } from 'src/shared/entities/asset.entity';
-import { IEntity } from 'src/shared/entities/entity';
+import { Asset } from 'src/shared/models/asset/asset.entity';
+import { IEntity } from 'src/shared/models/entity';
 import { Column, Entity, ManyToOne } from 'typeorm';
-import { BlockchainAddress } from '../../../../shared/entities/blockchain-address.entity';
-import { RewardStatus, StakingAddressPurposes } from '../enums';
+import { RewardStatus } from '../enums';
 import { Staking } from './staking.entity';
 
 @Entity()
@@ -40,9 +39,6 @@ export class Reward extends IEntity {
   @Column({ type: 'float', nullable: false, default: 0 })
   payoutAmount: number;
 
-  @ManyToOne(() => BlockchainAddress, { eager: true, nullable: true })
-  payoutAddress: BlockchainAddress<StakingAddressPurposes.REWARD_PAYOUT>;
-
   //*** FACTORY METHODS ***//
 
   static create(staking: Staking, amount: number): Reward {
@@ -60,7 +56,6 @@ export class Reward extends IEntity {
     reward.payoutShare = 0;
     reward.payoutAsset = staking.asset;
     reward.payoutAmount = 0;
-    reward.payoutAddress = null;
 
     return reward;
   }

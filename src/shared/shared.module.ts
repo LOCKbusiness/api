@@ -9,19 +9,23 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { GetConfig } from 'src/config/config';
 import { ConfigModule } from 'src/config/config.module';
 import { I18nModule } from 'nestjs-i18n';
+import { BlockchainAddressService } from './models/blockchain-address/blockchain-address.service';
+import { BlockchainAddressRepository } from './models/blockchain-address/blockchain-address.repository';
+import { AssetService } from './models/asset/asset.service';
+import { AssetRepository } from './models/asset/asset.repository';
 
 @Module({
   imports: [
     HttpModule,
     ConfigModule,
-    TypeOrmModule.forFeature([]),
+    TypeOrmModule.forFeature([BlockchainAddressRepository, AssetRepository]),
     PassportModule.register({ defaultStrategy: 'jwt', session: true }),
     JwtModule.register(GetConfig().auth.jwt),
     I18nModule.forRoot(GetConfig().i18n),
     ScheduleModule.forRoot(),
   ],
   controllers: [],
-  providers: [HttpService, JwtStrategy],
-  exports: [PassportModule, JwtModule, ScheduleModule, HttpService],
+  providers: [HttpService, JwtStrategy, BlockchainAddressService, AssetService],
+  exports: [PassportModule, JwtModule, ScheduleModule, HttpService, BlockchainAddressService, AssetService],
 })
 export class SharedModule {}

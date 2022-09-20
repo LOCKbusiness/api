@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Staking } from '../../domain/entities/staking.entity';
 import { Authorize } from '../decorators/authorize.decorator';
 import { CheckKyc } from '../decorators/check-kyc.decorator';
-import { CreateRewardDto } from '../dto/create-reward.dto';
+import { CreateRewardDto } from '../dto/input/create-reward.dto';
 import { StakingFactory } from '../factories/staking.factory';
 import { StakingRepository } from '../repositories/staking.repository';
 

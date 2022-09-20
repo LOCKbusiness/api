@@ -7,7 +7,7 @@ import { Staking } from '../../domain/entities/staking.entity';
 import { GetJwt } from 'src/shared/auth/get-jwt.decorator';
 import { JwtPayload } from 'src/shared/auth/jwt-payload.interface';
 import { StakingRewardService } from '../../application/services/staking-reward.service';
-import { CreateRewardDto } from '../../application/dto/create-reward.dto';
+import { CreateRewardDto } from '../../application/dto/input/create-reward.dto';
 
 @ApiTags('reward')
 @Controller('staking/:stakingId/reward')
@@ -18,7 +18,7 @@ export class RewardController {
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(UserRole.USER))
-  async addReward(
+  async createReward(
     @GetJwt() jwt: JwtPayload,
     @Param('stakingId') stakingId: string,
     @Body() dto: CreateRewardDto,

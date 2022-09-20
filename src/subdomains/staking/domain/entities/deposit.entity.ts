@@ -1,8 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
-import { Asset } from 'src/shared/entities/asset.entity';
-import { IEntity } from 'src/shared/entities/entity';
+import { Asset } from 'src/shared/models/asset/asset.entity';
+import { IEntity } from 'src/shared/models/entity';
 import { Column, Entity, ManyToOne } from 'typeorm';
-import { BlockchainAddress } from '../../../../shared/entities/blockchain-address.entity';
+import { BlockchainAddress } from '../../../../shared/models/blockchain-address/blockchain-address.entity';
 import { DepositStatus, StakingAddressPurposes } from '../enums';
 import { Staking } from './staking.entity';
 
@@ -20,29 +20,19 @@ export class Deposit extends IEntity {
   @Column({ type: 'float', nullable: false, default: 0 })
   amount: number;
 
-  @ManyToOne(() => BlockchainAddress, { eager: true, nullable: false })
-  address: BlockchainAddress<StakingAddressPurposes.DEPOSIT>;
-
-  @Column({ length: 256, nullable: false })
+  @Column({ length: 256, nullable: true })
   txId: string;
 
   //*** FACTORY METHODS ***//
 
-  static create(
-    staking: Staking,
-    asset: Asset,
-    amount: number,
-    address: BlockchainAddress<StakingAddressPurposes.DEPOSIT>,
-    txId: string,
-  ): Deposit {
+  static create(staking: Staking, amount: number, txId: string): Deposit {
     if (!txId) throw new BadRequestException('TxID must be provided when creating a staking deposit');
 
     const deposit = new Deposit();
 
     deposit.staking = staking;
     deposit.status = DepositStatus.PENDING;
-    deposit.asset = asset;
-    deposit.address = address;
+    deposit.asset = staking.asset;
     deposit.amount = amount;
     deposit.txId = txId;
 
@@ -51,7 +41,9 @@ export class Deposit extends IEntity {
 
   //*** PUBLIC API ***//
 
-  confirmDeposit(): this {
+  confirmDeposit(txId: string): this {
+    if (this.txId !== txId) throw new BadRequestException('Provided wrong txId for deposit, txId does not match.');
+
     this.status = DepositStatus.CONFIRMED;
 
     return this;
