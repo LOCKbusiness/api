@@ -2,7 +2,7 @@ import { Controller, UseGuards, Body, Post, Get, Param } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
-import { UserRole } from 'src/shared/auth/user-role.enum';
+import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { StakingService } from '../../application/services/staking.service';
 import { CreateStakingDto } from '../../application/dto/create-staking.dto';
 import { Staking } from '../../domain/entities/staking.entity';
@@ -17,7 +17,7 @@ export class StakingController {
   @Post()
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async createStaking(@GetJwt() jwt: JwtPayload, @Body() dto: CreateStakingDto): Promise<Staking> {
     return this.stakingService.createStaking(jwt.id, dto);
   }
@@ -25,7 +25,7 @@ export class StakingController {
   @Get(':id')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async updateVolumes(@GetJwt() jwt: JwtPayload, @Param('id') id: string): Promise<number> {
     return this.stakingService.getBalance(jwt.id, id);
   }

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
-import { KYCStatus } from 'src/subdomains/user/domain/enums';
+import { KycStatus } from 'src/subdomains/user/domain/enums';
+
 import { Staking } from '../../domain/entities/staking.entity';
 import { CreateDepositDto } from '../dto/create-deposit.dto';
 import { StakingFactory } from '../factories/staking.factory';
@@ -33,8 +34,8 @@ export class StakingDepositService {
   //*** HELPER METHODS ***//
   // TODO - if got time - move to decorator - move to shared
   private async checkKYC(userId: number): Promise<void> {
-    const userKycStatus = await this.userService.getKYCStatus(userId);
+    const userKycStatus = await this.userService.getKycStatus(userId);
 
-    if (userKycStatus !== KYCStatus.SUCCESS) throw new Error('Cannot proceed without KYC');
+    if (userKycStatus === KycStatus.NA) throw new Error('Cannot proceed without KYC');
   }
 }

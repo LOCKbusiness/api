@@ -51,6 +51,8 @@ export class Configuration {
         expiresIn: process.env.JWT_EXPIRES_IN ?? 172800,
       },
     },
+    signMessage:
+      'By_signing_this_message,_you_confirm_that_you_are_the_sole_owner_of_the_provided_Blockchain_address._Your_ID:_',
   };
 
   blockchain = {
@@ -74,6 +76,16 @@ export class Configuration {
     network: this.network,
     url: 'https://ocean.defichain.com',
   };
+
+  get addressFormat(): RegExp {
+    return this.environment === 'prd'
+      ? /^(8\w{33}|d\w{33}|d\w{41}|0x\w{40}|(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39})$/
+      : /^((7|8)\w{33}|(t|d)\w{33}|(t|d)\w{41}|0x\w{40}|(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39})$/;
+  }
+
+  get signatureFormat(): RegExp {
+    return /^(.{87}=|[a-f0-9]{130}|[a-f0-9x]{132})$/;
+  }
 }
 
 @Injectable()

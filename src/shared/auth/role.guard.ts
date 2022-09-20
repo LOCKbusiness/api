@@ -1,14 +1,14 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { UserRole } from 'src/shared/auth/user-role.enum';
+import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 
 @Injectable()
 export class RoleGuard implements CanActivate {
   // additional allowed roles
   private readonly additionalRoles = {
-    [UserRole.USER]: [UserRole.ADMIN],
+    [WalletRole.USER]: [WalletRole.ADMIN],
   };
 
-  constructor(private readonly entryRole: UserRole) {}
+  constructor(private readonly entryRole: WalletRole) {}
 
   canActivate(context: ExecutionContext): boolean {
     const userRole = context.switchToHttp().getRequest().user.role;
