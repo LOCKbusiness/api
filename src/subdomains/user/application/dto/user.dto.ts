@@ -1,23 +1,23 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { KycStatus } from '../../domain/enums';
 
 export class UserDto {
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Address from the user',
   })
   @IsOptional()
   @IsString()
   address: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Mail from the user',
   })
   @IsOptional()
   @IsString()
   mail: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Language from the user',
   })
   @IsOptional()
