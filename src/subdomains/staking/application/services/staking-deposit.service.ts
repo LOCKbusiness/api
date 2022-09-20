@@ -27,6 +27,8 @@ export class StakingDepositService {
 
     staking.addDeposit(deposit);
 
+    await this.repository.save(staking);
+
     return staking;
   }
 
@@ -39,6 +41,8 @@ export class StakingDepositService {
     const deposit = staking.getDeposit(depositId);
 
     deposit.confirmDeposit(txId);
+
+    await this.repository.save(staking);
 
     return staking;
   }

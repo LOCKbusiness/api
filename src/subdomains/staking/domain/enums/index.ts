@@ -18,7 +18,7 @@ export enum DepositStatus {
 
 export enum RewardStatus {
   CREATED = 'Created',
-  COMPLETE = 'Complete',
+  CONFIRMED = 'Confirmed',
 }
 
 export enum StakingAddressPurposes {

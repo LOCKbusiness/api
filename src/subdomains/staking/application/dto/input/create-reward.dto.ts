@@ -6,4 +6,9 @@ export class CreateRewardDto {
   @IsNotEmpty()
   @IsNumber()
   amount: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsNumber()
+  userId: number;
 }
