@@ -96,6 +96,10 @@ export class Configuration {
     minimalStake: 1,
     minimalDeposit: 0.01,
     stakingFee: 0.05,
+    signatureTemplates: {
+      signWithdrawalMessage:
+        'By_signing_this_message,_you_confirm_that_you_are_withdrawing_${AMOUNT}_${ASSET}_of_staking_from_your_address:_${ADDRESS}',
+    },
   };
 }
 

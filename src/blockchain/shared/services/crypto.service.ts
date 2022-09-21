@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { verify } from 'bitcoinjs-message';
 import { MainNet } from '@defichain/jellyfish-network';
 import { isEthereumAddress } from 'class-validator';
-
+import { verifyMessage } from 'ethers/lib/utils';
 import { Config } from 'src/config/config';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 
@@ -50,13 +50,34 @@ export class CryptoService {
   }
 
   private verify(message: string, address: string, signature: string, blockchains: Blockchain[]): boolean {
+    if (blockchains.includes(Blockchain.ETHEREUM)) return this.verifyEthereum(message, address, signature);
+    if (blockchains.includes(Blockchain.BITCOIN)) return this.verifyBitcoin(message, address, signature);
     return this.verifyDefichain(message, address, signature);
+  }
+
+  private verifyEthereum(message: string, address: string, signature: string): boolean {
+    // there are ETH signings out there, which do not have '0x' in the beginning, but for verification this is needed
+    const signatureToUse = signature.startsWith('0x') ? signature : '0x' + signature;
+    return verifyMessage(message, signatureToUse) === address;
+  }
+
+  private verifyBitcoin(message: string, address: string, signature: string): boolean {
+    try {
+      return verify(message, address, signature, null, true);
+    } catch (e) {
+      if (e.message === 'checkSegwitAlways can only be used with a compressed pubkey signature flagbyte') {
+        // If message created with uncompressed private key, it will throw this error
+        // in this case we should re-try with checkSegwitAlways flag off
+        // node_modules/bitcoinjs-message/index.js:187
+        return verify(message, address, signature);
+      }
+      throw e;
+    }
   }
 
   private verifyDefichain(message: string, address: string, signature: string): boolean {
     let isValid = verify(message, address, signature, MainNet.messagePrefix);
     if (!isValid) {
-      // TODO - make configurable for different signature messages
       const fallbackMessage = Config.auth.signMessage + address;
       isValid = verify(fallbackMessage, address, signature, MainNet.messagePrefix);
     }

@@ -4,7 +4,7 @@ import { Reward } from './reward.entity';
 import { Withdrawal } from './withdrawal.entity';
 import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { IEntity } from 'src/shared/models/entity';
-import { DepositStatus, RewardStatus, StakingStatus, WithdrawalStatus } from '../enums';
+import { DepositStatus, StakingStatus, WithdrawalStatus } from '../enums';
 import { BlockchainAddress } from 'src/shared/models/blockchain-address/blockchain-address.entity';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Util } from 'src/shared/util';

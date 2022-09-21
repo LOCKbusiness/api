@@ -39,12 +39,7 @@ export class StakingFactory {
   createWithdrawal(staking: Staking, dto: CreateWithdrawalDto): Withdrawal {
     const { amount, signature } = dto;
 
-    // contruct signing message -> 'WITHDRAW_AMOUNT_ASSET_to_ADDRESS'
-    // and then compare to signature in CryptoService
-    // verification in CryptoService, otherwise throw Unauthorized
-    // signature should be stored in Withdrawal
-
-    return Withdrawal.create(staking, amount);
+    return Withdrawal.create(staking, amount, signature);
   }
 
   createReward(staking: Staking, dto: CreateRewardDto): Reward {

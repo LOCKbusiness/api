@@ -1,7 +1,7 @@
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { BlockchainAddress } from 'src/shared/models/blockchain-address/blockchain-address.entity';
 import { IEntity } from 'src/shared/models/entity';
-import { Column, Entity, ManyToOne, OneToMany, OneToOne } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToOne } from 'typeorm';
 
 export enum PayInPurpose {
   CRYPTO_STAKING = 'CryptoStaking',

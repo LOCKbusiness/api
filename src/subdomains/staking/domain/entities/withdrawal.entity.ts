@@ -6,6 +6,9 @@ import { Staking } from './staking.entity';
 
 @Entity()
 export class Withdrawal extends IEntity {
+  @Column({ length: 256, nullable: false })
+  signature: string;
+
   @ManyToOne(() => Staking, (staking) => staking.withdrawals, { eager: true, nullable: true })
   staking: Staking;
 
@@ -26,9 +29,10 @@ export class Withdrawal extends IEntity {
 
   //*** FACTORY METHODS ***//
 
-  static create(staking: Staking, amount: number): Withdrawal {
+  static create(staking: Staking, amount: number, signature: string): Withdrawal {
     const withdrawal = new Withdrawal();
 
+    withdrawal.signature = signature;
     withdrawal.staking = staking;
     withdrawal.status = WithdrawalStatus.PENDING;
     withdrawal.asset = staking.asset;

@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { Lock } from 'src/shared/lock';
-import { BlockchainAddressService } from 'src/shared/models/blockchain-address/blockchain-address.service';
 import { PayInService } from 'src/subdomains/payin/application/services/payin.service';
 import { PayIn } from 'src/subdomains/payin/domain/entities/payin-crypto.entity';
 import { Staking } from '../../domain/entities/staking.entity';
@@ -21,7 +20,6 @@ export class StakingDepositService {
   constructor(
     private readonly factory: StakingFactory,
     private readonly repository: StakingRepository,
-    private readonly blockchainAddressService: BlockchainAddressService,
     private readonly deFiChainStakingService: StakingDeFiChainService,
     private readonly payInService: PayInService,
   ) {}
