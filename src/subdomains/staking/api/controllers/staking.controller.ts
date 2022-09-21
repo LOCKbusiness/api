@@ -1,13 +1,12 @@
 import { Controller, UseGuards, Body, Post, Get, Param, Patch } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExcludeEndpoint, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { StakingService } from '../../application/services/staking.service';
-import { Staking } from '../../domain/entities/staking.entity';
 import { GetJwt } from 'src/shared/auth/get-jwt.decorator';
 import { JwtPayload } from 'src/shared/auth/jwt-payload.interface';
-import { StakingBalanceDto } from '../../application/dto/output/staking-balance.dto';
+import { StakingOutputDto } from '../../application/dto/output/staking.output.dto';
 import { CreateStakingDto } from '../../application/dto/input/create-staking.dto';
 import { SetStakingFeeDto } from '../../application/dto/input/set-staking-fee.dto';
 
@@ -19,52 +18,24 @@ export class StakingController {
   @Post()
   @ApiBearerAuth()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  async createStaking(@GetJwt() jwt: JwtPayload, @Body() dto: CreateStakingDto): Promise<Staking> {
+  @ApiResponse({ status: 200, type: StakingOutputDto })
+  async createStaking(@GetJwt() jwt: JwtPayload, @Body() dto: CreateStakingDto): Promise<StakingOutputDto> {
     return this.stakingService.createStaking(jwt.id, dto);
   }
 
   @Get(':id')
   @ApiBearerAuth()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  async getBalance(@GetJwt() jwt: JwtPayload, @Param('id') stakingId: string): Promise<StakingDto> {
-    return this.stakingService.getBalance(jwt.id, stakingId);
-  }
-
-  // TODO - combine all in StakingDto
-  // swagger the return detail ->
-  @Get(':id/deposit-address')
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  @ApiResponse({ status: 201, type: BankAccountDto })
-  async getDepositAddress(@GetJwt() jwt: JwtPayload, @Param('id') stakingId: string): Promise<string> {
-    return this.stakingService.getDepositAddress(jwt.id, stakingId);
-  }
-
-  @Get(':id/minimum-stake')
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  async getMinimumStake(@GetJwt() jwt: JwtPayload, @Param('id') stakingId: string): Promise<number> {
-    return this.stakingService.getMinimumStake(jwt.id, stakingId);
-  }
-
-  @Get(':id/minimum-deposit')
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  async getMinimumDeposit(@GetJwt() jwt: JwtPayload, @Param('id') stakingId: string): Promise<number> {
-    return this.stakingService.getMinimumDeposit(jwt.id, stakingId);
-  }
-
-  @Get(':id/staking-fee')
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  async getStakingFee(@GetJwt() jwt: JwtPayload, @Param('id') stakingId: string): Promise<number> {
-    return this.stakingService.getStakingFee(jwt.id, stakingId);
+  @ApiResponse({ status: 200, type: StakingOutputDto })
+  async getStaking(@GetJwt() jwt: JwtPayload, @Param('id') stakingId: string): Promise<StakingOutputDto> {
+    return this.stakingService.getStaking(jwt.id, stakingId);
   }
 
   @Patch(':id/staking-fee')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
+  @ApiResponse({ status: 201 })
   async setStakingFee(
     @GetJwt() jwt: JwtPayload,
     @Param('id') stakingId: string,
