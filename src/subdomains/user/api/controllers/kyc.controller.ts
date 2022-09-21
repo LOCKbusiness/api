@@ -49,7 +49,7 @@ export class KycController {
   async handoverKycWebhook(@RealIP() ip: string, @Body() dto: KycWebhookDto) {
     this.checkIp(ip, dto.data);
     if (dto.result === KycResult.STATUS_CHANGED) {
-      const user = await this.userService.getUserByKycId(+dto.data.kycId);
+      const user = await this.userService.getUserByKycId(dto.id);
       this.userService.updateUser(user.id, dto.data);
     }
   }
