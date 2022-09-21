@@ -5,6 +5,6 @@ export enum KycStatus {
 }
 
 export enum KycResult {
-  STATUS_CHANGED = 'StatusFailed',
+  STATUS_CHANGED = 'StatusChanged',
   FAILED = 'Failed',
 }

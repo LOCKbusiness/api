@@ -4,7 +4,6 @@ import { CryptoService } from 'src/blockchain/crypto.service';
 import { Config } from 'src/config/config';
 import { HttpError, HttpService } from 'src/shared/services/http.service';
 import { User } from '../../domain/entities/user.entity';
-import { KycDataDto } from '../dto/kyc-data.dto';
 import { KycDto } from '../dto/kyc.dto';
 import { UserService } from './user.service';
 
@@ -33,7 +32,7 @@ export class KycService {
       await this.userService.updateUser(user.id, {
         kycHash: kycUser.kycHash,
         kycId: user.kycId,
-      } as KycDataDto),
+      }),
     );
   }
 
