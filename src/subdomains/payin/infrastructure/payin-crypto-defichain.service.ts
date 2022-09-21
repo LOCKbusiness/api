@@ -4,9 +4,17 @@ import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { Config } from 'src/config/config';
 import { AccountHistory } from '@defichain/jellyfish-api-core/dist/category/account';
+import { PayInTransaction } from '../application/interfaces';
+import { BlockchainAddress } from 'src/shared/models/blockchain-address/blockchain-address.entity';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
+
+interface HistoryAmount {
+  amount: number;
+  asset: string;
+}
 
 @Injectable()
-export class PayInCryptoDeFiChainService {
+export class PayInDeFiChainService {
   private client: DeFiClient;
 
   private readonly utxoTxTypes = ['receive', 'AccountToUtxos'];
@@ -17,22 +25,24 @@ export class PayInCryptoDeFiChainService {
 
   //*** PUBLIC API ***//
 
-  async getNewTransactionsSince(lastHeight: number): Promise<AccountHistory[]> {
+  async getNewTransactionsSince(lastHeight: number): Promise<PayInTransaction[]> {
+    const histories = await this.getNewTransactionsHistorySince(lastHeight);
+
+    return this.mapHistoriesToTransactions(histories);
+  }
+
+  //*** HELPER METHODS ***//
+
+  private async getNewTransactionsHistorySince(lastHeight: number): Promise<AccountHistory[]> {
     const { blocks: currentHeight } = await this.checkNodeInSync();
 
     const utxos = await this.client.getUtxo();
 
-    return (
-      this.getAddressesWithFunds(utxos)
-        .then((i) => i.filter((e) => e != Config.blockchain.default.utxoSpenderAddress))
-        // get receive history
-        .then((a) => this.client.getHistories(a, lastHeight + 1, currentHeight))
-        .then((i) => i.filter((h) => [...this.utxoTxTypes].includes(h.type)))
-        .then((i) => i.filter((h) => h.blockHeight > lastHeight))
-    );
+    return this.getAddressesWithFunds(utxos)
+      .then((a) => this.client.getHistories(a, lastHeight + 1, currentHeight))
+      .then((i) => i.filter((h) => [...this.utxoTxTypes].includes(h.type)))
+      .then((i) => i.filter((h) => h.blockHeight > lastHeight));
   }
-
-  //*** HELPER METHODS ***//
 
   private async checkNodeInSync(): Promise<{ headers: number; blocks: number }> {
     const { blocks, headers } = await this.client.getInfo();
@@ -43,9 +53,40 @@ export class PayInCryptoDeFiChainService {
 
   private async getAddressesWithFunds(utxo: UTXO[]): Promise<string[]> {
     const utxoAddresses = utxo
-      .filter((u) => u.amount.toNumber() >= Config.blockchain.default.minDeposit.DeFiChain.DFI)
+      .filter((u) => u.amount.toNumber() >= Config.payIn.minPayIn.DeFiChain.DFI)
       .map((u) => u.address);
 
     return [...new Set(utxoAddresses)];
+  }
+
+  private mapHistoriesToTransactions(histories: AccountHistory[]): PayInTransaction[] {
+    const transactions: PayInTransaction[] = [];
+
+    histories.forEach((h) => {
+      const amounts = this.getHistoryAmounts(h);
+
+      amounts.forEach((a) => {
+        transactions.push({
+          txSource: BlockchainAddress.create(h.owner, Blockchain.DEFICHAIN),
+          type: h.type,
+          txId: h.txid,
+          blockHeight: h.blockHeight,
+          amount: a.amount,
+          asset: a.asset,
+        });
+      });
+    });
+
+    return transactions;
+  }
+
+  private getHistoryAmounts(history: AccountHistory): HistoryAmount[] {
+    const amounts = history.amounts.map((a) => this.parseAmount(a));
+
+    return amounts.map((a) => ({ ...a, amount: Math.abs(a.amount) }));
+  }
+
+  private parseAmount(amount: string): HistoryAmount {
+    return { ...this.client.parseAmount(amount) };
   }
 }

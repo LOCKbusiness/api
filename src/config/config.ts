@@ -77,6 +77,21 @@ export class Configuration {
     url: 'https://ocean.defichain.com',
   };
 
+  payIn = {
+    minPayIn: {
+      Fiat: {
+        USD: 1,
+      },
+      Bitcoin: {
+        BTC: 0.0005,
+      },
+      DeFiChain: {
+        DFI: 0.01,
+        USD: 1,
+      },
+    },
+  };
+
   staking = {
     minimalStake: 1,
     minimalDeposit: 0.01,

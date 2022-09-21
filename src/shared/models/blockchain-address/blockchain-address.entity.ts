@@ -10,17 +10,13 @@ export class BlockchainAddress extends IEntity {
   @Column({ length: 256, nullable: false })
   blockchain: Blockchain;
 
-  @Column({ length: 256, nullable: false })
-  purpose: string;
-
   //*** FACTORY METHODS ***//
 
-  static create(address: string, blockchain: Blockchain, purpose: string): BlockchainAddress {
+  static create(address: string, blockchain: Blockchain): BlockchainAddress {
     const _address = new BlockchainAddress();
 
     _address.address = address;
     _address.blockchain = blockchain;
-    _address.purpose = purpose;
 
     return _address;
   }

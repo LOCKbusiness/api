@@ -7,7 +7,6 @@ import { Asset } from './asset.entity';
 export interface AssetQuery {
   name: string;
   blockchain: string;
-  isToken?: boolean;
 }
 
 @Injectable()
@@ -24,11 +23,8 @@ export class AssetService {
   }
 
   async getAssetByQuery(query: AssetQuery): Promise<Asset> {
-    let { name: dexName } = query;
-    const { blockchain, isToken } = query;
+    const { name: dexName, blockchain } = query;
 
-    // TODO - remove it ->isToken
-    if (dexName === 'DFI' && isToken) dexName = 'DFI-Token';
     return this.assetRepo.findOne({ where: { name: dexName, blockchain } });
   }
 }
