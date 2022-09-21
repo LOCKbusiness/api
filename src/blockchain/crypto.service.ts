@@ -12,6 +12,8 @@ import { Config } from 'src/config/config';
 
 @Injectable()
 export class CryptoService {
+  // --- ADDRESS UTIL --- //
+
   public getBlockchainsBasedOn(address: string): Blockchain[] {
     if (isEthereumAddress(address)) return [Blockchain.ETHEREUM, Blockchain.BINANCE_SMART_CHAIN];
     if (this.isBitcoinAddress(address)) return [Blockchain.BITCOIN];
@@ -20,6 +22,28 @@ export class CryptoService {
 
   private isBitcoinAddress(address: string): boolean {
     return address.match(/^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39}$/)?.length > 1 ?? false;
+  }
+
+  // --- SIGNATURE VERIFICATION --- //
+
+  public verifySignature(message: string, address: string, signature: string): boolean {
+    const blockchains = this.getBlockchainsBasedOn(address);
+
+    let isValid = false;
+    try {
+      isValid = this.verify(message, address, signature, blockchains);
+    } catch (e) {}
+
+    if (!isValid && !blockchains.includes(Blockchain.ETHEREUM)) {
+      isValid = this.fallbackVerify(message, address, signature, blockchains);
+    }
+    return isValid;
+  }
+
+  private verify(message: string, address: string, signature: string, blockchains: Blockchain[]): boolean {
+    if (blockchains.includes(Blockchain.ETHEREUM)) return this.verifyEthereum(message, address, signature);
+    if (blockchains.includes(Blockchain.BITCOIN)) return this.verifyBitcoin(message, address, signature);
+    return this.verifyDefichain(message, address, signature);
   }
 
   private fallbackVerify(message: string, address: string, signature: string, blockchains: Blockchain[]) {
@@ -35,26 +59,6 @@ export class CryptoService {
         isValid = this.verify(message, address, candidateSig, blockchains);
         if (isValid) break;
       } catch (e) {}
-    }
-    return isValid;
-  }
-
-  private verify(message: string, address: string, signature: string, blockchains: Blockchain[]): boolean {
-    if (blockchains.includes(Blockchain.ETHEREUM)) return this.verifyEthereum(message, address, signature);
-    if (blockchains.includes(Blockchain.BITCOIN)) return this.verifyBitcoin(message, address, signature);
-    return this.verifyDefichain(message, address, signature);
-  }
-
-  public verifySignature(message: string, address: string, signature: string): boolean {
-    const blockchains = this.getBlockchainsBasedOn(address);
-
-    let isValid = false;
-    try {
-      isValid = this.verify(message, address, signature, blockchains);
-    } catch (e) {}
-
-    if (!isValid && !blockchains.includes(Blockchain.ETHEREUM)) {
-      isValid = this.fallbackVerify(message, address, signature, blockchains);
     }
     return isValid;
   }
@@ -82,6 +86,8 @@ export class CryptoService {
   private verifyDefichain(message: string, address: string, signature: string): boolean {
     return verify(message, address, signature, MainNet.messagePrefix);
   }
+
+  // --- SIGNATURE CREATION --- //
 
   public createWallet(seed: string[]): JellyfishWallet<WhaleWalletAccount, WalletHdNode> {
     return new JellyfishWallet(

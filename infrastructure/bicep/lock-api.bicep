@@ -28,6 +28,15 @@ param myDeFiChainUser string
 @secure()
 param myDeFiChainPassword string
 
+@secure()
+param kycSecret string
+@secure()
+param kycWebhookIps string
+@secure()
+param kycPhrase string
+param kycApiUrl string
+param kycFrontendUrl string
+
 // --- VARIABLES --- //
 var compName = 'lock'
 var apiName = 'api'
@@ -306,6 +315,27 @@ resource apiAppService 'Microsoft.Web/sites@2018-11-01' = if (env != 'loc') {
           name: 'MYDEFICHAIN_PASSWORD'
           value: myDeFiChainPassword
         }
+        {
+          name: 'KYC_SECRET'
+          value: kycSecret
+        }
+        {
+          name: 'KYC_WEBHOOK_IPS'
+          value: kycWebhookIps
+        }
+        {
+          name: 'KYC_PHRASE'
+          value: kycPhrase
+        }
+        {
+          name: 'KYC_API_URL'
+          value: kycApiUrl
+        }
+        {
+          name: 'KYC_FRONTEND_URL'
+          value: kycFrontendUrl
+        }
+
       ]
     }
   }
