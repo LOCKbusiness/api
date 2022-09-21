@@ -35,7 +35,7 @@ export class WalletService {
 
   async getKycIdByAddress(address: string): Promise<string> {
     const wallet = await this.walletRepo.findOne({
-      where: { address },
+      where: { kycId: address },
       relations: ['user'],
     });
 
