@@ -1,4 +1,4 @@
-import { Body, Controller, ForbiddenException, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiExcludeEndpoint, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { WalletService } from '../../application/services/wallet.service';
@@ -37,7 +37,7 @@ export class KycController {
   @Get('kycId')
   @UseGuards(AuthGuard('api-key'))
   @ApiExcludeEndpoint()
-  async getKycId(@RealIP() ip: string, address: string): Promise<{ kycId: string }> {
+  async getKycId(@RealIP() ip: string, @Query() address: string): Promise<{ kycId: string }> {
     this.checkIp(ip, address);
     return { kycId: await this.walletService.getKycIdByAddress(address) };
   }
