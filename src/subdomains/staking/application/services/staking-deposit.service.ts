@@ -59,7 +59,7 @@ export class StakingDepositService {
 
   //*** HELPER METHODS ***//
   private async recordDepositTransactions(): Promise<void> {
-    const newPayIns = await this.payInService.getNewPayIns();
+    const newPayIns = await this.payInService.getNewPayInTransactions();
     const stakingPayIns = await this.filterStakingPayIns(newPayIns);
 
     // if this is first deposit - verify if source address is a user address (check with withdrawal asset)

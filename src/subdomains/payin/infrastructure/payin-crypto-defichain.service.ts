@@ -46,6 +46,7 @@ export class PayInDeFiChainService {
 
   private async checkNodeInSync(): Promise<{ headers: number; blocks: number }> {
     const { blocks, headers } = await this.client.getInfo();
+
     if (blocks < headers - 1) throw new Error(`Node not in sync by ${headers - blocks} block(s)`);
 
     return { headers, blocks };

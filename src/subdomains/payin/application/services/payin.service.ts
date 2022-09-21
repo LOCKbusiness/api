@@ -22,18 +22,18 @@ export class PayInService {
 
   //*** PUBLIC API ***//
 
-  async getNewPayIns(): Promise<PayIn[]> {
+  async getNewPayInTransactions(): Promise<PayIn[]> {
     return this.repository.find({ acknowledged: false });
   }
 
   //*** JOBS ***//
 
   @Interval(300000)
-  async checkPayIns(): Promise<void> {
+  async checkPayInTransactions(): Promise<void> {
     if (!this.lock.acquire()) return;
 
     try {
-      await this.processNewPayIns();
+      await this.processNewPayInTransactions();
     } catch (e) {
       console.error('Exception during DeFiChain input checks:', e);
     } finally {
@@ -43,7 +43,7 @@ export class PayInService {
 
   //*** HELPER METHODS ***//
 
-  private async processNewPayIns(): Promise<void> {
+  private async processNewPayInTransactions(): Promise<void> {
     const lastCheckedBlockHeight = await this.repository
       .findOne({ order: { blockHeight: 'DESC' } })
       .then((input) => input?.blockHeight ?? 0);
@@ -52,6 +52,8 @@ export class PayInService {
     const newPayIns = await this.createNewPayIns(newTransactions);
 
     newPayIns.length > 0 && console.log(`New DeFiChain inputs (${newPayIns.length}):`, newPayIns);
+
+    await this.persistPayIns(newPayIns);
   }
 
   private async createNewPayIns(newTransactions: PayInTransaction[]): Promise<PayIn[]> {
@@ -84,9 +86,9 @@ export class PayInService {
     return this.factory.createFromTransaction(tx, assetEntity);
   }
 
+  // TODO - is it reliable to save like that?
   private async persistPayIns(payIns: PayIn[]): Promise<void> {
     for (const payIn of payIns) {
-      // TODO - is it reliable to save like that?
       await this.repository.save(payIn);
     }
   }
