@@ -75,7 +75,7 @@ export class MasternodeService {
     if (!masternode) throw new NotFoundException('Masternode not found');
 
     if (masternodeState === MasternodeState.RESIGN_REQUESTED) {
-      if (masternode.state !== MasternodeState.CREATED) throw new ConflictException('Masternode resign is not created');
+      if (masternode.state !== MasternodeState.CREATED) throw new ConflictException('Masternode not yet created');
       masternode.signatureLiquidityManager = signature;
     }
 
