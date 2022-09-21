@@ -42,7 +42,7 @@ export class KycService {
     const { accessToken } = await this.callApi<{ accessToken }>('auth/signUp', 'POST', {
       address,
       signature,
-      walletId: 7,
+      wallet: 7,
     });
     return accessToken;
   }
