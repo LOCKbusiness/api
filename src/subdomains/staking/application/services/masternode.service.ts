@@ -47,39 +47,6 @@ export class MasternodeService {
     return this.masternodeRepo.find();
   }
 
-  async create(id: number, dto: CreateMasternodeDto): Promise<Masternode> {
-    const masternode = await this.masternodeRepo.findOne(id);
-    if (!masternode) throw new NotFoundException('Masternode not found');
-    if (masternode.creationHash) throw new ConflictException('Masternode already created');
-
-    masternode.state = MasternodeState.CREATED;
-
-    return await this.masternodeRepo.save({ ...masternode, ...dto });
-  }
-
-  async addSignature(id: number, signature: string, masternodeState: MasternodeState): Promise<Masternode> {
-    const masternode = await this.masternodeRepo.findOne(id);
-    if (!masternode) throw new NotFoundException('Masternode not found');
-
-    masternode.state = masternodeState;
-
-    if (masternodeState === MasternodeState.RESIGN_REQUESTED) masternode.signatureLiquidityManager = signature;
-    if (masternodeState === MasternodeState.RESIGN_CONFIRMED) masternode.signaturePayoutManager = signature;
-
-    return await this.masternodeRepo.save(masternode);
-  }
-
-  async resign(id: number, dto: ResignMasternodeDto): Promise<Masternode> {
-    const masternode = await this.masternodeRepo.findOne(id);
-    if (!masternode) throw new NotFoundException('Masternode not found');
-    if (!masternode.creationHash) throw new ConflictException('Masternode not yet created');
-    if (masternode.resignHash) throw new ConflictException('Masternode already resigned');
-
-    masternode.state = MasternodeState.RESIGNED;
-
-    return await this.masternodeRepo.save({ ...masternode, ...dto });
-  }
-
   async getActiveCount(date: Date = new Date()): Promise<number> {
     return this.masternodeRepo.count({
       where: [
@@ -91,6 +58,49 @@ export class MasternodeService {
 
   async getActive(): Promise<Masternode[]> {
     return this.masternodeRepo.find({ where: { creationHash: Not(IsNull()), resignHash: IsNull() } });
+  }
+
+  async create(id: number, dto: CreateMasternodeDto): Promise<Masternode> {
+    const masternode = await this.masternodeRepo.findOne(id);
+    if (!masternode) throw new NotFoundException('Masternode not found');
+    if (masternode.creationHash) throw new ConflictException('Masternode already created');
+
+    masternode.state = MasternodeState.CREATED;
+
+    return await this.masternodeRepo.save({ ...masternode, ...dto });
+  }
+
+  async prepareResign(id: number, signature: string, masternodeState: MasternodeState): Promise<Masternode> {
+    const masternode = await this.masternodeRepo.findOne(id);
+    if (!masternode) throw new NotFoundException('Masternode not found');
+
+    if (masternodeState === MasternodeState.RESIGN_REQUESTED) {
+      if (masternode.state !== MasternodeState.CREATED) throw new ConflictException('Masternode resign is not created');
+      masternode.signatureLiquidityManager = signature;
+    }
+
+    if (masternodeState === MasternodeState.RESIGN_CONFIRMED) {
+      if (masternode.state !== MasternodeState.RESIGN_REQUESTED)
+        throw new ConflictException('Masternode resign is not requested');
+      masternode.signaturePayoutManager = signature;
+    }
+
+    masternode.state = masternodeState;
+
+    return await this.masternodeRepo.save(masternode);
+  }
+
+  async resign(id: number, dto: ResignMasternodeDto): Promise<Masternode> {
+    const masternode = await this.masternodeRepo.findOne(id);
+    if (!masternode) throw new NotFoundException('Masternode not found');
+    if (!masternode.creationHash) throw new ConflictException('Masternode not yet created');
+    if (masternode.resignHash) throw new ConflictException('Masternode already resigned');
+    if (masternode.state !== MasternodeState.RESIGN_CONFIRMED)
+      throw new ConflictException('Masternode resign is not confirmed');
+
+    masternode.state = MasternodeState.RESIGNED;
+
+    return await this.masternodeRepo.save({ ...masternode, ...dto });
   }
 
   // --- HELPER METHODS --- //

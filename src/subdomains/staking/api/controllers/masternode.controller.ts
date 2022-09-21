@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
+import { MultipleRoleGuard } from 'src/shared/auth/multiple-role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { CreateMasternodeDto } from '../../application/dto/create-masternode.dto';
 import { ResignMasternodeDto } from '../../application/dto/resign-masternode.dto';
@@ -17,7 +18,11 @@ export class MasternodeController {
   @Get()
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.MASTERNODE_MANAGER))
+  @UseGuards(
+    AuthGuard(),
+    new MultipleRoleGuard([WalletRole.MASTERNODE_MANAGER, WalletRole.LIQUIDITY_MANAGER, WalletRole.PAYOUT_MANAGER]),
+    new RoleGuard(WalletRole.MASTERNODE_MANAGER),
+  )
   getMasternodes(): Promise<Masternode[]> {
     return this.masternodeService.get();
   }
@@ -35,7 +40,7 @@ export class MasternodeController {
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.LIQUIDITY_MANAGER))
   requestResignMasternode(@Param('id') id: string, @Body() signature: string): Promise<Masternode> {
-    return this.masternodeService.addSignature(+id, signature, MasternodeState.RESIGN_REQUESTED);
+    return this.masternodeService.prepareResign(+id, signature, MasternodeState.RESIGN_REQUESTED);
   }
 
   @Put(':id/confirmResign')
@@ -43,7 +48,7 @@ export class MasternodeController {
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.PAYOUT_MANAGER))
   confirmResignMasternode(@Param('id') id: string, @Body() signature: string): Promise<Masternode> {
-    return this.masternodeService.addSignature(+id, signature, MasternodeState.RESIGN_CONFIRMED);
+    return this.masternodeService.prepareResign(+id, signature, MasternodeState.RESIGN_CONFIRMED);
   }
 
   @Put(':id/resign')

@@ -15,10 +15,7 @@ export class Masternode extends IEntity {
   owner: string;
 
   @Column({ length: 256, nullable: true })
-  signatureLiquidityManager: string;
-
-  @Column({ length: 256, nullable: true })
-  signaturePayoutManager: string;
+  ownerWallet: string;
 
   @Column({ type: 'integer', nullable: true })
   timeLock: number;
@@ -36,6 +33,12 @@ export class Masternode extends IEntity {
   @Column({ length: 256, nullable: true })
   @Index({ unique: true, where: 'resignHash IS NOT NULL' })
   resignHash: string;
+
+  @Column({ length: 256, nullable: true })
+  signatureLiquidityManager: string;
+
+  @Column({ length: 256, nullable: true })
+  signaturePayoutManager: string;
 
   @Column({ default: MasternodeState.IDLE, nullable: false })
   state: MasternodeState;
