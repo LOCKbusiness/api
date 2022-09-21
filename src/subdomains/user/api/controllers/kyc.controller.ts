@@ -12,11 +12,16 @@ import { JwtPayload } from 'src/shared/auth/jwt-payload.interface';
 import { KycService } from '../../application/services/kyc.service';
 import { User } from '../../domain/entities/user.entity';
 import { KycDto } from '../../application/dto/kyc.dto';
+import { UserService } from '../../application/services/user.service';
 
 @ApiTags('kyc')
 @Controller('kyc')
 export class KycController {
-  constructor(private readonly walletService: WalletService, private readonly kycService: KycService) {}
+  constructor(
+    private readonly walletService: WalletService,
+    private readonly kycService: KycService,
+    private readonly userService: UserService,
+  ) {}
 
   // --- KYC USER --- //
 
@@ -24,8 +29,8 @@ export class KycController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   @ApiResponse({ status: 201, type: KycDto, isArray: false })
-  async startKyc(@GetJwt() jwt: JwtPayload): Promise<User> {
-    return this.kycService.startKyc(jwt.address);
+  async startKyc(@GetJwt() jwt: JwtPayload): Promise<KycDto> {
+    return this.kycService.startKyc(jwt.userId);
   }
 
   // --- KYC SERVICE--- //
@@ -43,6 +48,8 @@ export class KycController {
   @ApiExcludeEndpoint()
   async handoverKycWebhook(@RealIP() ip: string, @Body() data: KycDataDto) {
     this.checkIp(ip, data);
+    const wallet = await this.walletService.getByAddress(data.kycId, true);
+    this.userService.updateUser(wallet.user.id, data);
   }
 
   private checkIp(ip: string, data: any) {

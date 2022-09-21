@@ -1,11 +1,10 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RealIP } from 'nestjs-real-ip';
-import { CreateWalletDto } from 'src/subdomains/user/application/dto/create-wallet.dto';
-import { Blockchain } from '../enums/blockchain.enum';
+import { SignUpDto } from 'src/shared/auth/auth-sign-up.dto';
 import { AuthService } from '../services/auth.service';
-import { AuthCredentialsDto } from './auth-credentials.dto';
-import { AuthMessageDto } from './auth-message.dto';
+import { SignInDto } from './auth-sign-in.dto';
+import { SignMessageDto } from './auth-message.dto';
 import { AuthResponseDto } from './auth-response.dto';
 
 @ApiTags('auth')
@@ -14,20 +13,20 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('signUp')
-  @ApiResponse({ status: 200, type: AuthResponseDto })
-  signUp(@Body() dto: CreateWalletDto, @RealIP() ip: string): Promise<{ accessToken: string }> {
+  @ApiResponse({ status: 201, type: AuthResponseDto })
+  signUp(@Body() dto: SignUpDto, @RealIP() ip: string): Promise<AuthResponseDto> {
     return this.authService.signUp(dto, ip);
   }
 
   @Post('signIn')
-  @ApiResponse({ status: 200, type: AuthResponseDto })
-  signIn(@Body() credentials: AuthCredentialsDto): Promise<{ accessToken: string }> {
-    return this.authService.signIn(credentials);
+  @ApiResponse({ status: 201, type: AuthResponseDto })
+  signIn(@Body() signInDto: SignInDto): Promise<AuthResponseDto> {
+    return this.authService.signIn(signInDto);
   }
 
   @Get('signMessage')
-  @ApiResponse({ status: 200, type: AuthMessageDto })
-  getSignMessage(@Query('address') address: string): { message: string; blockchains: Blockchain[] } {
+  @ApiResponse({ status: 201, type: SignMessageDto })
+  getSignMessage(@Query('address') address: string): SignMessageDto {
     return this.authService.getSignMessage(address);
   }
 }
