@@ -1,7 +1,7 @@
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { BlockchainAddress } from 'src/shared/models/blockchain-address/blockchain-address.entity';
 import { IEntity } from 'src/shared/models/entity';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany, OneToOne } from 'typeorm';
 
 export enum PayInPurpose {
   CRYPTO_STAKING = 'CryptoStaking',
@@ -22,7 +22,7 @@ export class PayIn extends IEntity {
   @Column({ length: 256 })
   txType: string;
 
-  @Column({ length: 256 })
+  @OneToOne(() => BlockchainAddress)
   txSource: BlockchainAddress;
 
   @Column({ length: 256, nullable: true })
