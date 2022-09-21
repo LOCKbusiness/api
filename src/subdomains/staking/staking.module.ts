@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AinModule } from 'src/blockchain/ain/ain.module';
+import { BlockchainModule } from 'src/blockchain/blockchain.module';
 import { SharedModule } from 'src/shared/shared.module';
 import { PayInModule } from '../payin/payin.module';
 import { UserModule } from '../user/user.module';
@@ -17,7 +17,7 @@ import { StakingService } from './application/services/staking.service';
 import { StakingDeFiChainService } from './infrastructre/staking-defichain.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([StakingRepository]), AinModule, SharedModule, UserModule, PayInModule],
+  imports: [TypeOrmModule.forFeature([StakingRepository]), BlockchainModule, SharedModule, UserModule, PayInModule],
   controllers: [StakingController, DepositController, RewardController, WithdrawalController],
   providers: [
     StakingService,

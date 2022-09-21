@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { Lock } from 'src/shared/lock';
+import { BlockchainAddress } from 'src/shared/models/blockchain-address/blockchain-address.entity';
 import { PayInService } from 'src/subdomains/payin/application/services/payin.service';
-import { PayIn } from 'src/subdomains/payin/domain/entities/payin-crypto.entity';
+import { PayIn, PayInPurpose } from 'src/subdomains/payin/domain/entities/payin-crypto.entity';
 import { Staking } from '../../domain/entities/staking.entity';
 import { StakingDeFiChainService } from '../../infrastructre/staking-defichain.service';
 import { Authorize } from '../decorators/authorize.decorator';
@@ -43,7 +44,7 @@ export class StakingDepositService {
 
   //*** JOBS ***//
 
-  @Interval(300000)
+  @Interval(60000)
   async checkBlockchainDepositInputs(): Promise<void> {
     if (!this.lock.acquire()) return;
 
@@ -58,22 +59,56 @@ export class StakingDepositService {
   }
 
   //*** HELPER METHODS ***//
+
   private async recordDepositTransactions(): Promise<void> {
-    const newPayIns = await this.payInService.getNewPayInTransactions();
-    const stakingPayIns = await this.filterStakingPayIns(newPayIns);
+    const newPayInTransactions = await this.payInService.getNewPayInTransactions();
+    const stakingPayIns = await this.filterStakingPayIns(newPayInTransactions);
+    const stakingPairs = await this.getStakingsForPayIns(stakingPayIns);
 
-    // if this is first deposit - verify if source address is a user address (check with withdrawal asset)
-
-    // acknowledge relevant payins
+    await this.processNewDeposits(stakingPairs);
   }
 
   private async filterStakingPayIns(allPayIns: PayIn[]): Promise<PayIn[]> {
-    // TODO - fetch deposit addresses from active stakings??
-
-    // or loop through new payins and find stakings? OR these are two separate steps?
-    const stakingAddresses = [];
+    // TODO - Temp - this query is wrong, lookup for proper query
+    const stakingAddresses = (await this.repository
+      .createQueryBuilder('staking')
+      .leftJoin('staking.withdrawalAddress', 'withdrawalAddress')
+      .select('withdrawalAddress')
+      .where('staking.status = Active')
+      .getMany()) as unknown as string[];
 
     return allPayIns.filter((p) => stakingAddresses.includes(p.txSource.address));
+  }
+
+  private async getStakingsForPayIns(stakingPayIns: PayIn[]): Promise<[Staking, PayIn][]> {
+    const stakingPairs = [];
+
+    for (const payIn of stakingPayIns) {
+      const staking = await this.repository.findOne({ withdrawalAddress: payIn.txSource });
+
+      stakingPairs.push([payIn, staking]);
+    }
+
+    return stakingPairs;
+  }
+
+  private async processNewDeposits(stakingPairs: [Staking, PayIn][]): Promise<void> {
+    for (const [staking, payIn] of stakingPairs) {
+      try {
+        if (staking.deposits.length === 0) this.verifyFirstPayIn(staking, payIn);
+
+        const deposit = this.factory.createDeposit(staking, { amount: payIn.amount, txId: payIn.txId });
+
+        staking.addDeposit(deposit);
+
+        await this.repository.save(staking);
+        await this.payInService.acknowledgePayIn(payIn, PayInPurpose.CRYPTO_STAKING);
+      } catch (e) {}
+    }
+  }
+
+  private async verifyFirstPayIn(staking: Staking, payIn: PayIn): Promise<void> {
+    // verify addresses
   }
 
   private async forwardDepositsToStaking(): Promise<void> {
