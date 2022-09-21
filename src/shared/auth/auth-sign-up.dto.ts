@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsString, Matches } from 'class-validator';
+import { IsNotEmpty, IsString, Matches } from 'class-validator';
 import { GetConfig } from 'src/config/config';
 
 export class SignUpDto {
