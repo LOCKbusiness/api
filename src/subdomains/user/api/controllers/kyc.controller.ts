@@ -4,7 +4,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { WalletService } from '../../application/services/wallet.service';
 import { Config } from 'src/config/config';
 import { RealIP } from 'nestjs-real-ip';
-import { KycDataDto, KycWebhookDto } from '../../application/dto/kyc-data.dto';
+import { KycWebhookDto } from '../../application/dto/kyc-data.dto';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { GetJwt } from 'src/shared/auth/get-jwt.decorator';
