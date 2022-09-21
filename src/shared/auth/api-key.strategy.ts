@@ -10,7 +10,7 @@ export class ApiKeyStrategy extends PassportStrategy(Strategy, 'api-key') {
   }
 
   private validate(apiKey: string, done: (error: Error, data) => void) {
-    if (Config.kyc.kycSecret === apiKey) {
+    if (Config.kyc.secret === apiKey) {
       done(null, true);
     } else {
       done(new UnauthorizedException(), null);

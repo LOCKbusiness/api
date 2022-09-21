@@ -3,8 +3,8 @@ export enum KycStatus {
   LIGHT = 'Light',
   FULL = 'Full',
 }
-export enum CfpVote {
-  YES = 'Yes',
-  NO = 'No',
-  NEUTRAL = 'Neutral',
+
+export enum KycResult {
+  STATUS_CHANGED = 'StatusFailed',
+  FAILED = 'Failed',
 }

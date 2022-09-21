@@ -23,7 +23,7 @@ export class KycService {
     if (user.kycHash) return this.toDto(user);
 
     //Register at KYC provider
-    const wallet = this.cryptoService.createWallet(Config.auth.kycPhrase);
+    const wallet = this.cryptoService.createWallet(Config.kyc.phrase);
     user.kycId = await wallet.get(userId).getAddress();
     const signature = await this.getSignature(await wallet.get(userId).privateKey(), user.kycId);
     const accessToken = await this.signUp(user.kycId, signature);

@@ -5,7 +5,6 @@ import { GetConfig } from 'src/config/config';
 export class SignInDto {
   @ApiProperty({
     description: 'Address for login',
-    isArray: false,
   })
   @IsNotEmpty()
   @IsString()
@@ -13,7 +12,7 @@ export class SignInDto {
   address: string;
 
   @ApiProperty({
-    description: 'Signature for login‚',
+    description: 'Signature for login',
   })
   @IsNotEmpty()
   @IsString()

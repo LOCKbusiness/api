@@ -5,8 +5,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { GetJwt } from 'src/shared/auth/get-jwt.decorator';
 import { JwtPayload } from 'src/shared/auth/jwt-payload.interface';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
-import { UserDto } from '../../application/dto/user.dto';
 import { WalletService } from '../../application/services/wallet.service';
+import { WalletDetailedDto } from '../../application/dto/wallet-detailed.dto';
 
 @ApiTags('user')
 @Controller('user')
@@ -18,8 +18,8 @@ export class UserController {
   @Get()
   @ApiBearerAuth()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  @ApiResponse({ status: 200, type: UserDto })
-  async getUser(@GetJwt() jwt: JwtPayload): Promise<UserDto> {
+  @ApiResponse({ status: 200, type: WalletDetailedDto })
+  async getUser(@GetJwt() jwt: JwtPayload): Promise<WalletDetailedDto> {
     return this.walletService.getWalletDto(jwt.walletId);
   }
 }

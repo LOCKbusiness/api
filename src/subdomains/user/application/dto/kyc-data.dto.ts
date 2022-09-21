@@ -1,6 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { KycStatus } from '../../domain/enums';
+import { KycResult, KycStatus } from '../../domain/enums';
+
+export class KycWebhookDto {
+  @ApiProperty()
+  @IsEnum(KycResult)
+  result: KycResult;
+
+  @ApiProperty()
+  data: KycDataDto;
+
+  @ApiProperty()
+  @IsString()
+  reason: string;
+}
 
 export class KycDataDto {
   @ApiProperty()
@@ -21,7 +34,7 @@ export class KycDataDto {
   @ApiProperty()
   @IsOptional()
   @IsString()
-  surname: string;
+  lastName: string;
 
   @ApiProperty()
   @IsOptional()
@@ -36,7 +49,7 @@ export class KycDataDto {
   @ApiProperty()
   @IsOptional()
   @IsString()
-  location: string;
+  city: string;
 
   @ApiProperty()
   @IsOptional()
