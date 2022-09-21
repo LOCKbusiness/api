@@ -27,6 +27,5 @@ export enum MasternodeState {
   CREATED = 'Created',
   RESIGN_REQUESTED = 'ResignRequested',
   RESIGN_CONFIRMED = 'ResignConfirmed',
-  RESIGN_REJECTED = 'ResignRejected',
   RESIGNED = 'Resigned',
 }
