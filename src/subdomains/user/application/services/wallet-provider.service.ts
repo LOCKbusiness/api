@@ -6,7 +6,7 @@ import { WalletProviderRepository } from '../repositories/wallet-provider.reposi
 export class WalletProviderService {
   constructor(private walletProviderRepo: WalletProviderRepository) {}
 
-  async getWalletOrDefault(id: number): Promise<WalletProvider> {
-    return (await this.walletProviderRepo.findOne(id)) ?? (await this.walletProviderRepo.findOne(1));
+  async getWalletProviderByName(name: string): Promise<WalletProvider> {
+    return await this.walletProviderRepo.findOne({ where: { name } });
   }
 }

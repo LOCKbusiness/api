@@ -42,4 +42,7 @@ export class Masternode extends IEntity {
 
   @Column({ default: MasternodeState.IDLE, nullable: false })
   state: MasternodeState;
+
+  @Column({ default: false })
+  creationFeePaid: boolean;
 }

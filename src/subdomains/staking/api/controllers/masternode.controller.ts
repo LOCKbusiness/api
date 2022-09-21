@@ -15,6 +15,18 @@ import { MasternodeState } from '../../domain/enums';
 export class MasternodeController {
   constructor(private readonly masternodeService: MasternodeService) {}
 
+  // --- ADMIN --- //
+
+  @Get('unpaidFee')
+  @ApiBearerAuth()
+  @ApiExcludeEndpoint()
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
+  getUnpaidFee(): Promise<number> {
+    return this.masternodeService.getUnpaidFee();
+  }
+
+  // --- MANAGERS --- //
+
   @Get()
   @ApiBearerAuth()
   @ApiExcludeEndpoint()

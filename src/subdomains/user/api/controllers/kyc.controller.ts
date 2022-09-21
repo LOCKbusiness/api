@@ -10,7 +10,6 @@ import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { GetJwt } from 'src/shared/auth/get-jwt.decorator';
 import { JwtPayload } from 'src/shared/auth/jwt-payload.interface';
 import { KycService } from '../../application/services/kyc.service';
-import { User } from '../../domain/entities/user.entity';
 import { KycDto } from '../../application/dto/kyc.dto';
 import { UserService } from '../../application/services/user.service';
 
@@ -48,8 +47,8 @@ export class KycController {
   @ApiExcludeEndpoint()
   async handoverKycWebhook(@RealIP() ip: string, @Body() data: KycDataDto) {
     this.checkIp(ip, data);
-    const wallet = await this.walletService.getByAddress(data.kycId, true);
-    this.userService.updateUser(wallet.user.id, data);
+    const user = await this.userService.getUserByKycId(+data.kycId);
+    this.userService.updateUser(user.id, data);
   }
 
   private checkIp(ip: string, data: any) {

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { Method } from 'axios';
 import { CryptoService } from 'src/blockchain/crypto.service';
 import { Config } from 'src/config/config';
@@ -23,7 +23,7 @@ export class KycService {
     if (user.kycHash) return this.toDto(user);
 
     //Register at KYC provider
-    const wallet = this.cryptoService.getWallet();
+    const wallet = this.cryptoService.createWallet(Config.auth.kycPhrase);
     user.kycId = await wallet.get(userId).getAddress();
     const signature = await this.getSignature(await wallet.get(userId).privateKey(), user.kycId);
     const accessToken = await this.signUp(user.kycId, signature);

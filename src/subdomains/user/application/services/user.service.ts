@@ -1,9 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Config } from 'src/config/config';
 import { User } from '../../domain/entities/user.entity';
 import { KycStatus } from '../../domain/enums';
 import { KycDataDto } from '../dto/kyc-data.dto';
-import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserRepository } from '../repositories/user.repository';
 import { CountryService } from './country.service';
 
@@ -16,14 +15,18 @@ export class UserService {
     });
   }
 
-  async updateUser(userDataId: number, dto: KycDataDto): Promise<User> {
-    const user = await this.userRepo.findOne(userDataId);
-    if (!user) throw new NotFoundException('User data not found');
+  async updateUser(userId: number, dto: KycDataDto): Promise<User> {
+    const user = await this.userRepo.findOne(userId);
+    if (!user) throw new NotFoundException('User not found');
     return await this.userRepo.save({ ...user, ...dto });
   }
 
   async getUser(userId: number): Promise<User> {
     return this.userRepo.findOne({ where: { id: userId }, relations: ['wallets'] });
+  }
+
+  async getUserByKycId(kycId: number): Promise<User> {
+    return this.userRepo.findOne({ where: { kycId } });
   }
 
   async getAllUser(): Promise<User[]> {

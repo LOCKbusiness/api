@@ -13,10 +13,10 @@ export class User extends IEntity {
   mail: string;
 
   @Column({ length: 256, nullable: true })
-  firstname: string;
+  firstName: string;
 
   @Column({ length: 256, nullable: true })
-  surname: string;
+  lastName: string;
 
   @Column({ length: 256, nullable: true })
   street: string;
@@ -25,7 +25,7 @@ export class User extends IEntity {
   houseNumber: string;
 
   @Column({ length: 256, nullable: true })
-  location: string;
+  city: string;
 
   @Column({ length: 256, nullable: true })
   zip: string;
