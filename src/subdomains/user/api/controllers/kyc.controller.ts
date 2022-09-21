@@ -37,7 +37,7 @@ export class KycController {
   @Get('kycId')
   @UseGuards(AuthGuard('api-key'))
   @ApiExcludeEndpoint()
-  async getKycId(@RealIP() ip: string, @Query() address: string): Promise<{ kycId: string }> {
+  async getKycId(@RealIP() ip: string, @Query('address') address: string): Promise<{ kycId: string }> {
     this.checkIp(ip, address);
     return { kycId: await this.walletService.getKycIdByAddress(address) };
   }
