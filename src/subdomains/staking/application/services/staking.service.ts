@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { BlockchainAddressService } from 'src/shared/models/blockchain-address/blockchain-address.service';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
-import { Staking } from '../../domain/entities/staking.entity';
 import { Authorize } from '../decorators/authorize.decorator';
 import { CheckKyc } from '../decorators/check-kyc.decorator';
 import { CreateStakingDto } from '../dto/input/create-staking.dto';

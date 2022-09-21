@@ -9,7 +9,9 @@ import { StakingDeFiChainService } from '../../infrastructre/staking-defichain.s
 import { Authorize } from '../decorators/authorize.decorator';
 import { CheckKyc } from '../decorators/check-kyc.decorator';
 import { CreateDepositDto } from '../dto/input/create-deposit.dto';
+import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
+import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
 import { StakingRepository } from '../repositories/staking.repository';
 
 @Injectable()
@@ -28,7 +30,7 @@ export class StakingDepositService {
 
   @Authorize()
   @CheckKyc()
-  async createDeposit(userId: number, stakingId: string, dto: CreateDepositDto): Promise<Staking> {
+  async createDeposit(userId: number, stakingId: string, dto: CreateDepositDto): Promise<StakingOutputDto> {
     // TODO - make sure to overwrite the amount with actual amount from BC transaction
     const staking = await this.repository.findOne(stakingId);
 
@@ -38,7 +40,7 @@ export class StakingDepositService {
 
     await this.repository.save(staking);
 
-    return staking;
+    return StakingOutputDtoMapper.entityToDto(staking);
   }
 
   //*** JOBS ***//
