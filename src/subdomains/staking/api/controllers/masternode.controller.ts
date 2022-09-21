@@ -30,10 +30,7 @@ export class MasternodeController {
   @Get()
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(
-    AuthGuard(),
-    new RoleGuard([WalletRole.MASTERNODE_MANAGER, WalletRole.LIQUIDITY_MANAGER, WalletRole.PAYOUT_MANAGER]),
-  )
+  @UseGuards(AuthGuard(), new RoleGuard([WalletRole.MASTERNODE_MANAGER, WalletRole.PAYOUT_MANAGER]))
   getMasternodes(): Promise<Masternode[]> {
     return this.masternodeService.get();
   }
@@ -44,14 +41,6 @@ export class MasternodeController {
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.MASTERNODE_MANAGER))
   createMasternode(@Param('id') id: string, @Body() dto: CreateMasternodeDto): Promise<Masternode> {
     return this.masternodeService.create(+id, dto);
-  }
-
-  @Put(':id/requestResign')
-  @ApiBearerAuth()
-  @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.LIQUIDITY_MANAGER))
-  requestResignMasternode(@Param('id') id: string, @Body() dto: PrepareResignMasternodeDto): Promise<Masternode> {
-    return this.masternodeService.prepareResign(+id, dto.signature, MasternodeState.RESIGN_REQUESTED);
   }
 
   @Put(':id/confirmResign')
