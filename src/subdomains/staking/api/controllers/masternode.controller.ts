@@ -2,7 +2,6 @@ import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
-import { MultipleRoleGuard } from 'src/shared/auth/multiple-role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { CreateMasternodeDto } from '../../application/dto/create-masternode.dto';
 import { ResignMasternodeDto } from '../../application/dto/resign-masternode.dto';
@@ -20,8 +19,7 @@ export class MasternodeController {
   @ApiExcludeEndpoint()
   @UseGuards(
     AuthGuard(),
-    new MultipleRoleGuard([WalletRole.MASTERNODE_MANAGER, WalletRole.LIQUIDITY_MANAGER, WalletRole.PAYOUT_MANAGER]),
-    new RoleGuard(WalletRole.MASTERNODE_MANAGER),
+    new RoleGuard([WalletRole.MASTERNODE_MANAGER, WalletRole.LIQUIDITY_MANAGER, WalletRole.PAYOUT_MANAGER]),
   )
   getMasternodes(): Promise<Masternode[]> {
     return this.masternodeService.get();
