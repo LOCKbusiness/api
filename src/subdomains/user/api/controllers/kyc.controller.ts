@@ -4,7 +4,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { WalletService } from '../../application/services/wallet.service';
 import { Config } from 'src/config/config';
 import { RealIP } from 'nestjs-real-ip';
-import { KycDataDto } from '../../application/dto/kyc-data.dto';
+import { KycDataDto, KycWebhookDto } from '../../application/dto/kyc-data.dto';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { GetJwt } from 'src/shared/auth/get-jwt.decorator';
@@ -12,6 +12,7 @@ import { JwtPayload } from 'src/shared/auth/jwt-payload.interface';
 import { KycService } from '../../application/services/kyc.service';
 import { KycDto } from '../../application/dto/kyc.dto';
 import { UserService } from '../../application/services/user.service';
+import { KycResult } from '../../domain/enums';
 
 @ApiTags('kyc')
 @Controller('kyc')
@@ -27,7 +28,7 @@ export class KycController {
   @Post()
   @ApiBearerAuth()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  @ApiResponse({ status: 201, type: KycDto, isArray: false })
+  @ApiResponse({ status: 201, type: KycDto })
   async startKyc(@GetJwt() jwt: JwtPayload): Promise<KycDto> {
     return this.kycService.startKyc(jwt.userId);
   }
@@ -45,10 +46,12 @@ export class KycController {
   @Post('handoverKyc')
   @UseGuards(AuthGuard('api-key'))
   @ApiExcludeEndpoint()
-  async handoverKycWebhook(@RealIP() ip: string, @Body() data: KycDataDto) {
-    this.checkIp(ip, data);
-    const user = await this.userService.getUserByKycId(+data.kycId);
-    this.userService.updateUser(user.id, data);
+  async handoverKycWebhook(@RealIP() ip: string, @Body() dto: KycWebhookDto) {
+    this.checkIp(ip, dto.data);
+    if (dto.result === KycResult.STATUS_CHANGED) {
+      const user = await this.userService.getUserByKycId(+dto.data.kycId);
+      this.userService.updateUser(user.id, dto.data);
+    }
   }
 
   private checkIp(ip: string, data: any) {

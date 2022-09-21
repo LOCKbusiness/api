@@ -1,11 +1,11 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RealIP } from 'nestjs-real-ip';
-import { SignUpDto } from 'src/shared/auth/auth-sign-up.dto';
+import { SignUpDto } from 'src/shared/auth/dto/sign-up.dto';
 import { AuthService } from '../services/auth.service';
-import { SignInDto } from './auth-sign-in.dto';
-import { SignMessageDto } from './auth-message.dto';
-import { AuthResponseDto } from './auth-response.dto';
+import { SignInDto } from './dto/sign-in.dto';
+import { SignMessageDto } from './dto/sign-message.dto';
+import { AuthResponseDto } from './dto/auth-response.dto';
 
 @ApiTags('auth')
 @Controller('auth')

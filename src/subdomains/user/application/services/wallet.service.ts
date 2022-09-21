@@ -3,14 +3,14 @@ import { Config } from 'src/config/config';
 import { Like } from 'typeorm';
 import { User } from '../../domain/entities/user.entity';
 import { Wallet } from '../../domain/entities/wallet.entity';
-import { SignUpDto } from '../../../../shared/auth/auth-sign-up.dto';
-import { UserDto } from '../dto/user.dto';
 import { WalletRepository } from '../repositories/wallet.repository';
 import { CountryService } from './country.service';
 import { GeoLocationService } from './geo-location.service';
 import { UserService } from './user.service';
 import { WalletProviderService } from './wallet-provider.service';
 import { WalletProvider } from '../../domain/entities/wallet-provider.entity';
+import { SignUpDto } from 'src/shared/auth/dto/sign-up.dto';
+import { WalletDetailedDto } from '../dto/wallet-detailed.dto';
 
 @Injectable()
 export class WalletService {
@@ -22,7 +22,7 @@ export class WalletService {
     private geoLocationService: GeoLocationService,
   ) {}
 
-  async getWalletDto(walletId: number): Promise<UserDto> {
+  async getWalletDto(walletId: number): Promise<WalletDetailedDto> {
     const wallet = await this.walletRepo.findOne(walletId, { relations: ['user'] });
     if (!wallet) throw new NotFoundException('Wallet not found');
 
@@ -89,10 +89,11 @@ export class WalletService {
   }
 
   // --- DTO --- //
-  private async toDto(wallet: Wallet): Promise<UserDto> {
+  private async toDto(wallet: Wallet): Promise<WalletDetailedDto> {
     return {
       address: wallet.address,
       mail: wallet.user?.mail,
+      phone: wallet.user?.phone,
       language: wallet.user?.language,
       kycStatus: wallet.user?.kycStatus,
       kycLink: `${Config.kyc.frontendUrl}/kyc?code=${wallet.user?.kycHash}`,
