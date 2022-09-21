@@ -12,8 +12,6 @@ import { Config } from 'src/config/config';
 
 @Injectable()
 export class CryptoService {
-  private wallet: JellyfishWallet<WhaleWalletAccount, WalletHdNode> | undefined;
-
   public getBlockchainsBasedOn(address: string): Blockchain[] {
     if (isEthereumAddress(address)) return [Blockchain.ETHEREUM, Blockchain.BINANCE_SMART_CHAIN];
     if (this.isBitcoinAddress(address)) return [Blockchain.BITCOIN];
@@ -85,23 +83,17 @@ export class CryptoService {
     return verify(message, address, signature, MainNet.messagePrefix);
   }
 
-  public getWallet(): JellyfishWallet<WhaleWalletAccount, WalletHdNode> {
-    this.wallet = new JellyfishWallet(
-      MnemonicHdNodeProvider.fromWords(
-        Config.auth.kycPhrase,
-        this.bip32OptionsBasedOn(Config.network == 'testnet' ? TestNet : MainNet),
-      ),
-      new WhaleWalletAccountProvider(undefined, Config.network == 'testnet' ? TestNet : MainNet),
+  public createWallet(seed: string[]): JellyfishWallet<WhaleWalletAccount, WalletHdNode> {
+    return new JellyfishWallet(
+      MnemonicHdNodeProvider.fromWords(seed, this.bip32OptionsBasedOn(Config.network == 'testnet' ? TestNet : MainNet)),
+      new WhaleWalletAccountProvider(undefined, this.getNetwork()),
       JellyfishWallet.COIN_TYPE_DFI,
       JellyfishWallet.PURPOSE_LIGHT_WALLET,
     );
-    if (!this.wallet) throw new Error('Wallet is not initialized');
-    return this.wallet;
   }
 
   public async signMessage(privKey: Buffer, message: string): Promise<string> {
-    const messagePrefix = MainNet.messagePrefix;
-    return sign(message, privKey, true, messagePrefix).toString('base64');
+    return sign(message, privKey, true, this.getNetwork().messagePrefix).toString('base64');
   }
 
   private bip32OptionsBasedOn(network: Network): Bip32Options {
@@ -112,5 +104,9 @@ export class CryptoService {
       },
       wif: network.wifPrefix,
     };
+  }
+
+  private getNetwork(): Network {
+    return Config.network == 'testnet' ? TestNet : MainNet;
   }
 }

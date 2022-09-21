@@ -1,12 +1,16 @@
 {
     "cSpell.words": [
+        "bitcoinjs",
         "datetime",
+        "DEFICHAIN",
+        "flagbyte",
         "geoip",
         "headerapikey",
         "masternode",
         "Masternodes",
         "mydefichain",
         "nestjs",
+        "Segwit",
         "typeorm"
     ]
 }

@@ -60,6 +60,14 @@ export class MasternodeService {
     return this.masternodeRepo.find({ where: { creationHash: Not(IsNull()), resignHash: IsNull() } });
   }
 
+  //Get unpaid fee in DFI
+  async getUnpaidFee(): Promise<number> {
+    const unpaidMasternodeFee = await this.masternodeRepo.count({
+      where: { creationFeePaid: false },
+    });
+    return unpaidMasternodeFee * 10;
+  }
+
   async create(id: number, dto: CreateMasternodeDto): Promise<Masternode> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
@@ -106,8 +114,7 @@ export class MasternodeService {
   async resigned(id: number): Promise<Masternode> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
-    if (!masternode.creationHash) throw new ConflictException('Masternode not yet created');
-    if (masternode.resignHash) throw new ConflictException('Masternode already resigned');
+    if (masternode.resignHash) throw new ConflictException('Masternode is not resigning');
     if (masternode.state !== MasternodeState.RESIGNING)
       throw new ConflictException('Masternode resigning has not started');
 

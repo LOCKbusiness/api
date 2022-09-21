@@ -10,6 +10,7 @@ import { CountryService } from './country.service';
 import { GeoLocationService } from './geo-location.service';
 import { UserService } from './user.service';
 import { WalletProviderService } from './wallet-provider.service';
+import { WalletProvider } from '../../domain/entities/wallet-provider.entity';
 
 @Injectable()
 export class WalletService {
@@ -46,7 +47,7 @@ export class WalletService {
 
     wallet.ip = userIp;
     wallet.ipCountry = await this.checkIpCountry(userIp);
-    wallet.walletProvider = await this.walletProviderService.getWalletOrDefault(dto.walletId);
+    wallet.walletProvider = await this.checkWalletProvider(dto.walletName);
     wallet.ref = await this.getNextRef();
     wallet.user = user ?? (await this.userService.createUser());
 
@@ -70,11 +71,18 @@ export class WalletService {
   private async checkIpCountry(userIp: string): Promise<string> {
     const ipCountry = await this.geoLocationService.getCountry(userIp);
 
-    const country = await this.countryService.getCountryWithSymbol(ipCountry);
+    const country = await this.countryService.getCountryBySymbol(ipCountry);
     if (!country?.ipEnable && Config.environment !== 'loc')
       throw new ForbiddenException('The country of IP address is not allowed');
 
     return ipCountry;
+  }
+
+  private async checkWalletProvider(name: string): Promise<WalletProvider> {
+    const walletProvider = await this.walletProviderService.getWalletProviderByName(name);
+    if (!walletProvider) throw new NotFoundException(`No wallet provider with name: ${name}`);
+
+    return walletProvider;
   }
 
   // --- DTO --- //

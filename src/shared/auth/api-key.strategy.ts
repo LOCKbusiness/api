@@ -6,9 +6,7 @@ import { Config } from 'src/config/config';
 @Injectable()
 export class ApiKeyStrategy extends PassportStrategy(Strategy, 'api-key') {
   constructor() {
-    super({ header: 'X-API-KEY', prefix: '' }, true, async (apiKey, done) => {
-      return this.validate(apiKey, done);
-    });
+    super({ header: 'X-API-KEY', prefix: '' }, true, async (apiKey, done) => this.validate(apiKey, done));
   }
 
   private validate(apiKey: string, done: (error: Error, data) => void) {
