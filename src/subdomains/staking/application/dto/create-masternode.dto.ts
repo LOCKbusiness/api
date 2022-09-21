@@ -16,6 +16,10 @@ export class CreateMasternodeDto {
   owner: string;
 
   @IsNotEmpty()
+  @IsString()
+  ownerWallet: string;
+
+  @IsNotEmpty()
   @IsInt()
   timeLock: number;
 }

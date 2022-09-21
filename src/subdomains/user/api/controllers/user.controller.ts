@@ -20,6 +20,6 @@ export class UserController {
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   @ApiResponse({ status: 200, type: UserDto })
   async getUser(@GetJwt() jwt: JwtPayload): Promise<UserDto> {
-    return this.walletService.getWalletDto(jwt.id);
+    return this.walletService.getWalletDto(jwt.walletId);
   }
 }

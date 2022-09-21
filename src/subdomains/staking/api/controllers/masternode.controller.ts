@@ -5,6 +5,7 @@ import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { CreateMasternodeDto } from '../../application/dto/create-masternode.dto';
 import { ResignMasternodeDto } from '../../application/dto/resign-masternode.dto';
+import { PrepareResignMasternodeDto } from '../../application/dto/prepare-resign-masternode.dto';
 import { MasternodeService } from '../../application/services/masternode.service';
 import { Masternode } from '../../domain/entities/masternode.entity';
 import { MasternodeState } from '../../domain/enums';
@@ -37,16 +38,16 @@ export class MasternodeController {
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.LIQUIDITY_MANAGER))
-  requestResignMasternode(@Param('id') id: string, @Body() signature: string): Promise<Masternode> {
-    return this.masternodeService.prepareResign(+id, signature, MasternodeState.RESIGN_REQUESTED);
+  requestResignMasternode(@Param('id') id: string, @Body() dto: PrepareResignMasternodeDto): Promise<Masternode> {
+    return this.masternodeService.prepareResign(+id, dto.signature, MasternodeState.RESIGN_REQUESTED);
   }
 
   @Put(':id/confirmResign')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.PAYOUT_MANAGER))
-  confirmResignMasternode(@Param('id') id: string, @Body() signature: string): Promise<Masternode> {
-    return this.masternodeService.prepareResign(+id, signature, MasternodeState.RESIGN_CONFIRMED);
+  confirmResignMasternode(@Param('id') id: string, @Body() dto: PrepareResignMasternodeDto): Promise<Masternode> {
+    return this.masternodeService.prepareResign(+id, dto.signature, MasternodeState.RESIGN_CONFIRMED);
   }
 
   @Put(':id/resign')
@@ -55,5 +56,13 @@ export class MasternodeController {
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.MASTERNODE_MANAGER))
   async resignMasternode(@Param('id') id: string, @Body() dto: ResignMasternodeDto): Promise<Masternode> {
     return this.masternodeService.resign(+id, dto);
+  }
+
+  @Put(':id/resigned')
+  @ApiBearerAuth()
+  @ApiExcludeEndpoint()
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.MASTERNODE_MANAGER))
+  async resignedMasternode(@Param('id') id: string): Promise<Masternode> {
+    return this.masternodeService.resigned(+id);
   }
 }

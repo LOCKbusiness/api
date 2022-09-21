@@ -12,21 +12,7 @@ import { Config } from 'src/config/config';
 
 @Injectable()
 export class CryptoService {
-  public static NEEDED_SEED_LENGTH = 24;
   private wallet: JellyfishWallet<WhaleWalletAccount, WalletHdNode> | undefined;
-  public verifySignature(message: string, address: string, signature: string): boolean {
-    const blockchains = this.getBlockchainsBasedOn(address);
-
-    let isValid = false;
-    try {
-      isValid = this.verify(message, address, signature, blockchains);
-    } catch (e) {}
-
-    if (!isValid && !blockchains.includes(Blockchain.ETHEREUM)) {
-      isValid = this.fallbackVerify(message, address, signature, blockchains);
-    }
-    return isValid;
-  }
 
   public getBlockchainsBasedOn(address: string): Blockchain[] {
     if (isEthereumAddress(address)) return [Blockchain.ETHEREUM, Blockchain.BINANCE_SMART_CHAIN];
@@ -61,6 +47,20 @@ export class CryptoService {
     return this.verifyDefichain(message, address, signature);
   }
 
+  public verifySignature(message: string, address: string, signature: string): boolean {
+    const blockchains = this.getBlockchainsBasedOn(address);
+
+    let isValid = false;
+    try {
+      isValid = this.verify(message, address, signature, blockchains);
+    } catch (e) {}
+
+    if (!isValid && !blockchains.includes(Blockchain.ETHEREUM)) {
+      isValid = this.fallbackVerify(message, address, signature, blockchains);
+    }
+    return isValid;
+  }
+
   private verifyEthereum(message: string, address: string, signature: string): boolean {
     // there are ETH signings out there, which do not have '0x' in the beginning, but for verification this is needed
     const signatureToUse = signature.startsWith('0x') ? signature : '0x' + signature;
@@ -81,23 +81,26 @@ export class CryptoService {
     }
   }
 
-  public getAddress(userId: number): Promise<string> {
+  private verifyDefichain(message: string, address: string, signature: string): boolean {
+    return verify(message, address, signature, MainNet.messagePrefix);
+  }
+
+  public getWallet(): JellyfishWallet<WhaleWalletAccount, WalletHdNode> {
     this.wallet = new JellyfishWallet(
       MnemonicHdNodeProvider.fromWords(
-        Config.auth.lockSeed,
+        Config.auth.kycPhrase,
         this.bip32OptionsBasedOn(Config.network == 'testnet' ? TestNet : MainNet),
       ),
-      new WhaleWalletAccountProvider(undefined, Config.network == 'testnet' ? TestNet : MainNet), // if crashes occur change to ColdWalletClient, need to overwrite all properties
+      new WhaleWalletAccountProvider(undefined, Config.network == 'testnet' ? TestNet : MainNet),
       JellyfishWallet.COIN_TYPE_DFI,
       JellyfishWallet.PURPOSE_LIGHT_WALLET,
     );
     if (!this.wallet) throw new Error('Wallet is not initialized');
-    return this.wallet.get(userId).getAddress();
+    return this.wallet;
   }
 
-  public async signMessage(userId: number, message: string): Promise<string> {
+  public async signMessage(privKey: Buffer, message: string): Promise<string> {
     const messagePrefix = MainNet.messagePrefix;
-    const privKey = await this.wallet.get(userId).privateKey();
     return sign(message, privKey, true, messagePrefix).toString('base64');
   }
 
@@ -109,9 +112,5 @@ export class CryptoService {
       },
       wif: network.wifPrefix,
     };
-  }
-
-  private verifyDefichain(message: string, address: string, signature: string): boolean {
-    return verify(message, address, signature, MainNet.messagePrefix);
   }
 }

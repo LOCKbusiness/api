@@ -4,18 +4,18 @@ import Strategy from 'passport-headerapikey';
 import { Config } from 'src/config/config';
 
 @Injectable()
-export class HeaderApiKeyStrategy extends PassportStrategy(Strategy, 'api-key') {
+export class ApiKeyStrategy extends PassportStrategy(Strategy, 'api-key') {
   constructor() {
     super({ header: 'X-API-KEY', prefix: '' }, true, async (apiKey, done) => {
       return this.validate(apiKey, done);
     });
   }
 
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  public validate = (apiKey: string, done: (error: Error, data) => {}) => {
+  private validate(apiKey: string, done: (error: Error, data) => void) {
     if (Config.kyc.kycSecret === apiKey) {
       done(null, true);
+    } else {
+      done(new UnauthorizedException(), null);
     }
-    done(new UnauthorizedException(), null);
-  };
+  }
 }

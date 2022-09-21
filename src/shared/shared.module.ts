@@ -12,6 +12,7 @@ import { I18nModule } from 'nestjs-i18n';
 import { CryptoService } from 'src/blockchain/crypto.service';
 import { SettingService } from './services/setting.service';
 import { SettingRepository } from './repositories/setting.repository';
+import { ApiKeyStrategy } from './auth/api-key.strategy';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { SettingRepository } from './repositories/setting.repository';
     ScheduleModule.forRoot(),
   ],
   controllers: [],
-  providers: [HttpService, JwtStrategy, CryptoService, SettingService],
+  providers: [HttpService, JwtStrategy, ApiKeyStrategy, CryptoService, SettingService],
   exports: [PassportModule, JwtModule, ScheduleModule, HttpService, CryptoService, SettingService],
 })
 export class SharedModule {}

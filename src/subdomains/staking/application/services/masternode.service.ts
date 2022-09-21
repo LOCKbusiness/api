@@ -98,9 +98,22 @@ export class MasternodeService {
     if (masternode.state !== MasternodeState.RESIGN_CONFIRMED)
       throw new ConflictException('Masternode resign is not confirmed');
 
-    masternode.state = MasternodeState.RESIGNED;
+    masternode.state = MasternodeState.RESIGNING;
 
     return await this.masternodeRepo.save({ ...masternode, ...dto });
+  }
+
+  async resigned(id: number): Promise<Masternode> {
+    const masternode = await this.masternodeRepo.findOne(id);
+    if (!masternode) throw new NotFoundException('Masternode not found');
+    if (!masternode.creationHash) throw new ConflictException('Masternode not yet created');
+    if (masternode.resignHash) throw new ConflictException('Masternode already resigned');
+    if (masternode.state !== MasternodeState.RESIGNING)
+      throw new ConflictException('Masternode resigning has not started');
+
+    masternode.state = MasternodeState.RESIGNED;
+
+    return await this.masternodeRepo.save(masternode);
   }
 
   // --- HELPER METHODS --- //

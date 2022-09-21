@@ -19,7 +19,7 @@ export class KycDto {
   kycStatus: KycStatus;
 
   @ApiProperty({
-    description: 'KycHash of the user',
+    description: 'Kyc link of the user',
   })
-  kycHash: string;
+  kycLink: string;
 }

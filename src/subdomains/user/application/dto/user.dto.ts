@@ -4,37 +4,37 @@ import { KycStatus } from '../../domain/enums';
 
 export class UserDto {
   @ApiPropertyOptional({
-    description: 'Address from the user',
+    description: 'Address of the user',
   })
   @IsOptional()
   @IsString()
   address: string;
 
   @ApiPropertyOptional({
-    description: 'Mail from the user',
+    description: 'Mail of the user',
   })
   @IsOptional()
   @IsString()
   mail: string;
 
   @ApiPropertyOptional({
-    description: 'Language from the user',
+    description: 'Language of the user',
   })
   @IsOptional()
   @IsString()
   language: string;
 
   @ApiProperty({
-    description: 'KycStatus from the user',
+    description: 'KycStatus of the user',
   })
   @IsOptional()
   @IsEnum(KycStatus)
   kycStatus: KycStatus;
 
   @ApiProperty({
-    description: 'KycHash from the user',
+    description: 'KycHash of the user',
   })
   @IsOptional()
   @IsString()
-  kycHash: string;
+  kycLink: string;
 }
