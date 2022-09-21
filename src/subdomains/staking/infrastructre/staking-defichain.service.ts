@@ -10,7 +10,7 @@ export class StakingDeFiChainService {
   private client: DeFiClient;
 
   constructor(nodeService: NodeService, private readonly cryptoService: CryptoService) {
-    nodeService.getConnectedNode<NodeType.INPUT>(NodeType.INPUT).subscribe((client) => (this.client = client));
+    nodeService.getConnectedNode(NodeType.INPUT).subscribe((client) => (this.client = client));
   }
 
   //*** PUBLIC API ***//

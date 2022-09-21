@@ -24,7 +24,7 @@ interface NodeCheckResult {
   info: BlockchainInfo | undefined;
 }
 
-type TypedNodeClient<T> = DeFiClient;
+type TypedNodeClient = DeFiClient;
 
 @Injectable()
 export class NodeService {
@@ -46,11 +46,11 @@ export class NodeService {
 
   // --- PUBLIC API --- //
 
-  getConnectedNode<T extends NodeType>(type: T): Observable<TypedNodeClient<T>> {
+  getConnectedNode<T extends NodeType>(type: T): Observable<TypedNodeClient> {
     const client = this.connectedNodes.get(type);
 
     if (client) {
-      return client.asObservable() as Observable<TypedNodeClient<T>>;
+      return client.asObservable() as Observable<TypedNodeClient>;
     }
 
     throw new BadRequestException(`No node for type '${type}'`);

@@ -20,7 +20,7 @@ export class PayInDeFiChainService {
   private readonly utxoTxTypes = ['receive', 'AccountToUtxos'];
 
   constructor(nodeService: NodeService) {
-    nodeService.getConnectedNode<NodeType.INPUT>(NodeType.INPUT).subscribe((client) => (this.client = client));
+    nodeService.getConnectedNode(NodeType.INPUT).subscribe((client) => (this.client = client));
   }
 
   //*** PUBLIC API ***//

@@ -2,8 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { IEntity } from 'src/shared/models/entity';
 import { Column, Entity, ManyToOne } from 'typeorm';
-import { BlockchainAddress } from '../../../../shared/models/blockchain-address/blockchain-address.entity';
-import { DepositStatus, StakingAddressPurposes } from '../enums';
+import { DepositStatus } from '../enums';
 import { Staking } from './staking.entity';
 
 @Entity()
