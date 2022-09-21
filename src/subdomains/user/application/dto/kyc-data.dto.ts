@@ -1,23 +1,6 @@
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { KycResult, KycStatus } from '../../domain/enums';
 
-export class KycWebhookDto {
-  @IsOptional()
-  @IsString()
-  id: string;
-
-  @IsNotEmpty()
-  @IsEnum(KycResult)
-  result: KycResult;
-
-  @IsOptional()
-  data: KycDataDto;
-
-  @IsOptional()
-  @IsString()
-  reason: string;
-}
-
 export class KycDataDto {
   @IsOptional()
   @IsString()
@@ -58,4 +41,21 @@ export class KycDataDto {
   @IsNotEmpty()
   @IsString()
   kycHash: string;
+}
+
+export class KycWebhookDto {
+  @IsOptional()
+  @IsString()
+  id: string;
+
+  @IsNotEmpty()
+  @IsEnum(KycResult)
+  result: KycResult;
+
+  @IsOptional()
+  data: KycDataDto;
+
+  @IsOptional()
+  @IsString()
+  reason: string;
 }
