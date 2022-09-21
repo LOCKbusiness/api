@@ -2,7 +2,7 @@ import { Asset } from 'src/shared/entities/asset.entity';
 import { IEntity } from 'src/shared/entities/entity';
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { BlockchainAddress } from '../../../../shared/entities/blockchain-address.entity';
-import { DepositStatus, StakingAddressPurposes } from '../enums';
+import { DepositStatus } from '../enums';
 import { Staking } from './staking.entity';
 
 @Entity()

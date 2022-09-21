@@ -9,11 +9,12 @@ import { JwtPayload } from 'src/shared/auth/jwt-payload.interface';
 import { JwtService } from '@nestjs/jwt';
 import { Config } from 'src/config/config';
 import { WalletService } from 'src/subdomains/user/application/services/wallet.service';
-import { Blockchain } from '../enums/blockchain.enum';
 import { Wallet } from 'src/subdomains/user/domain/entities/wallet.entity';
 import { CryptoService } from 'src/blockchain/crypto.service';
-import { CreateWalletDto } from 'src/subdomains/user/application/dto/create-wallet.dto';
-import { AuthCredentialsDto } from '../auth/auth-credentials.dto';
+import { SignUpDto } from '../auth/auth-sign-up.dto';
+import { SignInDto } from '../auth/auth-sign-in.dto';
+import { AuthResponseDto } from '../auth/auth-response.dto';
+import { SignMessageDto } from '../auth/auth-message.dto';
 
 @Injectable()
 export class AuthService {
@@ -23,8 +24,8 @@ export class AuthService {
     private readonly cryptoService: CryptoService,
   ) {}
 
-  async signUp(dto: CreateWalletDto, userIp: string): Promise<{ accessToken: string }> {
-    const existingWallet = await this.walletService.getByAddress(dto.address);
+  async signUp(dto: SignUpDto, userIp: string): Promise<AuthResponseDto> {
+    const existingWallet = await this.walletService.getByAddress(dto.address, true);
     if (existingWallet) {
       throw new ConflictException('User already exists');
     }
@@ -37,8 +38,8 @@ export class AuthService {
     return { accessToken: this.generateToken(wallet) };
   }
 
-  async signIn({ address, signature }: AuthCredentialsDto): Promise<{ accessToken: string }> {
-    const wallet = await this.walletService.getByAddress(address);
+  async signIn({ address, signature }: SignInDto): Promise<AuthResponseDto> {
+    const wallet = await this.walletService.getByAddress(address, true);
     if (!wallet) throw new NotFoundException('User not found');
 
     const credentialsValid = this.verifySignature(address, signature);
@@ -47,7 +48,7 @@ export class AuthService {
     return { accessToken: this.generateToken(wallet) };
   }
 
-  getSignMessage(address: string): { message: string; blockchains: Blockchain[] } {
+  getSignMessage(address: string): SignMessageDto {
     const blockchains = this.cryptoService.getBlockchainsBasedOn(address);
     return {
       message: Config.auth.signMessage + address,
@@ -62,7 +63,8 @@ export class AuthService {
 
   private generateToken(wallet: Wallet): string {
     const payload: JwtPayload = {
-      id: wallet.id,
+      walletId: wallet.id,
+      userId: wallet.user?.id,
       address: wallet.address,
       role: wallet.role,
       blockchains: this.cryptoService.getBlockchainsBasedOn(wallet.address),

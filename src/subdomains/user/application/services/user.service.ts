@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { Config } from 'src/config/config';
 import { User } from '../../domain/entities/user.entity';
 import { KycStatus } from '../../domain/enums';
+import { KycDataDto } from '../dto/kyc-data.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserRepository } from '../repositories/user.repository';
 import { CountryService } from './country.service';
@@ -15,15 +16,9 @@ export class UserService {
     });
   }
 
-  async updateUser(userDataId: number, dto: UpdateUserDto): Promise<User> {
+  async updateUser(userDataId: number, dto: KycDataDto): Promise<User> {
     const user = await this.userRepo.findOne(userDataId);
     if (!user) throw new NotFoundException('User data not found');
-
-    if (dto.countryId) {
-      user.country = await this.countryService.getCountry(dto.countryId);
-      if (!user.country) throw new BadRequestException('Country not found');
-    }
-
     return await this.userRepo.save({ ...user, ...dto });
   }
 

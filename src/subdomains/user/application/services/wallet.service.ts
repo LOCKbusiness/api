@@ -3,7 +3,7 @@ import { Config } from 'src/config/config';
 import { Like } from 'typeorm';
 import { User } from '../../domain/entities/user.entity';
 import { Wallet } from '../../domain/entities/wallet.entity';
-import { CreateWalletDto } from '../dto/create-wallet.dto';
+import { SignUpDto } from '../../../../shared/auth/auth-sign-up.dto';
 import { UserDto } from '../dto/user.dto';
 import { WalletRepository } from '../repositories/wallet.repository';
 import { CountryService } from './country.service';
@@ -41,8 +41,8 @@ export class WalletService {
     if (!wallet) throw new NotFoundException('User not available');
     return wallet.user.kycId;
   }
-  async createWallet(dto: CreateWalletDto, userIp: string, user?: User): Promise<Wallet> {
-    let wallet = this.walletRepo.create(dto);
+  async createWallet(dto: SignUpDto, userIp: string, user?: User): Promise<Wallet> {
+    const wallet = this.walletRepo.create(dto);
 
     wallet.ip = userIp;
     wallet.ipCountry = await this.checkIpCountry(userIp);
@@ -50,8 +50,7 @@ export class WalletService {
     wallet.ref = await this.getNextRef();
     wallet.user = user ?? (await this.userService.createUser());
 
-    wallet = await this.walletRepo.save(wallet);
-    return wallet;
+    return await this.walletRepo.save(wallet);
   }
 
   private async getNextRef(): Promise<string> {
@@ -85,7 +84,7 @@ export class WalletService {
       mail: wallet.user?.mail,
       language: wallet.user?.language,
       kycStatus: wallet.user?.kycStatus,
-      kycHash: wallet.user?.kycHash,
+      kycLink: `${Config.kyc.frontendUrl}/kyc?code=${wallet.user?.kycHash}`,
     };
   }
 }

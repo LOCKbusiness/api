@@ -21,3 +21,12 @@ export enum StakingAddressPurposes {
   WITHDRAWAL = 'Withdrawal',
   REWARD_PAYOUT = 'RewardPayout',
 }
+
+export enum MasternodeState {
+  IDLE = 'Idle',
+  CREATED = 'Created',
+  RESIGN_REQUESTED = 'ResignRequested',
+  RESIGN_CONFIRMED = 'ResignConfirmed',
+  RESIGNING = 'Resigning',
+  RESIGNED = 'Resigned',
+}

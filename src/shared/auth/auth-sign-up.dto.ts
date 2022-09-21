@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsInt, IsNotEmpty, IsOptional, IsString, Matches } from 'class-validator';
 import { GetConfig } from 'src/config/config';
 
-export class CreateWalletDto {
+export class SignUpDto {
   @ApiProperty({
     description: 'Address for login',
   })
@@ -22,7 +22,7 @@ export class CreateWalletDto {
   @ApiPropertyOptional({
     description: 'Used wallet for login',
   })
-  @IsOptional()
+  @IsNotEmpty()
   @IsInt()
   walletId: number;
 }

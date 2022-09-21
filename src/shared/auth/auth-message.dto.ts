@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Blockchain } from '../enums/blockchain.enum';
 
-export class AuthMessageDto {
+export class SignMessageDto {
   @ApiProperty({
     description: 'Message to sign',
     isArray: false,
@@ -13,5 +13,5 @@ export class AuthMessageDto {
     isArray: true,
     enum: Blockchain,
   })
-  blockchain: Blockchain[];
+  blockchains: Blockchain[];
 }

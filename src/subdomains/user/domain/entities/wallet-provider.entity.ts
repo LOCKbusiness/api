@@ -8,5 +8,5 @@ export class WalletProvider extends IEntity {
   name: string;
 
   @Column({ length: 256, default: KycStatus.LIGHT })
-  minKycStatus: KycStatus;
+  minStakingKycStatus: KycStatus;
 }

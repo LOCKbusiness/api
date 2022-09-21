@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, Matches } from 'class-validator';
 import { GetConfig } from 'src/config/config';
 
-export class AuthCredentialsDto {
+export class SignInDto {
   @ApiProperty({
     description: 'Address for login',
     isArray: false,
@@ -14,7 +14,6 @@ export class AuthCredentialsDto {
 
   @ApiProperty({
     description: 'Signature for login‚',
-    isArray: false,
   })
   @IsNotEmpty()
   @IsString()
