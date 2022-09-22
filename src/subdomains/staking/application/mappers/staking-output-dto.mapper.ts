@@ -5,6 +5,7 @@ export class StakingOutputDtoMapper {
   static entityToDto(staking: Staking): StakingOutputDto {
     const dto = new StakingOutputDto();
 
+    dto.asset = staking.asset.name;
     dto.depositAddress = staking.depositAddress.address;
     dto.minimalStake = staking.minimalStake;
     dto.minimalDeposit = staking.minimalDeposit;

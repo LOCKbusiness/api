@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { BlockchainAddress } from 'src/shared/models/blockchain-address/blockchain-address.entity';
-import { BlockchainAddressService } from 'src/shared/models/blockchain-address/blockchain-address.service';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
+import { UserBlockchainAddress } from 'src/subdomains/user/domain/entities/user-blockchain-address.entity';
+import { StakingBlockchainAddress } from '../../domain/entities/staking-blockchain-address.entity';
 import { Staking } from '../../domain/entities/staking.entity';
 import { Authorize } from '../decorators/authorize.decorator';
 import { CheckKyc } from '../decorators/check-kyc.decorator';
@@ -11,13 +11,14 @@ import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
 import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
 import { StakingRepository } from '../repositories/staking.repository';
+import { StakingBlockchainAddressService } from './staking-blockchain-address.service';
 
 @Injectable()
 export class StakingService {
   constructor(
     private readonly factory: StakingFactory,
     private readonly repository: StakingRepository,
-    private readonly blockchainAddressService: BlockchainAddressService,
+    private readonly addressService: StakingBlockchainAddressService,
     private readonly userService: UserService,
   ) {}
 
@@ -28,7 +29,7 @@ export class StakingService {
   async createStaking(userId: number, dto: CreateStakingDto): Promise<StakingOutputDto> {
     const staking = await this.createStakingDraft(dto);
 
-    const depositAddress = await this.blockchainAddressService.getAvailableAddressForStaking(staking);
+    const depositAddress = await this.addressService.getAvailableAddressForStaking(staking);
     const withdrawalAddress = await this.userService.getWalletAddress(userId);
 
     await this.finalizeStakingCreation(staking, depositAddress, withdrawalAddress);
@@ -63,8 +64,8 @@ export class StakingService {
 
   private async finalizeStakingCreation(
     staking: Staking,
-    depositAddress: BlockchainAddress,
-    withdrawalAddress: BlockchainAddress,
+    depositAddress: StakingBlockchainAddress,
+    withdrawalAddress: UserBlockchainAddress,
   ): Promise<void> {
     staking.finalizeCreation(depositAddress, withdrawalAddress);
 

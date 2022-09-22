@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { Lock } from 'src/shared/lock';
-import { BlockchainAddress } from 'src/shared/models/blockchain-address/blockchain-address.entity';
 import { PayInService } from 'src/subdomains/payin/application/services/payin.service';
-import { PayIn, PayInPurpose } from 'src/subdomains/payin/domain/entities/payin-crypto.entity';
+import { PayIn, PayInPurpose } from 'src/subdomains/payin/domain/entities/payin.entity';
 import { Deposit } from '../../domain/entities/deposit.entity';
+import { StakingBlockchainAddress } from '../../domain/entities/staking-blockchain-address.entity';
 import { Staking } from '../../domain/entities/staking.entity';
 import { StakingDeFiChainService } from '../../infrastructre/staking-defichain.service';
 import { Authorize } from '../decorators/authorize.decorator';
@@ -31,7 +31,7 @@ export class StakingDepositService {
   @Authorize()
   @CheckKyc()
   async createDeposit(userId: number, stakingId: string, dto: CreateDepositDto): Promise<StakingOutputDto> {
-    // TODO - make sure to overwrite the amount with actual amount from BC transaction
+    // TODO - to add relations
     const staking = await this.repository.findOne(stakingId);
 
     const deposit = this.factory.createDeposit(staking, dto);
@@ -78,7 +78,7 @@ export class StakingDepositService {
       .where('staking.status = Active')
       .getMany()) as unknown as string[];
 
-    return allPayIns.filter((p) => stakingAddresses.includes(p.txSource.address));
+    return allPayIns.filter((p) => stakingAddresses.includes(p.address.address));
   }
 
   private async getStakingsForPayIns(stakingPayIns: PayIn[]): Promise<[Staking, PayIn][]> {
@@ -86,7 +86,7 @@ export class StakingDepositService {
 
     for (const payIn of stakingPayIns) {
       // TODO - add relations
-      const staking = await this.repository.findOne({ withdrawalAddress: payIn.txSource });
+      const staking = await this.repository.findOne({ withdrawalAddress: payIn.address });
 
       stakingPairs.push([payIn, staking]);
     }
@@ -97,6 +97,7 @@ export class StakingDepositService {
   private async processNewDeposits(stakingPairs: [Staking, PayIn][]): Promise<void> {
     for (const [staking, payIn] of stakingPairs) {
       try {
+        // this will not work, filter non-pending additionally
         if (staking.deposits.length === 0) this.verifyFirstPayIn(staking, payIn);
 
         this.createOrUpdateDeposit(staking, payIn);
@@ -108,7 +109,10 @@ export class StakingDepositService {
   }
 
   private async verifyFirstPayIn(staking: Staking, payIn: PayIn): Promise<void> {
+    // get real source address
     // verify addresses
+    // this.userService.verifyUserAddress(sourceAddress);
+    // throw Unauth if not
   }
 
   private createOrUpdateDeposit(staking: Staking, payIn: PayIn): void {
@@ -141,14 +145,13 @@ export class StakingDepositService {
 
     for (const deposit of deposits) {
       const txId = await this.forwardDepositToStaking(deposit, staking.depositAddress);
-      // TODO - check separately for completion instead?
       staking.confirmDeposit(deposit.id.toString(), txId);
 
       await this.repository.save(staking);
     }
   }
 
-  private async forwardDepositToStaking(deposit: Deposit, depositAddress: BlockchainAddress): Promise<string> {
+  private async forwardDepositToStaking(deposit: Deposit, depositAddress: StakingBlockchainAddress): Promise<string> {
     return this.deFiChainStakingService.forwardDeposit(depositAddress.address, deposit.amount);
   }
 }

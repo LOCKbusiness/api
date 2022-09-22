@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { BlockchainAddress } from 'src/shared/models/blockchain-address/blockchain-address.entity';
+import { UserBlockchainAddress } from '../../domain/entities/user-blockchain-address.entity';
 import { KYCStatus } from '../../domain/enums';
 
 @Injectable()
 export class UserService {
-  async getWalletAddress(userId: number): Promise<BlockchainAddress> {
-    return new BlockchainAddress();
+  async getWalletAddress(userId: number): Promise<UserBlockchainAddress> {
+    return new UserBlockchainAddress();
   }
 
   async getKYCStatus(userId: number): Promise<KYCStatus> {

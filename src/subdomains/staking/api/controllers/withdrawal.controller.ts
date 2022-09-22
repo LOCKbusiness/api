@@ -18,7 +18,7 @@ export class WithdrawalController {
   @Post()
   @ApiBearerAuth()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  @ApiResponse({ status: 200, type: StakingOutputDto })
+  @ApiResponse({ status: 201, type: StakingOutputDto })
   async createWithdrawal(
     @GetJwt() jwt: JwtPayload,
     @Param('stakingId') stakingId: string,

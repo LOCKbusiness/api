@@ -1,7 +1,7 @@
 import { Asset } from 'src/shared/models/asset/asset.entity';
-import { BlockchainAddress } from 'src/shared/models/blockchain-address/blockchain-address.entity';
 import { IEntity } from 'src/shared/models/entity';
 import { Column, Entity, ManyToOne, OneToOne } from 'typeorm';
+import { PayInBlockchainAddress } from './payin-blockchain-address.entity';
 
 export enum PayInPurpose {
   CRYPTO_STAKING = 'CryptoStaking',
@@ -9,6 +9,7 @@ export enum PayInPurpose {
 
 export enum PayInStatus {
   CREATED = 'Created',
+  ACKNOWLEDGED = 'Acknowledged',
 }
 
 @Entity()
@@ -22,8 +23,8 @@ export class PayIn extends IEntity {
   @Column({ length: 256 })
   txType: string;
 
-  @OneToOne(() => BlockchainAddress)
-  txSource: BlockchainAddress;
+  @OneToOne(() => PayInBlockchainAddress)
+  address: PayInBlockchainAddress;
 
   @Column({ length: 256, nullable: true })
   returnTxId: string;
@@ -40,13 +41,10 @@ export class PayIn extends IEntity {
   @Column({ length: 256, nullable: false })
   purpose: PayInPurpose;
 
-  @Column({ nullable: true })
-  acknowledged: boolean;
-
   //*** FACTORY METHODS ***//
 
   static create(
-    txSource: BlockchainAddress,
+    address: PayInBlockchainAddress,
     txType: string,
     txId: string,
     blockHeight: number,
@@ -55,7 +53,7 @@ export class PayIn extends IEntity {
   ): PayIn {
     const payIn = new PayIn();
 
-    payIn.txSource = txSource;
+    payIn.address = address;
     payIn.txType = txType;
     payIn.txId = txId;
     payIn.blockHeight = blockHeight;
@@ -67,7 +65,7 @@ export class PayIn extends IEntity {
 
   acknowledge(purpose: PayInPurpose): this {
     this.purpose = purpose;
-    this.acknowledged = true;
+    this.status = PayInStatus.ACKNOWLEDGED;
 
     return this;
   }

@@ -22,26 +22,15 @@ export class Reward extends IEntity {
 
   //*** REINVEST PROPS ***//
 
-  @Column({ type: 'float', nullable: false, default: 1 })
-  reinvestShare: number;
+  @Column({ nullable: true })
+  reinvestTxId: string;
 
-  @Column({ type: 'float', nullable: false, default: 0 })
-  reinvestAmount: number;
-
-  //*** PAYOUT PROPS ***//
-
-  @Column({ type: 'float', nullable: false, default: 0 })
-  payoutShare: number;
-
-  @ManyToOne(() => Asset, { eager: true, nullable: false })
-  payoutAsset: Asset;
-
-  @Column({ type: 'float', nullable: false, default: 0 })
-  payoutAmount: number;
+  @Column({ nullable: true })
+  reinvestOutputDate: Date;
 
   //*** FACTORY METHODS ***//
 
-  static create(staking: Staking, amount: number): Reward {
+  static create(staking: Staking, amount: number, reinvestTxId: string, reinvestOutputDate: Date): Reward {
     const reward = new Reward();
 
     reward.staking = staking;
@@ -49,13 +38,8 @@ export class Reward extends IEntity {
 
     reward.asset = staking.asset;
     reward.amount = amount;
-
-    reward.reinvestShare = 1;
-    reward.reinvestAmount = amount;
-
-    reward.payoutShare = 0;
-    reward.payoutAsset = staking.asset;
-    reward.payoutAmount = 0;
+    reward.reinvestTxId = reinvestTxId;
+    reward.reinvestOutputDate = reinvestOutputDate;
 
     return reward;
   }

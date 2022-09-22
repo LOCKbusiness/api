@@ -3,7 +3,8 @@ import { Interval } from '@nestjs/schedule';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { Lock } from 'src/shared/lock';
 import { AssetService } from 'src/shared/models/asset/asset.service';
-import { PayIn, PayInPurpose } from '../../domain/entities/payin-crypto.entity';
+import { Not } from 'typeorm';
+import { PayIn, PayInPurpose, PayInStatus } from '../../domain/entities/payin.entity';
 import { PayInDeFiChainService } from '../../infrastructure/payin-crypto-defichain.service';
 import { PayInFactory } from '../factories/payin.factory';
 import { PayInTransaction } from '../interfaces';
@@ -23,7 +24,7 @@ export class PayInService {
   //*** PUBLIC API ***//
 
   async getNewPayInTransactions(): Promise<PayIn[]> {
-    return this.repository.find({ acknowledged: false });
+    return this.repository.find({ status: Not(PayInStatus.ACKNOWLEDGED) });
   }
 
   async acknowledgePayIn(payIn: PayIn, purpose: PayInPurpose): Promise<void> {

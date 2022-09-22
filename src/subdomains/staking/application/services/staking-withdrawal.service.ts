@@ -1,4 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
+import { Staking } from '../../domain/entities/staking.entity';
 import { StakingDeFiChainService } from '../../infrastructre/staking-defichain.service';
 import { Authorize } from '../decorators/authorize.decorator';
 import { CheckKyc } from '../decorators/check-kyc.decorator';
@@ -14,6 +16,7 @@ export class StakingWithdrawalService {
   constructor(
     private readonly factory: StakingFactory,
     private readonly repository: StakingRepository,
+    private readonly cryptoService: CryptoService,
     private readonly deFiChainStakingService: StakingDeFiChainService,
   ) {}
 
@@ -25,7 +28,7 @@ export class StakingWithdrawalService {
     const staking = await this.repository.findOne(stakingId);
     const withdrawal = this.factory.createWithdrawal(staking, dto);
 
-    this.deFiChainStakingService.verifySignature(dto.signature, dto.amount, staking);
+    this.verifySignature(dto.signature, dto.amount, staking);
 
     staking.withdraw(withdrawal);
 
@@ -59,5 +62,19 @@ export class StakingWithdrawalService {
     withdrawal.failWithdrawal();
 
     await this.repository.save(staking);
+  }
+
+  //*** HELPER METHOD ***//
+
+  verifySignature(signature: string, amount: number, staking: Staking): void {
+    const message = staking.generateWithdrawalSignatureMessage(
+      amount,
+      staking.asset.name,
+      staking.withdrawalAddress.address,
+    );
+
+    const isValid = this.cryptoService.verifySignature(message, staking.withdrawalAddress.address, signature);
+
+    if (!isValid) throw new UnauthorizedException();
   }
 }

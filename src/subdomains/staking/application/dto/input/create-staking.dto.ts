@@ -6,7 +6,7 @@ export class CreateStakingDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  assetDexName: string;
+  assetName: string;
 
   @ApiProperty()
   @IsNotEmpty()

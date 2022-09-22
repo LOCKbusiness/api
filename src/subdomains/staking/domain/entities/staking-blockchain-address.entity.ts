@@ -1,18 +1,13 @@
-import { Blockchain } from 'src/shared/enums/blockchain.enum';
+import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 import { Staking } from 'src/subdomains/staking/domain/entities/staking.entity';
-import { Column, Entity, OneToOne } from 'typeorm';
-import { IEntity } from '../entity';
+import { Entity, OneToOne } from 'typeorm';
 
 @Entity()
-export class BlockchainAddress extends IEntity {
-  @Column({ length: 256, nullable: false })
-  address: string;
-
-  @Column({ length: 256, nullable: false })
-  blockchain: Blockchain;
-
+export class StakingBlockchainAddress extends BlockchainAddress {
   @OneToOne(() => Staking, (staking) => staking.depositAddress, { nullable: true })
   staking: Staking;
+
+  //*** FACTORY METHODS ***//
 
   //*** PUBLIC API ***//
 

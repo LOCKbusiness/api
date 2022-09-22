@@ -2,12 +2,14 @@ import { Asset } from 'src/shared/models/asset/asset.entity';
 import { Deposit } from './deposit.entity';
 import { Reward } from './reward.entity';
 import { Withdrawal } from './withdrawal.entity';
-import { Column, Entity, ManyToOne, OneToMany, OneToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne } from 'typeorm';
 import { IEntity } from 'src/shared/models/entity';
-import { DepositStatus, StakingStatus, WithdrawalStatus } from '../enums';
-import { BlockchainAddress } from 'src/shared/models/blockchain-address/blockchain-address.entity';
+import { DepositStatus, RewardStatus, StakingStatus, WithdrawalStatus } from '../enums';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Util } from 'src/shared/util';
+import { Config } from 'src/config/config';
+import { StakingBlockchainAddress } from './staking-blockchain-address.entity';
+import { UserBlockchainAddress } from 'src/subdomains/user/domain/entities/user-blockchain-address.entity';
 
 @Entity()
 export class Staking extends IEntity {
@@ -20,23 +22,27 @@ export class Staking extends IEntity {
   @Column({ type: 'float', nullable: false, default: 0 })
   balance: number;
 
-  @OneToOne(() => BlockchainAddress, (address) => address.staking, { eager: true, nullable: true })
-  depositAddress: BlockchainAddress;
+  @OneToOne(() => StakingBlockchainAddress, (address) => address.staking, { eager: true, nullable: true })
+  @JoinColumn()
+  depositAddress: StakingBlockchainAddress;
 
   @OneToMany(() => Deposit, (deposit) => deposit.staking, { cascade: true })
   deposits: Deposit[];
 
-  @ManyToOne(() => BlockchainAddress, { eager: true, nullable: false })
-  withdrawalAddress: BlockchainAddress;
+  @ManyToOne(() => UserBlockchainAddress, { eager: true, nullable: false })
+  withdrawalAddress: UserBlockchainAddress;
 
   @OneToMany(() => Withdrawal, (withdrawal) => withdrawal.staking, { cascade: true })
   withdrawals: Withdrawal[];
 
-  @ManyToOne(() => BlockchainAddress, { eager: true, nullable: true })
-  rewardsPayoutAddress: BlockchainAddress;
+  @ManyToOne(() => UserBlockchainAddress, { eager: true, nullable: true })
+  rewardsPayoutAddress: UserBlockchainAddress;
 
   @OneToMany(() => Reward, (reward) => reward.staking, { cascade: true })
   rewards: Reward[];
+
+  @Column({ type: 'float', nullable: false, default: 0 })
+  rewardsAmount: number;
 
   @Column({ type: 'float', nullable: false, default: 1 })
   minimalStake: number;
@@ -67,7 +73,7 @@ export class Staking extends IEntity {
     return staking;
   }
 
-  finalizeCreation(depositAddress: BlockchainAddress, withdrawalAddress: BlockchainAddress): this {
+  finalizeCreation(depositAddress: StakingBlockchainAddress, withdrawalAddress: UserBlockchainAddress): this {
     this.depositAddress = depositAddress;
     this.withdrawalAddress = withdrawalAddress;
     this.rewardsPayoutAddress = withdrawalAddress;
@@ -101,6 +107,10 @@ export class Staking extends IEntity {
     if (!this.withdrawals) this.withdrawals = [];
     if (this.status !== StakingStatus.ACTIVE) throw new BadRequestException('Staking is inactive');
 
+    if (!this.isEnoughBalanceForWithdrawal(withdrawal)) {
+      throw new BadRequestException('Not sufficient staking balance to proceed with Withdrawal');
+    }
+
     this.withdrawals.push(withdrawal);
     this.updateBalance();
 
@@ -120,7 +130,7 @@ export class Staking extends IEntity {
     if (!this.rewards) this.rewards = [];
 
     this.rewards.push(reward);
-    this.updateBalance();
+    this.updateRewardBalance();
 
     return this;
   }
@@ -129,6 +139,16 @@ export class Staking extends IEntity {
     this.stakingFee = feePercent;
 
     return this;
+  }
+
+  generateWithdrawalSignatureMessage(amount: number, asset: string, address: string): string {
+    const message = Config.staking.signatureTemplates.signWithdrawalMessage;
+
+    message.replace('${AMOUNT}', amount.toString());
+    message.replace('${ASSET}', asset);
+    message.replace('${ADDRESS}', address);
+
+    return message;
   }
 
   //*** GETTERS ***//
@@ -183,12 +203,33 @@ export class Staking extends IEntity {
     const confirmedDeposits = this.getDepositsByStatus(DepositStatus.CONFIRMED);
     const confirmedWithdrawals = this.getWithdrawalsByStatus(WithdrawalStatus.CONFIRMED);
 
-    const confirmedDepositsAmount = Util.sum(confirmedDeposits.map((d) => d.amount));
-    const confirmedWithdrawalsAmount = Util.sum(confirmedWithdrawals.map((w) => w.amount));
+    const confirmedDepositsAmount = Util.sumObj(confirmedDeposits, 'amount');
+    const confirmedWithdrawalsAmount = Util.sumObj(confirmedWithdrawals, 'amount');
 
     this.balance = Util.round(confirmedDepositsAmount - confirmedWithdrawalsAmount, 8);
 
     return this.balance;
+  }
+
+  private updateRewardBalance(): number {
+    const confirmedRewards = this.getRewardsByStatus(RewardStatus.CONFIRMED);
+    const confirmedRewardsAmount = Util.sumObj(confirmedRewards, 'amount');
+
+    this.rewardsAmount = confirmedRewardsAmount;
+
+    return this.rewardsAmount;
+  }
+
+  private isEnoughBalanceForWithdrawal(withdrawal: Withdrawal): boolean {
+    const pendingWithdrawals = this.getWithdrawalsByStatus(WithdrawalStatus.PENDING);
+    const payingOutWithdrawals = this.getWithdrawalsByStatus(WithdrawalStatus.PAYING_OUT);
+
+    const pendingAmount = Util.sumObj(pendingWithdrawals, 'amount');
+    const payingOutAmount = Util.sumObj(payingOutWithdrawals, 'amount');
+
+    const currentBalance = this.balance - pendingAmount - payingOutAmount;
+
+    return currentBalance > withdrawal.amount;
   }
 
   private getDepositsByStatus(status: DepositStatus): Deposit[] {
@@ -197,5 +238,9 @@ export class Staking extends IEntity {
 
   private getWithdrawalsByStatus(status: WithdrawalStatus): Withdrawal[] {
     return this.withdrawals.filter((w) => w.status === status);
+  }
+
+  private getRewardsByStatus(status: RewardStatus): Reward[] {
+    return this.rewards.filter((r) => r.status === status);
   }
 }

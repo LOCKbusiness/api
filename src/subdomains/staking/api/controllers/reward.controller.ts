@@ -1,6 +1,6 @@
 import { Controller, UseGuards, Body, Post, Param } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiBearerAuth, ApiExcludeEndpoint, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { StakingRewardService } from '../../application/services/staking-reward.service';
@@ -16,7 +16,6 @@ export class RewardController {
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
-  @ApiResponse({ status: 200, type: StakingOutputDto })
   async createReward(@Param('stakingId') stakingId: string, @Body() dto: CreateRewardDto): Promise<StakingOutputDto> {
     return this.stakingRewardService.createReward(dto.userId, stakingId, dto);
   }

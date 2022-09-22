@@ -15,12 +15,12 @@ export class StakingFactory {
   constructor(private readonly assetService: AssetService) {}
 
   async createStaking(dto: CreateStakingDto): Promise<Staking> {
-    const { assetDexName: dexName, blockchain } = dto;
+    const { assetName: name, blockchain } = dto;
     const {
       staking: { minimalStake, minimalDeposit, stakingFee },
     } = GetConfig();
 
-    const asset = await this.assetService.getAssetByQuery({ name: dexName, blockchain });
+    const asset = await this.assetService.getAssetByQuery({ name, blockchain });
 
     return Staking.create(asset, minimalStake, minimalDeposit, stakingFee);
   }
@@ -38,6 +38,6 @@ export class StakingFactory {
   }
 
   createReward(staking: Staking, dto: CreateRewardDto): Reward {
-    return Reward.create(staking, dto.amount);
+    return Reward.create(staking, dto.amount, dto.reinvestTxId, dto.reinvestOutputDate);
   }
 }

@@ -1,7 +1,7 @@
-import { BlockchainAddress } from 'src/shared/models/blockchain-address/blockchain-address.entity';
+import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 
 export interface PayInTransaction {
-  txSource: BlockchainAddress;
+  address: BlockchainAddress;
   type: string;
   txId: string;
   blockHeight: number;
