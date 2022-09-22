@@ -6,10 +6,10 @@ import { HttpError, HttpService } from 'src/shared/services/http.service';
 import { SettingService } from 'src/shared/services/setting.service';
 import { IsNull, LessThan, MoreThan, Not } from 'typeorm';
 import { Masternode } from '../../domain/entities/masternode.entity';
-import { MasternodeState } from '../../domain/enums';
-import { CreateMasternodeDto } from '../dto/input/create-masternode.dto';
-import { ResignMasternodeDto } from '../dto/input/resign-masternode.dto';
+import { MasternodeState } from '../../../../domain/enums';
+import { ResignMasternodeDto } from '../dto/resign-masternode.dto';
 import { MasternodeRepository } from '../repositories/masternode.repository';
+import { CreateMasternodeDto } from '../dto/create-masternode.dto';
 
 @Injectable()
 export class MasternodeService {
