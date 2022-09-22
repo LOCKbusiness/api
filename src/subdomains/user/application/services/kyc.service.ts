@@ -1,6 +1,6 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { Method } from 'axios';
-import { CryptoService } from 'src/blockchain/crypto.service';
+import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
 import { Config } from 'src/config/config';
 import { HttpError, HttpService } from 'src/shared/services/http.service';
 import { User } from '../../domain/entities/user.entity';

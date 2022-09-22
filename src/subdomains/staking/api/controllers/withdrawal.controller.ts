@@ -24,7 +24,7 @@ export class WithdrawalController {
     @Param('stakingId') stakingId: string,
     @Body() dto: CreateWithdrawalDto,
   ): Promise<StakingOutputDto> {
-    return this.stakingWithdrawalService.createWithdrawal(jwt.id, stakingId, dto);
+    return this.stakingWithdrawalService.createWithdrawal(jwt.userId, stakingId, dto);
   }
 
   //*** WEBHOOKS ***//

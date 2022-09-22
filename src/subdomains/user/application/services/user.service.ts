@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Config } from 'src/config/config';
+import { UserBlockchainAddress } from '../../domain/entities/user-blockchain-address.entity';
 import { User } from '../../domain/entities/user.entity';
 import { KycStatus } from '../../domain/enums';
 import { UserRepository } from '../repositories/user.repository';
@@ -35,5 +36,12 @@ export class UserService {
   async getKycStatus(userId: number): Promise<KycStatus> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     return user.kycStatus;
+  }
+
+  async getWalletAddress(userId: number): Promise<UserBlockchainAddress> {
+    const user = await this.userRepo.findOne({ where: { id: userId }, relations: ['wallets'] });
+
+    // TODO - implement User Address fetch
+    return null;
   }
 }

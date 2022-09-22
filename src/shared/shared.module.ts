@@ -11,7 +11,7 @@ import { ConfigModule } from 'src/config/config.module';
 import { I18nModule } from 'nestjs-i18n';
 import { AssetService } from './models/asset/asset.service';
 import { AssetRepository } from './models/asset/asset.repository';
-import { CryptoService } from 'src/blockchain/crypto.service';
+import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
 import { SettingService } from './services/setting.service';
 import { SettingRepository } from './repositories/setting.repository';
 import { ApiKeyStrategy } from './auth/api-key.strategy';

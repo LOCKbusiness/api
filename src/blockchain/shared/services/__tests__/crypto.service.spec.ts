@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CryptoService } from 'src/blockchain/ain/services/crypto.service';
-import { Blockchain } from 'src/blockchain/shared/enums/blockchain.enum';
+import { CryptoService } from '../crypto.service';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
 
 describe('CryptoService', () => {
   let service: CryptoService;

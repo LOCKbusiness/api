@@ -4,8 +4,8 @@ import { CryptoService } from './shared/services/crypto.service';
 
 @Module({
   imports: [AinModule],
+  controllers: [],
   providers: [CryptoService],
   exports: [AinModule, CryptoService],
-  controllers: [],
 })
 export class BlockchainModule {}

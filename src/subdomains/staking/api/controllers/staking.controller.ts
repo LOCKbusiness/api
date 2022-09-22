@@ -20,7 +20,7 @@ export class StakingController {
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   @ApiResponse({ status: 201, type: StakingOutputDto })
   async createStaking(@GetJwt() jwt: JwtPayload, @Body() dto: CreateStakingDto): Promise<StakingOutputDto> {
-    return this.stakingService.createStaking(jwt.id, dto);
+    return this.stakingService.createStaking(jwt.userId, dto);
   }
 
   @Get(':id')
@@ -28,7 +28,7 @@ export class StakingController {
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   @ApiResponse({ status: 200, type: StakingOutputDto })
   async getStaking(@GetJwt() jwt: JwtPayload, @Param('id') stakingId: string): Promise<StakingOutputDto> {
-    return this.stakingService.getStaking(jwt.id, stakingId);
+    return this.stakingService.getStaking(jwt.userId, stakingId);
   }
 
   @Patch(':id/staking-fee')
@@ -40,6 +40,6 @@ export class StakingController {
     @Param('id') stakingId: string,
     @Body() dto: SetStakingFeeDto,
   ): Promise<void> {
-    return this.stakingService.setStakingFee(jwt.id, stakingId, dto);
+    return this.stakingService.setStakingFee(jwt.userId, stakingId, dto);
   }
 }

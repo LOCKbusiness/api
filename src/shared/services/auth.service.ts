@@ -10,7 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Config } from 'src/config/config';
 import { WalletService } from 'src/subdomains/user/application/services/wallet.service';
 import { Wallet } from 'src/subdomains/user/domain/entities/wallet.entity';
-import { CryptoService } from 'src/blockchain/crypto.service';
+import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
 import { SignUpDto } from '../auth/dto/sign-up.dto';
 import { SignInDto } from '../auth/dto/sign-in.dto';
 import { AuthResponseDto } from '../auth/dto/auth-response.dto';
