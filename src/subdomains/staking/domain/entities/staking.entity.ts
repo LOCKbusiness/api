@@ -49,27 +49,15 @@ export class Staking extends IEntity {
 
   //*** FACTORY METHODS ***//
 
-  static create(
-    asset: Asset,
-    depositAddress: BlockchainAddress,
-    withdrawalAddress: BlockchainAddress,
-    minimalStake: number,
-    minimalDeposit: number,
-    stakingFee: number,
-  ): Staking {
+  static create(asset: Asset, minimalStake: number, minimalDeposit: number, stakingFee: number): Staking {
     const staking = new Staking();
 
-    staking.status = StakingStatus.CREATED;
+    staking.status = StakingStatus.DRAFT;
     staking.asset = asset;
     staking.balance = 0;
 
-    staking.depositAddress = depositAddress;
     staking.deposits = [];
-
-    staking.withdrawalAddress = withdrawalAddress;
     staking.withdrawals = [];
-
-    staking.rewardsPayoutAddress = withdrawalAddress;
     staking.rewards = [];
 
     staking.minimalStake = minimalStake;
@@ -77,6 +65,16 @@ export class Staking extends IEntity {
     staking.stakingFee = stakingFee;
 
     return staking;
+  }
+
+  finalizeCreation(depositAddress: BlockchainAddress, withdrawalAddress: BlockchainAddress): this {
+    this.depositAddress = depositAddress;
+    this.withdrawalAddress = withdrawalAddress;
+    this.rewardsPayoutAddress = withdrawalAddress;
+
+    this.status = StakingStatus.CREATED;
+
+    return this;
   }
 
   //*** PUBLIC API ***//

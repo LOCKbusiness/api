@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { BlockchainAddress } from 'src/shared/models/blockchain-address/blockchain-address.entity';
 import { BlockchainAddressService } from 'src/shared/models/blockchain-address/blockchain-address.service';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
+import { Staking } from '../../domain/entities/staking.entity';
 import { Authorize } from '../decorators/authorize.decorator';
 import { CheckKyc } from '../decorators/check-kyc.decorator';
 import { CreateStakingDto } from '../dto/input/create-staking.dto';
@@ -24,12 +26,12 @@ export class StakingService {
   @Authorize()
   @CheckKyc()
   async createStaking(userId: number, dto: CreateStakingDto): Promise<StakingOutputDto> {
-    const depositAddress = await this.blockchainAddressService.getAvailableAddressFromPool();
+    const staking = await this.createStakingDraft(dto);
+
+    const depositAddress = await this.blockchainAddressService.getAvailableAddressForStaking(staking);
     const withdrawalAddress = await this.userService.getWalletAddress(userId);
 
-    const staking = await this.factory.createStaking(dto, depositAddress, withdrawalAddress);
-
-    await this.repository.save(staking);
+    await this.finalizeStakingCreation(staking, depositAddress, withdrawalAddress);
 
     return StakingOutputDtoMapper.entityToDto(staking);
   }
@@ -47,6 +49,24 @@ export class StakingService {
     const staking = await this.repository.findOne(stakingId);
 
     staking.setStakingFee(feePercent);
+
+    await this.repository.save(staking);
+  }
+
+  //*** HELPER METHODS ***//
+
+  private async createStakingDraft(dto: CreateStakingDto): Promise<Staking> {
+    const stakingDraft = await this.factory.createStaking(dto);
+
+    return this.repository.save(stakingDraft);
+  }
+
+  private async finalizeStakingCreation(
+    staking: Staking,
+    depositAddress: BlockchainAddress,
+    withdrawalAddress: BlockchainAddress,
+  ): Promise<void> {
+    staking.finalizeCreation(depositAddress, withdrawalAddress);
 
     await this.repository.save(staking);
   }

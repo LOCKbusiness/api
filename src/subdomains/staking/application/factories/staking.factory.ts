@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { GetConfig } from 'src/config/config';
 import { AssetService } from 'src/shared/models/asset/asset.service';
-import { BlockchainAddress } from 'src/shared/models/blockchain-address/blockchain-address.entity';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Reward } from '../../domain/entities/reward.entity';
 import { Staking } from '../../domain/entities/staking.entity';
@@ -15,11 +14,7 @@ import { CreateWithdrawalDto } from '../dto/input/create-withdrawal.dto';
 export class StakingFactory {
   constructor(private readonly assetService: AssetService) {}
 
-  async createStaking(
-    dto: CreateStakingDto,
-    depositAddress: BlockchainAddress,
-    withdrawalAddress: BlockchainAddress,
-  ): Promise<Staking> {
+  async createStaking(dto: CreateStakingDto): Promise<Staking> {
     const { assetDexName: dexName, blockchain } = dto;
     const {
       staking: { minimalStake, minimalDeposit, stakingFee },
@@ -27,7 +22,7 @@ export class StakingFactory {
 
     const asset = await this.assetService.getAssetByQuery({ name: dexName, blockchain });
 
-    return Staking.create(asset, depositAddress, withdrawalAddress, minimalStake, minimalDeposit, stakingFee);
+    return Staking.create(asset, minimalStake, minimalDeposit, stakingFee);
   }
 
   createDeposit(staking: Staking, dto: CreateDepositDto): Deposit {

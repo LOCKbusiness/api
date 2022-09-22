@@ -1,4 +1,5 @@
 export enum StakingStatus {
+  DRAFT = 'Draft',
   CREATED = 'Created',
   ACTIVE = 'Active',
   INACTIVE = 'Inactive',
