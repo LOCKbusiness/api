@@ -4,6 +4,7 @@ import { Lock } from 'src/shared/lock';
 import { BlockchainAddress } from 'src/shared/models/blockchain-address/blockchain-address.entity';
 import { PayInService } from 'src/subdomains/payin/application/services/payin.service';
 import { PayIn, PayInPurpose } from 'src/subdomains/payin/domain/entities/payin-crypto.entity';
+import { Deposit } from '../../domain/entities/deposit.entity';
 import { Staking } from '../../domain/entities/staking.entity';
 import { StakingDeFiChainService } from '../../infrastructre/staking-defichain.service';
 import { Authorize } from '../decorators/authorize.decorator';
@@ -84,6 +85,7 @@ export class StakingDepositService {
     const stakingPairs = [];
 
     for (const payIn of stakingPayIns) {
+      // TODO - add relations
       const staking = await this.repository.findOne({ withdrawalAddress: payIn.txSource });
 
       stakingPairs.push([payIn, staking]);
@@ -113,20 +115,27 @@ export class StakingDepositService {
 
   private async forwardDepositsToStaking(): Promise<void> {
     // find all stakings where one of deposits cas status PENDING_FORWARD
-    // get those deposits -> run the forwarding
-    // change deposits state, set status to confirmed
-    // save the stakings
+    // TODO - create query to find all stakings with pending deposites
+    const stakingsWithPendingDeposits = await this.repository.find({});
+
+    for (const staking of stakingsWithPendingDeposits) {
+      await this.processPendingDepositsForStaking(staking);
+    }
   }
 
-  private async confirmDeposit(userId: number, stakingId: string, depositId: string, txId: string): Promise<Staking> {
-    const staking = await this.repository.findOne(stakingId);
+  private async processPendingDepositsForStaking(staking: Staking): Promise<void> {
+    const deposits = staking.getPendingDeposits();
 
-    const deposit = staking.getDeposit(depositId);
+    for (const deposit of deposits) {
+      const txId = await this.forwardDepositToStaking(deposit, staking.depositAddress);
+      // TODO - check separately for completion instead?
+      deposit.confirmDeposit(txId);
 
-    deposit.confirmDeposit(txId);
+      await this.repository.save(staking);
+    }
+  }
 
-    await this.repository.save(staking);
-
-    return staking;
+  private async forwardDepositToStaking(deposit: Deposit, depositAddress: BlockchainAddress): Promise<string> {
+    return this.deFiChainStakingService.forwardDeposit(depositAddress.address, deposit.amount);
   }
 }

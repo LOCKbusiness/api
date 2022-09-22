@@ -90,10 +90,6 @@ export class Staking extends IEntity {
     return this;
   }
 
-  confirmDeposit(depositId: string): this {
-    return this;
-  }
-
   withdraw(withdrawal: Withdrawal): this {
     if (!this.withdrawals) this.withdrawals = [];
     if (this.status !== StakingStatus.ACTIVE) throw new BadRequestException('Staking is inactive');
@@ -127,20 +123,6 @@ export class Staking extends IEntity {
     return this;
   }
 
-  //*** HELPER METHODS ***//
-
-  private updateBalance(): number {
-    const confirmedDeposits = this.getDepositsByStatus(DepositStatus.CONFIRMED);
-    const confirmedWithdrawals = this.getWithdrawalsByStatus(WithdrawalStatus.CONFIRMED);
-
-    const confirmedDepositsAmount = Util.sum(confirmedDeposits.map((d) => d.amount));
-    const confirmedWithdrawalsAmount = Util.sum(confirmedWithdrawals.map((w) => w.amount));
-
-    this.balance = Util.round(confirmedDepositsAmount - confirmedWithdrawalsAmount, 8);
-
-    return this.balance;
-  }
-
   //*** GETTERS ***//
 
   getWithdrawal(withdrawalId: string): Withdrawal {
@@ -163,6 +145,10 @@ export class Staking extends IEntity {
     return this.balance;
   }
 
+  getPendingDeposits(): Deposit[] {
+    return this.getDepositsByStatus(DepositStatus.PENDING);
+  }
+
   getPendingDepositsAmount(): number {
     const pendingDeposits = this.getDepositsByStatus(DepositStatus.PENDING);
 
@@ -175,7 +161,19 @@ export class Staking extends IEntity {
     return Util.sum(pendingWithdrawals.map((w) => w.amount));
   }
 
-  //*** ***//
+  //*** HELPER METHODS ***//
+
+  private updateBalance(): number {
+    const confirmedDeposits = this.getDepositsByStatus(DepositStatus.CONFIRMED);
+    const confirmedWithdrawals = this.getWithdrawalsByStatus(WithdrawalStatus.CONFIRMED);
+
+    const confirmedDepositsAmount = Util.sum(confirmedDeposits.map((d) => d.amount));
+    const confirmedWithdrawalsAmount = Util.sum(confirmedWithdrawals.map((w) => w.amount));
+
+    this.balance = Util.round(confirmedDepositsAmount - confirmedWithdrawalsAmount, 8);
+
+    return this.balance;
+  }
 
   private getDepositsByStatus(status: DepositStatus): Deposit[] {
     return this.deposits.filter((d) => d.status === status);

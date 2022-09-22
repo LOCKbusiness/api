@@ -68,6 +68,7 @@ export class Configuration {
         active: process.env.NODE_REW_URL_ACTIVE,
         passive: process.env.NODE_REW_URL_PASSIVE,
       },
+      stakingWalletAddress: process.env.STAKING_WALLET_ADDRESS,
     },
   };
 

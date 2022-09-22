@@ -27,6 +27,10 @@ export class StakingDeFiChainService {
     if (!isValid) throw new UnauthorizedException();
   }
 
+  async forwardDeposit(sourceAddress: string, amount: number): Promise<string> {
+    return this.forwardUtxo(sourceAddress, Config.blockchain.default.stakingWalletAddress, amount);
+  }
+
   //*** HELPER METHODS **//
 
   private generateWithdrawalSignatureMessage(amount: number, asset: string, address: string): string {
@@ -39,12 +43,7 @@ export class StakingDeFiChainService {
     return message;
   }
 
-  /*
-
-  private async forwardUtxo(input: CryptoInput, address: string): Promise<void> {
-    const outTxId = await this.client.sendCompleteUtxo(input.route.deposit.address, address, input.amount);
-    await this.cryptoInputRepo.update({ id: input.id }, { outTxId });
+  private async forwardUtxo(sourceAddress: string, targetAddress: string, amount: number): Promise<string> {
+    return this.client.sendCompleteUtxo(sourceAddress, targetAddress, amount);
   }
-
-  */
 }
