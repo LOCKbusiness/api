@@ -52,6 +52,21 @@
     },
     "myDeFiChainPassword": {
       "value": "xxx"
+    },
+    "kycSecret": {
+      "value": "xxx"
+    },
+    "kycWebhookIps": {
+      "value": "xxx"
+    },
+    "kycPhrase": {
+      "value": "xxx"
+    },
+    "kycApiUrl": {
+      "value": "https://api.dfx.swiss/v1"
+    },
+    "kycFrontendUrl": {
+      "value": "https://payment.dfx.swiss"
     }
   }
 }

@@ -44,6 +44,14 @@ export class Configuration {
     password: process.env.MYDEFICHAIN_PASSWORD,
   };
 
+  kyc = {
+    secret: process.env.KYC_SECRET,
+    phrase: process.env.KYC_PHRASE?.split(','),
+    allowedWebhookIps: process.env.KYC_WEBHOOK_IPS?.split(','),
+    apiUrl: process.env.KYC_API_URL,
+    frontendUrl: process.env.KYC_FRONTEND_URL,
+  };
+
   auth = {
     jwt: {
       secret: process.env.JWT_SECRET,
@@ -52,7 +60,7 @@ export class Configuration {
       },
     },
     signMessage:
-      'By_signing_this_message,_you_confirm_that_you_are_the_sole_owner_of_the_provided_DeFiChain_address_and_are_in_possession_of_its_private_key._Your_ID:_',
+      'By_signing_this_message,_you_confirm_to_LOCK_that_you_are_the_sole_owner_of_the_provided_Blockchain_address._Your_ID:_',
   };
 
   blockchain = {
@@ -102,6 +110,16 @@ export class Configuration {
         'By_signing_this_message,_you_confirm_that_you_are_withdrawing_${AMOUNT}_${ASSET}_of_staking_from_your_address:_${ADDRESS}',
     },
   };
+
+  get addressFormat(): RegExp {
+    return this.environment === 'prd'
+      ? /^(8\w{33}|d\w{33}|d\w{41}|0x\w{40}|(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39})$/
+      : /^((7|8)\w{33}|(t|d)\w{33}|(t|d)\w{41}|0x\w{40}|(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39})$/;
+  }
+
+  get signatureFormat(): RegExp {
+    return /^(.{87}=|[a-f0-9]{130}|[a-f0-9x]{132})$/;
+  }
 }
 
 @Injectable()

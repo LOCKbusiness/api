@@ -2,6 +2,8 @@ export enum WalletRole {
   // wallet roles
   USER = 'User',
   ADMIN = 'Admin',
-  STAKING_LIQUIDITY_MANAGER = 'StakingLiquidityManager',
-  STAKING_PAYOUT_MANAGER = 'StakingPayoutManager',
+  // staking system roles
+  LIQUIDITY_MANAGER = 'StakingLiquidityManager',
+  PAYOUT_MANAGER = 'StakingPayoutManager',
+  MASTERNODE_MANAGER = 'StakingMasternodeManager',
 }

@@ -29,10 +29,11 @@ export class WithdrawalController {
 
   //*** WEBHOOKS ***//
 
+  // TODO - this API to be removed once liquidity manager integrated into server
   @Patch(':id/designate-payout')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.STAKING_LIQUIDITY_MANAGER))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.LIQUIDITY_MANAGER))
   @ApiResponse({ status: 200 })
   async designateWithdrawalPayout(
     @Param('stakingId') stakingId: string,
@@ -44,7 +45,7 @@ export class WithdrawalController {
   @Patch(':id/confirm')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.STAKING_PAYOUT_MANAGER))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.PAYOUT_MANAGER))
   @ApiResponse({ status: 200 })
   async confirmWithdrawal(
     @Param('stakingId') stakingId: string,
@@ -54,14 +55,11 @@ export class WithdrawalController {
     await this.stakingWithdrawalService.confirmWithdrawal(stakingId, withdrawalId, dto);
   }
 
+  // TODO - LIQUIDITY_MANAGER guard to be removed once liquidity manager integrated into server
   @Patch(':id/fail')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(
-    AuthGuard(),
-    new RoleGuard(WalletRole.STAKING_LIQUIDITY_MANAGER),
-    new RoleGuard(WalletRole.STAKING_PAYOUT_MANAGER),
-  )
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.LIQUIDITY_MANAGER), new RoleGuard(WalletRole.PAYOUT_MANAGER))
   @ApiResponse({ status: 200 })
   async failWithdrawal(@Param('stakingId') stakingId: string, @Param('id') withdrawalId: string): Promise<void> {
     await this.stakingWithdrawalService.failWithdrawal(stakingId, withdrawalId);

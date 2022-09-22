@@ -17,16 +17,19 @@ import { StakingRewardService } from './application/services/staking-reward.serv
 import { StakingWithdrawalService } from './application/services/staking-withdrawal.service';
 import { StakingService } from './application/services/staking.service';
 import { StakingDeFiChainService } from './infrastructre/staking-defichain.service';
+import { MasternodeController } from './api/controllers/masternode.controller';
+import { MasternodeRepository } from './application/repositories/masternode.repository';
+import { MasternodeService } from './application/services/masternode.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([StakingRepository, StakingBlockchainAddressRepository]),
+    TypeOrmModule.forFeature([StakingRepository, StakingBlockchainAddressRepository, MasternodeRepository]),
     BlockchainModule,
     SharedModule,
     UserModule,
     PayInModule,
   ],
-  controllers: [StakingController, DepositController, RewardController, WithdrawalController],
+  controllers: [StakingController, DepositController, RewardController, WithdrawalController, MasternodeController],
   providers: [
     StakingService,
     StakingDepositService,
@@ -35,6 +38,7 @@ import { StakingDeFiChainService } from './infrastructre/staking-defichain.servi
     StakingWithdrawalService,
     StakingFactory,
     StakingBlockchainAddressService,
+    MasternodeService,
   ],
   exports: [],
 })

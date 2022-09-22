@@ -8,10 +8,15 @@ export class RoleGuard implements CanActivate {
     [WalletRole.USER]: [WalletRole.ADMIN],
   };
 
-  constructor(private readonly entryRole: WalletRole) {}
+  constructor(private readonly entryRole: WalletRole | WalletRole[]) {}
 
   canActivate(context: ExecutionContext): boolean {
     const userRole = context.switchToHttp().getRequest().user.role;
-    return this.entryRole === userRole || this.additionalRoles[this.entryRole]?.includes(userRole);
+
+    if (Array.isArray(this.entryRole)) {
+      return this.entryRole.includes(userRole);
+    } else {
+      return this.entryRole === userRole || this.additionalRoles[this.entryRole]?.includes(userRole);
+    }
   }
 }
