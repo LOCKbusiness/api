@@ -1,5 +1,6 @@
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { Column, Entity } from 'typeorm';
+import { Staking } from 'src/subdomains/staking/domain/entities/staking.entity';
+import { Column, Entity, OneToOne } from 'typeorm';
 import { IEntity } from '../entity';
 
 @Entity()
@@ -10,14 +11,17 @@ export class BlockchainAddress extends IEntity {
   @Column({ length: 256, nullable: false })
   blockchain: Blockchain;
 
-  //*** FACTORY METHODS ***//
+  @OneToOne(() => Staking, (staking) => staking.depositAddress, { nullable: true })
+  staking: Staking;
 
-  static create(address: string, blockchain: Blockchain): BlockchainAddress {
-    const _address = new BlockchainAddress();
+  //*** PUBLIC API ***//
 
-    _address.address = address;
-    _address.blockchain = blockchain;
+  assignStaking(staking: Staking): this {
+    if (this.staking)
+      throw new Error(`This address is already used for staking. AddressID: ${this.id}. StakingID: ${this.staking.id}`);
 
-    return _address;
+    this.staking = staking;
+
+    return this;
   }
 }

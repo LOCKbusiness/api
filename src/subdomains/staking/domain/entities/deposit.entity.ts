@@ -20,12 +20,15 @@ export class Deposit extends IEntity {
   amount: number;
 
   @Column({ length: 256, nullable: true })
-  txId: string;
+  payInTxId: string;
+
+  @Column({ length: 256, nullable: true })
+  forwardTxId: string;
 
   //*** FACTORY METHODS ***//
 
-  static create(staking: Staking, amount: number, txId: string): Deposit {
-    if (!txId) throw new BadRequestException('TxID must be provided when creating a staking deposit');
+  static create(staking: Staking, amount: number, payInTxId: string): Deposit {
+    if (!payInTxId) throw new BadRequestException('TxID must be provided when creating a staking deposit');
 
     const deposit = new Deposit();
 
@@ -33,18 +36,25 @@ export class Deposit extends IEntity {
     deposit.status = DepositStatus.PENDING;
     deposit.asset = staking.asset;
     deposit.amount = amount;
-    deposit.txId = txId;
+    deposit.payInTxId = payInTxId;
 
     return deposit;
   }
 
   //*** PUBLIC API ***//
 
-  confirmDeposit(txId: string): this {
-    if (this.txId !== txId) throw new BadRequestException('Provided wrong txId for deposit, txId does not match.');
-
+  confirmDeposit(forwardTxId: string): this {
+    this.forwardTxId = forwardTxId;
     this.status = DepositStatus.CONFIRMED;
 
     return this;
+  }
+
+  updatePreCreatedDeposit(payInTxId: string, amount: number) {
+    if (this.payInTxId !== payInTxId) {
+      throw new BadRequestException('Provided wrong payInTxId for deposit, payInTxId does not match.');
+    }
+
+    this.amount = amount;
   }
 }

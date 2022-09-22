@@ -2,7 +2,7 @@ import { Asset } from 'src/shared/models/asset/asset.entity';
 import { Deposit } from './deposit.entity';
 import { Reward } from './reward.entity';
 import { Withdrawal } from './withdrawal.entity';
-import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany, OneToOne } from 'typeorm';
 import { IEntity } from 'src/shared/models/entity';
 import { DepositStatus, StakingStatus, WithdrawalStatus } from '../enums';
 import { BlockchainAddress } from 'src/shared/models/blockchain-address/blockchain-address.entity';
@@ -20,7 +20,7 @@ export class Staking extends IEntity {
   @Column({ type: 'float', nullable: false, default: 0 })
   balance: number;
 
-  @ManyToOne(() => BlockchainAddress, { eager: true, nullable: false })
+  @OneToOne(() => BlockchainAddress, (address) => address.staking, { eager: true, nullable: true })
   depositAddress: BlockchainAddress;
 
   @OneToMany(() => Deposit, (deposit) => deposit.staking, { cascade: true })
@@ -90,6 +90,15 @@ export class Staking extends IEntity {
     return this;
   }
 
+  confirmDeposit(depositId: string, forwardTxId: string): this {
+    const deposit = this.getDeposit(depositId);
+
+    deposit.confirmDeposit(forwardTxId);
+    this.updateBalance();
+
+    return this;
+  }
+
   withdraw(withdrawal: Withdrawal): this {
     if (!this.withdrawals) this.withdrawals = [];
     if (this.status !== StakingStatus.ACTIVE) throw new BadRequestException('Staking is inactive');
@@ -100,7 +109,12 @@ export class Staking extends IEntity {
     return this;
   }
 
-  confirmWithdrawal(withdrawalId: string): this {
+  confirmWithdrawal(withdrawalId: string, outputDate: Date, txId: string): this {
+    const withdrawal = this.getWithdrawal(withdrawalId);
+
+    withdrawal.confirmWithdrawal(outputDate, txId);
+    this.updateBalance();
+
     return this;
   }
 
@@ -110,10 +124,6 @@ export class Staking extends IEntity {
     this.rewards.push(reward);
     this.updateBalance();
 
-    return this;
-  }
-
-  confirmRewardReinvestment(rewardId: string): this {
     return this;
   }
 
@@ -135,6 +145,14 @@ export class Staking extends IEntity {
 
   getDeposit(depositId: string): Deposit {
     const deposit = this.deposits.find((w) => w.id === parseInt(depositId));
+
+    if (!deposit) throw new NotFoundException('Deposit not found');
+
+    return deposit;
+  }
+
+  getDepositByPayInTxId(payInTxId: string): Deposit {
+    const deposit = this.deposits.find((w) => w.payInTxId === payInTxId);
 
     if (!deposit) throw new NotFoundException('Deposit not found');
 

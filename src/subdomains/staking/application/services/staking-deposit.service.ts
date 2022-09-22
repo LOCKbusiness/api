@@ -99,9 +99,7 @@ export class StakingDepositService {
       try {
         if (staking.deposits.length === 0) this.verifyFirstPayIn(staking, payIn);
 
-        const deposit = this.factory.createDeposit(staking, { amount: payIn.amount, txId: payIn.txId });
-
-        staking.addDeposit(deposit);
+        this.createOrUpdateDeposit(staking, payIn);
 
         await this.repository.save(staking);
         await this.payInService.acknowledgePayIn(payIn, PayInPurpose.CRYPTO_STAKING);
@@ -113,8 +111,23 @@ export class StakingDepositService {
     // verify addresses
   }
 
+  private createOrUpdateDeposit(staking: Staking, payIn: PayIn): void {
+    const existingDeposit = staking.getDepositByPayInTxId(payIn.txId);
+
+    if (existingDeposit) {
+      existingDeposit.updatePreCreatedDeposit(payIn.txId, payIn.amount);
+    } else {
+      this.createNewDeposit(staking, payIn);
+    }
+  }
+
+  private createNewDeposit(staking: Staking, payIn: PayIn): void {
+    const newDeposit = this.factory.createDeposit(staking, { amount: payIn.amount, txId: payIn.txId });
+
+    staking.addDeposit(newDeposit);
+  }
+
   private async forwardDepositsToStaking(): Promise<void> {
-    // find all stakings where one of deposits cas status PENDING_FORWARD
     // TODO - create query to find all stakings with pending deposites
     const stakingsWithPendingDeposits = await this.repository.find({});
 
@@ -129,7 +142,7 @@ export class StakingDepositService {
     for (const deposit of deposits) {
       const txId = await this.forwardDepositToStaking(deposit, staking.depositAddress);
       // TODO - check separately for completion instead?
-      deposit.confirmDeposit(txId);
+      staking.confirmDeposit(deposit.id.toString(), txId);
 
       await this.repository.save(staking);
     }

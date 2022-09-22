@@ -47,8 +47,7 @@ export class StakingWithdrawalService {
     const { outputDate, txId } = dto;
     const staking = await this.repository.findOne(stakingId);
 
-    const withdrawal = staking.getWithdrawal(withdrawalId);
-    withdrawal.confirmWithdrawal(outputDate, txId);
+    staking.confirmWithdrawal(withdrawalId, outputDate, txId);
 
     await this.repository.save(staking);
   }
