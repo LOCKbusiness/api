@@ -1,4 +1,4 @@
-import { ApiClient, BigNumber } from '@defichain/jellyfish-api-core';
+import { ApiClient } from '@defichain/jellyfish-api-core';
 import { Block, BlockchainInfo } from '@defichain/jellyfish-api-core/dist/category/blockchain';
 import { MasternodeInfo } from '@defichain/jellyfish-api-core/dist/category/masternode';
 import { InWalletTransaction, UTXO } from '@defichain/jellyfish-api-core/dist/category/wallet';

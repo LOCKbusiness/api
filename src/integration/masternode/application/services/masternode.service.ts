@@ -1,4 +1,10 @@
-import { ConflictException, Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Method } from 'axios';
 import { Config } from 'src/config/config';
@@ -94,6 +100,21 @@ export class MasternodeService {
       where: { creationFeePaid: false },
     });
     return unpaidMasternodeFee * 10;
+  }
+
+  //Add masternode creationFee
+  async addFee(paidFee: number): Promise<void> {
+    const unpaidMasternodes = await this.masternodeRepo.find({
+      where: { creationFeePaid: false },
+    });
+
+    const paidMasternodeCount = Math.floor(paidFee / Config.masternode.fee);
+    if (paidMasternodeCount !== paidFee / Config.masternode.fee)
+      throw new BadRequestException(`Fee amount not divisible by ${Config.masternode.fee}`);
+
+    for (const mn of unpaidMasternodes.slice(0, paidMasternodeCount)) {
+      await this.masternodeRepo.update(mn.id, { creationFeePaid: true });
+    }
   }
 
   async create(id: number, dto: CreateMasternodeDto): Promise<Masternode> {
