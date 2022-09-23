@@ -99,8 +99,7 @@ export class StakingDepositService {
   private async processNewDeposits(stakingPairs: [Staking, PayIn][]): Promise<void> {
     for (const [staking, payIn] of stakingPairs) {
       try {
-        // this will not work, filter non-pending additionally
-        if (staking.deposits.length === 0) this.verifyFirstPayIn(staking, payIn);
+        if (staking.getConfirmedDeposits().length === 0) this.verifyFirstPayIn(staking, payIn);
 
         this.createOrUpdateDeposit(staking, payIn);
 

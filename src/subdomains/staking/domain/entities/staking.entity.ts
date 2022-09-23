@@ -191,6 +191,10 @@ export class Staking extends IEntity {
     return this.balance;
   }
 
+  getConfirmedDeposits(): Deposit[] {
+    return this.getDepositsByStatus(DepositStatus.CONFIRMED);
+  }
+
   getPendingDeposits(): Deposit[] {
     return this.getDepositsByStatus(DepositStatus.PENDING);
   }
