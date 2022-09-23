@@ -9,9 +9,9 @@ export function Authorize(target: AuthorizeStaking, propertyKey: string, descrip
   const method = descriptor.value;
 
   descriptor.value = async function (...args: any[]) {
-    const userId: number = args['userId'] ?? args['_userId'];
+    const userId: number = args[0];
 
-    if (!userId) throw new UnauthorizedException();
+    if (typeof userId !== 'number') throw new UnauthorizedException();
 
     const staking = await target.repository.findOne({ userId });
 

@@ -3,6 +3,8 @@ import { UserService } from 'src/subdomains/user/application/services/user.servi
 import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wallet-blockchain-address.entity';
 import { StakingBlockchainAddress } from '../../domain/entities/staking-blockchain-address.entity';
 import { Staking } from '../../domain/entities/staking.entity';
+import { StakingAuthorizeService } from '../../infrastructre/staking-authorize.service';
+import { StakingKycCheckService } from '../../infrastructre/staking-kyc-check.service';
 import { Authorize } from '../decorators/authorize.decorator';
 import { CheckKyc } from '../decorators/check-kyc.decorator';
 import { CreateStakingDto } from '../dto/input/create-staking.dto';
@@ -18,14 +20,18 @@ export class StakingService {
   constructor(
     public readonly repository: StakingRepository,
     public readonly userService: UserService,
+    private readonly authorize: StakingAuthorizeService,
+    private readonly kycCheck: StakingKycCheckService,
     private readonly factory: StakingFactory,
     private readonly addressService: StakingBlockchainAddressService,
   ) {}
 
   //*** PUBLIC API ***//
 
-  @CheckKyc
+  // @CheckKyc
   async createStaking(userId: number, dto: CreateStakingDto): Promise<StakingOutputDto> {
+    await this.kycCheck.check(userId);
+
     const staking = await this.createStakingDraft(userId, dto);
 
     const depositAddress = await this.addressService.getAvailableAddressForStaking(staking);
@@ -36,9 +42,12 @@ export class StakingService {
     return StakingOutputDtoMapper.entityToDto(staking);
   }
 
-  @Authorize
-  @CheckKyc
-  async getStaking(_userId: number, stakingId: string): Promise<StakingOutputDto> {
+  // @Authorize
+  // @CheckKyc
+  async getStaking(userId: number, stakingId: string): Promise<StakingOutputDto> {
+    await this.authorize.authorize(userId);
+    await this.kycCheck.check(userId);
+
     const staking = await this.repository.findOne(stakingId);
 
     return StakingOutputDtoMapper.entityToDto(staking);

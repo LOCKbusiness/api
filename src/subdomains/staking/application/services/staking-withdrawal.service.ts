@@ -2,6 +2,8 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { Staking } from '../../domain/entities/staking.entity';
+import { StakingAuthorizeService } from '../../infrastructre/staking-authorize.service';
+import { StakingKycCheckService } from '../../infrastructre/staking-kyc-check.service';
 import { Authorize } from '../decorators/authorize.decorator';
 import { CheckKyc } from '../decorators/check-kyc.decorator';
 import { ConfirmWithdrawalDto } from '../dto/input/confirm-withdrawal.dto';
@@ -17,15 +19,20 @@ export class StakingWithdrawalService {
   constructor(
     public readonly repository: StakingRepository,
     public readonly userService: UserService,
+    private readonly authorize: StakingAuthorizeService,
+    private readonly kycCheck: StakingKycCheckService,
     private readonly factory: StakingFactory,
     private readonly cryptoService: CryptoService,
   ) {}
 
   //*** PUBLIC API ***//
 
-  @Authorize
-  @CheckKyc
-  async createWithdrawal(_userId: number, stakingId: string, dto: CreateWithdrawalDto): Promise<StakingOutputDto> {
+  // @Authorize
+  // @CheckKyc
+  async createWithdrawal(userId: number, stakingId: string, dto: CreateWithdrawalDto): Promise<StakingOutputDto> {
+    await this.authorize.authorize(userId);
+    await this.kycCheck.check(userId);
+
     const staking = await this.repository.findOne(stakingId);
     const withdrawal = this.factory.createWithdrawal(staking, dto);
 

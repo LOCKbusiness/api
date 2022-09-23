@@ -20,6 +20,8 @@ import { StakingDeFiChainService } from './infrastructre/staking-defichain.servi
 import { MasternodeController } from '../../integration/masternode/api/controllers/masternode.controller';
 import { MasternodeRepository } from '../../integration/masternode/application/repositories/masternode.repository';
 import { MasternodeService } from '../../integration/masternode/application/services/masternode.service';
+import { StakingAuthorizeService } from './infrastructre/staking-authorize.service';
+import { StakingKycCheckService } from './infrastructre/staking-kyc-check.service';
 
 @Module({
   imports: [
@@ -39,6 +41,8 @@ import { MasternodeService } from '../../integration/masternode/application/serv
     StakingFactory,
     StakingBlockchainAddressService,
     MasternodeService,
+    StakingAuthorizeService,
+    StakingKycCheckService,
   ],
   exports: [],
 })
