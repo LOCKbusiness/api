@@ -3,8 +3,8 @@ import { UserService } from 'src/subdomains/user/application/services/user.servi
 import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wallet-blockchain-address.entity';
 import { StakingBlockchainAddress } from '../../domain/entities/staking-blockchain-address.entity';
 import { Staking } from '../../domain/entities/staking.entity';
-import { StakingAuthorizeService } from '../../infrastructre/staking-authorize.service';
-import { StakingKycCheckService } from '../../infrastructre/staking-kyc-check.service';
+import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
+import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
 import { Authorize } from '../decorators/authorize.decorator';
 import { CheckKyc } from '../decorators/check-kyc.decorator';
 import { CreateStakingDto } from '../dto/input/create-staking.dto';

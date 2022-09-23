@@ -16,12 +16,12 @@ import { StakingDepositService } from './application/services/staking-deposit.se
 import { StakingRewardService } from './application/services/staking-reward.service';
 import { StakingWithdrawalService } from './application/services/staking-withdrawal.service';
 import { StakingService } from './application/services/staking.service';
-import { StakingDeFiChainService } from './infrastructre/staking-defichain.service';
+import { StakingDeFiChainService } from './infrastructure/staking-defichain.service';
 import { MasternodeController } from '../../integration/masternode/api/controllers/masternode.controller';
 import { MasternodeRepository } from '../../integration/masternode/application/repositories/masternode.repository';
 import { MasternodeService } from '../../integration/masternode/application/services/masternode.service';
-import { StakingAuthorizeService } from './infrastructre/staking-authorize.service';
-import { StakingKycCheckService } from './infrastructre/staking-kyc-check.service';
+import { StakingAuthorizeService } from './infrastructure/staking-authorize.service';
+import { StakingKycCheckService } from './infrastructure/staking-kyc-check.service';
 
 @Module({
   imports: [

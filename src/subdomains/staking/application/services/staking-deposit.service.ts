@@ -7,9 +7,9 @@ import { UserService } from 'src/subdomains/user/application/services/user.servi
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { StakingBlockchainAddress } from '../../domain/entities/staking-blockchain-address.entity';
 import { Staking } from '../../domain/entities/staking.entity';
-import { StakingAuthorizeService } from '../../infrastructre/staking-authorize.service';
-import { StakingDeFiChainService } from '../../infrastructre/staking-defichain.service';
-import { StakingKycCheckService } from '../../infrastructre/staking-kyc-check.service';
+import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
+import { StakingDeFiChainService } from '../../infrastructure/staking-defichain.service';
+import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
 import { Authorize } from '../decorators/authorize.decorator';
 import { CheckKyc } from '../decorators/check-kyc.decorator';
 import { CreateDepositDto } from '../dto/input/create-deposit.dto';
