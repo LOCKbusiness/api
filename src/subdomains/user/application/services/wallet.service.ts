@@ -32,15 +32,15 @@ export class WalletService {
 
   async getByAddress(address: string, needsRelation = false): Promise<Wallet> {
     return this.walletRepo.findOne({
-      where: { address },
-      relations: needsRelation ? ['user', 'walletProvider'] : [],
+      where: { address: { address } },
+      relations: needsRelation ? ['address', 'user', 'walletProvider'] : [],
     });
   }
 
   async getKycIdByAddress(address: string): Promise<string> {
     const wallet = await this.walletRepo.findOne({
-      where: { address },
-      relations: ['user'],
+      where: { address: { address } },
+      relations: ['address', 'user'],
     });
 
     if (!wallet) throw new NotFoundException('Wallet not available');
