@@ -16,7 +16,7 @@ export class Staking extends IEntity {
   @Column({ type: 'int', nullable: false })
   userId: number;
 
-  @Column({ length: 256, nullable: false })
+  @Column({ nullable: false })
   status: StakingStatus;
 
   @ManyToOne(() => Asset, { eager: true, nullable: false })
@@ -159,6 +159,10 @@ export class Staking extends IEntity {
     message.replace('${ADDRESS}', address);
 
     return message;
+  }
+
+  verifyUserAddresses(addresses: string[]): boolean {
+    return addresses.every((a) => a === this.withdrawalAddress.address);
   }
 
   //*** GETTERS ***//

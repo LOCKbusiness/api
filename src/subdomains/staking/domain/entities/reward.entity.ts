@@ -9,7 +9,7 @@ export class Reward extends IEntity {
   @ManyToOne(() => Staking, (staking) => staking.rewards, { eager: true, nullable: true })
   staking: Staking;
 
-  @Column({ length: 256, nullable: false })
+  @Column({ nullable: false })
   status: RewardStatus;
 
   //*** NATIVE ASSET ***//

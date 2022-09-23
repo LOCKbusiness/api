@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
-import { CheckKyc } from '../decorators/check-kyc.decorator';
 import { CreateRewardDto } from '../dto/input/create-reward.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
@@ -21,7 +20,6 @@ export class StakingRewardService {
 
   //*** PUBLIC API ***//
 
-  // @CheckKyc
   async createReward(userId: number, stakingId: string, dto: CreateRewardDto): Promise<StakingOutputDto> {
     await this.kycCheck.check(userId);
 

@@ -3,9 +3,9 @@ import { Column } from 'typeorm';
 import { IEntity } from './entity';
 
 export abstract class BlockchainAddress extends IEntity {
-  @Column({ length: 256, nullable: false })
+  @Column({ nullable: false })
   address: string;
 
-  @Column({ length: 256, nullable: false })
+  @Column({ nullable: false })
   blockchain: Blockchain;
 }

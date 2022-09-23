@@ -65,9 +65,9 @@ export class AuthService {
     const payload: JwtPayload = {
       walletId: wallet.id,
       userId: wallet.user?.id,
-      address: wallet.address,
+      address: wallet.address.address,
       role: wallet.role,
-      blockchains: this.cryptoService.getBlockchainsBasedOn(wallet.address),
+      blockchains: this.cryptoService.getBlockchainsBasedOn(wallet.address.address),
     };
     return this.jwtService.sign(payload);
   }

@@ -11,6 +11,7 @@ import { WalletProviderService } from './wallet-provider.service';
 import { WalletProvider } from '../../domain/entities/wallet-provider.entity';
 import { SignUpDto } from 'src/shared/auth/dto/sign-up.dto';
 import { WalletDetailedDto } from '../dto/wallet-detailed.dto';
+import { WalletBlockchainAddress } from '../../domain/entities/wallet-blockchain-address.entity';
 
 @Injectable()
 export class WalletService {
@@ -46,7 +47,11 @@ export class WalletService {
     return wallet.user.kycId;
   }
   async createWallet(dto: SignUpDto, userIp: string, user?: User): Promise<Wallet> {
-    const wallet = this.walletRepo.create(dto);
+    const walletAddress = WalletBlockchainAddress.create(dto.address, dto.blockchain);
+    const wallet = this.walletRepo.create({
+      signature: dto.signature,
+      address: walletAddress,
+    });
 
     wallet.ip = userIp;
     wallet.ipCountry = await this.checkIpCountry(userIp);
@@ -91,7 +96,8 @@ export class WalletService {
   // --- DTO --- //
   private async toDto(wallet: Wallet): Promise<WalletDetailedDto> {
     return {
-      address: wallet.address,
+      address: wallet.address.address,
+      blockchain: wallet.address.blockchain,
       mail: wallet.user?.mail,
       phone: wallet.user?.phone,
       language: wallet.user?.language,

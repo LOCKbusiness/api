@@ -13,15 +13,15 @@ export enum AssetCategory {
   unique: true,
 })
 export class Asset extends IEntity {
-  @Column({ nullable: true, length: 256 })
+  @Column({ nullable: true })
   name: string;
 
-  @Column({ length: 256 })
+  @Column()
   displayName: string;
 
-  @Column({ length: 256, nullable: false, default: AssetCategory.STOCK })
+  @Column({ nullable: false, default: AssetCategory.STOCK })
   category: AssetCategory;
 
-  @Column({ length: 256, default: Blockchain.DEFICHAIN })
+  @Column({ default: Blockchain.DEFICHAIN })
   blockchain: Blockchain;
 }

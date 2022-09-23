@@ -10,7 +10,7 @@ export class Deposit extends IEntity {
   @ManyToOne(() => Staking, (staking) => staking.deposits, { eager: true, nullable: true })
   staking: Staking;
 
-  @Column({ length: 256, nullable: false })
+  @Column({ nullable: false })
   status: DepositStatus;
 
   @ManyToOne(() => Asset, { eager: true, nullable: false })
@@ -19,10 +19,10 @@ export class Deposit extends IEntity {
   @Column({ type: 'float', nullable: false, default: 0 })
   amount: number;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ nullable: true })
   payInTxId: string;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ nullable: true })
   forwardTxId: string;
 
   //*** FACTORY METHODS ***//

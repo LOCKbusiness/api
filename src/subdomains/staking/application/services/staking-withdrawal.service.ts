@@ -4,8 +4,6 @@ import { UserService } from 'src/subdomains/user/application/services/user.servi
 import { Staking } from '../../domain/entities/staking.entity';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
-import { Authorize } from '../decorators/authorize.decorator';
-import { CheckKyc } from '../decorators/check-kyc.decorator';
 import { ConfirmWithdrawalDto } from '../dto/input/confirm-withdrawal.dto';
 import { CreateWithdrawalDto } from '../dto/input/create-withdrawal.dto';
 import { DesignateWithdrawalDto } from '../dto/input/designate-withdrawal.dto';
@@ -27,8 +25,6 @@ export class StakingWithdrawalService {
 
   //*** PUBLIC API ***//
 
-  // @Authorize
-  // @CheckKyc
   async createWithdrawal(userId: number, stakingId: string, dto: CreateWithdrawalDto): Promise<StakingOutputDto> {
     await this.authorize.authorize(userId);
     await this.kycCheck.check(userId);

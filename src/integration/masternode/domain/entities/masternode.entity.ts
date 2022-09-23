@@ -4,17 +4,17 @@ import { MasternodeState } from '../../../../subdomains/staking/domain/enums';
 
 @Entity()
 export class Masternode extends IEntity {
-  @Column({ length: 256 })
+  @Column()
   server: string;
 
-  @Column({ length: 256, unique: true })
+  @Column({ unique: true })
   operator: string;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ nullable: true })
   @Index({ unique: true, where: 'owner IS NOT NULL' })
   owner: string;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ nullable: true })
   ownerWallet: string;
 
   @Column({ type: 'integer', nullable: true })
@@ -23,21 +23,21 @@ export class Masternode extends IEntity {
   @Column({ type: 'datetime2', nullable: true })
   creationDate: Date;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ nullable: true })
   @Index({ unique: true, where: 'creationHash IS NOT NULL' })
   creationHash: string;
 
   @Column({ type: 'datetime2', nullable: true })
   resignDate: Date;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ nullable: true })
   @Index({ unique: true, where: 'resignHash IS NOT NULL' })
   resignHash: string;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ nullable: true })
   signatureLiquidityManager: string;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ nullable: true })
   signaturePayoutManager: string;
 
   @Column({ default: MasternodeState.IDLE, nullable: false })

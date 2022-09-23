@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { KycStatus } from '../../domain/enums';
 
 export class WalletDetailedDto {
@@ -6,6 +7,11 @@ export class WalletDetailedDto {
     description: 'Address of the user',
   })
   address: string;
+  @ApiProperty({
+    description: 'Address of the user',
+    enum: Blockchain,
+  })
+  blockchain: Blockchain;
   @ApiPropertyOptional({
     description: 'Mail of the user',
   })

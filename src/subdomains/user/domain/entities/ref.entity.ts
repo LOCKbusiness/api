@@ -3,12 +3,12 @@ import { Entity, Column } from 'typeorm';
 
 @Entity()
 export class Ref extends IEntity {
-  @Column({ length: 256, unique: true })
+  @Column({ unique: true })
   ip: string;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ nullable: true })
   ref?: string;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ nullable: true })
   origin?: string;
 }

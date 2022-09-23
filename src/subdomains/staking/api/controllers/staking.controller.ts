@@ -20,7 +20,7 @@ export class StakingController {
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   @ApiResponse({ status: 201, type: StakingOutputDto })
   async createStaking(@GetJwt() jwt: JwtPayload, @Body() dto: CreateStakingDto): Promise<StakingOutputDto> {
-    return this.stakingService.createStaking(jwt.userId, dto);
+    return this.stakingService.createStaking(jwt.userId, jwt.walletId, dto);
   }
 
   @Get(':id')

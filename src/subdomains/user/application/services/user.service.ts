@@ -5,7 +5,6 @@ import { User } from '../../domain/entities/user.entity';
 import { KycStatus } from '../../domain/enums';
 import { UserRepository } from '../repositories/user.repository';
 import { CountryService } from './country.service';
-import { Blockchain } from 'src/shared/enums/blockchain.enum';
 
 @Injectable()
 export class UserService {
@@ -43,18 +42,9 @@ export class UserService {
     return [KycStatus.FULL, KycStatus.LIGHT].includes(await this.getKycStatus(userId));
   }
 
-  async getWalletAddress(userId: number): Promise<WalletBlockchainAddress> {
-    const user = await this.userRepo.findOne({ where: { id: userId }, relations: ['wallets'] });
+  async getWalletAddress(userId: number, walletId: number): Promise<WalletBlockchainAddress> {
+    const user = await this.userRepo.findOne({ where: { id: userId }, relations: ['wallets', 'wallets.address'] });
 
-    // TODO - remove placeholder, implement User Address fetch
-    return WalletBlockchainAddress.create('ABC123', Blockchain.DEFICHAIN);
-  }
-
-  async verifyUserAddresses(userId: number, inputAddresses: string[]): Promise<boolean> {
-    const user = await this.userRepo.findOne({ where: { id: userId }, relations: ['wallets'] });
-
-    const userAddresses = user.wallets.map((w) => w.address);
-
-    return inputAddresses.every((a) => userAddresses.includes(a));
+    return user.wallets.find((w) => w.id === walletId).address;
   }
 }

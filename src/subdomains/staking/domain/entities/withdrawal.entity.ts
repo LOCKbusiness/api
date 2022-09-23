@@ -6,13 +6,13 @@ import { Staking } from './staking.entity';
 
 @Entity()
 export class Withdrawal extends IEntity {
-  @Column({ length: 256, nullable: false })
+  @Column({ nullable: false })
   signature: string;
 
   @ManyToOne(() => Staking, (staking) => staking.withdrawals, { eager: true, nullable: true })
   staking: Staking;
 
-  @Column({ length: 256, nullable: false })
+  @Column({ nullable: false })
   status: WithdrawalStatus;
 
   @ManyToOne(() => Asset, { eager: true, nullable: false })
@@ -24,10 +24,10 @@ export class Withdrawal extends IEntity {
   @Column({ type: 'datetime2', nullable: true })
   outputDate: Date;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ nullable: true })
   prepareTxId: string;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ nullable: true })
   withdrawalTxId: string;
 
   //*** FACTORY METHODS ***//

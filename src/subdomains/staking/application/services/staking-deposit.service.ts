@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { Lock } from 'src/shared/lock';
 import { PayInService } from 'src/subdomains/payin/application/services/payin.service';
@@ -10,8 +10,6 @@ import { Staking } from '../../domain/entities/staking.entity';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingDeFiChainService } from '../../infrastructure/staking-defichain.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
-import { Authorize } from '../decorators/authorize.decorator';
-import { CheckKyc } from '../decorators/check-kyc.decorator';
 import { CreateDepositDto } from '../dto/input/create-deposit.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
@@ -34,8 +32,6 @@ export class StakingDepositService {
 
   //*** PUBLIC API ***//
 
-  // @Authorize
-  // @CheckKyc
   async createDeposit(userId: number, stakingId: string, dto: CreateDepositDto): Promise<StakingOutputDto> {
     await this.authorize.authorize(userId);
     await this.kycCheck.check(userId);
@@ -121,9 +117,15 @@ export class StakingDepositService {
 
     if (addresses.length === 0) throw new UnauthorizedException();
 
-    const addressesValid = await this.userService.verifyUserAddresses(staking.userId, addresses);
+    try {
+      const addressesValid = staking.verifyUserAddresses(addresses);
 
-    if (!addressesValid) throw new UnauthorizedException();
+      if (!addressesValid) throw new UnauthorizedException();
+    } catch (e) {
+      if (e instanceof NotFoundException) throw new UnauthorizedException();
+
+      throw e;
+    }
   }
 
   private createOrUpdateDeposit(staking: Staking, payIn: PayIn): void {

@@ -14,19 +14,19 @@ export enum PayInStatus {
 
 @Entity()
 export class PayIn extends IEntity {
-  @Column({ length: 256, nullable: false })
+  @Column({ nullable: false })
   status: PayInStatus;
 
-  @Column({ length: 256 })
+  @Column()
   txId: string;
 
-  @Column({ length: 256 })
+  @Column()
   txType: string;
 
   @OneToOne(() => PayInBlockchainAddress)
   address: PayInBlockchainAddress;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ nullable: true })
   returnTxId: string;
 
   @Column({ type: 'integer', nullable: true })
@@ -38,7 +38,7 @@ export class PayIn extends IEntity {
   @ManyToOne(() => Asset, { nullable: false, eager: true })
   asset: Asset;
 
-  @Column({ length: 256, nullable: false })
+  @Column({ nullable: false })
   purpose: PayInPurpose;
 
   //*** FACTORY METHODS ***//

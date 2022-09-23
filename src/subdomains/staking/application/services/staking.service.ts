@@ -5,8 +5,6 @@ import { StakingBlockchainAddress } from '../../domain/entities/staking-blockcha
 import { Staking } from '../../domain/entities/staking.entity';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
-import { Authorize } from '../decorators/authorize.decorator';
-import { CheckKyc } from '../decorators/check-kyc.decorator';
 import { CreateStakingDto } from '../dto/input/create-staking.dto';
 import { SetStakingFeeDto } from '../dto/input/set-staking-fee.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
@@ -28,22 +26,19 @@ export class StakingService {
 
   //*** PUBLIC API ***//
 
-  // @CheckKyc
-  async createStaking(userId: number, dto: CreateStakingDto): Promise<StakingOutputDto> {
+  async createStaking(userId: number, walletId: number, dto: CreateStakingDto): Promise<StakingOutputDto> {
     await this.kycCheck.check(userId);
 
     const staking = await this.createStakingDraft(userId, dto);
 
     const depositAddress = await this.addressService.getAvailableAddressForStaking(staking);
-    const withdrawalAddress = await this.userService.getWalletAddress(userId);
+    const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
 
     await this.finalizeStakingCreation(staking, depositAddress, withdrawalAddress);
 
     return StakingOutputDtoMapper.entityToDto(staking);
   }
 
-  // @Authorize
-  // @CheckKyc
   async getStaking(userId: number, stakingId: string): Promise<StakingOutputDto> {
     await this.authorize.authorize(userId);
     await this.kycCheck.check(userId);
