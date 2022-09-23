@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
-import { UserBlockchainAddress } from 'src/subdomains/user/domain/entities/user-blockchain-address.entity';
+import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wallet-blockchain-address.entity';
 import { StakingBlockchainAddress } from '../../domain/entities/staking-blockchain-address.entity';
 import { Staking } from '../../domain/entities/staking.entity';
 import { Authorize } from '../decorators/authorize.decorator';
@@ -65,7 +65,7 @@ export class StakingService {
   private async finalizeStakingCreation(
     staking: Staking,
     depositAddress: StakingBlockchainAddress,
-    withdrawalAddress: UserBlockchainAddress,
+    withdrawalAddress: WalletBlockchainAddress,
   ): Promise<void> {
     staking.finalizeCreation(depositAddress, withdrawalAddress);
 

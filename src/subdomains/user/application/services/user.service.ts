@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Config } from 'src/config/config';
-import { UserBlockchainAddress } from '../../domain/entities/user-blockchain-address.entity';
+import { WalletBlockchainAddress } from '../../domain/entities/wallet-blockchain-address.entity';
 import { User } from '../../domain/entities/user.entity';
 import { KycStatus } from '../../domain/enums';
 import { UserRepository } from '../repositories/user.repository';
 import { CountryService } from './country.service';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
 
 @Injectable()
 export class UserService {
@@ -42,11 +43,11 @@ export class UserService {
     return [KycStatus.FULL, KycStatus.LIGHT].includes(await this.getKycStatus(userId));
   }
 
-  async getWalletAddress(userId: number): Promise<UserBlockchainAddress> {
+  async getWalletAddress(userId: number): Promise<WalletBlockchainAddress> {
     const user = await this.userRepo.findOne({ where: { id: userId }, relations: ['wallets'] });
 
-    // TODO - implement User Address fetch
-    return null;
+    // TODO - remove placeholder, implement User Address fetch
+    return WalletBlockchainAddress.create('ABC123', Blockchain.DEFICHAIN);
   }
 
   async verifyUserAddresses(userId: number, inputAddresses: string[]): Promise<boolean> {

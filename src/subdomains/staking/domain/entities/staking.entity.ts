@@ -9,7 +9,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Util } from 'src/shared/util';
 import { Config } from 'src/config/config';
 import { StakingBlockchainAddress } from './staking-blockchain-address.entity';
-import { UserBlockchainAddress } from 'src/subdomains/user/domain/entities/user-blockchain-address.entity';
+import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wallet-blockchain-address.entity';
 
 @Entity()
 export class Staking extends IEntity {
@@ -32,14 +32,14 @@ export class Staking extends IEntity {
   @OneToMany(() => Deposit, (deposit) => deposit.staking, { cascade: true })
   deposits: Deposit[];
 
-  @ManyToOne(() => UserBlockchainAddress, { eager: true, nullable: false })
-  withdrawalAddress: UserBlockchainAddress;
+  @ManyToOne(() => WalletBlockchainAddress, { eager: true, nullable: false })
+  withdrawalAddress: WalletBlockchainAddress;
 
   @OneToMany(() => Withdrawal, (withdrawal) => withdrawal.staking, { cascade: true })
   withdrawals: Withdrawal[];
 
-  @ManyToOne(() => UserBlockchainAddress, { eager: true, nullable: true })
-  rewardsPayoutAddress: UserBlockchainAddress;
+  @ManyToOne(() => WalletBlockchainAddress, { eager: true, nullable: true })
+  rewardsPayoutAddress: WalletBlockchainAddress;
 
   @OneToMany(() => Reward, (reward) => reward.staking, { cascade: true })
   rewards: Reward[];
@@ -83,7 +83,7 @@ export class Staking extends IEntity {
     return staking;
   }
 
-  finalizeCreation(depositAddress: StakingBlockchainAddress, withdrawalAddress: UserBlockchainAddress): this {
+  finalizeCreation(depositAddress: StakingBlockchainAddress, withdrawalAddress: WalletBlockchainAddress): this {
     this.depositAddress = depositAddress;
     this.withdrawalAddress = withdrawalAddress;
     this.rewardsPayoutAddress = withdrawalAddress;
