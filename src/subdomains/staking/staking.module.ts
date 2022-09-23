@@ -12,6 +12,7 @@ import { StakingFactory } from './application/factories/staking.factory';
 import { StakingBlockchainAddressRepository } from './application/repositories/staking-blockchain-address.repository';
 import { StakingRepository } from './application/repositories/staking.repository';
 import { StakingBlockchainAddressService } from './application/services/staking-blockchain-address.service';
+import { LiquidityManagementService } from './application/services/liquidity-management.service';
 import { StakingDepositService } from './application/services/staking-deposit.service';
 import { StakingRewardService } from './application/services/staking-reward.service';
 import { StakingWithdrawalService } from './application/services/staking-withdrawal.service';
@@ -43,6 +44,7 @@ import { StakingKycCheckService } from './infrastructure/staking-kyc-check.servi
     MasternodeService,
     StakingAuthorizeService,
     StakingKycCheckService,
+    LiquidityManagementService
   ],
   exports: [],
 })

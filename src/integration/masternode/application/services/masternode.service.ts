@@ -1,24 +1,37 @@
-import { ConflictException, Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Method } from 'axios';
 import { Config } from 'src/config/config';
 import { HttpError, HttpService } from 'src/shared/services/http.service';
 import { SettingService } from 'src/shared/services/setting.service';
-import { IsNull, LessThan, MoreThan, Not } from 'typeorm';
+import { In, IsNull, LessThan, MoreThan, Not } from 'typeorm';
 import { Masternode } from '../../domain/entities/masternode.entity';
 import { MasternodeState } from '../../../../subdomains/staking/domain/enums';
 import { ResignMasternodeDto } from '../dto/resign-masternode.dto';
 import { MasternodeRepository } from '../repositories/masternode.repository';
 import { CreateMasternodeDto } from '../dto/create-masternode.dto';
-import { AddMasternodeFee } from '../dto/add-masternode-fee.dto';
+import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
+import { Util } from 'src/shared/util';
+import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 
 @Injectable()
 export class MasternodeService {
+  private client: DeFiClient;
+
   constructor(
     private readonly masternodeRepo: MasternodeRepository,
     private readonly http: HttpService,
     private readonly settingService: SettingService,
-  ) {}
+    nodeService: NodeService,
+  ) {
+    nodeService.getConnectedNode(NodeType.LIQ).subscribe((c) => (this.client = c));
+  }
 
   // --- MASTERNODE SYNC --- //
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
@@ -61,7 +74,27 @@ export class MasternodeService {
     return this.masternodeRepo.find({ where: { creationHash: Not(IsNull()), resignHash: IsNull() } });
   }
 
-  //Get unpaid fee in DFI
+  async getResigning(): Promise<Masternode[]> {
+    return this.masternodeRepo.find({
+      where: {
+        state: In([MasternodeState.RESIGN_REQUESTED, MasternodeState.RESIGN_CONFIRMED, MasternodeState.RESIGNING]),
+      },
+    });
+  }
+
+  async getOrderedByTms(): Promise<Masternode[]> {
+    const activeMasternodes = await this.getActive();
+
+    // get TMS info
+    const tmsInfo = await Promise.all(activeMasternodes.map((mn) => this.getMasternodeTms(mn.creationHash)));
+
+    return activeMasternodes.sort(
+      (a, b) =>
+        tmsInfo.find((tms) => tms.hash === a.creationHash).tms - tmsInfo.find((tms) => tms.hash === b.creationHash).tms,
+    );
+  }
+
+  // get unpaid fee in DFI
   async getUnpaidFee(): Promise<number> {
     const unpaidMasternodeFee = await this.masternodeRepo.count({
       where: { creationFeePaid: false },
@@ -70,15 +103,17 @@ export class MasternodeService {
   }
 
   //Add masternode creationFee
-  async addFee(addMasternodeFee: AddMasternodeFee): Promise<void> {
-    const unpaidMasternodeFee = await this.masternodeRepo.find({
+  async addFee(paidFee: number): Promise<void> {
+    const unpaidMasternodes = await this.masternodeRepo.find({
       where: { creationFeePaid: false },
     });
 
-    const paidMasternode = Math.abs(addMasternodeFee.feeAmount / 10);
-    for (let mn = 0; mn < paidMasternode; mn++) {
-      unpaidMasternodeFee[mn].creationFeePaid = true;
-      await this.masternodeRepo.save(unpaidMasternodeFee);
+    const paidMasternodeCount = Math.floor(paidFee / Config.masternode.fee);
+    if (paidMasternodeCount !== paidFee / Config.masternode.fee)
+      throw new BadRequestException(`Fee amount not divisible by ${Config.masternode.fee}`);
+
+    for (const mn of unpaidMasternodes.slice(0, paidMasternodeCount)) {
+      await this.masternodeRepo.update(mn.id, { creationFeePaid: true });
     }
   }
 
@@ -153,5 +188,10 @@ export class MasternodeService {
       auth: { username: Config.mydefichain.username, password: Config.mydefichain.password },
       params: method === 'GET' ? data : undefined,
     });
+  }
+
+  private async getMasternodeTms(creationHash: string): Promise<{ hash: string; tms: number }> {
+    const info = await this.client.getMasternodeInfo(creationHash);
+    return { hash: creationHash, tms: Util.avg(info.targetMultipliers ?? []) };
   }
 }

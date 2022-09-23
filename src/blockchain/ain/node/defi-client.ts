@@ -1,6 +1,5 @@
 import { AccountHistory, AccountResult, UTXO as SpendUTXO } from '@defichain/jellyfish-api-core/dist/category/account';
 import { SchedulerRegistry } from '@nestjs/schedule';
-import BigNumber from 'bignumber.js';
 import { HttpService } from 'src/shared/services/http.service';
 import { NodeClient, NodeCommand, NodeMode } from './node-client';
 
@@ -27,7 +26,7 @@ export class DeFiClient extends NodeClient {
     );
   }
 
-  async getNodeBalance(): Promise<{ utxo: BigNumber; token: number }> {
+  async getNodeBalance(): Promise<{ utxo: number; token: number }> {
     return { utxo: await this.getBalance(), token: await this.getToken().then((t) => t.length) };
   }
 

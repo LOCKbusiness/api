@@ -14,7 +14,7 @@ export class StakingDeFiChainService {
   //*** PUBLIC API ***//
 
   async forwardDeposit(sourceAddress: string, amount: number): Promise<string> {
-    return this.forwardUtxo(sourceAddress, Config.blockchain.default.stakingWalletAddress, amount);
+    return this.forwardUtxo(sourceAddress, Config.staking.liquidityWalletAddress, amount);
   }
 
   async getSourceAddresses(txId: string): Promise<string[]> {

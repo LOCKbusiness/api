@@ -7,7 +7,7 @@ import { WalletProvider } from './wallet-provider.entity';
 
 @Entity()
 export class Wallet extends IEntity {
-  @OneToOne(() => WalletBlockchainAddress, { eager: true, nullable: false })
+  @OneToOne(() => WalletBlockchainAddress, { eager: true, nullable: false, cascade: true })
   @JoinColumn()
   address: WalletBlockchainAddress;
 
