@@ -1,7 +1,7 @@
 export enum StakingStatus {
   CREATED = 'Created',
   ACTIVE = 'Active',
-  INACTIVE = 'Inactive',
+  BLOCKED = 'Blocked',
 }
 
 export enum WithdrawalStatus {

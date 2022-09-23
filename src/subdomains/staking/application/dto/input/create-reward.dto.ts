@@ -10,11 +10,6 @@ export class CreateRewardDto {
 
   @ApiProperty()
   @IsNotEmpty()
-  @IsNumber()
-  userId: number;
-
-  @ApiProperty()
-  @IsNotEmpty()
   @IsString()
   reinvestTxId: string;
 

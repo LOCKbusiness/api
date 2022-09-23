@@ -24,12 +24,12 @@ export class StakingFactory {
   ): Promise<Staking> {
     const { assetName: name, blockchain } = dto;
     const {
-      staking: { minimalStake, minimalDeposit, stakingFee },
+      staking: { minimalStake },
     } = GetConfig();
 
     const asset = await this.assetService.getAssetByQuery({ name, blockchain });
 
-    return Staking.create(userId, depositAddress, withdrawalAddress, asset, minimalStake, minimalDeposit, stakingFee);
+    return Staking.create(userId, depositAddress, withdrawalAddress, asset, minimalStake);
   }
 
   createDeposit(staking: Staking, dto: CreateDepositDto): Deposit {

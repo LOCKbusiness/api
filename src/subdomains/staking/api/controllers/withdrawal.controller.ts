@@ -25,7 +25,7 @@ export class WithdrawalController {
     @Param('stakingId') stakingId: string,
     @Body() dto: CreateWithdrawalDto,
   ): Promise<StakingOutputDto> {
-    return this.stakingWithdrawalService.createWithdrawal(jwt.userId, stakingId, dto);
+    return this.stakingWithdrawalService.createWithdrawal(jwt.userId, jwt.walletId, +stakingId, dto);
   }
 
   //*** WEBHOOKS ***//
@@ -41,7 +41,7 @@ export class WithdrawalController {
     @Param('id') withdrawalId: string,
     @Body() dto: DesignateWithdrawalDto,
   ): Promise<void> {
-    await this.stakingWithdrawalService.designateWithdrawalPayout(stakingId, withdrawalId, dto);
+    await this.stakingWithdrawalService.designateWithdrawalPayout(+stakingId, withdrawalId, dto);
   }
 
   @Patch(':id/confirm')
@@ -54,7 +54,7 @@ export class WithdrawalController {
     @Param('id') withdrawalId: string,
     @Body() dto: ConfirmWithdrawalDto,
   ): Promise<void> {
-    await this.stakingWithdrawalService.confirmWithdrawal(stakingId, withdrawalId, dto);
+    await this.stakingWithdrawalService.confirmWithdrawal(+stakingId, withdrawalId, dto);
   }
 
   // TODO - LIQUIDITY_MANAGER guard to be removed once liquidity manager integrated into server
@@ -64,6 +64,6 @@ export class WithdrawalController {
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.LIQUIDITY_MANAGER), new RoleGuard(WalletRole.PAYOUT_MANAGER))
   @ApiResponse({ status: 200 })
   async failWithdrawal(@Param('stakingId') stakingId: string, @Param('id') withdrawalId: string): Promise<void> {
-    await this.stakingWithdrawalService.failWithdrawal(stakingId, withdrawalId);
+    await this.stakingWithdrawalService.failWithdrawal(+stakingId, withdrawalId);
   }
 }

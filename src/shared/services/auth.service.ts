@@ -66,8 +66,8 @@ export class AuthService {
       walletId: wallet.id,
       userId: wallet.user?.id,
       address: wallet.address.address,
+      blockchain: wallet.address.blockchain,
       role: wallet.role,
-      blockchains: this.cryptoService.getBlockchainsBasedOn(wallet.address.address),
     };
     return this.jwtService.sign(payload);
   }

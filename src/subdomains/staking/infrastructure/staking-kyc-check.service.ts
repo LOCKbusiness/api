@@ -5,9 +5,9 @@ import { UserService } from 'src/subdomains/user/application/services/user.servi
 export class StakingKycCheckService {
   constructor(private readonly userService: UserService) {}
 
-  async check(userId: number): Promise<void> {
-    const isKycSuccessful = await this.userService.isKycSuccessful(userId);
+  async check(userId: number, walletId: number): Promise<void> {
+    const canStake = await this.userService.canStake(userId, walletId);
 
-    if (!isKycSuccessful) throw new UnauthorizedException();
+    if (!canStake) throw new UnauthorizedException();
   }
 }

@@ -1,3 +1,4 @@
+import { Config } from 'src/config/config';
 import { Staking } from '../../domain/entities/staking.entity';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 
@@ -7,9 +8,9 @@ export class StakingOutputDtoMapper {
 
     dto.asset = staking.asset.name;
     dto.depositAddress = staking.depositAddress.address;
-    dto.minimalStake = staking.minimalStake;
-    dto.minimalDeposit = staking.minimalDeposit;
-    dto.stakingFee = staking.stakingFee;
+    dto.minimalStake = Config.staking.minimalStake;
+    dto.minimalDeposit = Config.staking.minimalDeposit;
+    dto.fee = staking.fee;
     dto.balance = staking.getBalance();
     dto.pendingDeposits = staking.getPendingDepositsAmount();
     dto.pendingWithdrawals = staking.getPendingWithdrawalsAmount();

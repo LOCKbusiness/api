@@ -25,11 +25,10 @@ export class StakingWithdrawalService {
 
   //*** PUBLIC API ***//
 
-  async createWithdrawal(userId: number, stakingId: string, dto: CreateWithdrawalDto): Promise<StakingOutputDto> {
-    await this.authorize.authorize(userId);
-    await this.kycCheck.check(userId);
+  async createWithdrawal(userId: number, walletId: number, stakingId: number, dto: CreateWithdrawalDto): Promise<StakingOutputDto> {
+    await this.kycCheck.check(userId, walletId);
 
-    const staking = await this.repository.findOne(stakingId);
+    const staking = await this.authorize.authorize(userId, stakingId);
     const withdrawal = this.factory.createWithdrawal(staking, dto);
 
     this.verifySignature(dto.signature, dto.amount, staking);
@@ -41,7 +40,7 @@ export class StakingWithdrawalService {
     return StakingOutputDtoMapper.entityToDto(staking);
   }
 
-  async designateWithdrawalPayout(stakingId: string, withdrawalId: string, dto: DesignateWithdrawalDto): Promise<void> {
+  async designateWithdrawalPayout(stakingId: number, withdrawalId: string, dto: DesignateWithdrawalDto): Promise<void> {
     const { prepareTxId } = dto;
     const staking = await this.repository.findOne(stakingId);
 
@@ -51,7 +50,7 @@ export class StakingWithdrawalService {
     await this.repository.save(staking);
   }
 
-  async confirmWithdrawal(stakingId: string, withdrawalId: string, dto: ConfirmWithdrawalDto): Promise<void> {
+  async confirmWithdrawal(stakingId: number, withdrawalId: string, dto: ConfirmWithdrawalDto): Promise<void> {
     const { outputDate, withdrawalTxId } = dto;
     const staking = await this.repository.findOne(stakingId);
 
@@ -60,7 +59,7 @@ export class StakingWithdrawalService {
     await this.repository.save(staking);
   }
 
-  async failWithdrawal(stakingId: string, withdrawalId: string): Promise<void> {
+  async failWithdrawal(stakingId: number, withdrawalId: string): Promise<void> {
     const staking = await this.repository.findOne(stakingId);
 
     staking.failWithdrawal(withdrawalId);

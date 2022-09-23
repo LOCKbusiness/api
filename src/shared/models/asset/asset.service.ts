@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { AssetRepository } from 'src/shared/models/asset/asset.repository';
-import { In } from 'typeorm';
 import { Asset } from './asset.entity';
 
 export interface AssetQuery {
@@ -13,9 +12,8 @@ export interface AssetQuery {
 export class AssetService {
   constructor(private assetRepo: AssetRepository) {}
 
-  async getAllAsset(blockchains: Blockchain[]): Promise<Asset[]> {
-    blockchains ??= [Blockchain.DEFICHAIN];
-    return this.assetRepo.find({ where: { blockchain: In(blockchains) } });
+  async getAllAsset(blockchain: Blockchain): Promise<Asset[]> {
+    return this.assetRepo.find({ where: { blockchain } });
   }
 
   async getAssetById(id: number): Promise<Asset> {
@@ -23,8 +21,6 @@ export class AssetService {
   }
 
   async getAssetByQuery(query: AssetQuery): Promise<Asset> {
-    const { name: dexName, blockchain } = query;
-
-    return this.assetRepo.findOne({ where: { name: dexName, blockchain } });
+    return this.assetRepo.findOne({ where: query });
   }
 }

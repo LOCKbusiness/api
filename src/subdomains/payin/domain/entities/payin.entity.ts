@@ -29,7 +29,7 @@ export class PayIn extends IEntity {
   @Column({ nullable: true })
   returnTxId: string;
 
-  @Column({ type: 'integer', nullable: true })
+  @Column({ type: 'integer' })
   blockHeight: number;
 
   @Column({ type: 'float' })

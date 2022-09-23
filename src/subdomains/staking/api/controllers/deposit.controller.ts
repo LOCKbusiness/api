@@ -23,6 +23,6 @@ export class DepositController {
     @Param('stakingId') stakingId: string,
     @Body() dto: CreateDepositDto,
   ): Promise<StakingOutputDto> {
-    return this.stakingDepositService.createDeposit(jwt.userId, stakingId, dto);
+    return this.stakingDepositService.createDeposit(jwt.userId, jwt.walletId, +stakingId, dto);
   }
 }

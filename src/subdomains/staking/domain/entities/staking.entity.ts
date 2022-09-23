@@ -47,14 +47,8 @@ export class Staking extends IEntity {
   @Column({ type: 'float', nullable: false, default: 0 })
   rewardsAmount: number;
 
-  @Column({ type: 'float', nullable: false, default: 1 })
-  minimalStake: number;
-
-  @Column({ type: 'float', nullable: false, default: 0.01 })
-  minimalDeposit: number;
-
   @Column({ type: 'float', nullable: false, default: 0.05 })
-  stakingFee: number;
+  fee: number;
 
   //*** FACTORY METHODS ***//
 
@@ -63,8 +57,6 @@ export class Staking extends IEntity {
     depositAddress: StakingBlockchainAddress,
     withdrawalAddress: WalletBlockchainAddress,
     asset: Asset,
-    minimalStake: number,
-    minimalDeposit: number,
     stakingFee: number,
   ): Staking {
     const staking = new Staking();
@@ -82,14 +74,18 @@ export class Staking extends IEntity {
     staking.withdrawals = [];
     staking.rewards = [];
 
-    staking.minimalStake = minimalStake;
-    staking.minimalDeposit = minimalDeposit;
-    staking.stakingFee = stakingFee;
+    staking.fee = stakingFee;
 
     return staking;
   }
 
   //*** PUBLIC API ***//
+
+  block(): this {
+    this.status = StakingStatus.BLOCKED;
+
+    return this;
+  }
 
   addDeposit(deposit: Deposit): this {
     if (!this.deposits) this.deposits = [];
@@ -154,7 +150,7 @@ export class Staking extends IEntity {
   }
 
   setStakingFee(feePercent: number): this {
-    this.stakingFee = feePercent;
+    this.fee = feePercent;
 
     return this;
   }
@@ -247,7 +243,7 @@ export class Staking extends IEntity {
   private isEnoughBalanceForWithdrawal(withdrawal: Withdrawal): boolean {
     const currentBalance = this.balance - this.getInProgressWithdrawalsAmount();
 
-    return currentBalance > withdrawal.amount;
+    return currentBalance >= withdrawal.amount;
   }
 
   private getInProgressWithdrawalsAmount(): number {

@@ -33,11 +33,10 @@ export class StakingDepositService {
 
   //*** PUBLIC API ***//
 
-  async createDeposit(userId: number, stakingId: string, dto: CreateDepositDto): Promise<StakingOutputDto> {
-    await this.authorize.authorize(userId);
-    await this.kycCheck.check(userId);
+  async createDeposit(userId: number, walletId: number, stakingId: number, dto: CreateDepositDto): Promise<StakingOutputDto> {
+    await this.kycCheck.check(userId, walletId);
 
-    const staking = await this.repository.findOne(stakingId);
+    const staking = await this.authorize.authorize(userId, stakingId);
 
     const deposit = this.factory.createDeposit(staking, dto);
 
@@ -58,7 +57,7 @@ export class StakingDepositService {
       await this.recordDepositTransactions();
       await this.forwardDepositsToStaking();
     } catch (e) {
-      console.error('Exception during DeFiChain input checks:', e);
+      console.error('Exception during staking deposit checks:', e);
     } finally {
       this.lock.release();
     }
@@ -104,9 +103,14 @@ export class StakingDepositService {
   private async processNewDeposits(stakingPairs: [Staking, PayIn][]): Promise<void> {
     for (const [staking, payIn] of stakingPairs) {
       try {
-        if (staking.getConfirmedDeposits().length === 0) this.verifyFirstPayIn(staking, payIn);
+        const payInValid = staking.getConfirmedDeposits().length > 0 || (await this.isFirstPayInValid(staking, payIn));
 
-        this.createOrUpdateDeposit(staking, payIn);
+        if (payInValid) {
+          this.createOrUpdateDeposit(staking, payIn);
+        } else {
+          console.error(`Invalid first pay in, staking ${staking.id} is blocked`);
+          staking.block();
+        }
 
         await this.repository.save(staking);
         await this.payInService.acknowledgePayIn(payIn, PayInPurpose.CRYPTO_STAKING);
@@ -114,20 +118,9 @@ export class StakingDepositService {
     }
   }
 
-  private async verifyFirstPayIn(staking: Staking, payIn: PayIn): Promise<void> {
+  private async isFirstPayInValid(staking: Staking, payIn: PayIn): Promise<boolean> {
     const addresses = await this.deFiChainStakingService.getSourceAddresses(payIn.txId);
-
-    if (addresses.length === 0) throw new UnauthorizedException();
-
-    try {
-      const addressesValid = staking.verifyUserAddresses(addresses);
-
-      if (!addressesValid) throw new UnauthorizedException();
-    } catch (e) {
-      if (e instanceof NotFoundException) throw new UnauthorizedException();
-
-      throw e;
-    }
+    return staking.verifyUserAddresses(addresses);
   }
 
   private createOrUpdateDeposit(staking: Staking, payIn: PayIn): void {

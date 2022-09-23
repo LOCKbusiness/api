@@ -7,29 +7,35 @@ export class WalletDetailedDto {
     description: 'Address of the user',
   })
   address: string;
+
   @ApiProperty({
-    description: 'Address of the user',
+    description: 'Blockchain of the user',
     enum: Blockchain,
   })
   blockchain: Blockchain;
+
   @ApiPropertyOptional({
     description: 'Mail of the user',
   })
   mail: string;
+
   @ApiPropertyOptional({
     description: 'Phone number of the user',
   })
   phone: string;
+
   @ApiProperty({
     description: 'Language of the user',
   })
   language: string;
+
   @ApiProperty({
-    description: 'KycStatus of the user',
+    description: 'KYC status of the user',
   })
   kycStatus: KycStatus;
+
   @ApiPropertyOptional({
-    description: 'Kyc link of the user',
+    description: 'KYC link of the user',
     enum: KycStatus,
   })
   kycLink: string;

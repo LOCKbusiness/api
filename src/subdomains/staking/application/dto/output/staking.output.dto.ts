@@ -14,7 +14,7 @@ export class StakingOutputDto {
   minimalDeposit: number;
 
   @ApiProperty()
-  stakingFee: number;
+  fee: number;
 
   @ApiProperty()
   balance: number;

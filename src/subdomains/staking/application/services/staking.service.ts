@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
@@ -24,10 +24,14 @@ export class StakingService {
   //*** PUBLIC API ***//
 
   async createStaking(userId: number, walletId: number, dto: CreateStakingDto): Promise<StakingOutputDto> {
-    await this.kycCheck.check(userId);
+    await this.kycCheck.check(userId, walletId);
 
     const depositAddress = await this.addressService.getAvailableAddress();
     const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
+
+    // only one staking per address
+    const existingStaking = await this.repository.findOne({ where: { withdrawalAddress } });
+    if (existingStaking) throw new ConflictException();
 
     const staking = await this.factory.createStaking(userId, depositAddress, withdrawalAddress, dto);
 
@@ -36,16 +40,15 @@ export class StakingService {
     return StakingOutputDtoMapper.entityToDto(staking);
   }
 
-  async getStaking(userId: number, stakingId: string): Promise<StakingOutputDto> {
-    await this.authorize.authorize(userId);
-    await this.kycCheck.check(userId);
+  async getStaking(userId: number, walletId: number, stakingId: number): Promise<StakingOutputDto> {
+    await this.kycCheck.check(userId, walletId);
 
-    const staking = await this.repository.findOne(stakingId);
+    const staking = await this.authorize.authorize(userId, stakingId);
 
     return StakingOutputDtoMapper.entityToDto(staking);
   }
 
-  async setStakingFee(stakingId: string, dto: SetStakingFeeDto): Promise<void> {
+  async setStakingFee(stakingId: number, dto: SetStakingFeeDto): Promise<void> {
     const { feePercent } = dto;
     const staking = await this.repository.findOne(stakingId);
 

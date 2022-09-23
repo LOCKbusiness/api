@@ -9,11 +9,11 @@ export enum AssetCategory {
 }
 
 @Entity()
-@Index('nameBlockchain', (asset: Asset) => [asset.displayName, asset.blockchain], {
+@Index('nameBlockchain', (asset: Asset) => [asset.name, asset.blockchain], {
   unique: true,
 })
 export class Asset extends IEntity {
-  @Column({ nullable: true })
+  @Column()
   name: string;
 
   @Column()

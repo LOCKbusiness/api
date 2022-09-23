@@ -3,7 +3,6 @@ import { Interval } from '@nestjs/schedule';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { Lock } from 'src/shared/lock';
 import { AssetService } from 'src/shared/models/asset/asset.service';
-import { Not } from 'typeorm';
 import { PayIn, PayInPurpose, PayInStatus } from '../../domain/entities/payin.entity';
 import { PayInDeFiChainService } from '../../infrastructure/payin-crypto-defichain.service';
 import { PayInFactory } from '../factories/payin.factory';
@@ -24,7 +23,7 @@ export class PayInService {
   //*** PUBLIC API ***//
 
   async getNewPayInTransactions(): Promise<PayIn[]> {
-    return this.repository.find({ status: Not(PayInStatus.ACKNOWLEDGED) });
+    return this.repository.find({ status: PayInStatus.CREATED });
   }
 
   async acknowledgePayIn(payIn: PayIn, purpose: PayInPurpose): Promise<void> {
@@ -44,7 +43,7 @@ export class PayInService {
     try {
       await this.processNewPayInTransactions();
     } catch (e) {
-      console.error('Exception during DeFiChain input checks:', e);
+      console.error('Exception during DeFiChain pay in checks:', e);
     } finally {
       this.lock.release();
     }
@@ -60,7 +59,7 @@ export class PayInService {
     const newTransactions = await this.deFiChainService.getNewTransactionsSince(lastCheckedBlockHeight);
     const newPayIns = await this.createNewPayIns(newTransactions);
 
-    newPayIns.length > 0 && console.log(`New DeFiChain inputs (${newPayIns.length}):`, newPayIns);
+    newPayIns.length > 0 && console.log(`New DeFiChain pay ins (${newPayIns.length}):`, newPayIns);
 
     await this.persistPayIns(newPayIns);
   }
@@ -86,7 +85,7 @@ export class PayInService {
     });
 
     if (!assetEntity) {
-      const message = `Failed to process DeFiChain input. No asset ${tx.asset} found. PayInTransaction:`;
+      const message = `Failed to process DeFiChain pay in. No asset ${tx.asset} found. PayInTransaction:`;
       console.error(message, tx);
 
       throw new Error(message);
