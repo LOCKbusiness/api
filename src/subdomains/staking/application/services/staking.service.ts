@@ -24,7 +24,6 @@ export class StakingService {
 
   //*** PUBLIC API ***//
 
-  @Authorize
   @CheckKyc
   async createStaking(userId: number, dto: CreateStakingDto): Promise<StakingOutputDto> {
     const staking = await this.createStakingDraft(userId, dto);
