@@ -6,6 +6,7 @@ import { Authorize } from '../decorators/authorize.decorator';
 import { CheckKyc } from '../decorators/check-kyc.decorator';
 import { ConfirmWithdrawalDto } from '../dto/input/confirm-withdrawal.dto';
 import { CreateWithdrawalDto } from '../dto/input/create-withdrawal.dto';
+import { DesignateWithdrawalDto } from '../dto/input/designate-withdrawal.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
 import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
@@ -37,20 +38,21 @@ export class StakingWithdrawalService {
     return StakingOutputDtoMapper.entityToDto(staking);
   }
 
-  async designateWithdrawalPayout(stakingId: string, withdrawalId: string): Promise<void> {
+  async designateWithdrawalPayout(stakingId: string, withdrawalId: string, dto: DesignateWithdrawalDto): Promise<void> {
+    const { prepareTxId } = dto;
     const staking = await this.repository.findOne(stakingId);
 
     const withdrawal = staking.getWithdrawal(withdrawalId);
-    withdrawal.designateWithdrawalPayout();
+    withdrawal.designateWithdrawalPayout(prepareTxId);
 
     await this.repository.save(staking);
   }
 
   async confirmWithdrawal(stakingId: string, withdrawalId: string, dto: ConfirmWithdrawalDto): Promise<void> {
-    const { outputDate, txId } = dto;
+    const { outputDate, withdrawalTxId } = dto;
     const staking = await this.repository.findOne(stakingId);
 
-    staking.confirmWithdrawal(withdrawalId, outputDate, txId);
+    staking.confirmWithdrawal(withdrawalId, outputDate, withdrawalTxId);
 
     await this.repository.save(staking);
   }

@@ -38,6 +38,8 @@ export class StakingFactory {
   }
 
   createReward(staking: Staking, dto: CreateRewardDto): Reward {
-    return Reward.create(staking, dto.amount, dto.reinvestTxId, dto.reinvestOutputDate);
+    const { amount, reinvestTxId, reinvestOutputDate, fee, amountEur, amountUsd, amountChf } = dto;
+
+    return Reward.create(staking, amount, reinvestTxId, reinvestOutputDate, fee, amountEur, amountUsd, amountChf);
   }
 }

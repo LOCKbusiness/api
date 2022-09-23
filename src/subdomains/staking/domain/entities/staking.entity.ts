@@ -117,10 +117,10 @@ export class Staking extends IEntity {
     return this;
   }
 
-  confirmWithdrawal(withdrawalId: string, outputDate: Date, txId: string): this {
+  confirmWithdrawal(withdrawalId: string, outputDate: Date, withdrawalTxId: string): this {
     const withdrawal = this.getWithdrawal(withdrawalId);
 
-    withdrawal.confirmWithdrawal(outputDate, txId);
+    withdrawal.confirmWithdrawal(outputDate, withdrawalTxId);
     this.updateBalance();
 
     return this;

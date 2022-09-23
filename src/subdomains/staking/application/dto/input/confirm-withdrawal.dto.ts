@@ -12,5 +12,5 @@ export class ConfirmWithdrawalDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  txId: string;
+  withdrawalTxId: string;
 }

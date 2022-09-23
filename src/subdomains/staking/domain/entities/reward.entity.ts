@@ -28,9 +28,32 @@ export class Reward extends IEntity {
   @Column({ nullable: true })
   reinvestOutputDate: Date;
 
+  //*** REFERENCE DATA ***//
+
+  @Column({ type: 'float', nullable: false, default: 0 })
+  fee: number;
+
+  @Column({ type: 'float', nullable: false, default: 0 })
+  amountEur: number;
+
+  @Column({ type: 'float', nullable: false, default: 0 })
+  amountUsd: number;
+
+  @Column({ type: 'float', nullable: false, default: 0 })
+  amountChf: number;
+
   //*** FACTORY METHODS ***//
 
-  static create(staking: Staking, amount: number, reinvestTxId: string, reinvestOutputDate: Date): Reward {
+  static create(
+    staking: Staking,
+    amount: number,
+    reinvestTxId: string,
+    reinvestOutputDate: Date,
+    fee: number,
+    amountEur: number,
+    amountUsd: number,
+    amountChf: number,
+  ): Reward {
     const reward = new Reward();
 
     reward.staking = staking;
@@ -40,6 +63,11 @@ export class Reward extends IEntity {
     reward.amount = amount;
     reward.reinvestTxId = reinvestTxId;
     reward.reinvestOutputDate = reinvestOutputDate;
+
+    reward.fee = fee;
+    reward.amountEur = amountEur;
+    reward.amountUsd = amountUsd;
+    reward.amountChf = amountChf;
 
     return reward;
   }

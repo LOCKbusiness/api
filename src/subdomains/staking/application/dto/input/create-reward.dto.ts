@@ -21,4 +21,24 @@ export class CreateRewardDto {
   @IsNotEmpty()
   @IsDate()
   reinvestOutputDate: Date;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsNumber()
+  fee: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsNumber()
+  amountEur: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsNumber()
+  amountUsd: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsNumber()
+  amountChf: number;
 }
