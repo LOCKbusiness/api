@@ -1,6 +1,6 @@
 import { IEntity } from 'src/shared/models/entity';
 import { Column, Entity, Index } from 'typeorm';
-import { MasternodeState } from '../../../../domain/enums';
+import { MasternodeState } from '../../../../subdomains/staking/domain/enums';
 
 @Entity()
 export class Masternode extends IEntity {

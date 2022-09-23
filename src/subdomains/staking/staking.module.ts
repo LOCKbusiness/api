@@ -17,9 +17,9 @@ import { StakingRewardService } from './application/services/staking-reward.serv
 import { StakingWithdrawalService } from './application/services/staking-withdrawal.service';
 import { StakingService } from './application/services/staking.service';
 import { StakingDeFiChainService } from './infrastructre/staking-defichain.service';
-import { MasternodeController } from './infrastructre/masternode/api/controllers/masternode.controller';
-import { MasternodeRepository } from './infrastructre/masternode/application/repositories/masternode.repository';
-import { MasternodeService } from './infrastructre/masternode/application/services/masternode.service';
+import { MasternodeController } from '../../integration/masternode/api/controllers/masternode.controller';
+import { MasternodeRepository } from '../../integration/masternode/application/repositories/masternode.repository';
+import { MasternodeService } from '../../integration/masternode/application/services/masternode.service';
 
 @Module({
   imports: [

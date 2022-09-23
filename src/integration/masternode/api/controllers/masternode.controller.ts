@@ -6,7 +6,7 @@ import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { ResignMasternodeDto } from '../../application/dto/resign-masternode.dto';
 import { MasternodeService } from '../../application/services/masternode.service';
 import { Masternode } from '../../domain/entities/masternode.entity';
-import { MasternodeState } from '../../../../domain/enums';
+import { MasternodeState } from '../../../../subdomains/staking/domain/enums';
 import { CreateMasternodeDto } from '../../application/dto/create-masternode.dto';
 import { PrepareResignMasternodeDto } from '../../application/dto/prepare-resign-masternode.dto';
 
