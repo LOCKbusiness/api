@@ -11,6 +11,7 @@ import { NodeClient, NodeMode } from './node-client';
 export enum NodeType {
   INPUT = 'inp',
   REW = 'rew',
+  LIQ = 'liq',
 }
 
 export interface NodeError {
@@ -90,6 +91,7 @@ export class NodeService {
   private initAllNodes(): void {
     this.addNodeClientPair(NodeType.INPUT, Config.blockchain.default.inp);
     this.addNodeClientPair(NodeType.REW, Config.blockchain.default.rew);
+    this.addNodeClientPair(NodeType.LIQ, Config.blockchain.default.liq);
   }
 
   private addNodeClientPair(type: NodeType, config: { active: string; passive: string }): void {

@@ -1,12 +1,16 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
+import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
+import { Config } from 'src/config/config';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { Staking } from '../../domain/entities/staking.entity';
+import { Withdrawal } from '../../domain/entities/withdrawal.entity';
+import { WithdrawalStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
 import { ConfirmWithdrawalDto } from '../dto/input/confirm-withdrawal.dto';
 import { CreateWithdrawalDto } from '../dto/input/create-withdrawal.dto';
-import { DesignateWithdrawalDto } from '../dto/input/designate-withdrawal.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
 import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
@@ -14,6 +18,8 @@ import { StakingRepository } from '../repositories/staking.repository';
 
 @Injectable()
 export class StakingWithdrawalService {
+  private client: DeFiClient;
+
   constructor(
     public readonly repository: StakingRepository,
     public readonly userService: UserService,
@@ -21,11 +27,19 @@ export class StakingWithdrawalService {
     private readonly kycCheck: StakingKycCheckService,
     private readonly factory: StakingFactory,
     private readonly cryptoService: CryptoService,
-  ) {}
+    nodeService: NodeService,
+  ) {
+    nodeService.getConnectedNode(NodeType.LIQ).subscribe((c) => (this.client = c));
+  }
 
   //*** PUBLIC API ***//
 
-  async createWithdrawal(userId: number, walletId: number, stakingId: number, dto: CreateWithdrawalDto): Promise<StakingOutputDto> {
+  async createWithdrawal(
+    userId: number,
+    walletId: number,
+    stakingId: number,
+    dto: CreateWithdrawalDto,
+  ): Promise<StakingOutputDto> {
     await this.kycCheck.check(userId, walletId);
 
     const staking = await this.authorize.authorize(userId, stakingId);
@@ -40,14 +54,27 @@ export class StakingWithdrawalService {
     return StakingOutputDtoMapper.entityToDto(staking);
   }
 
-  async designateWithdrawalPayout(stakingId: number, withdrawalId: string, dto: DesignateWithdrawalDto): Promise<void> {
-    const { prepareTxId } = dto;
-    const staking = await this.repository.findOne(stakingId);
+  async getStakingWithPendingWithdrawals(): Promise<Staking[]> {
+    return await this.repository
+      .createQueryBuilder('staking')
+      .leftJoinAndSelect('staking.withdrawals', 'withdrawal')
+      .where('withdrawal.status = :status', { status: WithdrawalStatus.PENDING })
+      .getMany();
+  }
 
-    const withdrawal = staking.getWithdrawal(withdrawalId);
-    withdrawal.designateWithdrawalPayout(prepareTxId);
+  async prepareWithdrawal(withdrawal: Withdrawal): Promise<void> {
+    const tx = await this.client.sendUtxoToMany([
+      {
+        addressTo: Config.staking.payoutWalletAddress,
+        amount: withdrawal.amount + this.client.utxoFee,
+      },
+    ]);
 
-    await this.repository.save(staking);
+    await this.client.waitForTx(tx).catch((e) => console.error(`Wait for withdrawal prepare transaction failed: ${e}`));
+
+    withdrawal.designateWithdrawalPayout(tx);
+
+    this.repository.save(withdrawal.staking);
   }
 
   async confirmWithdrawal(stakingId: number, withdrawalId: string, dto: ConfirmWithdrawalDto): Promise<void> {
