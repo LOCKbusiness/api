@@ -11,10 +11,10 @@ import { Config } from 'src/config/config';
 import { WalletService } from 'src/subdomains/user/application/services/wallet.service';
 import { Wallet } from 'src/subdomains/user/domain/entities/wallet.entity';
 import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
-import { SignUpDto } from '../auth/dto/sign-up.dto';
-import { SignInDto } from '../auth/dto/sign-in.dto';
-import { AuthResponseDto } from '../auth/dto/auth-response.dto';
-import { SignMessageDto } from '../auth/dto/sign-message.dto';
+import { SignInDto } from '../dto/sign-in.dto';
+import { AuthResponseDto } from '../dto/auth-response.dto';
+import { SignUpDto } from 'src/subdomains/user/application/dto/sign-up.dto';
+import { SignMessageDto } from 'src/subdomains/user/application/dto/sign-message.dto';
 
 @Injectable()
 export class AuthService {
