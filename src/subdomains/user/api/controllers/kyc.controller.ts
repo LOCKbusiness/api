@@ -35,7 +35,7 @@ export class KycController {
 
   // --- KYC SERVICE--- //
 
-  @Get('kycId')
+  @Get('check')
   @UseGuards(AuthGuard('api-key'))
   @ApiExcludeEndpoint()
   async getKycId(@RealIP() ip: string, @Query('address') address: string): Promise<{ kycId: string }> {
@@ -43,7 +43,7 @@ export class KycController {
     return { kycId: await this.walletService.getKycIdByAddress(address) };
   }
 
-  @Post('handoverKyc')
+  @Post('update')
   @UseGuards(AuthGuard('api-key'))
   @ApiExcludeEndpoint()
   async handoverKycWebhook(@RealIP() ip: string, @Body() dto: KycWebhookDto) {

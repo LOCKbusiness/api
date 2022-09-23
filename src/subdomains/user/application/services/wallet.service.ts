@@ -9,9 +9,9 @@ import { GeoLocationService } from './geo-location.service';
 import { UserService } from './user.service';
 import { WalletProviderService } from './wallet-provider.service';
 import { WalletProvider } from '../../domain/entities/wallet-provider.entity';
-import { SignUpDto } from 'src/shared/auth/dto/sign-up.dto';
 import { WalletDetailedDto } from '../dto/wallet-detailed.dto';
 import { WalletBlockchainAddress } from '../../domain/entities/wallet-blockchain-address.entity';
+import { SignUpDto } from '../dto/sign-up.dto';
 
 @Injectable()
 export class WalletService {
@@ -32,15 +32,15 @@ export class WalletService {
 
   async getByAddress(address: string, needsRelation = false): Promise<Wallet> {
     return this.walletRepo.findOne({
-      where: { address },
-      relations: needsRelation ? ['user', 'walletProvider'] : [],
+      where: { address: { address } },
+      relations: needsRelation ? ['address', 'user', 'walletProvider'] : [],
     });
   }
 
   async getKycIdByAddress(address: string): Promise<string> {
     const wallet = await this.walletRepo.findOne({
-      where: { address },
-      relations: ['user'],
+      where: { address: { address } },
+      relations: ['address', 'user'],
     });
 
     if (!wallet) throw new NotFoundException('Wallet not available');
