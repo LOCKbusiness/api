@@ -1,4 +1,4 @@
-import { IEntity } from 'src/shared/entities/entity';
+import { IEntity } from 'src/shared/models/entity';
 import { Column, Entity, Index } from 'typeorm';
 import { MasternodeState } from '../../../../domain/enums';
 
