@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { Lock } from 'src/shared/lock';
 import { PayInService } from 'src/subdomains/payin/application/services/payin.service';
@@ -33,7 +33,12 @@ export class StakingDepositService {
 
   //*** PUBLIC API ***//
 
-  async createDeposit(userId: number, walletId: number, stakingId: number, dto: CreateDepositDto): Promise<StakingOutputDto> {
+  async createDeposit(
+    userId: number,
+    walletId: number,
+    stakingId: number,
+    dto: CreateDepositDto,
+  ): Promise<StakingOutputDto> {
     await this.kycCheck.check(userId, walletId);
 
     const staking = await this.authorize.authorize(userId, stakingId);
