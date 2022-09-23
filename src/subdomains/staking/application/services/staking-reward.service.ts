@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { CheckKyc } from '../decorators/check-kyc.decorator';
 import { CreateRewardDto } from '../dto/input/create-reward.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
@@ -8,12 +9,16 @@ import { StakingRepository } from '../repositories/staking.repository';
 
 @Injectable()
 export class StakingRewardService {
-  constructor(private readonly factory: StakingFactory, private readonly repository: StakingRepository) {}
+  constructor(
+    public readonly userService: UserService,
+    private readonly factory: StakingFactory,
+    private readonly repository: StakingRepository,
+  ) {}
 
   //*** PUBLIC API ***//
 
-  @CheckKyc()
-  async createReward(userId: number, stakingId: string, dto: CreateRewardDto): Promise<StakingOutputDto> {
+  @CheckKyc
+  async createReward(_userId: number, stakingId: string, dto: CreateRewardDto): Promise<StakingOutputDto> {
     const staking = await this.repository.findOne(stakingId);
 
     const reward = this.factory.createReward(staking, dto);

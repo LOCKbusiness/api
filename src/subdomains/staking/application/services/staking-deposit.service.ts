@@ -3,6 +3,7 @@ import { Interval } from '@nestjs/schedule';
 import { Lock } from 'src/shared/lock';
 import { PayInService } from 'src/subdomains/payin/application/services/payin.service';
 import { PayIn, PayInPurpose } from 'src/subdomains/payin/domain/entities/payin.entity';
+import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { StakingBlockchainAddress } from '../../domain/entities/staking-blockchain-address.entity';
 import { Staking } from '../../domain/entities/staking.entity';
@@ -20,17 +21,18 @@ export class StakingDepositService {
   private readonly lock = new Lock(7200);
 
   constructor(
+    public readonly repository: StakingRepository,
+    public readonly userService: UserService,
     private readonly factory: StakingFactory,
-    private readonly repository: StakingRepository,
     private readonly deFiChainStakingService: StakingDeFiChainService,
     private readonly payInService: PayInService,
   ) {}
 
   //*** PUBLIC API ***//
 
-  @Authorize()
-  @CheckKyc()
-  async createDeposit(userId: number, stakingId: string, dto: CreateDepositDto): Promise<StakingOutputDto> {
+  @Authorize
+  @CheckKyc
+  async createDeposit(_userId: number, stakingId: string, dto: CreateDepositDto): Promise<StakingOutputDto> {
     // TODO - to add relations
     const staking = await this.repository.findOne(stakingId);
 

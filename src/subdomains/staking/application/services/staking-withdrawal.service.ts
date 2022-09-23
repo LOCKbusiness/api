@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
+import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { Staking } from '../../domain/entities/staking.entity';
-import { StakingDeFiChainService } from '../../infrastructre/staking-defichain.service';
 import { Authorize } from '../decorators/authorize.decorator';
 import { CheckKyc } from '../decorators/check-kyc.decorator';
 import { ConfirmWithdrawalDto } from '../dto/input/confirm-withdrawal.dto';
@@ -15,17 +15,17 @@ import { StakingRepository } from '../repositories/staking.repository';
 @Injectable()
 export class StakingWithdrawalService {
   constructor(
+    public readonly repository: StakingRepository,
+    public readonly userService: UserService,
     private readonly factory: StakingFactory,
-    private readonly repository: StakingRepository,
     private readonly cryptoService: CryptoService,
-    private readonly deFiChainStakingService: StakingDeFiChainService,
   ) {}
 
   //*** PUBLIC API ***//
 
-  @Authorize()
-  @CheckKyc()
-  async createWithdrawal(userId: number, stakingId: string, dto: CreateWithdrawalDto): Promise<StakingOutputDto> {
+  @Authorize
+  @CheckKyc
+  async createWithdrawal(_userId: number, stakingId: string, dto: CreateWithdrawalDto): Promise<StakingOutputDto> {
     const staking = await this.repository.findOne(stakingId);
     const withdrawal = this.factory.createWithdrawal(staking, dto);
 

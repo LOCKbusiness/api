@@ -14,7 +14,7 @@ import { CreateWithdrawalDto } from '../dto/input/create-withdrawal.dto';
 export class StakingFactory {
   constructor(private readonly assetService: AssetService) {}
 
-  async createStaking(dto: CreateStakingDto): Promise<Staking> {
+  async createStaking(userId: number, dto: CreateStakingDto): Promise<Staking> {
     const { assetName: name, blockchain } = dto;
     const {
       staking: { minimalStake, minimalDeposit, stakingFee },
@@ -22,7 +22,7 @@ export class StakingFactory {
 
     const asset = await this.assetService.getAssetByQuery({ name, blockchain });
 
-    return Staking.create(asset, minimalStake, minimalDeposit, stakingFee);
+    return Staking.create(userId, asset, minimalStake, minimalDeposit, stakingFee);
   }
 
   createDeposit(staking: Staking, dto: CreateDepositDto): Deposit {

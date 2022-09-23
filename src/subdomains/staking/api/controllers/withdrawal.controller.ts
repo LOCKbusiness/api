@@ -9,6 +9,7 @@ import { StakingWithdrawalService } from '../../application/services/staking-wit
 import { ConfirmWithdrawalDto } from '../../application/dto/input/confirm-withdrawal.dto';
 import { CreateWithdrawalDto } from '../../application/dto/input/create-withdrawal.dto';
 import { StakingOutputDto } from '../../application/dto/output/staking.output.dto';
+import { DesignateWithdrawalDto } from '../../application/dto/input/designate-withdrawal.dto';
 
 @ApiTags('withdrawal')
 @Controller('staking/:stakingId/withdrawal')
@@ -38,8 +39,9 @@ export class WithdrawalController {
   async designateWithdrawalPayout(
     @Param('stakingId') stakingId: string,
     @Param('id') withdrawalId: string,
+    @Body() dto: DesignateWithdrawalDto,
   ): Promise<void> {
-    await this.stakingWithdrawalService.designateWithdrawalPayout(stakingId, withdrawalId);
+    await this.stakingWithdrawalService.designateWithdrawalPayout(stakingId, withdrawalId, dto);
   }
 
   @Patch(':id/confirm')

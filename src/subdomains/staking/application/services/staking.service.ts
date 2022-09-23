@@ -16,18 +16,18 @@ import { StakingBlockchainAddressService } from './staking-blockchain-address.se
 @Injectable()
 export class StakingService {
   constructor(
+    public readonly repository: StakingRepository,
+    public readonly userService: UserService,
     private readonly factory: StakingFactory,
-    private readonly repository: StakingRepository,
     private readonly addressService: StakingBlockchainAddressService,
-    private readonly userService: UserService,
   ) {}
 
   //*** PUBLIC API ***//
 
-  @Authorize()
-  @CheckKyc()
+  @Authorize
+  @CheckKyc
   async createStaking(userId: number, dto: CreateStakingDto): Promise<StakingOutputDto> {
-    const staking = await this.createStakingDraft(dto);
+    const staking = await this.createStakingDraft(userId, dto);
 
     const depositAddress = await this.addressService.getAvailableAddressForStaking(staking);
     const withdrawalAddress = await this.userService.getWalletAddress(userId);
@@ -37,15 +37,15 @@ export class StakingService {
     return StakingOutputDtoMapper.entityToDto(staking);
   }
 
-  @Authorize()
-  @CheckKyc()
-  async getStaking(userId: number, stakingId: string): Promise<StakingOutputDto> {
+  @Authorize
+  @CheckKyc
+  async getStaking(_userId: number, stakingId: string): Promise<StakingOutputDto> {
     const staking = await this.repository.findOne(stakingId);
 
     return StakingOutputDtoMapper.entityToDto(staking);
   }
 
-  async setStakingFee(userId: number, stakingId: string, dto: SetStakingFeeDto): Promise<void> {
+  async setStakingFee(stakingId: string, dto: SetStakingFeeDto): Promise<void> {
     const { feePercent } = dto;
     const staking = await this.repository.findOne(stakingId);
 
@@ -56,8 +56,8 @@ export class StakingService {
 
   //*** HELPER METHODS ***//
 
-  private async createStakingDraft(dto: CreateStakingDto): Promise<Staking> {
-    const stakingDraft = await this.factory.createStaking(dto);
+  private async createStakingDraft(userId: number, dto: CreateStakingDto): Promise<Staking> {
+    const stakingDraft = await this.factory.createStaking(userId, dto);
 
     return this.repository.save(stakingDraft);
   }

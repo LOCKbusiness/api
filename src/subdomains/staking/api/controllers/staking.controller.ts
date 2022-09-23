@@ -35,11 +35,7 @@ export class StakingController {
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
-  async setStakingFee(
-    @GetJwt() jwt: JwtPayload,
-    @Param('id') stakingId: string,
-    @Body() dto: SetStakingFeeDto,
-  ): Promise<void> {
-    return this.stakingService.setStakingFee(jwt.userId, stakingId, dto);
+  async setStakingFee(@Param('id') stakingId: string, @Body() dto: SetStakingFeeDto): Promise<void> {
+    return this.stakingService.setStakingFee(stakingId, dto);
   }
 }

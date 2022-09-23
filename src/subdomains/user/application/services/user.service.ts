@@ -38,6 +38,10 @@ export class UserService {
     return user.kycStatus;
   }
 
+  async isKycSuccessful(userId: number): Promise<boolean> {
+    return [KycStatus.FULL, KycStatus.LIGHT].includes(await this.getKycStatus(userId));
+  }
+
   async getWalletAddress(userId: number): Promise<UserBlockchainAddress> {
     const user = await this.userRepo.findOne({ where: { id: userId }, relations: ['wallets'] });
 

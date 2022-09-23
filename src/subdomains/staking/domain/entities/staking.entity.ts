@@ -13,6 +13,9 @@ import { UserBlockchainAddress } from 'src/subdomains/user/domain/entities/user-
 
 @Entity()
 export class Staking extends IEntity {
+  @Column({ type: 'int', nullable: false })
+  userId: number;
+
   @Column({ length: 256, nullable: false })
   status: StakingStatus;
 
@@ -55,9 +58,16 @@ export class Staking extends IEntity {
 
   //*** FACTORY METHODS ***//
 
-  static create(asset: Asset, minimalStake: number, minimalDeposit: number, stakingFee: number): Staking {
+  static create(
+    userId: number,
+    asset: Asset,
+    minimalStake: number,
+    minimalDeposit: number,
+    stakingFee: number,
+  ): Staking {
     const staking = new Staking();
 
+    staking.userId = userId;
     staking.status = StakingStatus.DRAFT;
     staking.asset = asset;
     staking.balance = 0;
