@@ -10,6 +10,7 @@ import { MasternodeState } from '../../../../subdomains/staking/domain/enums';
 import { ResignMasternodeDto } from '../dto/resign-masternode.dto';
 import { MasternodeRepository } from '../repositories/masternode.repository';
 import { CreateMasternodeDto } from '../dto/create-masternode.dto';
+import { AddMasternodeFee } from '../dto/add-masternode-fee.dto';
 
 @Injectable()
 export class MasternodeService {
@@ -66,6 +67,19 @@ export class MasternodeService {
       where: { creationFeePaid: false },
     });
     return unpaidMasternodeFee * 10;
+  }
+
+  //Add masternode creationFee
+  async addFee(addMasternodeFee: AddMasternodeFee): Promise<void> {
+    const unpaidMasternodeFee = await this.masternodeRepo.find({
+      where: { creationFeePaid: false },
+    });
+
+    const paidMasternode = Math.abs(addMasternodeFee.feeAmount / 10);
+    for (let mn = 0; mn < paidMasternode; mn++) {
+      unpaidMasternodeFee[mn].creationFeePaid = true;
+      await this.masternodeRepo.save(unpaidMasternodeFee);
+    }
   }
 
   async create(id: number, dto: CreateMasternodeDto): Promise<Masternode> {
