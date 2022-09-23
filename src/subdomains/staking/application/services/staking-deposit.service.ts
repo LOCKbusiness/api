@@ -7,6 +7,7 @@ import { UserService } from 'src/subdomains/user/application/services/user.servi
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { StakingBlockchainAddress } from '../../domain/entities/staking-blockchain-address.entity';
 import { Staking } from '../../domain/entities/staking.entity';
+import { DepositStatus, StakingStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingDeFiChainService } from '../../infrastructure/staking-defichain.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
@@ -36,7 +37,6 @@ export class StakingDepositService {
     await this.authorize.authorize(userId);
     await this.kycCheck.check(userId);
 
-    // TODO - to add relations
     const staking = await this.repository.findOne(stakingId);
 
     const deposit = this.factory.createDeposit(staking, dto);
@@ -68,6 +68,9 @@ export class StakingDepositService {
 
   private async recordDepositTransactions(): Promise<void> {
     const newPayInTransactions = await this.payInService.getNewPayInTransactions();
+
+    if (!newPayInTransactions) return;
+
     const stakingPayIns = await this.filterStakingPayIns(newPayInTransactions);
     const stakingPairs = await this.getStakingsForPayIns(stakingPayIns);
 
@@ -75,13 +78,13 @@ export class StakingDepositService {
   }
 
   private async filterStakingPayIns(allPayIns: PayIn[]): Promise<PayIn[]> {
-    // TODO - Temp - this query is wrong, lookup for proper query
-    const stakingAddresses = (await this.repository
+    const stakingAddresses = await this.repository
       .createQueryBuilder('staking')
-      .leftJoin('staking.withdrawalAddress', 'withdrawalAddress')
-      .select('withdrawalAddress')
-      .where('staking.status = Active')
-      .getMany()) as unknown as string[];
+      .leftJoin('staking.depositAddress', 'depositAddress')
+      .select('depositAddress.address', 'address')
+      .where('staking.status = :status', { status: StakingStatus.ACTIVE })
+      .getRawMany<{ address: string }>()
+      .then((a) => a.map((a) => a.address));
 
     return allPayIns.filter((p) => stakingAddresses.includes(p.address.address));
   }
@@ -90,7 +93,6 @@ export class StakingDepositService {
     const stakingPairs = [];
 
     for (const payIn of stakingPayIns) {
-      // TODO - add relations
       const staking = await this.repository.findOne({ withdrawalAddress: payIn.address });
 
       stakingPairs.push([payIn, staking]);
@@ -145,15 +147,21 @@ export class StakingDepositService {
   }
 
   private async forwardDepositsToStaking(): Promise<void> {
-    // TODO - create query to find all stakings with pending deposites
-    const stakingsWithPendingDeposits = await this.repository.find({});
+    // not querying Stakings, because eager query is not supported, thus unsafe to fetch entire entity
+    const stakingIdsWithPendingDeposits = await this.repository
+      .createQueryBuilder('staking')
+      .leftJoin('staking.deposits', 'deposits')
+      .where('deposits.status = :status', { status: DepositStatus.PENDING })
+      .getMany()
+      .then((s) => s.map((i) => i.id));
 
-    for (const staking of stakingsWithPendingDeposits) {
-      await this.processPendingDepositsForStaking(staking);
+    for (const stakingId of stakingIdsWithPendingDeposits) {
+      await this.processPendingDepositsForStaking(stakingId);
     }
   }
 
-  private async processPendingDepositsForStaking(staking: Staking): Promise<void> {
+  private async processPendingDepositsForStaking(stakingId: number): Promise<void> {
+    const staking = await this.repository.findOne(stakingId);
     const deposits = staking.getPendingDeposits();
 
     for (const deposit of deposits) {
