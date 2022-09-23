@@ -18,7 +18,9 @@ param nodeAllowAllIps bool
 param nodePassword string
 @secure()
 param nodeWalletPassword string
-param stakingWalletAddress string
+param stakingLiquidityWalletAddress string
+param stakingMasternodeWalletAddress string
+param stakingPayoutWalletAddress string
 
 param nodeServicePlanSkuName string
 param nodeServicePlanSkuTier string
@@ -64,11 +66,18 @@ var nodeProps = [
     fileShareNameB: 'node-inp-data-b'
   }
   {
-    name: 'nodes-rewards-${env}'
+    name: 'nodes-reward-${env}'
     servicePlanName: 'plan-${compName}-${nodeName}-rew-${env}'
     appName: 'app-${compName}-${nodeName}-rew-${env}'
     fileShareNameA: 'node-rew-data-a'
     fileShareNameB: 'node-rew-data-b'
+  }
+  {
+    name: 'nodes-liq-${env}'
+    servicePlanName: 'plan-${compName}-${nodeName}-liq-${env}'
+    appName: 'app-${compName}-${nodeName}-liq-${env}'
+    fileShareNameA: 'node-liq-data-a'
+    fileShareNameB: 'node-liq-data-b'
   }
 ]
 
@@ -304,8 +313,24 @@ resource apiAppService 'Microsoft.Web/sites@2018-11-01' = if (env != 'loc') {
           value: nodes[1].outputs.urlStg
         }
         {
-          name: 'STAKING_WALLET_ADDRESS'
-          value: stakingWalletAddress
+          name: 'NODE_LIQ_URL_ACTIVE'
+          value: nodes[2].outputs.url
+        }
+        {
+          name: 'NODE_LIQ_URL_PASSIVE'
+          value: nodes[2].outputs.urlStg
+        }
+        {
+          name: 'STAKING_LIQUIDITY_WALLET_ADDRESS'
+          value: stakingLiquidityWalletAddress
+        }
+        {
+          name: 'STAKING_MASTERNODE_WALLET_ADDRESS'
+          value: stakingMasternodeWalletAddress
+        }
+        {
+          name: 'STAKING_PAYOUT_WALLET_ADDRESS'
+          value: stakingPayoutWalletAddress
         }
         {
           name: 'MYDEFICHAIN_USER'

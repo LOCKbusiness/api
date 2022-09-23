@@ -35,7 +35,13 @@
     "nodeWalletPassword": {
       "value": "xxx"
     },
-    "stakingWalletAddress": {
+    "stakingLiquidityWalletAddress": {
+      "value": "xxx"
+    },
+    "stakingMasternodeWalletAddress": {
+      "value": "xxx"
+    },
+    "stakingPayoutWalletAddress": {
       "value": "xxx"
     },
     "nodeServicePlanSkuName": {
