@@ -17,6 +17,13 @@ export class StakingDeFiChainService {
     return this.forwardUtxo(sourceAddress, Config.blockchain.default.stakingWalletAddress, amount);
   }
 
+  async getSourceAddresses(txId: string): Promise<string[]> {
+    const transaction = await this.client.getTx(txId);
+    const transactionDetails = transaction.details ?? [];
+
+    return transactionDetails.map((d) => d.address);
+  }
+
   //*** HELPER METHODS **//
 
   private async forwardUtxo(sourceAddress: string, targetAddress: string, amount: number): Promise<string> {

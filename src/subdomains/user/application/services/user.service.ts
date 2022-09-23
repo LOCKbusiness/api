@@ -48,4 +48,12 @@ export class UserService {
     // TODO - implement User Address fetch
     return null;
   }
+
+  async verifyUserAddresses(userId: number, inputAddresses: string[]): Promise<boolean> {
+    const user = await this.userRepo.findOne({ where: { id: userId }, relations: ['wallets'] });
+
+    const userAddresses = user.wallets.map((w) => w.address);
+
+    return inputAddresses.every((a) => userAddresses.includes(a));
+  }
 }

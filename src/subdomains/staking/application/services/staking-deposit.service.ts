@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { Lock } from 'src/shared/lock';
 import { PayInService } from 'src/subdomains/payin/application/services/payin.service';
@@ -110,10 +110,13 @@ export class StakingDepositService {
   }
 
   private async verifyFirstPayIn(staking: Staking, payIn: PayIn): Promise<void> {
-    // get real source address
-    // verify addresses
-    // this.userService.verifyUserAddress(sourceAddress);
-    // throw Unauth if not
+    const addresses = await this.deFiChainStakingService.getSourceAddresses(payIn.txId);
+
+    if (addresses.length === 0) throw new UnauthorizedException();
+
+    const addressesValid = await this.userService.verifyUserAddresses(staking.userId, addresses);
+
+    if (!addressesValid) throw new UnauthorizedException();
   }
 
   private createOrUpdateDeposit(staking: Staking, payIn: PayIn): void {
