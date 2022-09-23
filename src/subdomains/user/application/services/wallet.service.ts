@@ -33,7 +33,7 @@ export class WalletService {
   async getByAddress(address: string, needsRelation = false): Promise<Wallet> {
     return this.walletRepo.findOne({
       where: { address: { address } },
-      relations: needsRelation ? ['address', 'user', 'walletProvider'] : [],
+      relations: needsRelation ? ['address', 'user', 'walletProvider'] : ['address'],
     });
   }
 
