@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsDate, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class CreateRewardDto {
@@ -20,6 +21,7 @@ export class CreateRewardDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsDate()
+  @Type(() => Date)
   reinvestOutputDate: Date;
 
   @ApiProperty()

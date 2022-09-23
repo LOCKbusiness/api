@@ -25,17 +25,17 @@ export class Staking extends IEntity {
   @Column({ type: 'float', nullable: false, default: 0 })
   balance: number;
 
-  @OneToOne(() => StakingBlockchainAddress, (address) => address.staking, { eager: true, nullable: false })
+  @OneToOne(() => StakingBlockchainAddress, { eager: true, nullable: false })
   @JoinColumn()
   depositAddress: StakingBlockchainAddress;
 
-  @OneToMany(() => Deposit, (deposit) => deposit.staking, { cascade: true })
+  @OneToMany(() => Deposit, (deposit) => deposit.staking, { eager: true, cascade: true })
   deposits: Deposit[];
 
   @ManyToOne(() => WalletBlockchainAddress, { eager: true, nullable: false })
   withdrawalAddress: WalletBlockchainAddress;
 
-  @OneToMany(() => Withdrawal, (withdrawal) => withdrawal.staking, { cascade: true })
+  @OneToMany(() => Withdrawal, (withdrawal) => withdrawal.staking, { eager: true, cascade: true })
   withdrawals: Withdrawal[];
 
   @ManyToOne(() => WalletBlockchainAddress, { eager: true, nullable: false })
@@ -93,6 +93,9 @@ export class Staking extends IEntity {
 
   addDeposit(deposit: Deposit): this {
     if (!this.deposits) this.deposits = [];
+    if (this.deposits.length === 0) this.status = StakingStatus.ACTIVE;
+
+    if (this.status !== StakingStatus.ACTIVE) throw new BadRequestException('Staking is inactive');
 
     this.deposits.push(deposit);
     this.updateBalance();
@@ -127,6 +130,15 @@ export class Staking extends IEntity {
     const withdrawal = this.getWithdrawal(withdrawalId);
 
     withdrawal.confirmWithdrawal(outputDate, withdrawalTxId);
+    this.updateBalance();
+
+    return this;
+  }
+
+  failWithdrawal(withdrawalId: string): this {
+    const withdrawal = this.getWithdrawal(withdrawalId);
+
+    withdrawal.failWithdrawal();
     this.updateBalance();
 
     return this;
@@ -206,9 +218,7 @@ export class Staking extends IEntity {
   }
 
   getPendingWithdrawalsAmount(): number {
-    const pendingWithdrawals = this.getWithdrawalsByStatus(WithdrawalStatus.PENDING);
-
-    return Util.sum(pendingWithdrawals.map((w) => w.amount));
+    return this.getInProgressWithdrawalsAmount();
   }
 
   //*** HELPER METHODS ***//
@@ -235,15 +245,19 @@ export class Staking extends IEntity {
   }
 
   private isEnoughBalanceForWithdrawal(withdrawal: Withdrawal): boolean {
+    const currentBalance = this.balance - this.getInProgressWithdrawalsAmount();
+
+    return currentBalance > withdrawal.amount;
+  }
+
+  private getInProgressWithdrawalsAmount(): number {
     const pendingWithdrawals = this.getWithdrawalsByStatus(WithdrawalStatus.PENDING);
     const payingOutWithdrawals = this.getWithdrawalsByStatus(WithdrawalStatus.PAYING_OUT);
 
     const pendingAmount = Util.sumObj(pendingWithdrawals, 'amount');
     const payingOutAmount = Util.sumObj(payingOutWithdrawals, 'amount');
 
-    const currentBalance = this.balance - pendingAmount - payingOutAmount;
-
-    return currentBalance > withdrawal.amount;
+    return pendingAmount + payingOutAmount;
   }
 
   private getDepositsByStatus(status: DepositStatus): Deposit[] {

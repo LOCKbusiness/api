@@ -63,8 +63,7 @@ export class StakingWithdrawalService {
   async failWithdrawal(stakingId: string, withdrawalId: string): Promise<void> {
     const staking = await this.repository.findOne(stakingId);
 
-    const withdrawal = staking.getWithdrawal(withdrawalId);
-    withdrawal.failWithdrawal();
+    staking.failWithdrawal(withdrawalId);
 
     await this.repository.save(staking);
   }
