@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Config } from 'src/config/config';
+import { WalletBlockchainAddress } from '../../domain/entities/wallet-blockchain-address.entity';
 import { User } from '../../domain/entities/user.entity';
 import { KycStatus } from '../../domain/enums';
 import { UserRepository } from '../repositories/user.repository';
-import { CountryService } from './country.service';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly userRepo: UserRepository, private readonly countryService: CountryService) {}
+  constructor(private readonly userRepo: UserRepository) {}
   async createUser(): Promise<User> {
     return await this.userRepo.save({
       language: Config.defaultLanguage,
@@ -35,5 +35,32 @@ export class UserService {
   async getKycStatus(userId: number): Promise<KycStatus> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     return user.kycStatus;
+  }
+
+  async canStake(userId: number, walletId: number): Promise<boolean> {
+    const user = await this.userRepo.findOne(userId, { relations: ['wallets', 'wallets.walletProvider'] });
+    const minKycStatus = user.wallets.find((w) => w.id === walletId)?.walletProvider.minStakingKycStatus;
+
+    return this.kycStatusFulfills(user.kycStatus, minKycStatus);
+  }
+
+  async getWalletAddress(userId: number, walletId: number): Promise<WalletBlockchainAddress> {
+    const user = await this.userRepo.findOne({ where: { id: userId }, relations: ['wallets', 'wallets.address'] });
+
+    return user.wallets.find((w) => w.id === walletId).address;
+  }
+
+  // --- HELPER METHODS --- //
+  private kycStatusFulfills(status: KycStatus, min: KycStatus): boolean {
+    switch (min) {
+      case KycStatus.NA:
+        return true;
+      case KycStatus.LIGHT:
+        return status !== KycStatus.NA;
+      case KycStatus.FULL:
+        return status === KycStatus.FULL;
+      default:
+        return false;
+    }
   }
 }

@@ -1,7 +1,6 @@
-import { Asset } from 'src/shared/entities/asset.entity';
-import { IEntity } from 'src/shared/entities/entity';
+import { Asset } from 'src/shared/models/asset/asset.entity';
+import { IEntity } from 'src/shared/models/entity';
 import { Column, Entity, ManyToOne } from 'typeorm';
-import { BlockchainAddress } from '../../../../shared/entities/blockchain-address.entity';
 import { RewardStatus } from '../enums';
 import { Staking } from './staking.entity';
 
@@ -10,7 +9,7 @@ export class Reward extends IEntity {
   @ManyToOne(() => Staking, (staking) => staking.rewards, { eager: true, nullable: true })
   staking: Staking;
 
-  @Column({ length: 256, nullable: false })
+  @Column({ nullable: false })
   status: RewardStatus;
 
   //*** NATIVE ASSET ***//
@@ -23,23 +22,53 @@ export class Reward extends IEntity {
 
   //*** REINVEST PROPS ***//
 
-  @Column({ type: 'float', nullable: false, default: 1 })
-  reinvestShare: number;
+  @Column({ nullable: true })
+  reinvestTxId: string;
+
+  @Column({ nullable: true })
+  reinvestOutputDate: Date;
+
+  //*** REFERENCE DATA ***//
 
   @Column({ type: 'float', nullable: false, default: 0 })
-  reinvestAmount: Asset;
-
-  //*** PAYOUT PROPS ***//
+  fee: number;
 
   @Column({ type: 'float', nullable: false, default: 0 })
-  payoutShare: number;
-
-  @ManyToOne(() => Asset, { eager: true, nullable: false })
-  payoutAsset: Asset;
+  amountEur: number;
 
   @Column({ type: 'float', nullable: false, default: 0 })
-  payoutAmount: number;
+  amountUsd: number;
 
-  @ManyToOne(() => BlockchainAddress, { eager: true, nullable: false })
-  payoutAddress: BlockchainAddress;
+  @Column({ type: 'float', nullable: false, default: 0 })
+  amountChf: number;
+
+  //*** FACTORY METHODS ***//
+
+  static create(
+    staking: Staking,
+    amount: number,
+    reinvestTxId: string,
+    reinvestOutputDate: Date,
+    fee: number,
+    amountEur: number,
+    amountUsd: number,
+    amountChf: number,
+  ): Reward {
+    const reward = new Reward();
+
+    reward.staking = staking;
+    reward.status = RewardStatus.CONFIRMED;
+
+    reward.asset = staking.asset;
+    reward.amount = amount;
+    reward.reinvestTxId = reinvestTxId;
+    reward.reinvestOutputDate = reinvestOutputDate;
+
+    reward.fee = fee;
+    reward.amountEur = amountEur;
+    reward.amountUsd = amountUsd;
+    reward.amountChf = amountChf;
+
+    return reward;
+  }
 }

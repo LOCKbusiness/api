@@ -76,6 +76,7 @@ export class Configuration {
         active: process.env.NODE_REW_URL_ACTIVE,
         passive: process.env.NODE_REW_URL_PASSIVE,
       },
+      stakingWalletAddress: process.env.STAKING_WALLET_ADDRESS,
     },
   };
 
@@ -83,6 +84,31 @@ export class Configuration {
     version: 'v0',
     network: this.network,
     url: 'https://ocean.defichain.com',
+  };
+
+  payIn = {
+    minPayIn: {
+      Fiat: {
+        USD: 1,
+      },
+      Bitcoin: {
+        BTC: 0.0005,
+      },
+      DeFiChain: {
+        DFI: 0.01,
+        USD: 1,
+      },
+    },
+  };
+
+  staking = {
+    minimalStake: 1,
+    minimalDeposit: 0.01,
+    stakingFee: 0.05,
+    signatureTemplates: {
+      signWithdrawalMessage:
+        'By_signing_this_message,_you_confirm_that_you_are_withdrawing_${AMOUNT}_${ASSET}_of_staking_from_your_address:_${ADDRESS}',
+    },
   };
 
   get addressFormat(): RegExp {

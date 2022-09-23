@@ -1,30 +1,32 @@
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
-import { IEntity } from 'src/shared/entities/entity';
+import { IEntity } from 'src/shared/models/entity';
 import { User } from 'src/subdomains/user/domain/entities/user.entity';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
+import { WalletBlockchainAddress } from './wallet-blockchain-address.entity';
 import { WalletProvider } from './wallet-provider.entity';
 
 @Entity()
 export class Wallet extends IEntity {
-  @Column({ length: 256, unique: true })
-  address: string;
+  @OneToOne(() => WalletBlockchainAddress, { eager: true, nullable: false })
+  @JoinColumn()
+  address: WalletBlockchainAddress;
 
-  @Column({ length: 256 })
+  @Column()
   signature: string;
 
   @ManyToOne(() => WalletProvider)
   walletProvider: WalletProvider;
 
-  @Column({ length: 256, unique: true })
+  @Column({ unique: true })
   ref: string;
 
-  @Column({ length: 256, default: WalletRole.USER })
+  @Column({ default: WalletRole.USER })
   role: WalletRole;
 
-  @Column({ length: 256, default: '0.0.0.0' })
+  @Column({ default: '0.0.0.0' })
   ip: string;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ nullable: true })
   ipCountry: string;
 
   @ManyToOne(() => User, { nullable: false })

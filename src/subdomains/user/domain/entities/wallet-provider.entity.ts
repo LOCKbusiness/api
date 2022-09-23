@@ -1,12 +1,12 @@
-import { IEntity } from 'src/shared/entities/entity';
+import { IEntity } from 'src/shared/models/entity';
 import { Column, Entity } from 'typeorm';
 import { KycStatus } from '../enums';
 
 @Entity()
 export class WalletProvider extends IEntity {
-  @Column({ unique: true, length: 256 })
+  @Column({ unique: true })
   name: string;
 
-  @Column({ length: 256, default: KycStatus.LIGHT })
+  @Column({ default: KycStatus.LIGHT })
   minStakingKycStatus: KycStatus;
 }

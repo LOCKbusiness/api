@@ -1,4 +1,4 @@
-import { IEntity } from 'src/shared/entities/entity';
+import { IEntity } from 'src/shared/models/entity';
 import { Column, Entity } from 'typeorm';
 
 @Entity()
@@ -6,7 +6,7 @@ export class Country extends IEntity {
   @Column({ unique: true, length: 10 })
   symbol: string;
 
-  @Column({ length: 256 })
+  @Column()
   name: string;
 
   @Column({ default: true })

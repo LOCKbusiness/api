@@ -1,47 +1,59 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
-import { KycStatus } from 'src/subdomains/user/domain/enums';
-
-import { Staking } from '../../domain/entities/staking.entity';
-import { CreateStakingDto } from '../dto/create-staking.dto';
+import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
+import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
+import { CreateStakingDto } from '../dto/input/create-staking.dto';
+import { SetStakingFeeDto } from '../dto/input/set-staking-fee.dto';
+import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
+import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
 import { StakingRepository } from '../repositories/staking.repository';
+import { StakingBlockchainAddressService } from './staking-blockchain-address.service';
 
 @Injectable()
 export class StakingService {
   constructor(
+    public readonly repository: StakingRepository,
+    public readonly userService: UserService,
+    private readonly authorize: StakingAuthorizeService,
+    private readonly kycCheck: StakingKycCheckService,
     private readonly factory: StakingFactory,
-    private readonly repository: StakingRepository,
-    private readonly userService: UserService,
+    private readonly addressService: StakingBlockchainAddressService,
   ) {}
 
   //*** PUBLIC API ***//
 
-  async createStaking(userId: number, dto: CreateStakingDto): Promise<Staking> {
-    await this.checkKYC(userId);
+  async createStaking(userId: number, walletId: number, dto: CreateStakingDto): Promise<StakingOutputDto> {
+    await this.kycCheck.check(userId, walletId);
 
-    const staking = this.factory.createStaking(dto);
+    const depositAddress = await this.addressService.getAvailableAddress();
+    const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
+
+    // only one staking per address
+    const existingStaking = await this.repository.findOne({ where: { withdrawalAddress } });
+    if (existingStaking) throw new ConflictException();
+
+    const staking = await this.factory.createStaking(userId, depositAddress, withdrawalAddress, dto);
 
     await this.repository.save(staking);
 
-    return staking;
+    return StakingOutputDtoMapper.entityToDto(staking);
   }
 
-  async getBalance(userId: number, stakingId: string): Promise<number> {
-    await this.checkKYC(userId);
+  async getStaking(userId: number, walletId: number, stakingId: number): Promise<StakingOutputDto> {
+    await this.kycCheck.check(userId, walletId);
 
+    const staking = await this.authorize.authorize(userId, stakingId);
+
+    return StakingOutputDtoMapper.entityToDto(staking);
+  }
+
+  async setStakingFee(stakingId: number, dto: SetStakingFeeDto): Promise<void> {
+    const { feePercent } = dto;
     const staking = await this.repository.findOne(stakingId);
 
-    if (!staking) throw new NotFoundException();
+    staking.setStakingFee(feePercent);
 
-    return staking.getBalance();
-  }
-
-  //*** HELPER METHODS ***//
-  // TODO - if got time - move to decorator - move to shared
-  private async checkKYC(userId: number): Promise<void> {
-    const userKycStatus = await this.userService.getKycStatus(userId);
-
-    if (userKycStatus === KycStatus.NA) throw new Error('Cannot proceed without KYC');
+    await this.repository.save(staking);
   }
 }
