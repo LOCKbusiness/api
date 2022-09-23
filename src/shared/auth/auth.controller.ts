@@ -25,7 +25,7 @@ export class AuthController {
   }
 
   @Get('signMessage')
-  @ApiResponse({ status: 201, type: SignMessageDto })
+  @ApiResponse({ status: 200, type: SignMessageDto })
   getSignMessage(@Query('address') address: string): SignMessageDto {
     return this.authService.getSignMessage(address);
   }

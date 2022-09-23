@@ -76,7 +76,10 @@ export class Configuration {
         active: process.env.NODE_REW_URL_ACTIVE,
         passive: process.env.NODE_REW_URL_PASSIVE,
       },
-      stakingWalletAddress: process.env.STAKING_WALLET_ADDRESS,
+      liq: {
+        active: process.env.NODE_LIQ_URL_ACTIVE,
+        passive: process.env.NODE_LIQ_URL_PASSIVE,
+      },
     },
   };
 
@@ -106,9 +109,23 @@ export class Configuration {
     minimalDeposit: 0.01,
     stakingFee: 0.05,
     signatureTemplates: {
-      signWithdrawalMessage:
-        'By_signing_this_message,_you_confirm_that_you_are_withdrawing_${AMOUNT}_${ASSET}_of_staking_from_your_address:_${ADDRESS}',
+      signWithdrawalMessage: 'Withdraw_${amount}_${asset}_from_${address}',
     },
+
+    liquidityWalletAddress: process.env.STAKING_LIQUIDITY_WALLET_ADDRESS,
+    masternodeWalletAddress: process.env.STAKING_MASTERNODE_WALLET_ADDRESS,
+    payoutWalletAddress: process.env.STAKING_PAYOUT_WALLET_ADDRESS,
+
+    liquidity: {
+      min: 20000,
+      max: 40000,
+    },
+  };
+
+  masternode = {
+    collateral: 20000,
+    fee: 10,
+    resignMessage: 'Resign_masternode_${id}_with_hash_${hash}',
   };
 
   get addressFormat(): RegExp {

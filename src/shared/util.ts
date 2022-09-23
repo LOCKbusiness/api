@@ -169,4 +169,9 @@ export class Util {
   static trimIBAN(iban: string): string {
     return '***' + iban.slice(iban.length - 4);
   }
+
+  static template(template: string, params: { [key: string]: string }): string {
+    Object.entries(params).forEach(([key, value]) => (template = template.replace('${' + key + '}', value)));
+    return template;
+  }
 }

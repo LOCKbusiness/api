@@ -1,5 +1,6 @@
 import { ApiClient, BigNumber } from '@defichain/jellyfish-api-core';
 import { Block, BlockchainInfo } from '@defichain/jellyfish-api-core/dist/category/blockchain';
+import { MasternodeInfo } from '@defichain/jellyfish-api-core/dist/category/masternode';
 import { InWalletTransaction, UTXO } from '@defichain/jellyfish-api-core/dist/category/wallet';
 import { JsonRpcClient } from '@defichain/jellyfish-api-jsonrpc';
 import { ServiceUnavailableException } from '@nestjs/common';
@@ -66,13 +67,25 @@ export class NodeClient {
     return this.callNode((c) => c.wallet.getTransaction(txId));
   }
 
+  async getMasternodeInfo(id: string): Promise<MasternodeInfo> {
+    return this.callNode((c) => c.masternode.getMasternode(id).then((r) => r[id]));
+  }
+
+  async signMessage(address: string, message: string): Promise<string> {
+    return this.callNode((c) => c.call('signmessage', [address, message], 'number'), true);
+  }
+
   // UTXO
+  get utxoFee(): number {
+    return this.chain === 'mainnet' ? 0.00000132 : 0.0000222;
+  }
+
   async getUtxo(): Promise<UTXO[]> {
     return this.callNode((c) => c.wallet.listUnspent());
   }
 
-  async getBalance(): Promise<BigNumber> {
-    return this.callNode((c) => c.wallet.getBalance());
+  async getBalance(): Promise<number> {
+    return this.callNode((c) => c.wallet.getBalance()).then((b) => b.toNumber());
   }
 
   async sendUtxoToMany(payload: { addressTo: string; amount: number }[]): Promise<string> {

@@ -156,13 +156,11 @@ export class Staking extends IEntity {
   }
 
   generateWithdrawalSignatureMessage(amount: number, asset: string, address: string): string {
-    const message = Config.staking.signatureTemplates.signWithdrawalMessage;
-
-    message.replace('${AMOUNT}', amount.toString());
-    message.replace('${ASSET}', asset);
-    message.replace('${ADDRESS}', address);
-
-    return message;
+    return Util.template(Config.staking.signatureTemplates.signWithdrawalMessage, {
+      amount: amount.toString(),
+      asset: asset,
+      address: address,
+    });
   }
 
   verifyUserAddresses(addresses: string[]): boolean {
@@ -215,6 +213,10 @@ export class Staking extends IEntity {
 
   getPendingWithdrawalsAmount(): number {
     return this.getInProgressWithdrawalsAmount();
+  }
+
+  getPendingWithdrawals(): Withdrawal[] {
+    return this.getWithdrawalsByStatus(WithdrawalStatus.PENDING);
   }
 
   //*** HELPER METHODS ***//
