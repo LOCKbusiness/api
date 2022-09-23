@@ -1,16 +1,40 @@
 [
   {
-    "_id": "a33fded6-2ca7-4dc1-9e9e-a4618b37be20",
+    "_id": "0643ac41-30ed-4ae2-a1e1-f6cd31c3bd77",
     "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
-    "containerId": "4beb1a88-028a-4b2f-a78e-51a552acf1fc",
-    "name": "hello world",
-    "url": "{{url}}/v1/app",
-    "method": "GET",
-    "sortNum": 30000,
-    "created": "2022-09-16T15:00:13.602Z",
-    "modified": "2022-09-16T15:04:00.493Z",
+    "containerId": "f96d0067-9aab-45f6-acc7-3b78f5f4af61",
+    "name": "Command",
+    "url": "{{url}}/v1/node/liq/passive/cmd",
+    "method": "POST",
+    "sortNum": 40000,
+    "created": "2022-09-23T22:17:02.788Z",
+    "modified": "2022-09-23T22:39:13.386Z",
     "headers": [],
     "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"command\": \"getblockchaininfo\",\n  \"noAutoUnlock\": false\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "8e861bcb-d612-48c5-8faa-ef34dfd83d4f",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "017dd981-fe87-4832-83c0-e62dcffb5a9d",
+    "name": "Sign In",
+    "url": "{{url}}/v1/auth/sign-in",
+    "method": "POST",
+    "sortNum": 50000,
+    "created": "2022-09-23T22:18:39.309Z",
+    "modified": "2022-09-23T22:46:56.342Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"address\": \"address\",\n  \"signature\": \"signature\"\n}",
+      "form": []
+    },
     "tests": []
   }
 ]
