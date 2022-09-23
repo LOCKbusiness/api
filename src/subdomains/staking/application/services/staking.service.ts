@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
-import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wallet-blockchain-address.entity';
-import { StakingBlockchainAddress } from '../../domain/entities/staking-blockchain-address.entity';
-import { Staking } from '../../domain/entities/staking.entity';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
 import { CreateStakingDto } from '../dto/input/create-staking.dto';
@@ -29,12 +26,12 @@ export class StakingService {
   async createStaking(userId: number, walletId: number, dto: CreateStakingDto): Promise<StakingOutputDto> {
     await this.kycCheck.check(userId);
 
-    const staking = await this.createStakingDraft(userId, dto);
-
-    const depositAddress = await this.addressService.getAvailableAddressForStaking(staking);
+    const depositAddress = await this.addressService.getAvailableAddress();
     const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
 
-    await this.finalizeStakingCreation(staking, depositAddress, withdrawalAddress);
+    const staking = await this.factory.createStaking(userId, depositAddress, withdrawalAddress, dto);
+
+    await this.repository.save(staking);
 
     return StakingOutputDtoMapper.entityToDto(staking);
   }
@@ -53,24 +50,6 @@ export class StakingService {
     const staking = await this.repository.findOne(stakingId);
 
     staking.setStakingFee(feePercent);
-
-    await this.repository.save(staking);
-  }
-
-  //*** HELPER METHODS ***//
-
-  private async createStakingDraft(userId: number, dto: CreateStakingDto): Promise<Staking> {
-    const stakingDraft = await this.factory.createStaking(userId, dto);
-
-    return this.repository.save(stakingDraft);
-  }
-
-  private async finalizeStakingCreation(
-    staking: Staking,
-    depositAddress: StakingBlockchainAddress,
-    withdrawalAddress: WalletBlockchainAddress,
-  ): Promise<void> {
-    staking.finalizeCreation(depositAddress, withdrawalAddress);
 
     await this.repository.save(staking);
   }

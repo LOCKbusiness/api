@@ -95,7 +95,7 @@ export class PayInService {
     return this.factory.createFromTransaction(tx, assetEntity);
   }
 
-  // TODO - is it reliable to save like that?
+  // TODO - consider more reliable solution - in case of DB fail, some PayIns might be lost
   private async persistPayIns(payIns: PayIn[]): Promise<void> {
     for (const payIn of payIns) {
       await this.repository.save(payIn);

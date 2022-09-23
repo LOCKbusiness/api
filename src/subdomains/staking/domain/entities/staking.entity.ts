@@ -25,7 +25,7 @@ export class Staking extends IEntity {
   @Column({ type: 'float', nullable: false, default: 0 })
   balance: number;
 
-  @OneToOne(() => StakingBlockchainAddress, (address) => address.staking, { eager: true, nullable: true })
+  @OneToOne(() => StakingBlockchainAddress, (address) => address.staking, { eager: true, nullable: false })
   @JoinColumn()
   depositAddress: StakingBlockchainAddress;
 
@@ -38,7 +38,7 @@ export class Staking extends IEntity {
   @OneToMany(() => Withdrawal, (withdrawal) => withdrawal.staking, { cascade: true })
   withdrawals: Withdrawal[];
 
-  @ManyToOne(() => WalletBlockchainAddress, { eager: true, nullable: true })
+  @ManyToOne(() => WalletBlockchainAddress, { eager: true, nullable: false })
   rewardsPayoutAddress: WalletBlockchainAddress;
 
   @OneToMany(() => Reward, (reward) => reward.staking, { cascade: true })
@@ -60,6 +60,8 @@ export class Staking extends IEntity {
 
   static create(
     userId: number,
+    depositAddress: StakingBlockchainAddress,
+    withdrawalAddress: WalletBlockchainAddress,
     asset: Asset,
     minimalStake: number,
     minimalDeposit: number,
@@ -68,9 +70,13 @@ export class Staking extends IEntity {
     const staking = new Staking();
 
     staking.userId = userId;
-    staking.status = StakingStatus.DRAFT;
+    staking.status = StakingStatus.CREATED;
     staking.asset = asset;
     staking.balance = 0;
+
+    staking.depositAddress = depositAddress;
+    staking.withdrawalAddress = withdrawalAddress;
+    staking.rewardsPayoutAddress = withdrawalAddress;
 
     staking.deposits = [];
     staking.withdrawals = [];
@@ -81,16 +87,6 @@ export class Staking extends IEntity {
     staking.stakingFee = stakingFee;
 
     return staking;
-  }
-
-  finalizeCreation(depositAddress: StakingBlockchainAddress, withdrawalAddress: WalletBlockchainAddress): this {
-    this.depositAddress = depositAddress;
-    this.withdrawalAddress = withdrawalAddress;
-    this.rewardsPayoutAddress = withdrawalAddress;
-
-    this.status = StakingStatus.CREATED;
-
-    return this;
   }
 
   //*** PUBLIC API ***//

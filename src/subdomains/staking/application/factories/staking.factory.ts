@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { GetConfig } from 'src/config/config';
 import { AssetService } from 'src/shared/models/asset/asset.service';
+import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wallet-blockchain-address.entity';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Reward } from '../../domain/entities/reward.entity';
+import { StakingBlockchainAddress } from '../../domain/entities/staking-blockchain-address.entity';
 import { Staking } from '../../domain/entities/staking.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { CreateDepositDto } from '../dto/input/create-deposit.dto';
@@ -14,7 +16,12 @@ import { CreateWithdrawalDto } from '../dto/input/create-withdrawal.dto';
 export class StakingFactory {
   constructor(private readonly assetService: AssetService) {}
 
-  async createStaking(userId: number, dto: CreateStakingDto): Promise<Staking> {
+  async createStaking(
+    userId: number,
+    depositAddress: StakingBlockchainAddress,
+    withdrawalAddress: WalletBlockchainAddress,
+    dto: CreateStakingDto,
+  ): Promise<Staking> {
     const { assetName: name, blockchain } = dto;
     const {
       staking: { minimalStake, minimalDeposit, stakingFee },
@@ -22,7 +29,7 @@ export class StakingFactory {
 
     const asset = await this.assetService.getAssetByQuery({ name, blockchain });
 
-    return Staking.create(userId, asset, minimalStake, minimalDeposit, stakingFee);
+    return Staking.create(userId, depositAddress, withdrawalAddress, asset, minimalStake, minimalDeposit, stakingFee);
   }
 
   createDeposit(staking: Staking, dto: CreateDepositDto): Deposit {
