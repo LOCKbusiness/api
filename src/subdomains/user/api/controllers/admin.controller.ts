@@ -7,8 +7,6 @@ import { getConnection } from 'typeorm';
 
 @Controller('admin')
 export class AdminController {
-  constructor() {}
-
   @Get('db')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
