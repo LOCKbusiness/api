@@ -59,6 +59,7 @@ export class PayIn extends IEntity {
     payIn.blockHeight = blockHeight;
     payIn.amount = amount;
     payIn.asset = asset;
+    payIn.status = PayInStatus.CREATED;
 
     return payIn;
   }
