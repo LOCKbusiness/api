@@ -17,6 +17,7 @@ import { RefService } from './application/services/ref.service';
 import { UserService } from './application/services/user.service';
 import { WalletProviderService } from './application/services/wallet-provider.service';
 import { WalletService } from './application/services/wallet.service';
+import { AdminController } from './api/controllers/admin.controller';
 
 @Module({
   imports: [
@@ -29,7 +30,7 @@ import { WalletService } from './application/services/wallet.service';
     ]),
     SharedModule,
   ],
-  controllers: [UserController, KycController, AuthController],
+  controllers: [UserController, KycController, AuthController, AdminController],
   providers: [
     UserService,
     WalletService,
