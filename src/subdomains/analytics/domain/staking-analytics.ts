@@ -13,6 +13,8 @@ export class StakingAnalytics {
   }
 
   static calculateAPR(averageBalance: number, totalReward: number): number {
+    if (averageBalance === 0) return 0;
+
     const apr = this.getApr(totalReward / GetConfig().staking.aprPeriod, averageBalance);
 
     return Util.round(apr, 3);
@@ -27,6 +29,8 @@ export class StakingAnalytics {
   //*** HELPER METHODS ***//
 
   private static getApr(interest: number, collateral: number): number {
+    if (collateral === 0) return 0;
+
     return (interest / collateral) * 365;
   }
 }

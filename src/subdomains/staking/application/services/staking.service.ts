@@ -60,7 +60,7 @@ export class StakingService {
   }
 
   async getAverageStakingBalance(dateFrom: Date, dateTo: Date): Promise<number> {
-    const currentBalance = await this.getCurrentTotalStakingBalance();
+    const currentBalance = (await this.getCurrentTotalStakingBalance()) ?? 0;
     const balances: number[] = [];
 
     for (
@@ -91,8 +91,8 @@ export class StakingService {
   //*** HELPER METHODS ***//
 
   private async getPreviousTotalStakingBalance(currentBalance: number, date: Date): Promise<number> {
-    const depositsFromDate = await this.getTotalDepositsSince(date);
-    const withdrawalsFromDate = await this.getTotalWithdrawalsSince(date);
+    const depositsFromDate = (await this.getTotalDepositsSince(date)) ?? 0;
+    const withdrawalsFromDate = (await this.getTotalWithdrawalsSince(date)) ?? 0;
 
     return currentBalance - depositsFromDate + withdrawalsFromDate;
   }
