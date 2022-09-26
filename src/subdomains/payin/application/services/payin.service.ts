@@ -7,6 +7,7 @@ import { PayIn, PayInPurpose, PayInStatus } from '../../domain/entities/payin.en
 import { PayInDeFiChainService } from '../../infrastructure/payin-crypto-defichain.service';
 import { PayInFactory } from '../factories/payin.factory';
 import { PayInTransaction } from '../interfaces';
+import { PayInBlockchainAddressRepository } from '../repositories/payin-blockchain-address.repository';
 import { PayInRepository } from '../repositories/payin.repository';
 
 @Injectable()
@@ -14,7 +15,8 @@ export class PayInService {
   private readonly lock = new Lock(7200);
 
   constructor(
-    private readonly repository: PayInRepository,
+    private readonly payInRepository: PayInRepository,
+    private readonly addressRepository: PayInBlockchainAddressRepository,
     private readonly factory: PayInFactory,
     private readonly deFiChainService: PayInDeFiChainService,
     private readonly assetService: AssetService,
@@ -23,15 +25,15 @@ export class PayInService {
   //*** PUBLIC API ***//
 
   async getNewPayInTransactions(): Promise<PayIn[]> {
-    return this.repository.find({ status: PayInStatus.CREATED });
+    return this.payInRepository.find({ status: PayInStatus.CREATED });
   }
 
   async acknowledgePayIn(payIn: PayIn, purpose: PayInPurpose): Promise<void> {
-    const _payIn = await this.repository.findOne(payIn.id);
+    const _payIn = await this.payInRepository.findOne(payIn.id);
 
     _payIn.acknowledge(purpose);
 
-    await this.repository.save(_payIn);
+    await this.payInRepository.save(_payIn);
   }
 
   //*** JOBS ***//
@@ -52,7 +54,7 @@ export class PayInService {
   //*** HELPER METHODS ***//
 
   private async processNewPayInTransactions(): Promise<void> {
-    const lastCheckedBlockHeight = await this.repository
+    const lastCheckedBlockHeight = await this.payInRepository
       .findOne({ order: { blockHeight: 'DESC' } })
       .then((input) => input?.blockHeight ?? 0);
 
@@ -84,6 +86,11 @@ export class PayInService {
       blockchain: Blockchain.DEFICHAIN,
     });
 
+    const existingAddress = await this.addressRepository.findOne({
+      address: tx.address.address,
+      blockchain: tx.address.blockchain,
+    });
+
     if (!assetEntity) {
       const message = `Failed to process DeFiChain pay in. No asset ${tx.asset} found. PayInTransaction:`;
       console.error(message, tx);
@@ -91,13 +98,13 @@ export class PayInService {
       throw new Error(message);
     }
 
-    return this.factory.createFromTransaction(tx, assetEntity);
+    return this.factory.createFromTransaction(tx, assetEntity, existingAddress);
   }
 
   // TODO - consider more reliable solution - in case of DB fail, some PayIns might be lost
   private async persistPayIns(payIns: PayIn[]): Promise<void> {
     for (const payIn of payIns) {
-      await this.repository.save(payIn);
+      await this.payInRepository.save(payIn);
     }
   }
 }
