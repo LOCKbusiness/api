@@ -1,6 +1,7 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { Util } from 'src/shared/util';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
+import { DepositStatus, WithdrawalStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
 import { CreateStakingDto } from '../dto/input/create-staking.dto';
@@ -59,6 +60,7 @@ export class StakingService {
   }
 
   async getAverageStakingBalance(dateFrom: Date, dateTo: Date): Promise<number> {
+    const currentBalance = await this.getCurrentTotalStakingBalance();
     const balances: number[] = [];
 
     for (
@@ -66,16 +68,19 @@ export class StakingService {
       dateIterator < dateTo;
       dateIterator.setDate(dateIterator.getDate() + 1)
     ) {
-      balances.push(await this.getTotalStakingBalance(dateIterator));
+      balances.push(await this.getPreviousTotalStakingBalance(currentBalance, dateIterator));
     }
 
     return Util.avg(balances);
   }
 
+  // assuming DFI is the only staking asset
   async getTotalRewards(dateFrom: Date, dateTo: Date): Promise<number> {
     const { rewardVolume } = await this.repository
       .createQueryBuilder('staking')
       .leftJoin('staking.rewards', 'rewards')
+      .leftJoin('staking.asset', 'asset')
+      .where('asset.name = :name', { name: 'DFI' })
       .select('SUM(amount)', 'rewardVolume')
       .where('rewards.created BETWEEN :dateFrom AND :dateTo', { dateFrom, dateTo })
       .getRawOne<{ rewardVolume: number }>();
@@ -85,12 +90,49 @@ export class StakingService {
 
   //*** HELPER METHODS ***//
 
-  private async getTotalStakingBalance(date?: Date): Promise<number> {
+  private async getPreviousTotalStakingBalance(currentBalance: number, date: Date): Promise<number> {
+    const depositsFromDate = await this.getTotalDepositsSince(date);
+    const withdrawalsFromDate = await this.getTotalWithdrawalsSince(date);
+
+    return currentBalance - depositsFromDate + withdrawalsFromDate;
+  }
+
+  // assuming DFI is the only staking asset
+  private async getCurrentTotalStakingBalance(): Promise<number> {
     return this.repository
       .createQueryBuilder('staking')
-      .where('staking.inputDate <= :date AND staking.outputDate >= :date', { date })
-      .select('SUM(inputAmount)', 'balance')
+      .leftJoin('staking.asset', 'asset')
+      .where('asset.name = :name', { name: 'DFI' })
+      .select('SUM(balance)', 'balance')
       .getRawOne<{ balance: number }>()
       .then((b) => b.balance);
+  }
+
+  // assuming DFI is the only staking asset
+  private async getTotalDepositsSince(date: Date): Promise<number> {
+    return this.repository
+      .createQueryBuilder('staking')
+      .leftJoin('staking.deposits', 'deposits')
+      .leftJoin('staking.asset', 'asset')
+      .where('asset.name = :name', { name: 'DFI' })
+      .andWhere('deposits.status = :status', { status: DepositStatus.CONFIRMED })
+      .andWhere('deposits.created >= :date', { date })
+      .select('SUM(amount)', 'amount')
+      .getRawOne<{ amount: number }>()
+      .then((b) => b.amount);
+  }
+
+  // assuming DFI is the only staking asset
+  private async getTotalWithdrawalsSince(date: Date): Promise<number> {
+    return this.repository
+      .createQueryBuilder('staking')
+      .leftJoin('staking.withdrawals', 'withdrawals')
+      .leftJoin('staking.asset', 'asset')
+      .where('asset.name = :name', { name: 'DFI' })
+      .andWhere('withdrawals.status = :status', { status: WithdrawalStatus.CONFIRMED })
+      .andWhere('withdrawals.created >= :date', { date })
+      .select('SUM(amount)', 'amount')
+      .getRawOne<{ amount: number }>()
+      .then((b) => b.amount);
   }
 }
