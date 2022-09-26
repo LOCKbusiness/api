@@ -19,23 +19,17 @@ describe('StakingAnalytics', () => {
     });
   });
 
-  describe('#calculateAPR(...)', () => {
-    it('calculates APR as average for 28 days', () => {
+  describe('#updateAnalytics(...)', () => {
+    it('calculates APR and APY as average for 28 days', () => {
       const averageBalance = 100;
       const totalReward = 2.8;
 
-      const apr = StakingAnalytics.calculateAPR(averageBalance, totalReward);
+      const analytics = new StakingAnalytics();
 
-      expect(apr).toBe(0.365);
-    });
-  });
+      const updatedAnalytics = analytics.updateAnalytics(averageBalance, totalReward);
 
-  describe('#calculateAPY(...)', () => {
-    it('calculates APY based on APR', () => {
-      const apr = 0.365;
-      const apy = StakingAnalytics.calculateAPY(apr);
-
-      expect(apy).toBe(0.44);
+      expect(updatedAnalytics.apr).toBe(0.365);
+      expect(updatedAnalytics.apy).toBe(0.44);
     });
   });
 });
