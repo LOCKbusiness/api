@@ -1,4 +1,5 @@
 import { ConflictException, Injectable } from '@nestjs/common';
+import { Util } from 'src/shared/util';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
@@ -55,5 +56,41 @@ export class StakingService {
     staking.setStakingFee(feePercent);
 
     await this.repository.save(staking);
+  }
+
+  async getAverageStakingBalance(dateFrom: Date, dateTo: Date): Promise<number> {
+    const balances: number[] = [];
+
+    for (
+      const dateIterator = new Date(dateFrom);
+      dateIterator < dateTo;
+      dateIterator.setDate(dateIterator.getDate() + 1)
+    ) {
+      balances.push(await this.getTotalStakingBalance(dateIterator));
+    }
+
+    return Util.avg(balances);
+  }
+
+  async getTotalRewards(dateFrom: Date, dateTo: Date): Promise<number> {
+    const { rewardVolume } = await this.repository
+      .createQueryBuilder('staking')
+      .leftJoin('staking.rewards', 'rewards')
+      .select('SUM(amount)', 'rewardVolume')
+      .where('rewards.created BETWEEN :dateFrom AND :dateTo', { dateFrom, dateTo })
+      .getRawOne<{ rewardVolume: number }>();
+
+    return rewardVolume;
+  }
+
+  //*** HELPER METHODS ***//
+
+  private async getTotalStakingBalance(date?: Date): Promise<number> {
+    return this.repository
+      .createQueryBuilder('staking')
+      .where('staking.inputDate <= :date AND staking.outputDate >= :date', { date })
+      .select('SUM(inputAmount)', 'balance')
+      .getRawOne<{ balance: number }>()
+      .then((b) => b.balance);
   }
 }

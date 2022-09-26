@@ -1,15 +1,21 @@
 import { Injectable } from '@nestjs/common';
+import { StakingService } from 'src/subdomains/staking/application/services/staking.service';
+import { StakingAnalytics } from '../../domain/staking-analytics';
 import { StakingAnalyticsOutputDto } from '../dto/output/staking-analytics.output.dto';
 
 @Injectable()
 export class StakingAnalyticsService {
-  getStakingAnalytics() {
-    // Temporary API placeholder, until functionality is implemented
-    const stakingAnalytics = new StakingAnalyticsOutputDto();
+  constructor(private readonly stakingService: StakingService) {}
 
-    stakingAnalytics.apr = 0.4;
-    stakingAnalytics.apy = 0.45;
+  async getStakingAnalytics(): Promise<StakingAnalyticsOutputDto> {
+    const { dateFrom, dateTo } = StakingAnalytics.getAPRPeriod();
 
-    return stakingAnalytics;
+    const averageBalance = await this.stakingService.getAverageStakingBalance(dateFrom, dateTo);
+    const totalRewards = await this.stakingService.getTotalRewards(dateFrom, dateTo);
+
+    const apr = StakingAnalytics.calculateAPR(averageBalance, totalRewards);
+    const apy = StakingAnalytics.calculateAPY(apr);
+
+    return StakingAnalyticsOutputDto.create(apr, apy);
   }
 }

@@ -120,6 +120,7 @@ export class Configuration {
       min: 20000,
       max: 40000,
     },
+    aprPeriod: 28, // days
   };
 
   masternode = {
