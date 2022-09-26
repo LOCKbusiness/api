@@ -120,7 +120,8 @@ export class StakingDepositService {
         await this.repository.save(staking);
         await this.payInService.acknowledgePayIn(payIn, PayInPurpose.CRYPTO_STAKING);
       } catch (e) {
-        console.error(`Failed to process deposit input: ${payIn.id}`);
+        const message = `Failed to process deposit input: ${payIn.id}. Error:`;
+        console.error(message, e);
       }
     }
   }
