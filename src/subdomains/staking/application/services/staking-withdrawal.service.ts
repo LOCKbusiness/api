@@ -1,15 +1,12 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
-import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
+import { Interval } from '@nestjs/schedule';
 import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
-import { Config } from 'src/config/config';
-import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { Staking } from '../../domain/entities/staking.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { WithdrawalStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
+import { StakingDeFiChainService } from '../../infrastructure/staking-defichain.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
-import { ConfirmWithdrawalDto } from '../dto/input/confirm-withdrawal.dto';
 import { CreateWithdrawalDto } from '../dto/input/create-withdrawal.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
@@ -18,19 +15,14 @@ import { StakingRepository } from '../repositories/staking.repository';
 
 @Injectable()
 export class StakingWithdrawalService {
-  private client: DeFiClient;
-
   constructor(
-    public readonly repository: StakingRepository,
-    public readonly userService: UserService,
+    private readonly repository: StakingRepository,
     private readonly authorize: StakingAuthorizeService,
     private readonly kycCheck: StakingKycCheckService,
     private readonly factory: StakingFactory,
     private readonly cryptoService: CryptoService,
-    nodeService: NodeService,
-  ) {
-    nodeService.getConnectedNode(NodeType.LIQ).subscribe((c) => (this.client = c));
-  }
+    private readonly deFiChainService: StakingDeFiChainService,
+  ) {}
 
   //*** PUBLIC API ***//
 
@@ -62,41 +54,34 @@ export class StakingWithdrawalService {
       .getMany();
   }
 
-  async prepareWithdrawal(withdrawal: Withdrawal): Promise<void> {
-    const tx = await this.client.sendUtxoToMany([
-      {
-        addressTo: Config.staking.payoutWalletAddress,
-        amount: withdrawal.amount + this.client.utxoFee,
-      },
-    ]);
+  async designateWithdrawal(withdrawal: Withdrawal): Promise<void> {
+    const txId = await this.deFiChainService.sendWithdrawal(withdrawal);
 
-    await this.client.waitForTx(tx).catch((e) => console.error(`Wait for withdrawal prepare transaction failed: ${e}`));
+    withdrawal.designateWithdrawalPayout(txId);
 
-    withdrawal.designateWithdrawalPayout(tx);
-
-    this.repository.save(withdrawal.staking);
+    await this.repository.save(withdrawal.staking);
   }
 
-  async confirmWithdrawal(stakingId: number, withdrawalId: string, dto: ConfirmWithdrawalDto): Promise<void> {
-    const { outputDate, withdrawalTxId } = dto;
-    const staking = await this.repository.findOne(stakingId);
+  //*** JOBS ***//
 
-    staking.confirmWithdrawal(withdrawalId, outputDate, withdrawalTxId);
+  @Interval(60000)
+  async checkWithdrawalCompletion(): Promise<void> {
+    // not querying Stakings, because eager query is not supported, thus unsafe to fetch entire entity
+    const stakingIdsWithPayingOutWithdrawals = await this.repository
+      .createQueryBuilder('staking')
+      .leftJoin('staking.withdrawals', 'withdrawals')
+      .where('withdrawals.status = :status', { status: WithdrawalStatus.PAYING_OUT })
+      .getMany()
+      .then((s) => s.map((i) => i.id));
 
-    await this.repository.save(staking);
-  }
-
-  async failWithdrawal(stakingId: number, withdrawalId: string): Promise<void> {
-    const staking = await this.repository.findOne(stakingId);
-
-    staking.failWithdrawal(withdrawalId);
-
-    await this.repository.save(staking);
+    for (const stakingId of stakingIdsWithPayingOutWithdrawals) {
+      await this.checkPayingOutWithdrawals(stakingId);
+    }
   }
 
   //*** HELPER METHOD ***//
 
-  verifySignature(signature: string, amount: number, staking: Staking): void {
+  private verifySignature(signature: string, amount: number, staking: Staking): void {
     const message = staking.generateWithdrawalSignatureMessage(
       amount,
       staking.asset.name,
@@ -106,5 +91,26 @@ export class StakingWithdrawalService {
     const isValid = this.cryptoService.verifySignature(message, staking.withdrawalAddress.address, signature);
 
     if (!isValid) throw new UnauthorizedException();
+  }
+
+  private async checkPayingOutWithdrawals(stakingId: number): Promise<void> {
+    const staking = await this.repository.findOne(stakingId);
+    const withdrawals = staking.getPayingOutWithdrawals();
+
+    for (const withdrawal of withdrawals) {
+      try {
+        if (await this.isWithdrawalComplete(withdrawal)) {
+          staking.confirmWithdrawal(withdrawal.id.toString());
+          await this.repository.save(staking);
+        }
+      } catch (e) {
+        console.error(`Error trying to confirm withdrawal. ID: ${withdrawal.id}`, e);
+        continue;
+      }
+    }
+  }
+
+  private async isWithdrawalComplete(withdrawal: Withdrawal): Promise<boolean> {
+    return this.deFiChainService.isWithdrawalTxComplete(withdrawal.withdrawalTxId);
   }
 }

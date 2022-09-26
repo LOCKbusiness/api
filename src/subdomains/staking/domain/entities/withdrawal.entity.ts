@@ -25,9 +25,6 @@ export class Withdrawal extends IEntity {
   outputDate: Date;
 
   @Column({ nullable: true })
-  prepareTxId: string;
-
-  @Column({ nullable: true })
   withdrawalTxId: string;
 
   //*** FACTORY METHODS ***//
@@ -46,18 +43,17 @@ export class Withdrawal extends IEntity {
 
   //*** PUBLIC API ***//
 
-  designateWithdrawalPayout(prepareTxId: string): this {
+  designateWithdrawalPayout(withdrawalTxId: string): this {
     this.status = WithdrawalStatus.PAYING_OUT;
-    this.prepareTxId = prepareTxId;
+    this.withdrawalTxId = withdrawalTxId;
 
     return this;
   }
 
-  confirmWithdrawal(outputDate: Date, withdrawalTxId: string): this {
+  confirmWithdrawal(): this {
     this.status = WithdrawalStatus.CONFIRMED;
 
-    this.outputDate = outputDate;
-    this.withdrawalTxId = withdrawalTxId;
+    this.outputDate = new Date();
 
     return this;
   }
