@@ -94,12 +94,12 @@ export class StakingDepositService {
   }
 
   private async getStakingsForPayIns(stakingPayIns: PayIn[]): Promise<[Staking, PayIn][]> {
-    const stakingPairs = [];
+    const stakingPairs: [Staking, PayIn][] = [];
 
     for (const payIn of stakingPayIns) {
       const staking = await this.repository.findOne({ withdrawalAddress: payIn.address });
 
-      stakingPairs.push([payIn, staking]);
+      stakingPairs.push([staking, payIn]);
     }
 
     return stakingPairs;
