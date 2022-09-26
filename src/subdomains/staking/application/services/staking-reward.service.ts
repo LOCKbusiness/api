@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { CreateRewardDto } from '../dto/input/create-reward.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
@@ -8,11 +7,7 @@ import { StakingRepository } from '../repositories/staking.repository';
 
 @Injectable()
 export class StakingRewardService {
-  constructor(
-    public readonly userService: UserService,
-    private readonly factory: StakingFactory,
-    private readonly repository: StakingRepository,
-  ) {}
+  constructor(private readonly factory: StakingFactory, private readonly repository: StakingRepository) {}
 
   //*** PUBLIC API ***//
 

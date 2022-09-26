@@ -13,8 +13,8 @@ import { StakingBlockchainAddressService } from './staking-blockchain-address.se
 @Injectable()
 export class StakingService {
   constructor(
-    public readonly repository: StakingRepository,
-    public readonly userService: UserService,
+    private readonly repository: StakingRepository,
+    private readonly userService: UserService,
     private readonly authorize: StakingAuthorizeService,
     private readonly kycCheck: StakingKycCheckService,
     private readonly factory: StakingFactory,

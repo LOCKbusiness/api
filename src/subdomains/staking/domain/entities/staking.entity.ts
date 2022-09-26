@@ -122,10 +122,10 @@ export class Staking extends IEntity {
     return this;
   }
 
-  confirmWithdrawal(withdrawalId: string, outputDate: Date, withdrawalTxId: string): this {
+  confirmWithdrawal(withdrawalId: string): this {
     const withdrawal = this.getWithdrawal(withdrawalId);
 
-    withdrawal.confirmWithdrawal(outputDate, withdrawalTxId);
+    withdrawal.confirmWithdrawal();
     this.updateBalance();
 
     return this;
@@ -213,6 +213,10 @@ export class Staking extends IEntity {
 
   getPendingWithdrawals(): Withdrawal[] {
     return this.getWithdrawalsByStatus(WithdrawalStatus.PENDING);
+  }
+
+  getPayingOutWithdrawals(): Withdrawal[] {
+    return this.getWithdrawalsByStatus(WithdrawalStatus.PAYING_OUT);
   }
 
   //*** HELPER METHODS ***//

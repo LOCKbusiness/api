@@ -129,7 +129,7 @@ export class LiquidityManagementService {
     await Promise.all(
       possibleWithdrawals.map((w) =>
         this.withdrawalService
-          .prepareWithdrawal(w)
+          .designateWithdrawal(w)
           .catch((e) => console.error(`Failed to prepare withdrawal ${w.id}:`, e)),
       ),
     );

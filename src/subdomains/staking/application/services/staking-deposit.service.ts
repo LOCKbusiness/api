@@ -3,7 +3,6 @@ import { Interval } from '@nestjs/schedule';
 import { Lock } from 'src/shared/lock';
 import { PayInService } from 'src/subdomains/payin/application/services/payin.service';
 import { PayIn, PayInPurpose } from 'src/subdomains/payin/domain/entities/payin.entity';
-import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { StakingBlockchainAddress } from '../../domain/entities/staking-blockchain-address.entity';
 import { Staking } from '../../domain/entities/staking.entity';
@@ -22,8 +21,7 @@ export class StakingDepositService {
   private readonly lock = new Lock(7200);
 
   constructor(
-    public readonly repository: StakingRepository,
-    public readonly userService: UserService,
+    private readonly repository: StakingRepository,
     private readonly authorize: StakingAuthorizeService,
     private readonly kycCheck: StakingKycCheckService,
     private readonly factory: StakingFactory,
