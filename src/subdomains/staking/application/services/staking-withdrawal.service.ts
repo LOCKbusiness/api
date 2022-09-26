@@ -8,6 +8,8 @@ import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.
 import { StakingDeFiChainService } from '../../infrastructure/staking-defichain.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
 import { CreateWithdrawalDto } from '../dto/input/create-withdrawal.dto';
+import { GetWithdrawalSignMessageDto } from '../dto/input/get-withdrawal-sign-message.dto';
+import { SignWithdrawalOutputDto } from '../dto/output/sign-withdrawal.output.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
 import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
@@ -44,6 +46,25 @@ export class StakingWithdrawalService {
     await this.repository.save(staking);
 
     return StakingOutputDtoMapper.entityToDto(staking);
+  }
+
+  async getSignMessage(
+    userId: number,
+    walletId: number,
+    stakingId: number,
+    dto: GetWithdrawalSignMessageDto,
+  ): Promise<SignWithdrawalOutputDto> {
+    await this.kycCheck.check(userId, walletId);
+
+    const staking = await this.authorize.authorize(userId, stakingId);
+
+    const message = staking.generateWithdrawalSignatureMessage(
+      dto.amount,
+      staking.asset.name,
+      staking.withdrawalAddress.address,
+    );
+
+    return { message };
   }
 
   async getStakingWithPendingWithdrawals(): Promise<Staking[]> {

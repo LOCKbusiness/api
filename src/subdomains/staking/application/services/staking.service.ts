@@ -1,4 +1,5 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { AssetService } from 'src/shared/models/asset/asset.service';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
@@ -19,6 +20,7 @@ export class StakingService {
     private readonly kycCheck: StakingKycCheckService,
     private readonly factory: StakingFactory,
     private readonly addressService: StakingBlockchainAddressService,
+    private readonly assetService: AssetService,
   ) {}
 
   //*** PUBLIC API ***//
@@ -40,10 +42,21 @@ export class StakingService {
     return StakingOutputDtoMapper.entityToDto(staking);
   }
 
-  async getStaking(userId: number, walletId: number, stakingId: number): Promise<StakingOutputDto> {
+  async getStaking(userId: number, walletId: number, dto: CreateStakingDto): Promise<StakingOutputDto> {
     await this.kycCheck.check(userId, walletId);
 
-    const staking = await this.authorize.authorize(userId, stakingId);
+    const { assetName, blockchain } = dto;
+
+    const asset = await this.assetService.getAssetByQuery({ name: assetName, blockchain });
+    const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
+
+    if (!asset || !withdrawalAddress) throw new NotFoundException();
+
+    const _staking = await this.repository.findOne({ userId, asset, withdrawalAddress });
+
+    if (!_staking) throw new NotFoundException();
+
+    const staking = await this.authorize.authorize(userId, _staking.id);
 
     return StakingOutputDtoMapper.entityToDto(staking);
   }

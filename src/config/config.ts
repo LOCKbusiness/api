@@ -125,6 +125,7 @@ export class Configuration {
   masternode = {
     collateral: 20000,
     fee: 10,
+    creationFee: 0.00000232,
     resignMessage: 'Resign_masternode_${id}_with_hash_${hash}',
   };
 

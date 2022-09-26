@@ -28,6 +28,7 @@ export enum StakingAddressPurposes {
 
 export enum MasternodeState {
   IDLE = 'Idle',
+  CREATING = 'Creating',
   CREATED = 'Created',
   RESIGN_REQUESTED = 'ResignRequested',
   RESIGN_CONFIRMED = 'ResignConfirmed',

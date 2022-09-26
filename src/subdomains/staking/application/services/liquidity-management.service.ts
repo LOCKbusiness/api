@@ -49,6 +49,7 @@ export class LiquidityManagementService {
         : Math.floor(excessiveLiquidity / Config.masternode.collateral);
 
     if (masternodeChangeCount > 0) {
+      // find n addresses from the masternode table, where state is idle
       await this.createMasternodes(masternodeChangeCount);
     } else {
       await this.resignMasternodes(Math.abs(masternodeChangeCount));
@@ -78,15 +79,19 @@ export class LiquidityManagementService {
 
   // --- MASTERNODES ---- //
   private async createMasternodes(count: number): Promise<void> {
+    const idleMasternodes = await this.masternodeService.getIdleMasternodes(count);
+
     let tx: string;
-    for (let i = 0; i < count; i++) {
+    for (const node of idleMasternodes) {
       tx = await this.client.sendUtxoToMany([
         {
-          addressTo: Config.staking.masternodeWalletAddress,
-          amount: Config.masternode.collateral + Config.masternode.fee,
+          addressTo: node.owner,
+          amount: Config.masternode.collateral + Config.masternode.fee + Config.masternode.creationFee,
         },
       ]);
       console.info(`Sending collateral to masternode wallet: ${tx}`);
+
+      await this.masternodeService.designateCreating(node.id);
     }
 
     if (tx) await this.client.waitForTx(tx).catch((e) => console.error(`Wait for creation TX failed: ${e}`));

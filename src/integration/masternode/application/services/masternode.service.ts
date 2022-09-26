@@ -61,6 +61,10 @@ export class MasternodeService {
     return this.masternodeRepo.find();
   }
 
+  async getIdleMasternodes(count: number): Promise<Masternode[]> {
+    return this.masternodeRepo.find({ where: { state: MasternodeState.IDLE }, take: count });
+  }
+
   async getActiveCount(date: Date = new Date()): Promise<number> {
     return this.masternodeRepo.count({
       where: [
@@ -115,6 +119,15 @@ export class MasternodeService {
     for (const mn of unpaidMasternodes.slice(0, paidMasternodeCount)) {
       await this.masternodeRepo.update(mn.id, { creationFeePaid: true });
     }
+  }
+
+  async designateCreating(id: number): Promise<void> {
+    const masternode = await this.masternodeRepo.findOne(id);
+    if (!masternode) throw new NotFoundException('Masternode not found');
+
+    masternode.state = MasternodeState.CREATING;
+
+    await this.masternodeRepo.save(masternode);
   }
 
   async create(id: number, dto: CreateMasternodeDto): Promise<Masternode> {
