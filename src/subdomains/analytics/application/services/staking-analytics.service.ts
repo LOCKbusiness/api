@@ -1,21 +1,41 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { Interval } from '@nestjs/schedule';
 import { StakingService } from 'src/subdomains/staking/application/services/staking.service';
-import { StakingAnalytics } from '../../domain/staking-analytics';
+import { StakingAnalytics } from '../../domain/staking-analytics.entity';
 import { StakingAnalyticsOutputDto } from '../dto/output/staking-analytics.output.dto';
+import { StakingAnalyticsOutputDtoMapper } from '../mappers/staking-analytics-output-dto.mapper';
+import { StakingAnalyticsRepository } from '../repositories/staking-analytics.repository';
 
 @Injectable()
 export class StakingAnalyticsService {
-  constructor(private readonly stakingService: StakingService) {}
+  constructor(
+    private readonly repository: StakingAnalyticsRepository,
+    private readonly stakingService: StakingService,
+  ) {}
 
-  async getStakingAnalytics(): Promise<StakingAnalyticsOutputDto> {
+  //*** PUBLIC API ***//
+
+  async getStakingAnalyticsCache(): Promise<StakingAnalyticsOutputDto> {
+    const analytics = await this.repository.findOne();
+
+    if (!analytics) throw new NotFoundException();
+
+    return StakingAnalyticsOutputDtoMapper.entityToDto(analytics);
+  }
+
+  //*** JOBS ***//
+
+  @Interval(3600000)
+  async updateStakingAnalytics(): Promise<void> {
     const { dateFrom, dateTo } = StakingAnalytics.getAPRPeriod();
 
     const averageBalance = await this.stakingService.getAverageStakingBalance(dateFrom, dateTo);
     const totalRewards = await this.stakingService.getTotalRewards(dateFrom, dateTo);
 
-    const apr = StakingAnalytics.calculateAPR(averageBalance, totalRewards);
-    const apy = StakingAnalytics.calculateAPY(apr);
+    const analytics = (await this.repository.findOne()) ?? this.repository.create();
 
-    return StakingAnalyticsOutputDto.create(apr, apy);
+    analytics.updateAnalytics(averageBalance, totalRewards);
+
+    await this.repository.save(analytics);
   }
 }

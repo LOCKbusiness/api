@@ -11,6 +11,6 @@ export class StakingAnalyticsController {
   @Get()
   @ApiResponse({ status: 200, type: StakingAnalyticsOutputDto })
   async getStakingAnalytics(): Promise<StakingAnalyticsOutputDto> {
-    return this.stakingAnalyticsService.getStakingAnalytics();
+    return this.stakingAnalyticsService.getStakingAnalyticsCache();
   }
 }

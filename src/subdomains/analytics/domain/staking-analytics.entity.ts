@@ -1,8 +1,24 @@
 import { GetConfig } from 'src/config/config';
+import { IEntity } from 'src/shared/models/entity';
 import { Util } from 'src/shared/util';
+import { Column, Entity } from 'typeorm';
 
-export class StakingAnalytics {
+@Entity()
+export class StakingAnalytics extends IEntity {
+  @Column({ type: 'float', nullable: true })
+  apr: number;
+
+  @Column({ type: 'float', nullable: true })
+  apy: number;
+
   //*** PUBLIC API ***//
+
+  updateAnalytics(averageBalance: number, totalReward: number): this {
+    this.apr = this.calculateAPR(averageBalance, totalReward);
+    this.apy = this.calculateAPY(this.apr);
+
+    return this;
+  }
 
   static getAPRPeriod(): { dateFrom: Date; dateTo: Date } {
     const dateTo = new Date();
@@ -12,7 +28,9 @@ export class StakingAnalytics {
     return { dateFrom, dateTo };
   }
 
-  static calculateAPR(averageBalance: number, totalReward: number): number {
+  //*** HELPER METHODS ***//
+
+  private calculateAPR(averageBalance: number, totalReward: number): number {
     if (averageBalance === 0) return 0;
 
     const apr = this.getApr(totalReward / GetConfig().staking.aprPeriod, averageBalance);
@@ -20,15 +38,13 @@ export class StakingAnalytics {
     return Util.round(apr, 3);
   }
 
-  static calculateAPY(apr: number): number {
+  private calculateAPY(apr: number): number {
     const apy = Math.pow(1 + apr / 365, 365) - 1;
 
     return Util.round(apy, 3);
   }
 
-  //*** HELPER METHODS ***//
-
-  private static getApr(interest: number, collateral: number): number {
+  private getApr(interest: number, collateral: number): number {
     if (collateral === 0) return 0;
 
     return (interest / collateral) * 365;

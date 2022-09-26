@@ -1,4 +1,4 @@
-import { StakingAnalytics } from '../staking-analytics';
+import { StakingAnalytics } from '../staking-analytics.entity';
 
 describe('StakingAnalytics', () => {
   describe('#getAPRPeriod(...)', () => {
