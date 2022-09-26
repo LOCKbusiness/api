@@ -186,11 +186,7 @@ export class Staking extends IEntity {
   }
 
   getDepositByPayInTxId(payInTxId: string): Deposit {
-    const deposit = this.deposits.find((w) => w.payInTxId === payInTxId);
-
-    if (!deposit) throw new NotFoundException('Deposit not found');
-
-    return deposit;
+    return this.deposits.find((w) => w.payInTxId === payInTxId);
   }
 
   getBalance(): number {

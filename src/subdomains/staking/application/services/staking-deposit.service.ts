@@ -86,7 +86,7 @@ export class StakingDepositService {
       .createQueryBuilder('staking')
       .leftJoin('staking.depositAddress', 'depositAddress')
       .select('depositAddress.address', 'address')
-      .where('staking.status = :status', { status: StakingStatus.ACTIVE })
+      .where('staking.status != :status', { status: StakingStatus.BLOCKED })
       .getRawMany<{ address: string }>()
       .then((a) => a.map((a) => a.address));
 
@@ -94,12 +94,12 @@ export class StakingDepositService {
   }
 
   private async getStakingsForPayIns(stakingPayIns: PayIn[]): Promise<[Staking, PayIn][]> {
-    const stakingPairs = [];
+    const stakingPairs: [Staking, PayIn][] = [];
 
     for (const payIn of stakingPayIns) {
       const staking = await this.repository.findOne({ withdrawalAddress: payIn.address });
 
-      stakingPairs.push([payIn, staking]);
+      stakingPairs.push([staking, payIn]);
     }
 
     return stakingPairs;
@@ -119,11 +119,15 @@ export class StakingDepositService {
 
         await this.repository.save(staking);
         await this.payInService.acknowledgePayIn(payIn, PayInPurpose.CRYPTO_STAKING);
-      } catch (e) {}
+      } catch (e) {
+        const message = `Failed to process deposit input: ${payIn.id}. Error:`;
+        console.error(message, e);
+      }
     }
   }
 
   private async isFirstPayInValid(staking: Staking, payIn: PayIn): Promise<boolean> {
+    return true; //TODO Remove after fix getSourceAddresses
     const addresses = await this.deFiChainStakingService.getSourceAddresses(payIn.txId);
     return staking.verifyUserAddresses(addresses);
   }
