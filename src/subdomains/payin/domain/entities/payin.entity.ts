@@ -1,6 +1,6 @@
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { IEntity } from 'src/shared/models/entity';
-import { Column, Entity, ManyToOne, OneToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
 import { PayInBlockchainAddress } from './payin-blockchain-address.entity';
 
 export enum PayInPurpose {
@@ -23,7 +23,8 @@ export class PayIn extends IEntity {
   @Column()
   txType: string;
 
-  @OneToOne(() => PayInBlockchainAddress)
+  @OneToOne(() => PayInBlockchainAddress, { eager: true, cascade: true })
+  @JoinColumn()
   address: PayInBlockchainAddress;
 
   @Column({ nullable: true })
@@ -38,7 +39,7 @@ export class PayIn extends IEntity {
   @ManyToOne(() => Asset, { nullable: false, eager: true })
   asset: Asset;
 
-  @Column({ nullable: false })
+  @Column({ nullable: true })
   purpose: PayInPurpose;
 
   //*** FACTORY METHODS ***//
