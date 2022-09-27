@@ -10,7 +10,7 @@ import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { CreateDepositDto } from '../dto/input/create-deposit.dto';
 import { CreateRewardDto } from '../dto/input/create-reward.dto';
 import { CreateStakingDto } from '../dto/input/create-staking.dto';
-import { CreateWithdrawalDto } from '../dto/input/create-withdrawal.dto';
+import { CreateWithdrawalDraftDto } from '../dto/input/create-withdrawal-draft.dto';
 
 @Injectable()
 export class StakingFactory {
@@ -38,10 +38,10 @@ export class StakingFactory {
     return Deposit.create(staking, amount, txId);
   }
 
-  createWithdrawal(staking: Staking, dto: CreateWithdrawalDto): Withdrawal {
-    const { amount, signature } = dto;
+  createWithdrawalDraft(staking: Staking, dto: CreateWithdrawalDraftDto): Withdrawal {
+    const { amount } = dto;
 
-    return Withdrawal.create(staking, amount, signature);
+    return Withdrawal.create(staking, amount);
   }
 
   createReward(staking: Staking, dto: CreateRewardDto): Reward {

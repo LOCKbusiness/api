@@ -7,13 +7,15 @@ import { WithdrawalStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingDeFiChainService } from '../../infrastructure/staking-defichain.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
-import { CreateWithdrawalDto } from '../dto/input/create-withdrawal.dto';
-import { GetWithdrawalSignMessageDto } from '../dto/input/get-withdrawal-sign-message.dto';
-import { SignWithdrawalOutputDto } from '../dto/output/sign-withdrawal.output.dto';
+import { SignWithdrawalDto } from '../dto/input/create-withdrawal.dto';
+import { CreateWithdrawalDraftDto } from '../dto/input/create-withdrawal-draft.dto';
+import { WithdrawalDraftOutputDto } from '../dto/output/withdrawal-draft.output.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
 import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
 import { StakingRepository } from '../repositories/staking.repository';
+import { WithdrawalDraftOutputDtoMapper } from '../mappers/withdrawal-draft-output-dto.mapper';
+import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wallet-blockchain-address.entity';
 
 @Injectable()
 export class StakingWithdrawalService {
@@ -28,43 +30,49 @@ export class StakingWithdrawalService {
 
   //*** PUBLIC API ***//
 
-  async createWithdrawal(
+  async createWithdrawalDraft(
     userId: number,
     walletId: number,
     stakingId: number,
-    dto: CreateWithdrawalDto,
-  ): Promise<StakingOutputDto> {
+    dto: CreateWithdrawalDraftDto,
+  ): Promise<WithdrawalDraftOutputDto> {
     await this.kycCheck.check(userId, walletId);
 
     const staking = await this.authorize.authorize(userId, stakingId);
-    const withdrawal = this.factory.createWithdrawal(staking, dto);
+    const withdrawalDraft = this.factory.createWithdrawalDraft(staking, dto);
 
-    this.verifySignature(dto.signature, dto.amount, staking);
+    staking.addWithdrawalDraft(withdrawalDraft);
 
-    staking.withdraw(withdrawal);
+    await this.repository.save(staking);
+
+    // DB ID is required before generating the sign message
+    withdrawalDraft.setSignMessage();
+
+    await this.repository.save(staking);
+
+    return WithdrawalDraftOutputDtoMapper.entityToDto(withdrawalDraft);
+  }
+
+  async signWithdrawal(
+    userId: number,
+    walletId: number,
+    stakingId: number,
+    withdrawalId: number,
+    dto: SignWithdrawalDto,
+  ): Promise<StakingOutputDto> {
+    // TODO - consider using pessimistic lock to disallow parallel request reads
+    await this.kycCheck.check(userId, walletId);
+
+    const staking = await this.authorize.authorize(userId, stakingId);
+    const withdrawal = staking.getWithdrawal(withdrawalId);
+
+    this.verifySignature(dto.signature, withdrawal, staking.withdrawalAddress);
+
+    staking.signWithdrawal(withdrawal.id, dto.signature);
 
     await this.repository.save(staking);
 
     return StakingOutputDtoMapper.entityToDto(staking);
-  }
-
-  async getSignMessage(
-    userId: number,
-    walletId: number,
-    stakingId: number,
-    dto: GetWithdrawalSignMessageDto,
-  ): Promise<SignWithdrawalOutputDto> {
-    await this.kycCheck.check(userId, walletId);
-
-    const staking = await this.authorize.authorize(userId, stakingId);
-
-    const message = staking.generateWithdrawalSignatureMessage(
-      dto.amount,
-      staking.asset.name,
-      staking.withdrawalAddress.address,
-    );
-
-    return { message };
   }
 
   async getStakingWithPendingWithdrawals(): Promise<Staking[]> {
@@ -102,14 +110,8 @@ export class StakingWithdrawalService {
 
   //*** HELPER METHOD ***//
 
-  private verifySignature(signature: string, amount: number, staking: Staking): void {
-    const message = staking.generateWithdrawalSignatureMessage(
-      amount,
-      staking.asset.name,
-      staking.withdrawalAddress.address,
-    );
-
-    const isValid = this.cryptoService.verifySignature(message, staking.withdrawalAddress.address, signature);
+  private verifySignature(signature: string, withdrawal: Withdrawal, withdrawalAddress: WalletBlockchainAddress): void {
+    const isValid = this.cryptoService.verifySignature(withdrawal.signMessage, withdrawalAddress.address, signature);
 
     if (!isValid) throw new UnauthorizedException();
   }
@@ -121,7 +123,7 @@ export class StakingWithdrawalService {
     for (const withdrawal of withdrawals) {
       try {
         if (await this.isWithdrawalComplete(withdrawal)) {
-          staking.confirmWithdrawal(withdrawal.id.toString());
+          staking.confirmWithdrawal(withdrawal.id);
           await this.repository.save(staking);
         }
       } catch (e) {

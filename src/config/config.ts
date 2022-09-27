@@ -109,7 +109,8 @@ export class Configuration {
     minimalDeposit: 0.01,
     stakingFee: 0.05,
     signatureTemplates: {
-      signWithdrawalMessage: 'Withdraw_${amount}_${asset}_from_${address}',
+      signWithdrawalMessage:
+        'Withdraw_${amount}_${asset}_from_${address}_staking_id_${stakingId}_withdrawal_id_${withdrawalId}',
     },
 
     liquidityWalletAddress: process.env.STAKING_LIQUIDITY_WALLET_ADDRESS,

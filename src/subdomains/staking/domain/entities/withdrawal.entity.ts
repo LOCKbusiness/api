@@ -1,12 +1,17 @@
+import { Config } from 'src/config/config';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { IEntity } from 'src/shared/models/entity';
+import { Util } from 'src/shared/util';
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { WithdrawalStatus } from '../enums';
 import { Staking } from './staking.entity';
 
 @Entity()
 export class Withdrawal extends IEntity {
-  @Column({ nullable: false })
+  @Column({ nullable: true })
+  signMessage: string;
+
+  @Column({ nullable: true })
   signature: string;
 
   @ManyToOne(() => Staking, (staking) => staking.withdrawals, { nullable: true })
@@ -29,12 +34,11 @@ export class Withdrawal extends IEntity {
 
   //*** FACTORY METHODS ***//
 
-  static create(staking: Staking, amount: number, signature: string): Withdrawal {
+  static create(staking: Staking, amount: number): Withdrawal {
     const withdrawal = new Withdrawal();
 
-    withdrawal.signature = signature;
     withdrawal.staking = staking;
-    withdrawal.status = WithdrawalStatus.PENDING;
+    withdrawal.status = WithdrawalStatus.DRAFT;
     withdrawal.asset = staking.asset;
     withdrawal.amount = amount;
 
@@ -42,6 +46,26 @@ export class Withdrawal extends IEntity {
   }
 
   //*** PUBLIC API ***//
+
+  // should be called after draft saved to DB and withdrawal receives an ID
+  setSignMessage(): this {
+    this.signMessage = this.generateWithdrawalSignatureMessage(
+      this.amount,
+      this.staking.asset.name,
+      this.staking.withdrawalAddress.address,
+      this.staking.id,
+      this.id,
+    );
+
+    return this;
+  }
+
+  signWithdrawal(signature: string): this {
+    this.signature = signature;
+    this.status = WithdrawalStatus.PENDING;
+
+    return this;
+  }
 
   designateWithdrawalPayout(withdrawalTxId: string): this {
     this.status = WithdrawalStatus.PAYING_OUT;
@@ -58,9 +82,21 @@ export class Withdrawal extends IEntity {
     return this;
   }
 
-  failWithdrawal(): this {
-    this.status = WithdrawalStatus.FAILED;
+  //*** HELPER METHODS ***//
 
-    return this;
+  private generateWithdrawalSignatureMessage(
+    amount: number,
+    asset: string,
+    address: string,
+    stakingId: number,
+    withdrawalId: number,
+  ): string {
+    return Util.template(Config.staking.signatureTemplates.signWithdrawalMessage, {
+      amount: amount.toString(),
+      asset,
+      address,
+      stakingId: stakingId.toString(),
+      withdrawalId: withdrawalId.toString(),
+    });
   }
 }

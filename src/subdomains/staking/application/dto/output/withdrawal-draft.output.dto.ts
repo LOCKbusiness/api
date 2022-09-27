@@ -1,8 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class SignWithdrawalOutputDto {
+export class WithdrawalDraftOutputDto {
+  @ApiProperty()
+  id: number;
+
   @ApiProperty({
     description: 'Message to sign',
   })
-  message: string;
+  signMessage: string;
 }

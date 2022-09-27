@@ -108,33 +108,37 @@ export class Staking extends IEntity {
     return this;
   }
 
-  withdraw(withdrawal: Withdrawal): this {
+  addWithdrawalDraft(withdrawal: Withdrawal): this {
     if (!this.withdrawals) this.withdrawals = [];
     if (this.status !== StakingStatus.ACTIVE) throw new BadRequestException('Staking is inactive');
+    if (withdrawal.status !== WithdrawalStatus.DRAFT) throw new BadRequestException('Cannot add non-Draft Withdrawals');
 
     if (!this.isEnoughBalanceForWithdrawal(withdrawal)) {
       throw new BadRequestException('Not sufficient staking balance to proceed with Withdrawal');
     }
 
     this.withdrawals.push(withdrawal);
-    this.updateBalance();
 
     return this;
   }
 
-  confirmWithdrawal(withdrawalId: string): this {
+  signWithdrawal(withdrawalId: number, signature: string): this {
+    const withdrawal = this.getWithdrawal(withdrawalId);
+
+    // additional check in case more than one draft is created and signed in parallel
+    if (!this.isEnoughBalanceForWithdrawal(withdrawal)) {
+      throw new BadRequestException('Not sufficient staking balance to proceed with signing Withdrawal');
+    }
+
+    withdrawal.signWithdrawal(signature);
+
+    return this;
+  }
+
+  confirmWithdrawal(withdrawalId: number): this {
     const withdrawal = this.getWithdrawal(withdrawalId);
 
     withdrawal.confirmWithdrawal();
-    this.updateBalance();
-
-    return this;
-  }
-
-  failWithdrawal(withdrawalId: string): this {
-    const withdrawal = this.getWithdrawal(withdrawalId);
-
-    withdrawal.failWithdrawal();
     this.updateBalance();
 
     return this;
@@ -155,22 +159,14 @@ export class Staking extends IEntity {
     return this;
   }
 
-  generateWithdrawalSignatureMessage(amount: number, asset: string, address: string): string {
-    return Util.template(Config.staking.signatureTemplates.signWithdrawalMessage, {
-      amount: amount.toString(),
-      asset: asset,
-      address: address,
-    });
-  }
-
   verifyUserAddresses(addresses: string[]): boolean {
     return addresses.every((a) => a === this.withdrawalAddress.address);
   }
 
   //*** GETTERS ***//
 
-  getWithdrawal(withdrawalId: string): Withdrawal {
-    const withdraw = this.withdrawals.find((w) => w.id === parseInt(withdrawalId));
+  getWithdrawal(withdrawalId: number): Withdrawal {
+    const withdraw = this.withdrawals.find((w) => w.id === withdrawalId);
 
     if (!withdraw) throw new NotFoundException('Withdrawal not found');
 

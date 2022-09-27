@@ -5,10 +5,10 @@ export enum StakingStatus {
 }
 
 export enum WithdrawalStatus {
+  DRAFT = 'Draft',
   PENDING = 'Pending',
   PAYING_OUT = 'PayingOut',
   CONFIRMED = 'Confirmed',
-  FAILED = 'Failed',
 }
 
 export enum DepositStatus {
