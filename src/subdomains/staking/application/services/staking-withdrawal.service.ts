@@ -73,7 +73,16 @@ export class StakingWithdrawalService {
     const staking = await this.authorize.authorize(userId, stakingId);
     const withdrawal = staking.getWithdrawal(withdrawalId);
 
-    this.verifySignature(dto.signature, withdrawal, staking.withdrawalAddress);
+    try {
+      this.verifySignature(dto.signature, withdrawal, staking.withdrawalAddress);
+    } catch (e) {
+      if (e instanceof UnauthorizedException) {
+        withdrawal.failWithdrawal();
+        await this.repository.save(staking);
+      }
+
+      throw e;
+    }
 
     staking.signWithdrawal(withdrawal.id, dto.signature);
 

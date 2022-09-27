@@ -104,7 +104,6 @@ export class Withdrawal extends IEntity {
     return this;
   }
 
-  // hit when signature verification fails
   failWithdrawal(): this {
     this.status = WithdrawalStatus.FAILED;
 
