@@ -20,7 +20,7 @@ export class WithdrawalController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   @ApiResponse({ status: 201, type: WithdrawalDraftOutputDto })
-  async getSignaturePhrase(
+  async createWithdrawalDraft(
     @GetJwt() jwt: JwtPayload,
     @Param('stakingId') stakingId: string,
     @Body() dto: CreateWithdrawalDraftDto,
@@ -32,7 +32,7 @@ export class WithdrawalController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   @ApiResponse({ status: 200, type: StakingOutputDto })
-  async createWithdrawal(
+  async signWithdrawal(
     @GetJwt() jwt: JwtPayload,
     @Param('stakingId') stakingId: string,
     @Param('id') withdrawalId: string,
