@@ -62,7 +62,15 @@ export class MasternodeService {
   }
 
   async getIdleMasternodes(count: number): Promise<Masternode[]> {
-    return this.masternodeRepo.find({ where: { state: MasternodeState.IDLE }, take: count });
+    const masternodes = await this.masternodeRepo.find({ where: { state: MasternodeState.IDLE }, take: count });
+
+    if (masternodes.length !== count) {
+      console.error(
+        `Could not get enough idle masternodes, requested ${count}, returning available: ${masternodes.length}`,
+      );
+    }
+
+    return masternodes;
   }
 
   async getActiveCount(date: Date = new Date()): Promise<number> {
