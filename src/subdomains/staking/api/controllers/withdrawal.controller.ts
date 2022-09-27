@@ -6,7 +6,7 @@ import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { GetJwt } from 'src/shared/auth/get-jwt.decorator';
 import { JwtPayload } from 'src/shared/auth/jwt-payload.interface';
 import { StakingWithdrawalService } from '../../application/services/staking-withdrawal.service';
-import { SignWithdrawalDto } from '../../application/dto/input/create-withdrawal.dto';
+import { SignWithdrawalDto } from '../../application/dto/input/sign-withdrawal.dto';
 import { StakingOutputDto } from '../../application/dto/output/staking.output.dto';
 import { WithdrawalDraftOutputDto } from '../../application/dto/output/withdrawal-draft.output.dto';
 import { CreateWithdrawalDraftDto } from '../../application/dto/input/create-withdrawal-draft.dto';

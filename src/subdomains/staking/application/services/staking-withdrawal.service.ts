@@ -7,7 +7,7 @@ import { WithdrawalStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingDeFiChainService } from '../../infrastructure/staking-defichain.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
-import { SignWithdrawalDto } from '../dto/input/create-withdrawal.dto';
+import { SignWithdrawalDto } from '../dto/input/sign-withdrawal.dto';
 import { CreateWithdrawalDraftDto } from '../dto/input/create-withdrawal-draft.dto';
 import { WithdrawalDraftOutputDto } from '../dto/output/withdrawal-draft.output.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
