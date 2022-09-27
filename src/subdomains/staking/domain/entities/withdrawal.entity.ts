@@ -2,11 +2,12 @@ import { Config } from 'src/config/config';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { IEntity } from 'src/shared/models/entity';
 import { Util } from 'src/shared/util';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { WithdrawalStatus } from '../enums';
 import { Staking } from './staking.entity';
 
 @Entity()
+@Index(['staking', 'status'], { unique: true, where: `status = '${WithdrawalStatus.DRAFT}'` })
 export class Withdrawal extends IEntity {
   @Column({ nullable: true })
   signMessage: string;

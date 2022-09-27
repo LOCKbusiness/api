@@ -7,7 +7,6 @@ import { IEntity } from 'src/shared/models/entity';
 import { DepositStatus, RewardStatus, StakingStatus, WithdrawalStatus } from '../enums';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Util } from 'src/shared/util';
-import { Config } from 'src/config/config';
 import { StakingBlockchainAddress } from './staking-blockchain-address.entity';
 import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wallet-blockchain-address.entity';
 
@@ -126,7 +125,7 @@ export class Staking extends IEntity {
   signWithdrawal(withdrawalId: number, signature: string): this {
     const withdrawal = this.getWithdrawal(withdrawalId);
 
-    // check in case other withdrawals were signed in the meanwhile
+    // double check balance before sending out
     if (!this.isEnoughBalanceForWithdrawal(withdrawal)) {
       throw new BadRequestException('Not sufficient staking balance to proceed with signing Withdrawal');
     }
