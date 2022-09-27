@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
 import { Staking } from '../../domain/entities/staking.entity';
@@ -43,12 +43,20 @@ export class StakingWithdrawalService {
 
     staking.addWithdrawalDraft(withdrawal);
 
-    // save is required to get withdrawal id
-    await this.repository.save(staking);
+    try {
+      // save is required to get withdrawal id
+      await this.repository.save(staking);
 
-    withdrawal.setSignMessage();
+      withdrawal.setSignMessage();
 
-    await this.repository.save(staking);
+      await this.repository.save(staking);
+    } catch (e) {
+      if (e.message.includes('Cannot insert duplicate key row')) {
+        throw new BadRequestException('Existing withdrawal have to be finished first');
+      }
+
+      throw e;
+    }
 
     return WithdrawalDraftOutputDtoMapper.entityToDto(withdrawal);
   }
@@ -74,8 +82,38 @@ export class StakingWithdrawalService {
     return StakingOutputDtoMapper.entityToDto(staking);
   }
 
+  async changeAmount(
+    userId: number,
+    walletId: number,
+    stakingId: number,
+    withdrawalId: number,
+    dto: CreateWithdrawalDraftDto,
+  ): Promise<WithdrawalDraftOutputDto> {
+    await this.kycCheck.check(userId, walletId);
+
+    const staking = await this.authorize.authorize(userId, stakingId);
+
+    staking.changeWithdrawalAmount(withdrawalId, dto.amount);
+
+    await this.repository.save(staking);
+
+    const withdrawal = staking.getWithdrawal(withdrawalId);
+
+    return WithdrawalDraftOutputDtoMapper.entityToDto(withdrawal);
+  }
+
+  async getDraftWithdrawals(userId: number, walletId: number, stakingId: number): Promise<WithdrawalDraftOutputDto[]> {
+    await this.kycCheck.check(userId, walletId);
+
+    const staking = await this.authorize.authorize(userId, stakingId);
+
+    const draftWithdrawals = staking.getDraftWithdrawals();
+
+    return draftWithdrawals.map((w) => WithdrawalDraftOutputDtoMapper.entityToDto(w));
+  }
+
   async getStakingWithPendingWithdrawals(): Promise<Staking[]> {
-    return await this.repository
+    return this.repository
       .createQueryBuilder('staking')
       .leftJoinAndSelect('staking.withdrawals', 'withdrawal')
       .where('withdrawal.status = :status', { status: WithdrawalStatus.PENDING })

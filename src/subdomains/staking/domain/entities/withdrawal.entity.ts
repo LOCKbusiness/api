@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { Config } from 'src/config/config';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { IEntity } from 'src/shared/models/entity';
@@ -36,6 +37,8 @@ export class Withdrawal extends IEntity {
   //*** FACTORY METHODS ***//
 
   static create(staking: Staking, amount: number): Withdrawal {
+    if (amount <= 0) throw new BadRequestException('Withdrawal amount must be greater than 0');
+
     const withdrawal = new Withdrawal();
 
     withdrawal.staking = staking;
@@ -79,6 +82,31 @@ export class Withdrawal extends IEntity {
     this.status = WithdrawalStatus.CONFIRMED;
 
     this.outputDate = new Date();
+
+    return this;
+  }
+
+  changeAmount(amount: number, parentStaking: Staking): this {
+    if (amount <= 0) throw new BadRequestException('Withdrawal amount must be greater than 0');
+    if (this.status !== WithdrawalStatus.DRAFT) {
+      throw new BadRequestException('Cannot change amount of non-draft withdrawal');
+    }
+
+    this.amount = amount;
+    this.signMessage = this.generateWithdrawalSignatureMessage(
+      this.amount,
+      parentStaking.asset.name,
+      parentStaking.withdrawalAddress.address,
+      parentStaking.id,
+      this.id,
+    );
+
+    return this;
+  }
+
+  // hit when signature verification fails
+  failWithdrawal(): this {
+    this.status = WithdrawalStatus.FAILED;
 
     return this;
   }

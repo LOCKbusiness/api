@@ -135,6 +135,18 @@ export class Staking extends IEntity {
     return this;
   }
 
+  changeWithdrawalAmount(withdrawalId: number, amount: number): this {
+    const withdrawal = this.getWithdrawal(withdrawalId);
+
+    withdrawal.changeAmount(amount, this);
+
+    if (!this.isEnoughBalanceForWithdrawal(withdrawal)) {
+      throw new BadRequestException('Not sufficient staking balance to proceed with signing Withdrawal');
+    }
+
+    return this;
+  }
+
   confirmWithdrawal(withdrawalId: number): this {
     const withdrawal = this.getWithdrawal(withdrawalId);
 
@@ -171,6 +183,10 @@ export class Staking extends IEntity {
     if (!withdraw) throw new NotFoundException('Withdrawal not found');
 
     return withdraw;
+  }
+
+  getDraftWithdrawals(): Withdrawal[] {
+    return this.withdrawals.filter((w) => w.status === WithdrawalStatus.DRAFT);
   }
 
   getDeposit(depositId: string): Deposit {
