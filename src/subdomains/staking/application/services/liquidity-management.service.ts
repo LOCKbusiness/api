@@ -49,7 +49,6 @@ export class LiquidityManagementService {
         : Math.floor(excessiveLiquidity / Config.masternode.collateral);
 
     if (masternodeChangeCount > 0) {
-      // find n addresses from the masternode table, where state is idle
       await this.createMasternodes(masternodeChangeCount);
     } else {
       await this.resignMasternodes(Math.abs(masternodeChangeCount));
@@ -79,6 +78,7 @@ export class LiquidityManagementService {
 
   // --- MASTERNODES ---- //
   private async createMasternodes(count: number): Promise<void> {
+    // get n addresses from the masternode table, where masternode state is idle
     const idleMasternodes = await this.masternodeService.getIdleMasternodes(count);
 
     let tx: string;
