@@ -2,6 +2,9 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class StakingOutputDto {
   @ApiProperty()
+  id: number;
+
+  @ApiProperty()
   asset: string;
 
   @ApiProperty()

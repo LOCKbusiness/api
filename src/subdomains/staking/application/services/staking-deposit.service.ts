@@ -95,7 +95,9 @@ export class StakingDepositService {
     const stakingPairs: [Staking, PayIn][] = [];
 
     for (const payIn of stakingPayIns) {
-      const staking = await this.repository.findOne({ depositAddress: payIn.address });
+      const staking = await this.repository.findOne({
+        depositAddress: { address: payIn.address.address, blockchain: payIn.address.blockchain },
+      });
 
       stakingPairs.push([staking, payIn]);
     }
