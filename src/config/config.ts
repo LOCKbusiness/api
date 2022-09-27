@@ -109,7 +109,8 @@ export class Configuration {
     minimalDeposit: 0.01,
     stakingFee: 0.05,
     signatureTemplates: {
-      signWithdrawalMessage: 'Withdraw_${amount}_${asset}_from_${address}',
+      signWithdrawalMessage:
+        'Withdraw_${amount}_${asset}_from_${address}_staking_id_${stakingId}_withdrawal_id_${withdrawalId}',
     },
 
     liquidityWalletAddress: process.env.STAKING_LIQUIDITY_WALLET_ADDRESS,
@@ -126,6 +127,7 @@ export class Configuration {
   masternode = {
     collateral: 20000,
     fee: 10,
+    creationFee: 0.00000232,
     resignMessage: 'Resign_masternode_${id}_with_hash_${hash}',
   };
 

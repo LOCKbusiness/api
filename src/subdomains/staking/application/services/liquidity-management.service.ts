@@ -78,15 +78,20 @@ export class LiquidityManagementService {
 
   // --- MASTERNODES ---- //
   private async createMasternodes(count: number): Promise<void> {
+    // get n addresses from the masternode table, where masternode state is idle
+    const idleMasternodes = await this.masternodeService.getIdleMasternodes(count);
+
     let tx: string;
-    for (let i = 0; i < count; i++) {
+    for (const node of idleMasternodes) {
       tx = await this.client.sendUtxoToMany([
         {
-          addressTo: Config.staking.masternodeWalletAddress,
-          amount: Config.masternode.collateral + Config.masternode.fee,
+          addressTo: node.owner,
+          amount: Config.masternode.collateral + Config.masternode.fee + Config.masternode.creationFee,
         },
       ]);
       console.info(`Sending collateral to masternode wallet: ${tx}`);
+
+      await this.masternodeService.designateCreating(node.id);
     }
 
     if (tx) await this.client.waitForTx(tx).catch((e) => console.error(`Wait for creation TX failed: ${e}`));
@@ -129,7 +134,7 @@ export class LiquidityManagementService {
     await Promise.all(
       possibleWithdrawals.map((w) =>
         this.withdrawalService
-          .prepareWithdrawal(w)
+          .designateWithdrawal(w)
           .catch((e) => console.error(`Failed to prepare withdrawal ${w.id}:`, e)),
       ),
     );

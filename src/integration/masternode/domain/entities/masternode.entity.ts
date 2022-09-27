@@ -10,6 +10,9 @@ export class Masternode extends IEntity {
   @Column({ unique: true })
   operator: string;
 
+  @Column({ type: 'integer', nullable: true })
+  accountIndex: number;
+
   @Column({ nullable: true })
   @Index({ unique: true, where: 'owner IS NOT NULL' })
   owner: string;

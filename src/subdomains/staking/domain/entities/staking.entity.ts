@@ -7,7 +7,6 @@ import { IEntity } from 'src/shared/models/entity';
 import { DepositStatus, RewardStatus, StakingStatus, WithdrawalStatus } from '../enums';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Util } from 'src/shared/util';
-import { Config } from 'src/config/config';
 import { StakingBlockchainAddress } from './staking-blockchain-address.entity';
 import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wallet-blockchain-address.entity';
 
@@ -108,33 +107,50 @@ export class Staking extends IEntity {
     return this;
   }
 
-  withdraw(withdrawal: Withdrawal): this {
+  addWithdrawalDraft(withdrawal: Withdrawal): this {
     if (!this.withdrawals) this.withdrawals = [];
     if (this.status !== StakingStatus.ACTIVE) throw new BadRequestException('Staking is inactive');
+    if (withdrawal.status !== WithdrawalStatus.DRAFT) throw new BadRequestException('Cannot add non-Draft Withdrawals');
 
+    // restrict creation of draft in case of insufficient balance, does not protect from parallel creation.
     if (!this.isEnoughBalanceForWithdrawal(withdrawal)) {
       throw new BadRequestException('Not sufficient staking balance to proceed with Withdrawal');
     }
 
     this.withdrawals.push(withdrawal);
-    this.updateBalance();
 
     return this;
   }
 
-  confirmWithdrawal(withdrawalId: string, outputDate: Date, withdrawalTxId: string): this {
+  signWithdrawal(withdrawalId: number, signature: string): this {
     const withdrawal = this.getWithdrawal(withdrawalId);
 
-    withdrawal.confirmWithdrawal(outputDate, withdrawalTxId);
-    this.updateBalance();
+    // double check balance before sending out
+    if (!this.isEnoughBalanceForWithdrawal(withdrawal)) {
+      throw new BadRequestException('Not sufficient staking balance to proceed with signing Withdrawal');
+    }
+
+    withdrawal.signWithdrawal(signature);
 
     return this;
   }
 
-  failWithdrawal(withdrawalId: string): this {
+  changeWithdrawalAmount(withdrawalId: number, amount: number): this {
     const withdrawal = this.getWithdrawal(withdrawalId);
 
-    withdrawal.failWithdrawal();
+    withdrawal.changeAmount(amount, this);
+
+    if (!this.isEnoughBalanceForWithdrawal(withdrawal)) {
+      throw new BadRequestException('Not sufficient staking balance to proceed with signing Withdrawal');
+    }
+
+    return this;
+  }
+
+  confirmWithdrawal(withdrawalId: number): this {
+    const withdrawal = this.getWithdrawal(withdrawalId);
+
+    withdrawal.confirmWithdrawal();
     this.updateBalance();
 
     return this;
@@ -155,26 +171,22 @@ export class Staking extends IEntity {
     return this;
   }
 
-  generateWithdrawalSignatureMessage(amount: number, asset: string, address: string): string {
-    return Util.template(Config.staking.signatureTemplates.signWithdrawalMessage, {
-      amount: amount.toString(),
-      asset: asset,
-      address: address,
-    });
-  }
-
   verifyUserAddresses(addresses: string[]): boolean {
     return addresses.every((a) => a === this.withdrawalAddress.address);
   }
 
   //*** GETTERS ***//
 
-  getWithdrawal(withdrawalId: string): Withdrawal {
-    const withdraw = this.withdrawals.find((w) => w.id === parseInt(withdrawalId));
+  getWithdrawal(withdrawalId: number): Withdrawal {
+    const withdraw = this.withdrawals.find((w) => w.id === withdrawalId);
 
     if (!withdraw) throw new NotFoundException('Withdrawal not found');
 
     return withdraw;
+  }
+
+  getDraftWithdrawals(): Withdrawal[] {
+    return this.withdrawals.filter((w) => w.status === WithdrawalStatus.DRAFT);
   }
 
   getDeposit(depositId: string): Deposit {
@@ -213,6 +225,10 @@ export class Staking extends IEntity {
 
   getPendingWithdrawals(): Withdrawal[] {
     return this.getWithdrawalsByStatus(WithdrawalStatus.PENDING);
+  }
+
+  getPayingOutWithdrawals(): Withdrawal[] {
+    return this.getWithdrawalsByStatus(WithdrawalStatus.PAYING_OUT);
   }
 
   //*** HELPER METHODS ***//
