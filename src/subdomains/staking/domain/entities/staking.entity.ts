@@ -113,6 +113,7 @@ export class Staking extends IEntity {
     if (this.status !== StakingStatus.ACTIVE) throw new BadRequestException('Staking is inactive');
     if (withdrawal.status !== WithdrawalStatus.DRAFT) throw new BadRequestException('Cannot add non-Draft Withdrawals');
 
+    // restrict creation of draft in case of insufficient balance, does not protect from parallel creation.
     if (!this.isEnoughBalanceForWithdrawal(withdrawal)) {
       throw new BadRequestException('Not sufficient staking balance to proceed with Withdrawal');
     }
@@ -125,7 +126,7 @@ export class Staking extends IEntity {
   signWithdrawal(withdrawalId: number, signature: string): this {
     const withdrawal = this.getWithdrawal(withdrawalId);
 
-    // additional check in case more than one draft is created and signed in parallel
+    // check in case other withdrawals were signed in the meanwhile
     if (!this.isEnoughBalanceForWithdrawal(withdrawal)) {
       throw new BadRequestException('Not sufficient staking balance to proceed with signing Withdrawal');
     }

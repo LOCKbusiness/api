@@ -39,18 +39,18 @@ export class StakingWithdrawalService {
     await this.kycCheck.check(userId, walletId);
 
     const staking = await this.authorize.authorize(userId, stakingId);
-    const withdrawalDraft = this.factory.createWithdrawalDraft(staking, dto);
+    const withdrawal = this.factory.createWithdrawalDraft(staking, dto);
 
-    staking.addWithdrawalDraft(withdrawalDraft);
+    staking.addWithdrawalDraft(withdrawal);
+
+    // save is required to get withdrawal id
+    await this.repository.save(staking);
+
+    withdrawal.setSignMessage();
 
     await this.repository.save(staking);
 
-    // DB ID is required before generating the sign message
-    withdrawalDraft.setSignMessage();
-
-    await this.repository.save(staking);
-
-    return WithdrawalDraftOutputDtoMapper.entityToDto(withdrawalDraft);
+    return WithdrawalDraftOutputDtoMapper.entityToDto(withdrawal);
   }
 
   async signWithdrawal(
@@ -60,7 +60,6 @@ export class StakingWithdrawalService {
     withdrawalId: number,
     dto: SignWithdrawalDto,
   ): Promise<StakingOutputDto> {
-    // TODO - consider using pessimistic lock to disallow parallel request reads
     await this.kycCheck.check(userId, walletId);
 
     const staking = await this.authorize.authorize(userId, stakingId);
