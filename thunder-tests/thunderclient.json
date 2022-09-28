@@ -4,16 +4,16 @@
     "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
     "containerId": "f96d0067-9aab-45f6-acc7-3b78f5f4af61",
     "name": "Command",
-    "url": "{{url}}/v1/node/liq/passive/cmd",
+    "url": "{{url}}/v1/node/inp/cmd",
     "method": "POST",
     "sortNum": 40000,
     "created": "2022-09-23T22:17:02.788Z",
-    "modified": "2022-09-23T22:39:13.386Z",
+    "modified": "2022-09-28T12:14:24.537Z",
     "headers": [],
     "params": [],
     "body": {
       "type": "json",
-      "raw": "{\n  \"command\": \"getblockchaininfo\",\n  \"noAutoUnlock\": false\n}",
+      "raw": "{\n  \"command\": \"getblockcount\",\n  \"noAutoUnlock\": false\n}",
       "form": []
     },
     "tests": []
@@ -27,12 +27,45 @@
     "method": "POST",
     "sortNum": 50000,
     "created": "2022-09-23T22:18:39.309Z",
-    "modified": "2022-09-23T22:46:56.342Z",
+    "modified": "2022-09-28T14:33:39.746Z",
     "headers": [],
     "params": [],
     "body": {
       "type": "json",
-      "raw": "{\n  \"address\": \"address\",\n  \"signature\": \"signature\"\n}",
+      "raw": "{\n  \"address\": \"changeMe\",\n  \"signature\": \"changeMe\"\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "eeaeeabf-920f-465f-be74-30223e0a4e4b",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "6a988eeb-70ef-4bf8-87fb-d8891ce8400f",
+    "name": "All",
+    "url": "{{url}}/v1/masternode",
+    "method": "GET",
+    "sortNum": 60000,
+    "created": "2022-09-28T09:45:20.799Z",
+    "modified": "2022-09-28T09:46:00.293Z",
+    "headers": [],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "70183fc0-c0af-4940-8419-868a11200131",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "6a988eeb-70ef-4bf8-87fb-d8891ce8400f",
+    "name": "Creating",
+    "url": "{{url}}/v1/masternode/creating",
+    "method": "GET",
+    "sortNum": 80000,
+    "created": "2022-09-28T11:00:08.752Z",
+    "modified": "2022-09-28T11:00:39.668Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"ownerWallet\": \"cold-wallet-a\"\n}",
       "form": []
     },
     "tests": []
