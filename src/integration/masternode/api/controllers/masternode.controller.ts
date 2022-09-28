@@ -10,6 +10,8 @@ import { MasternodeState } from '../../../../subdomains/staking/domain/enums';
 import { CreateMasternodeDto } from '../../application/dto/create-masternode.dto';
 import { PrepareResignMasternodeDto } from '../../application/dto/prepare-resign-masternode.dto';
 import { AddMasternodeFee } from '../../application/dto/add-masternode-fee.dto';
+import { CreatingMasternodeDto } from '../../application/dto/creating-masternode.dto';
+import { RawTxCreateMasternodeDto } from '../../application/dto/raw-tx-create-masternode.dto';
 
 @ApiTags('masternode')
 @Controller('masternode')
@@ -42,6 +44,14 @@ export class MasternodeController {
   @UseGuards(AuthGuard(), new RoleGuard([WalletRole.MASTERNODE_MANAGER, WalletRole.PAYOUT_MANAGER]))
   getMasternodes(): Promise<Masternode[]> {
     return this.masternodeService.get();
+  }
+
+  @Get('creating')
+  @ApiBearerAuth()
+  @ApiExcludeEndpoint()
+  @UseGuards(AuthGuard(), new RoleGuard([WalletRole.MASTERNODE_MANAGER]))
+  getMasternodesCreating(@Body() dto: CreatingMasternodeDto): Promise<RawTxCreateMasternodeDto[]> {
+    return this.masternodeService.getCreating(dto);
   }
 
   @Put(':id/create')
