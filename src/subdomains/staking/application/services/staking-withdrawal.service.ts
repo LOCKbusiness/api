@@ -125,6 +125,7 @@ export class StakingWithdrawalService {
     return this.repository
       .createQueryBuilder('staking')
       .leftJoinAndSelect('staking.withdrawals', 'withdrawal')
+      .leftJoinAndSelect('staking.withdrawalAddress', 'withdrawalAddress')
       .where('withdrawal.status = :status', { status: WithdrawalStatus.PENDING })
       .getMany();
   }
