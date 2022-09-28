@@ -130,6 +130,8 @@ export class LiquidityManagementService {
       possibleWithdrawals.push(withdrawal);
     }
 
+    if (possibleWithdrawals.length <= 0) return;
+
     // prepare
     await Promise.all(
       possibleWithdrawals.map((w) =>
