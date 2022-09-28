@@ -18,6 +18,13 @@
         "containerId": "",
         "created": "2022-09-23T22:18:33.738Z",
         "sortNum": 40000
+      },
+      {
+        "_id": "6a988eeb-70ef-4bf8-87fb-d8891ce8400f",
+        "name": "Masternode",
+        "containerId": "",
+        "created": "2022-09-28T09:45:06.665Z",
+        "sortNum": 50000
       }
     ],
     "settings": {
