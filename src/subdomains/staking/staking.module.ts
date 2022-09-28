@@ -46,6 +46,6 @@ import { StakingKycCheckService } from './infrastructure/staking-kyc-check.servi
     StakingKycCheckService,
     LiquidityManagementService,
   ],
-  exports: [],
+  exports: [StakingService],
 })
 export class StakingModule {}
