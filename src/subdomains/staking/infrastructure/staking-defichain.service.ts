@@ -24,7 +24,7 @@ export class StakingDeFiChainService {
     const txId = await this.liqClient.sendUtxoToMany([
       {
         addressTo: withdrawal.staking.withdrawalAddress.address,
-        amount: withdrawal.amount + this.liqClient.utxoFee,
+        amount: withdrawal.amount,
       },
     ]);
 
