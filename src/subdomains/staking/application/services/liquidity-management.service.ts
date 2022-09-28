@@ -91,10 +91,10 @@ export class LiquidityManagementService {
       ]);
       console.info(`Sending collateral to masternode wallet: ${tx}`);
 
+      if (tx) await this.client.waitForTx(tx).catch((e) => console.error(`Wait for creation TX failed: ${e}`));
+
       await this.masternodeService.designateCreating(node.id);
     }
-
-    if (tx) await this.client.waitForTx(tx).catch((e) => console.error(`Wait for creation TX failed: ${e}`));
   }
 
   private async resignMasternodes(count: number): Promise<void> {

@@ -19,6 +19,10 @@ import { CreateMasternodeDto } from '../dto/create-masternode.dto';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { Util } from 'src/shared/util';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
+import { CreatingMasternodeDto } from '../dto/creating-masternode.dto';
+import { JellyfishService } from 'src/blockchain/ain/jellyfish/jellyfish.service';
+import { RawTxCreateMasternodeDto } from '../dto/raw-tx-create-masternode.dto';
+import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 
 @Injectable()
 export class MasternodeService {
@@ -28,6 +32,8 @@ export class MasternodeService {
     private readonly masternodeRepo: MasternodeRepository,
     private readonly http: HttpService,
     private readonly settingService: SettingService,
+    private readonly jellyfishService: JellyfishService,
+    private readonly whaleService: WhaleService,
     nodeService: NodeService,
   ) {
     nodeService.getConnectedNode(NodeType.LIQ).subscribe((c) => (this.client = c));
@@ -61,8 +67,26 @@ export class MasternodeService {
     return this.masternodeRepo.find();
   }
 
+  async getCreating(dto: CreatingMasternodeDto): Promise<RawTxCreateMasternodeDto[]> {
+    const masternodes = await this.getCreatingMasternodes(dto);
+    return Promise.all(
+      [].concat(
+        masternodes.map(async (masternode) => {
+          return {
+            id: masternode.id,
+            accountIndex: masternode.accountIndex,
+            rawTx: await this.jellyfishService.rawTxForCreate(masternode),
+          };
+        }),
+      ),
+    );
+  }
+
   async getIdleMasternodes(count: number): Promise<Masternode[]> {
-    const masternodes = await this.masternodeRepo.find({ where: { state: MasternodeState.IDLE }, take: count });
+    const masternodes = await this.masternodeRepo.find({
+      where: { state: MasternodeState.IDLE, creationFeePaid: true },
+      take: count,
+    });
 
     if (masternodes.length !== count) {
       console.error(
@@ -143,6 +167,8 @@ export class MasternodeService {
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (masternode.creationHash) throw new ConflictException('Masternode already created');
 
+    masternode.creationHash = await this.whaleService.broadcast(dto.signedTx);
+    masternode.creationDate = new Date();
     masternode.state = MasternodeState.CREATED;
 
     return await this.masternodeRepo.save({ ...masternode, ...dto });
@@ -214,5 +240,9 @@ export class MasternodeService {
   private async getMasternodeTms(creationHash: string): Promise<{ hash: string; tms: number }> {
     const info = await this.client.getMasternodeInfo(creationHash);
     return { hash: creationHash, tms: Util.avg(info.targetMultipliers ?? []) };
+  }
+
+  private async getCreatingMasternodes(dto: CreatingMasternodeDto): Promise<Masternode[]> {
+    return this.masternodeRepo.find({ where: { state: MasternodeState.CREATING, ownerWallet: dto.ownerWallet } });
   }
 }
