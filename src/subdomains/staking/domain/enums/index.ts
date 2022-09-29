@@ -41,3 +41,9 @@ export enum MasternodeState {
   ERROR_CREATE_RAW = 'ErrorCreateRaw',
   ERROR_CREATE = 'ErrorCreate',
 }
+
+export enum MasternodeTimeLock {
+  NONE = 0,
+  FIVE_YEAR_FREEZER = 260,
+  TEN_YEAR_FREEZER = 520,
+}

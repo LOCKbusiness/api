@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty, IsObject } from 'class-validator';
+import { IsInt, IsNotEmpty, IsObject, IsString } from 'class-validator';
 import { RawTxDto } from 'src/blockchain/ain/jellyfish/dto/raw-tx.dto';
 
 export class RawTxCreateMasternodeDto {
@@ -9,6 +9,14 @@ export class RawTxCreateMasternodeDto {
   @IsNotEmpty()
   @IsInt()
   accountIndex: number;
+
+  @IsNotEmpty()
+  @IsString()
+  owner: string;
+
+  @IsNotEmpty()
+  @IsString()
+  operator: string;
 
   @IsNotEmpty()
   @IsObject()
