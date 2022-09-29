@@ -46,12 +46,6 @@ export class JellyfishService {
   }
 
   private getNetwork(): Network {
-    const chainNetwork = Config.network;
-    switch (chainNetwork?.toLowerCase()) {
-      case 'mainnet':
-        return MainNet;
-      default:
-        return TestNet;
-    }
+    return Config.network?.toLowerCase() === 'mainnet' ? MainNet : TestNet;
   }
 }

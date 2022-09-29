@@ -1,16 +1,36 @@
 {
     "cSpell.words": [
+        "bignumber",
         "bitcoinjs",
         "datetime",
+        "defi",
+        "DEFI",
         "DEFICHAIN",
+        "Dtos",
         "flagbyte",
+        "fuxingloh",
         "geoip",
         "headerapikey",
         "masternode",
         "Masternodes",
         "mydefichain",
         "nestjs",
+        "prevouts",
+        "Prevout",
+        "rawtx",
         "Segwit",
-        "typeorm"
-    ]
+        "sendutxosfrom",
+        "signmessage",
+        "testpoolswap",
+        "timelock",
+        "txid",
+        "typeorm",
+        "UTXO",
+        "Utxo",
+        "vout",
+        "vouts",
+        "Vout",
+        "walletpassphrase",
+    ],
+    "editor.formatOnSave": true
 }
