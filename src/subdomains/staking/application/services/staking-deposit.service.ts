@@ -108,18 +108,17 @@ export class StakingDepositService {
   private async processNewDeposits(stakingPairs: [number, PayIn][]): Promise<void> {
     for (const [stakingId, payIn] of stakingPairs) {
       try {
-        const currentStaking = await this.repository.findOne({ where: { id: stakingId } });
-        const payInValid =
-          currentStaking.getConfirmedDeposits().length > 0 || (await this.isFirstPayInValid(currentStaking, payIn));
+        const staking = await this.repository.findOne({ where: { id: stakingId } });
+        const payInValid = staking.getConfirmedDeposits().length > 0 || (await this.isFirstPayInValid(staking, payIn));
 
         if (payInValid) {
-          this.createOrUpdateDeposit(currentStaking, payIn);
+          this.createOrUpdateDeposit(staking, payIn);
         } else {
-          console.error(`Invalid first pay in, staking ${currentStaking.id} is blocked`);
-          currentStaking.block();
+          console.error(`Invalid first pay in, staking ${staking.id} is blocked`);
+          staking.block();
         }
 
-        await this.repository.save(currentStaking);
+        await this.repository.save(staking);
         await this.payInService.acknowledgePayIn(payIn, PayInPurpose.CRYPTO_STAKING);
       } catch (e) {
         const message = `Failed to process deposit input: ${payIn.id}. Error:`;
