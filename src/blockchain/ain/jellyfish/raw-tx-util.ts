@@ -15,6 +15,7 @@ import { Prevout } from '@defichain/jellyfish-transaction-builder';
 import BigNumber from 'bignumber.js';
 import { SmartBuffer } from 'smart-buffer';
 import { AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
+import { Config } from 'src/config/config';
 
 interface OpPushData {
   type: string;
@@ -73,7 +74,7 @@ export class RawTxUtil {
 
   static createVoutReturn(script: Script): Vout {
     return {
-      value: new BigNumber(20000),
+      value: new BigNumber(Config.masternode.collateral),
       script: script,
       tokenId: 0x00,
     };
@@ -81,7 +82,7 @@ export class RawTxUtil {
 
   static createVoutMasternode(operatorPubKeyHash: string, timeLock: number): Vout {
     return {
-      value: new BigNumber(10),
+      value: new BigNumber(Config.masternode.fee),
       script: {
         stack: [
           OP_CODES.OP_RETURN,

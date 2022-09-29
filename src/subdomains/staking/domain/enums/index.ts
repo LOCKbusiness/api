@@ -37,4 +37,7 @@ export enum MasternodeState {
   RESIGN_CONFIRMED = 'ResignConfirmed',
   RESIGNING = 'Resigning',
   RESIGNED = 'Resigned',
+
+  ERROR_CREATE_RAW = 'ErrorCreateRaw',
+  ERROR_CREATE = 'ErrorCreate',
 }
