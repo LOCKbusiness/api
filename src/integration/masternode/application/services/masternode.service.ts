@@ -76,6 +76,8 @@ export class MasternodeService {
         rawTxDtos.push({
           id: masternode.id,
           accountIndex: masternode.accountIndex,
+          owner: masternode.owner,
+          operator: masternode.operator,
           rawTx: await this.jellyfishService.rawTxForCreate(masternode),
         });
       } catch (e) {
