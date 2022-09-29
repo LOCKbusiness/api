@@ -23,7 +23,7 @@ export class PayIn extends IEntity {
   @Column()
   txType: string;
 
-  @OneToOne(() => PayInBlockchainAddress, { eager: true, cascade: true })
+  @ManyToOne(() => PayInBlockchainAddress, { eager: true, cascade: true })
   @JoinColumn()
   address: PayInBlockchainAddress;
 
