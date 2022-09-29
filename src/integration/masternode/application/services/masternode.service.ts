@@ -69,17 +69,28 @@ export class MasternodeService {
 
   async getCreating(dto: CreatingMasternodeDto): Promise<RawTxCreateMasternodeDto[]> {
     const masternodes = await this.getCreatingMasternodes(dto);
-    return Promise.all(
-      [].concat(
-        masternodes.map(async (masternode) => {
-          return {
-            id: masternode.id,
-            accountIndex: masternode.accountIndex,
-            rawTx: await this.jellyfishService.rawTxForCreate(masternode),
-          };
-        }),
-      ),
-    );
+
+    const rawTxDtos: RawTxCreateMasternodeDto[] = [];
+    for (const masternode of masternodes) {
+      try {
+        rawTxDtos.push({
+          id: masternode.id,
+          accountIndex: masternode.accountIndex,
+          rawTx: await this.jellyfishService.rawTxForCreate(masternode),
+        });
+      } catch (e) {
+        // TODO (Krysh) do something meaningful with these errors
+        // maybe we want to receive an email with it? I am not quite sure,
+        // how we handle other or similar errors
+        console.error(e);
+
+        // (Krysh): I know a GET should not change data
+        // maybe it is anyway better as a POST, as we are generating raw txs
+        masternode.state = MasternodeState.ERROR_CREATE_RAW;
+        await this.masternodeRepo.save({ ...masternode });
+      }
+    }
+    return rawTxDtos;
   }
 
   async getIdleMasternodes(count: number): Promise<Masternode[]> {
@@ -167,9 +178,17 @@ export class MasternodeService {
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (masternode.creationHash) throw new ConflictException('Masternode already created');
 
-    masternode.creationHash = await this.whaleService.broadcast(dto.signedTx);
-    masternode.creationDate = new Date();
-    masternode.state = MasternodeState.CREATED;
+    try {
+      masternode.creationHash = await this.whaleService.broadcast(dto.signedTx);
+      masternode.creationDate = new Date();
+      masternode.state = MasternodeState.CREATED;
+    } catch (e) {
+      // TODO (Krysh) do something meaningful with these errors
+      // maybe we want to receive an email with it? I am not quite sure,
+      // how we handle other or similar errors
+      console.log(e);
+      masternode.state = MasternodeState.ERROR_CREATE;
+    }
 
     return await this.masternodeRepo.save({ ...masternode, ...dto });
   }
