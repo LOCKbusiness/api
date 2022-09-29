@@ -91,7 +91,7 @@ export class CryptoService {
 
   public createWallet(seed: string[]): JellyfishWallet<WhaleWalletAccount, WalletHdNode> {
     return new JellyfishWallet(
-      MnemonicHdNodeProvider.fromWords(seed, this.bip32OptionsBasedOn(Config.network == 'testnet' ? TestNet : MainNet)),
+      MnemonicHdNodeProvider.fromWords(seed, this.bip32OptionsBasedOn(this.getNetwork())),
       new WhaleWalletAccountProvider(undefined, this.getNetwork()),
       JellyfishWallet.COIN_TYPE_DFI,
       JellyfishWallet.PURPOSE_LIGHT_WALLET,
