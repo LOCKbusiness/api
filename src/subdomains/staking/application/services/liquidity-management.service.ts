@@ -67,7 +67,7 @@ export class LiquidityManagementService {
   private async getCurrentLiquidity(): Promise<number> {
     const balance = await this.client.getBalance();
 
-    const resigningMasternodes = await this.masternodeService.getResigning();
+    const resigningMasternodes = await this.masternodeService.getAllResigning();
     const pendingResignAmount = resigningMasternodes.length * Config.masternode.collateral;
 
     const pendingWithdrawals = await this.getPendingWithdrawals();

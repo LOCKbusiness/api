@@ -129,6 +129,7 @@ export class Configuration {
     fee: 10,
     creationFee: 0.00000232,
     resignMessage: 'Resign_masternode_${id}_with_hash_${hash}',
+    resignFee: 0.00000209,
   };
 
   get addressFormat(): RegExp {

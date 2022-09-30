@@ -1,13 +1,11 @@
-import { Type } from 'class-transformer';
-import { IsDate, IsNotEmpty, IsString } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString } from 'class-validator';
 
 export class ResignMasternodeDto {
   @IsNotEmpty()
-  @IsDate()
-  @Type(() => Date)
-  resignDate: Date;
+  @IsInt()
+  id: number;
 
   @IsNotEmpty()
   @IsString()
-  resignHash: string;
+  signedTx: string;
 }

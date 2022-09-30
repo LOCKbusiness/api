@@ -19,10 +19,11 @@ import { CreateMasternodeDto } from '../dto/create-masternode.dto';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { Util } from 'src/shared/util';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
-import { CreatingMasternodeDto } from '../dto/creating-masternode.dto';
+import { MasternodeManagerDto } from '../dto/masternode-manager.dto';
 import { JellyfishService } from 'src/blockchain/ain/jellyfish/jellyfish.service';
 import { RawTxCreateMasternodeDto } from '../dto/raw-tx-create-masternode.dto';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
+import { RawTxResignMasternodeDto } from '../dto/raw-tx-resign-masternode.dto';
 
 @Injectable()
 export class MasternodeService {
@@ -67,7 +68,7 @@ export class MasternodeService {
     return this.masternodeRepo.find();
   }
 
-  async getCreating(dto: CreatingMasternodeDto): Promise<RawTxCreateMasternodeDto[]> {
+  async getCreating(dto: MasternodeManagerDto): Promise<RawTxCreateMasternodeDto[]> {
     const masternodes = await this.getCreatingMasternodes(dto);
 
     const rawTxDtos: RawTxCreateMasternodeDto[] = [];
@@ -89,6 +90,34 @@ export class MasternodeService {
         // (Krysh): I know a GET should not change data
         // maybe it is anyway better as a POST, as we are generating raw txs
         masternode.state = MasternodeState.ERROR_CREATE_RAW;
+        await this.masternodeRepo.save({ ...masternode });
+      }
+    }
+    return rawTxDtos;
+  }
+
+  async getResigning(dto: MasternodeManagerDto): Promise<RawTxResignMasternodeDto[]> {
+    const masternodes = await this.getResigningMasternodes(dto);
+
+    const rawTxDtos: RawTxCreateMasternodeDto[] = [];
+    for (const masternode of masternodes) {
+      try {
+        rawTxDtos.push({
+          id: masternode.id,
+          accountIndex: masternode.accountIndex,
+          owner: masternode.owner,
+          operator: masternode.operator,
+          rawTx: await this.jellyfishService.rawTxForResign(masternode),
+        });
+      } catch (e) {
+        // TODO (Krysh) do something meaningful with these errors
+        // maybe we want to receive an email with it? I am not quite sure,
+        // how we handle other or similar errors
+        console.error(e);
+
+        // (Krysh): I know a GET should not change data
+        // maybe it is anyway better as a POST, as we are generating raw txs
+        masternode.state = MasternodeState.ERROR_RESIGN_RAW;
         await this.masternodeRepo.save({ ...masternode });
       }
     }
@@ -123,7 +152,7 @@ export class MasternodeService {
     return this.masternodeRepo.find({ where: { creationHash: Not(IsNull()), resignHash: IsNull() } });
   }
 
-  async getResigning(): Promise<Masternode[]> {
+  async getAllResigning(): Promise<Masternode[]> {
     return this.masternodeRepo.find({
       where: {
         state: In([MasternodeState.RESIGN_REQUESTED, MasternodeState.RESIGN_CONFIRMED, MasternodeState.RESIGNING]),
@@ -223,7 +252,17 @@ export class MasternodeService {
     if (masternode.state !== MasternodeState.RESIGN_CONFIRMED)
       throw new ConflictException('Masternode resign is not confirmed');
 
-    masternode.state = MasternodeState.RESIGNING;
+    try {
+      masternode.resignHash = await this.whaleService.broadcast(dto.signedTx);
+      masternode.resignDate = new Date();
+      masternode.state = MasternodeState.RESIGNING;
+    } catch (e) {
+      // TODO (Krysh) do something meaningful with these errors
+      // maybe we want to receive an email with it? I am not quite sure,
+      // how we handle other or similar errors
+      console.log(e);
+      masternode.state = MasternodeState.ERROR_RESIGN;
+    }
 
     return await this.masternodeRepo.save({ ...masternode, ...dto });
   }
@@ -263,7 +302,13 @@ export class MasternodeService {
     return { hash: creationHash, tms: Util.avg(info.targetMultipliers ?? []) };
   }
 
-  private async getCreatingMasternodes(dto: CreatingMasternodeDto): Promise<Masternode[]> {
+  private async getCreatingMasternodes(dto: MasternodeManagerDto): Promise<Masternode[]> {
     return this.masternodeRepo.find({ where: { state: MasternodeState.CREATING, ownerWallet: dto.ownerWallet } });
+  }
+
+  private async getResigningMasternodes(dto: MasternodeManagerDto): Promise<Masternode[]> {
+    return this.masternodeRepo.find({
+      where: { state: MasternodeState.RESIGN_CONFIRMED, ownerWallet: dto.ownerWallet },
+    });
   }
 }
