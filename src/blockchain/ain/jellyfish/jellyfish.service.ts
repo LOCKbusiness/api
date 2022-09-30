@@ -25,9 +25,38 @@ export class JellyfishService {
 
     const vins = RawTxUtil.createVins(prevouts);
     const vouts = [
-      RawTxUtil.createVoutMasternode(operatorPubKeyHash, masternode.timeLock),
+      RawTxUtil.createVoutCreateMasternode(operatorPubKeyHash, masternode.timeLock),
       RawTxUtil.createVoutReturn(ownerScript),
     ];
+
+    const witnesses = [
+      RawTxUtil.createWitness([
+        RawTxUtil.createWitnessScript(operatorScript, operatorPubKeyHash),
+        RawTxUtil.createWitnessScript(ownerScript, ownerPubKeyHash),
+      ]),
+    ];
+
+    const tx = RawTxUtil.createTxSegWit(vins, vouts, witnesses);
+
+    return {
+      hex: new CTransactionSegWit(tx).toHex(),
+      scriptHex,
+      prevouts,
+    };
+  }
+
+  async rawTxForResign(masternode: Masternode): Promise<RawTxDto> {
+    const network = this.getNetwork();
+
+    const [ownerScript, ownerPubKeyHash] = RawTxUtil.parseOwnerAddress(masternode.owner, network);
+    const [operatorScript, operatorPubKeyHash] = RawTxUtil.parseOperatorPubKeyHash(masternode.operator, network);
+
+    const expectedAmount = new BigNumber(Config.masternode.resignFee);
+    const unspent = await this.whaleService.getUnspent(masternode.owner, 2, expectedAmount);
+    const [prevouts, scriptHex] = RawTxUtil.parseUnspent(unspent);
+
+    const vins = RawTxUtil.createVins(prevouts);
+    const vouts = [RawTxUtil.createVoutResignMasternode(masternode.creationHash)];
 
     const witnesses = [
       RawTxUtil.createWitness([

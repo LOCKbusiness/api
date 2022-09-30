@@ -69,5 +69,24 @@
       "form": []
     },
     "tests": []
+  },
+  {
+    "_id": "072ceff4-e846-4839-96f9-d0c5e3ce37ab",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "6a988eeb-70ef-4bf8-87fb-d8891ce8400f",
+    "name": "Resigning",
+    "url": "{{url}}/v1/masternode/resigning",
+    "method": "GET",
+    "sortNum": 90000,
+    "created": "2022-09-29T13:26:28.988Z",
+    "modified": "2022-09-29T13:39:28.616Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"ownerWallet\": \"cold-wallet-a\"\n}",
+      "form": []
+    },
+    "tests": []
   }
 ]

@@ -39,6 +39,8 @@ export enum MasternodeState {
 
   ERROR_CREATE_RAW = 'ErrorCreateRaw',
   ERROR_CREATE = 'ErrorCreate',
+  ERROR_RESIGN_RAW = 'ErrorResignRaw',
+  ERROR_RESIGN = 'ErrorResign',
 }
 
 export enum MasternodeTimeLock {

@@ -80,7 +80,7 @@ export class RawTxUtil {
     };
   }
 
-  static createVoutMasternode(operatorPubKeyHash: string, timeLock: number): Vout {
+  static createVoutCreateMasternode(operatorPubKeyHash: string, timeLock: number): Vout {
     return {
       value: new BigNumber(Config.masternode.fee),
       script: {
@@ -90,6 +90,21 @@ export class RawTxUtil {
             operatorType: 1,
             operatorPubKeyHash: operatorPubKeyHash,
             timelock: timeLock != null ? timeLock : 0, // TODO (Krysh) should be enum, at least it is not allowed to send null here
+          }),
+        ],
+      },
+      tokenId: 0x00,
+    };
+  }
+
+  static createVoutResignMasternode(creationTxId: string): Vout {
+    return {
+      value: new BigNumber(0),
+      script: {
+        stack: [
+          OP_CODES.OP_RETURN,
+          OP_CODES.OP_DEFI_TX_RESIGN_MASTER_NODE({
+            nodeId: creationTxId,
           }),
         ],
       },
