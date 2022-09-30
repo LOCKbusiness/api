@@ -13,9 +13,8 @@ import { SettingService } from 'src/shared/services/setting.service';
 import { In, IsNull, LessThan, MoreThan, Not } from 'typeorm';
 import { Masternode } from '../../domain/entities/masternode.entity';
 import { MasternodeState } from '../../../../subdomains/staking/domain/enums';
-import { ResignMasternodeDto } from '../dto/resign-masternode.dto';
 import { MasternodeRepository } from '../repositories/masternode.repository';
-import { CreateMasternodeDto } from '../dto/create-masternode.dto';
+import { SignedMasternodeTxDto } from '../dto/signed-masternode-tx.dto';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { Util } from 'src/shared/util';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
@@ -204,7 +203,7 @@ export class MasternodeService {
     await this.masternodeRepo.save(masternode);
   }
 
-  async create(id: number, dto: CreateMasternodeDto): Promise<Masternode> {
+  async create(id: number, dto: SignedMasternodeTxDto): Promise<Masternode> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (masternode.creationHash) throw new ConflictException('Masternode already created');
@@ -244,7 +243,7 @@ export class MasternodeService {
     return await this.masternodeRepo.save(masternode);
   }
 
-  async resign(id: number, dto: ResignMasternodeDto): Promise<Masternode> {
+  async resign(id: number, dto: SignedMasternodeTxDto): Promise<Masternode> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (!masternode.creationHash) throw new ConflictException('Masternode not yet created');
@@ -267,13 +266,14 @@ export class MasternodeService {
     return await this.masternodeRepo.save({ ...masternode, ...dto });
   }
 
-  async resigned(id: number): Promise<Masternode> {
+  async resigned(id: number, dto: SignedMasternodeTxDto): Promise<Masternode> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
-    if (masternode.resignHash) throw new ConflictException('Masternode is not resigning');
+    if (!masternode.resignHash) throw new ConflictException('Masternode is not resigning');
     if (masternode.state !== MasternodeState.RESIGNING)
       throw new ConflictException('Masternode resigning has not started');
 
+    await this.whaleService.broadcast(dto.signedTx);
     masternode.state = MasternodeState.RESIGNED;
 
     return await this.masternodeRepo.save(masternode);

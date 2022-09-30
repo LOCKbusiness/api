@@ -1,6 +1,6 @@
 import { IsInt, IsNotEmpty, IsString } from 'class-validator';
 
-export class ResignMasternodeDto {
+export class SignedMasternodeTxDto {
   @IsNotEmpty()
   @IsInt()
   id: number;

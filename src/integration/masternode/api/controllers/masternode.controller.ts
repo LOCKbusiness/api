@@ -3,11 +3,10 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
-import { ResignMasternodeDto } from '../../application/dto/resign-masternode.dto';
 import { MasternodeService } from '../../application/services/masternode.service';
 import { Masternode } from '../../domain/entities/masternode.entity';
 import { MasternodeState } from '../../../../subdomains/staking/domain/enums';
-import { CreateMasternodeDto } from '../../application/dto/create-masternode.dto';
+import { SignedMasternodeTxDto } from '../../application/dto/signed-masternode-tx.dto';
 import { PrepareResignMasternodeDto } from '../../application/dto/prepare-resign-masternode.dto';
 import { AddMasternodeFee } from '../../application/dto/add-masternode-fee.dto';
 import { MasternodeManagerDto } from '../../application/dto/masternode-manager.dto';
@@ -59,7 +58,7 @@ export class MasternodeController {
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.MASTERNODE_MANAGER))
-  createMasternode(@Param('id') id: string, @Body() dto: CreateMasternodeDto): Promise<Masternode> {
+  createMasternode(@Param('id') id: string, @Body() dto: SignedMasternodeTxDto): Promise<Masternode> {
     return this.masternodeService.create(+id, dto);
   }
 
@@ -83,7 +82,7 @@ export class MasternodeController {
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.MASTERNODE_MANAGER))
-  async resignMasternode(@Param('id') id: string, @Body() dto: ResignMasternodeDto): Promise<Masternode> {
+  async resignMasternode(@Param('id') id: string, @Body() dto: SignedMasternodeTxDto): Promise<Masternode> {
     return this.masternodeService.resign(+id, dto);
   }
 
@@ -91,7 +90,7 @@ export class MasternodeController {
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.MASTERNODE_MANAGER))
-  async resignedMasternode(@Param('id') id: string): Promise<Masternode> {
-    return this.masternodeService.resigned(+id);
+  async resignedMasternode(@Param('id') id: string, @Body() dto: SignedMasternodeTxDto): Promise<Masternode> {
+    return this.masternodeService.resigned(+id, dto);
   }
 }
