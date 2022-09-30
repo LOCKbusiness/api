@@ -1,6 +1,7 @@
 import { ApiClient } from '@defichain/jellyfish-api-core';
 import { Block, BlockchainInfo } from '@defichain/jellyfish-api-core/dist/category/blockchain';
 import { MasternodeInfo } from '@defichain/jellyfish-api-core/dist/category/masternode';
+import { RawTransaction } from '@defichain/jellyfish-api-core/dist/category/rawtx';
 import { InWalletTransaction, UTXO } from '@defichain/jellyfish-api-core/dist/category/wallet';
 import { JsonRpcClient } from '@defichain/jellyfish-api-jsonrpc';
 import { ServiceUnavailableException } from '@nestjs/common';
@@ -67,6 +68,10 @@ export class NodeClient {
     return this.callNode((c) => c.wallet.getTransaction(txId));
   }
 
+  async getRawTx(txId: string): Promise<RawTransaction> {
+    return this.callNode((c) => c.rawtx.getRawTransaction(txId, true));
+  }
+
   async getMasternodeInfo(id: string): Promise<MasternodeInfo> {
     return this.callNode((c) => c.masternode.getMasternode(id).then((r) => r[id]));
   }
@@ -83,17 +88,7 @@ export class NodeClient {
   async getBalance(): Promise<number> {
     return this.callNode((c) => c.wallet.getBalance()).then((b) => b.toNumber());
   }
-
-  async sendUtxoToMany(payload: { addressTo: string; amount: number }[]): Promise<string> {
-    if (payload.length > 100) {
-      throw new Error('Too many addresses in one transaction batch, allowed max 100 for UTXO');
-    }
-
-    const batch = payload.reduce((acc, p) => ({ ...acc, [p.addressTo]: `${p.amount}` }), {});
-
-    return this.callNode((c) => c.wallet.sendMany(batch), true);
-  }
-
+  
   // forwarding
   async sendRpcCommand(command: string): Promise<any> {
     return this.http.post(this.url, command, {

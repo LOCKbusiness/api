@@ -91,23 +91,24 @@ export class StakingDepositService {
     return allPayIns.filter((p) => stakingAddresses.includes(p.address.address));
   }
 
-  private async getStakingsForPayIns(stakingPayIns: PayIn[]): Promise<[Staking, PayIn][]> {
-    const stakingPairs: [Staking, PayIn][] = [];
+  private async getStakingsForPayIns(stakingPayIns: PayIn[]): Promise<[number, PayIn][]> {
+    const stakingPairs: [number, PayIn][] = [];
 
     for (const payIn of stakingPayIns) {
       const staking = await this.repository.findOne({
         depositAddress: { address: payIn.address.address, blockchain: payIn.address.blockchain },
       });
 
-      stakingPairs.push([staking, payIn]);
+      stakingPairs.push([staking.id, payIn]);
     }
 
     return stakingPairs;
   }
 
-  private async processNewDeposits(stakingPairs: [Staking, PayIn][]): Promise<void> {
-    for (const [staking, payIn] of stakingPairs) {
+  private async processNewDeposits(stakingPairs: [number, PayIn][]): Promise<void> {
+    for (const [stakingId, payIn] of stakingPairs) {
       try {
+        const staking = await this.repository.findOne({ where: { id: stakingId } });
         const payInValid = staking.getConfirmedDeposits().length > 0 || (await this.isFirstPayInValid(staking, payIn));
 
         if (payInValid) {
@@ -127,7 +128,6 @@ export class StakingDepositService {
   }
 
   private async isFirstPayInValid(staking: Staking, payIn: PayIn): Promise<boolean> {
-    return true; //TODO Remove after fix getSourceAddresses
     const addresses = await this.deFiChainStakingService.getSourceAddresses(payIn.txId);
     return staking.verifyUserAddresses(addresses);
   }

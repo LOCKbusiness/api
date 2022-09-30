@@ -1,16 +1,29 @@
 {
-    "cSpell.words": [
-        "bitcoinjs",
-        "datetime",
-        "DEFICHAIN",
-        "flagbyte",
-        "geoip",
-        "headerapikey",
-        "masternode",
-        "Masternodes",
-        "mydefichain",
-        "nestjs",
-        "Segwit",
-        "typeorm"
-    ]
+  "cSpell.words": [
+    "bitcoinjs",
+    "blockhash",
+    "datetime",
+    "defi",
+    "DEFICHAIN",
+    "flagbyte",
+    "geoip",
+    "headerapikey",
+    "masternode",
+    "Masternodes",
+    "mydefichain",
+    "nestjs",
+    "payin",
+    "rawtx",
+    "Segwit",
+    "sendutxosfrom",
+    "signmessage",
+    "Stakings",
+    "testpoolswap",
+    "txid",
+    "typeorm",
+    "UTXO",
+    "utxos",
+    "vout",
+    "walletpassphrase"
+  ]
 }

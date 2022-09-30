@@ -21,12 +21,11 @@ export class StakingDeFiChainService {
   }
 
   async sendWithdrawal(withdrawal: Withdrawal): Promise<string> {
-    const txId = await this.liqClient.sendUtxoToMany([
-      {
-        addressTo: withdrawal.staking.withdrawalAddress.address,
-        amount: withdrawal.amount,
-      },
-    ]);
+    const txId = await this.liqClient.sendUtxo(
+      Config.staking.liquidityWalletAddress,
+      withdrawal.staking.withdrawalAddress.address,
+      withdrawal.amount,
+    );
 
     await this.liqClient
       .waitForTx(txId)
@@ -36,10 +35,15 @@ export class StakingDeFiChainService {
   }
 
   async getSourceAddresses(txId: string): Promise<string[]> {
-    const transaction = await this.inputClient.getTx(txId);
-    const transactionDetails = transaction.details ?? [];
+    const rawTx = await this.inputClient.getRawTx(txId);
+    const addresses = [];
 
-    return transactionDetails.map((d) => d.address);
+    for (const vin of rawTx.vin) {
+      const vinTransaction = await this.inputClient.getRawTx(vin.txid);
+      addresses.push(vinTransaction.vout[vin.vout].scriptPubKey.addresses[0]);
+    }
+
+    return addresses;
   }
 
   async isWithdrawalTxComplete(withdrawalTxId: string): Promise<boolean> {

@@ -83,12 +83,12 @@ export class LiquidityManagementService {
 
     let tx: string;
     for (const node of idleMasternodes) {
-      tx = await this.client.sendUtxoToMany([
-        {
-          addressTo: node.owner,
-          amount: Config.masternode.collateral + Config.masternode.fee + Config.masternode.creationFee,
-        },
-      ]);
+      tx = await this.client.sendUtxo(
+        Config.staking.liquidityWalletAddress,
+        node.owner,
+        Config.masternode.collateral + Config.masternode.fee + Config.masternode.creationFee,
+      );
+
       console.info(`Sending collateral to masternode wallet: ${tx}`);
 
       await this.masternodeService.designateCreating(node.id);
