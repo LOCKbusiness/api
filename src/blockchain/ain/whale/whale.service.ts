@@ -20,12 +20,10 @@ export class WhaleService {
     if (unspent.length != amountOfPrevouts)
       throw new Error('Could not parse unspent, wrong length. expected length of ' + amountOfPrevouts);
 
-    const value = new BigNumber(unspent[0].vout.value);
-    if (!value.isEqualTo(expectedAmount))
-      throw new Error(
-        `Unspent on ${address} have a wrong value (expected: ${expectedAmount.toString()}, actual: ${value.toString()})`,
-      );
-    return unspent;
+    const wantedUnspent = unspent.find((u) => new BigNumber(u.vout.value).isEqualTo(expectedAmount));
+
+    if (!wantedUnspent) throw new Error(`Unspent on ${address} with amount of ${expectedAmount.toString()} not found`);
+    return [wantedUnspent];
   }
 
   // TODO (Krysh) maybe we don't want to broadcast via ocean but rather via our own nodes
