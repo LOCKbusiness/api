@@ -19,8 +19,8 @@ export class StakingController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   @ApiResponse({ status: 200, type: StakingOutputDto })
-  async getStaking(@GetJwt() jwt: JwtPayload, @Query() dto: GetOrCreateStakingQuery): Promise<StakingOutputDto> {
-    return this.stakingService.getOrCreateStaking(jwt.userId, jwt.walletId, dto);
+  async getStaking(@GetJwt() jwt: JwtPayload, @Query() query: GetOrCreateStakingQuery): Promise<StakingOutputDto> {
+    return this.stakingService.getOrCreateStaking(jwt.userId, jwt.walletId, query);
   }
 
   @Patch(':id/staking-fee')

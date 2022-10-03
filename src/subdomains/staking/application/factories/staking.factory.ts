@@ -9,8 +9,8 @@ import { Staking } from '../../domain/entities/staking.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { CreateDepositDto } from '../dto/input/create-deposit.dto';
 import { CreateRewardDto } from '../dto/input/create-reward.dto';
-import { CreateStakingDto } from '../dto/input/create-staking.dto';
 import { CreateWithdrawalDraftDto } from '../dto/input/create-withdrawal-draft.dto';
+import { GetOrCreateStakingQuery } from '../dto/input/get-staking.query';
 
 @Injectable()
 export class StakingFactory {
@@ -20,9 +20,9 @@ export class StakingFactory {
     userId: number,
     depositAddress: StakingBlockchainAddress,
     withdrawalAddress: WalletBlockchainAddress,
-    dto: CreateStakingDto,
+    query: GetOrCreateStakingQuery,
   ): Promise<Staking> {
-    const { assetName: name, blockchain } = dto;
+    const { assetName: name, blockchain } = query;
     const {
       staking: { minimalStake },
     } = GetConfig();
