@@ -92,8 +92,6 @@ export class StakingService {
   //*** HELPER METHODS ***//
 
   private async createStaking(userId: number, walletId: number, dto: GetOrCreateStakingQuery): Promise<Staking> {
-    await this.kycCheck.check(userId, walletId);
-
     const depositAddress = await this.addressService.getAvailableAddress();
     const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
 
