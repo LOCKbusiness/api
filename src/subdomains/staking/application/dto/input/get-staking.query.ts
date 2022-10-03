@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsEnum } from 'class-validator';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 
-export class CreateStakingDto {
+export class GetOrCreateStakingQuery {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
