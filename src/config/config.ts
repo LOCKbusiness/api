@@ -114,6 +114,7 @@ export class Configuration {
     },
 
     liquidityWalletAddress: process.env.STAKING_LIQUIDITY_WALLET_ADDRESS,
+    liquiditySignatureAddress: process.env.STAKING_LIQUIDITY_SIGNATURE_ADDRESS,
     masternodeWalletAddress: process.env.STAKING_MASTERNODE_WALLET_ADDRESS,
     payoutWalletAddress: process.env.STAKING_PAYOUT_WALLET_ADDRESS,
 

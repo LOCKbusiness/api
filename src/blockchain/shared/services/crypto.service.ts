@@ -4,9 +4,6 @@ import { MainNet, TestNet } from '@defichain/jellyfish-network';
 import { isEthereumAddress } from 'class-validator';
 import { verifyMessage } from 'ethers/lib/utils';
 import { Network } from '@defichain/jellyfish-network';
-import { JellyfishWallet, WalletHdNode } from '@defichain/jellyfish-wallet';
-import { WhaleWalletAccount, WhaleWalletAccountProvider } from '@defichain/whale-api-wallet';
-import { Bip32Options, MnemonicHdNodeProvider } from '@defichain/jellyfish-wallet-mnemonic';
 import { Config } from 'src/config/config';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 
@@ -89,27 +86,8 @@ export class CryptoService {
 
   // --- SIGNATURE CREATION --- //
 
-  public createWallet(seed: string[]): JellyfishWallet<WhaleWalletAccount, WalletHdNode> {
-    return new JellyfishWallet(
-      MnemonicHdNodeProvider.fromWords(seed, this.bip32OptionsBasedOn(this.getNetwork())),
-      new WhaleWalletAccountProvider(undefined, this.getNetwork()),
-      JellyfishWallet.COIN_TYPE_DFI,
-      JellyfishWallet.PURPOSE_LIGHT_WALLET,
-    );
-  }
-
   public async signMessage(privKey: Buffer, message: string): Promise<string> {
     return sign(message, privKey, true, this.getNetwork().messagePrefix).toString('base64');
-  }
-
-  private bip32OptionsBasedOn(network: Network): Bip32Options {
-    return {
-      bip32: {
-        public: network.bip32.publicPrefix,
-        private: network.bip32.privatePrefix,
-      },
-      wif: network.wifPrefix,
-    };
   }
 
   private getNetwork(): Network {

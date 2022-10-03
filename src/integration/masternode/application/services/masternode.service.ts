@@ -20,9 +20,8 @@ import { Util } from 'src/shared/util';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { MasternodeManagerDto } from '../dto/masternode-manager.dto';
 import { JellyfishService } from 'src/blockchain/ain/jellyfish/jellyfish.service';
-import { RawTxCreateMasternodeDto } from '../dto/raw-tx-create-masternode.dto';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
-import { RawTxResignMasternodeDto } from '../dto/raw-tx-resign-masternode.dto';
+import { RawTxMasternodeDto } from '../dto/raw-tx-masternode.dto';
 
 @Injectable()
 export class MasternodeService {
@@ -67,18 +66,20 @@ export class MasternodeService {
     return this.masternodeRepo.find();
   }
 
-  async getCreating(dto: MasternodeManagerDto): Promise<RawTxCreateMasternodeDto[]> {
+  async getCreating(dto: MasternodeManagerDto): Promise<RawTxMasternodeDto[]> {
     const masternodes = await this.getCreatingMasternodes(dto);
 
-    const rawTxDtos: RawTxCreateMasternodeDto[] = [];
+    const rawTxDtos: RawTxMasternodeDto[] = [];
     for (const masternode of masternodes) {
       try {
+        const rawTx = await this.jellyfishService.rawTxForCreate(masternode);
         rawTxDtos.push({
           id: masternode.id,
           accountIndex: masternode.accountIndex,
           owner: masternode.owner,
           operator: masternode.operator,
-          rawTx: await this.jellyfishService.rawTxForCreate(masternode),
+          rawTx,
+          apiSignature: await this.signMessage(rawTx.hex),
         });
       } catch (e) {
         // TODO (Krysh) do something meaningful with these errors
@@ -95,18 +96,20 @@ export class MasternodeService {
     return rawTxDtos;
   }
 
-  async getResigning(dto: MasternodeManagerDto): Promise<RawTxResignMasternodeDto[]> {
+  async getResigning(dto: MasternodeManagerDto): Promise<RawTxMasternodeDto[]> {
     const masternodes = await this.getResigningMasternodes(dto);
 
-    const rawTxDtos: RawTxCreateMasternodeDto[] = [];
+    const rawTxDtos: RawTxMasternodeDto[] = [];
     for (const masternode of masternodes) {
       try {
+        const rawTx = await this.jellyfishService.rawTxForResign(masternode);
         rawTxDtos.push({
           id: masternode.id,
           accountIndex: masternode.accountIndex,
           owner: masternode.owner,
           operator: masternode.operator,
-          rawTx: await this.jellyfishService.rawTxForResign(masternode),
+          rawTx,
+          apiSignature: await this.signMessage(rawTx.hex),
         });
       } catch (e) {
         // TODO (Krysh) do something meaningful with these errors
@@ -310,5 +313,9 @@ export class MasternodeService {
     return this.masternodeRepo.find({
       where: { state: MasternodeState.RESIGN_CONFIRMED, ownerWallet: dto.ownerWallet },
     });
+  }
+
+  private async signMessage(message: string): Promise<string> {
+    return this.client.signMessage(Config.staking.liquiditySignatureAddress, message);
   }
 }
