@@ -15,10 +15,8 @@ export class WhaleService {
     return this.client;
   }
 
-  async getUnspent(address: string, amountOfPrevouts: number, expectedAmount: BigNumber): Promise<AddressUnspent[]> {
+  async getUnspent(address: string, expectedAmount: BigNumber): Promise<AddressUnspent[]> {
     const unspent = await this.client.getUnspent(address);
-    if (unspent.length != amountOfPrevouts)
-      throw new Error('Could not parse unspent, wrong length. expected length of ' + amountOfPrevouts);
 
     const wantedUnspent = unspent.find((u) => new BigNumber(u.vout.value).isEqualTo(expectedAmount));
 
