@@ -22,6 +22,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@defichain/jellyfish-address": "^2.64.1",
     "@defichain/jellyfish-api-core": "^2.18.3",
     "@defichain/jellyfish-api-jsonrpc": "^2.18.3",
     "@defichain/jellyfish-network": "^2.18.3",

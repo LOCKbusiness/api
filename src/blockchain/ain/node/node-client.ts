@@ -68,10 +68,6 @@ export class NodeClient {
     return this.callNode((c) => c.wallet.getTransaction(txId));
   }
 
-  async getRawTx(txId: string): Promise<RawTransaction> {
-    return this.callNode((c) => c.rawtx.getRawTransaction(txId, true));
-  }
-
   async getMasternodeInfo(id: string): Promise<MasternodeInfo> {
     return this.callNode((c) => c.masternode.getMasternode(id).then((r) => r[id]));
   }

@@ -1,5 +1,5 @@
 import { WhaleApiClient } from '@defichain/whale-api-client';
-import { Transaction } from '@defichain/whale-api-client/dist/api/transactions';
+import { Transaction, TransactionVin } from '@defichain/whale-api-client/dist/api/transactions';
 import { GetConfig } from 'src/config/config';
 
 export class WhaleClient {
@@ -19,5 +19,9 @@ export class WhaleClient {
 
   async getTx(txId: string): Promise<Transaction> {
     return await this.client.transactions.get(txId);
+  }
+
+  async getTxVins(txId: string): Promise<TransactionVin[]> {
+    return await this.client.transactions.getVins(txId);
   }
 }

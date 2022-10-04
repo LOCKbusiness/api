@@ -1,17 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
+import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
+import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { Config } from 'src/config/config';
 import { Withdrawal } from '../domain/entities/withdrawal.entity';
+import { fromScriptHex } from '@defichain/jellyfish-address';
+import { NetworkName } from '@defichain/jellyfish-network';
 
 @Injectable()
 export class StakingDeFiChainService {
   private inputClient: DeFiClient;
   private liqClient: DeFiClient;
+  private whaleClient: WhaleClient;
 
-  constructor(nodeService: NodeService) {
+  constructor(nodeService: NodeService, whaleService: WhaleService) {
     nodeService.getConnectedNode(NodeType.INPUT).subscribe((client) => (this.inputClient = client));
     nodeService.getConnectedNode(NodeType.LIQ).subscribe((client) => (this.liqClient = client));
+
+    this.whaleClient = whaleService.getClient();
   }
 
   //*** PUBLIC API ***//
@@ -35,15 +42,8 @@ export class StakingDeFiChainService {
   }
 
   async getSourceAddresses(txId: string): Promise<string[]> {
-    const rawTx = await this.inputClient.getRawTx(txId);
-    const addresses = [];
-
-    for (const vin of rawTx.vin) {
-      const vinTransaction = await this.inputClient.getRawTx(vin.txid);
-      addresses.push(vinTransaction.vout[vin.vout].scriptPubKey.addresses[0]);
-    }
-
-    return addresses;
+    const vins = await this.whaleClient.getTxVins(txId);
+    return vins.map((vin) => fromScriptHex(vin.vout.script.hex, Config.network as NetworkName).address);
   }
 
   async isWithdrawalTxComplete(withdrawalTxId: string): Promise<boolean> {
