@@ -14,6 +14,7 @@ export enum WithdrawalStatus {
 }
 
 export enum DepositStatus {
+  OPEN = 'Open',
   PENDING = 'Pending',
   CONFIRMED = 'Confirmed',
 }

@@ -33,7 +33,7 @@ export class Deposit extends IEntity {
     const deposit = new Deposit();
 
     deposit.staking = staking;
-    deposit.status = DepositStatus.PENDING;
+    deposit.status = DepositStatus.OPEN;
     deposit.asset = staking.asset;
     deposit.amount = amount;
     deposit.payInTxId = payInTxId;
@@ -56,5 +56,6 @@ export class Deposit extends IEntity {
     }
 
     this.amount = amount;
+    this.status = DepositStatus.PENDING;
   }
 }

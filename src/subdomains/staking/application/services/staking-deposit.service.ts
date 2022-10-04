@@ -133,19 +133,17 @@ export class StakingDepositService {
   }
 
   private createOrUpdateDeposit(staking: Staking, payIn: PayIn): void {
-    const existingDeposit = staking.getDepositByPayInTxId(payIn.txId);
+    const deposit = staking.getDepositByPayInTxId(payIn.txId) ?? this.createNewDeposit(staking, payIn);
 
-    if (existingDeposit) {
-      existingDeposit.updatePreCreatedDeposit(payIn.txId, payIn.amount);
-    } else {
-      this.createNewDeposit(staking, payIn);
-    }
+    deposit.updatePreCreatedDeposit(payIn.txId, payIn.amount);
   }
 
-  private createNewDeposit(staking: Staking, payIn: PayIn): void {
+  private createNewDeposit(staking: Staking, payIn: PayIn): Deposit {
     const newDeposit = this.factory.createDeposit(staking, { amount: payIn.amount, txId: payIn.txId });
 
     staking.addDeposit(newDeposit);
+
+    return newDeposit;
   }
 
   private async forwardDepositsToStaking(): Promise<void> {

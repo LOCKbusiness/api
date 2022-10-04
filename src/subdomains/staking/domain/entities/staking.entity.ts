@@ -213,10 +213,10 @@ export class Staking extends IEntity {
     return this.getDepositsByStatus(DepositStatus.PENDING);
   }
 
-  getPendingDepositsAmount(): number {
-    const pendingDeposits = this.getDepositsByStatus(DepositStatus.PENDING);
+  getUnconfirmedDepositsAmount(): number {
+    const unconfirmedDeposits = this.getDepositsByStatus([DepositStatus.OPEN, DepositStatus.PENDING]);
 
-    return Util.sum(pendingDeposits.map((d) => d.amount));
+    return Util.sum(unconfirmedDeposits.map((d) => d.amount));
   }
 
   getPendingWithdrawalsAmount(): number {
@@ -270,8 +270,8 @@ export class Staking extends IEntity {
     return pendingAmount + payingOutAmount;
   }
 
-  private getDepositsByStatus(status: DepositStatus): Deposit[] {
-    return this.deposits.filter((d) => d.status === status);
+  private getDepositsByStatus(status: DepositStatus | DepositStatus[]): Deposit[] {
+    return this.deposits.filter((d) => status.includes(d.status));
   }
 
   private getWithdrawalsByStatus(status: WithdrawalStatus): Withdrawal[] {

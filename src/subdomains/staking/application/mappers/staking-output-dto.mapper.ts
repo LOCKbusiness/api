@@ -13,7 +13,7 @@ export class StakingOutputDtoMapper {
     dto.minimalDeposit = Config.staking.minimalDeposit;
     dto.fee = staking.fee;
     dto.balance = staking.getBalance();
-    dto.pendingDeposits = staking.getPendingDepositsAmount();
+    dto.pendingDeposits = staking.getUnconfirmedDepositsAmount();
     dto.pendingWithdrawals = staking.getPendingWithdrawalsAmount();
 
     return dto;
