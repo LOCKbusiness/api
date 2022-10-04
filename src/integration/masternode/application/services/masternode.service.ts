@@ -109,15 +109,15 @@ export class MasternodeService {
   // get unpaid fee in DFI
   async getUnpaidFee(): Promise<number> {
     const unpaidMasternodeFee = await this.masternodeRepo.count({
-      where: { creationFeePaid: false },
+      where: { creationHash: Not(IsNull()), creationFeePaid: false },
     });
     return unpaidMasternodeFee * 10;
   }
 
-  //Add masternode creationFee
+  // add masternode creationFee
   async addFee(paidFee: number): Promise<void> {
     const unpaidMasternodes = await this.masternodeRepo.find({
-      where: { creationFeePaid: false },
+      where: { creationHash: Not(IsNull()), creationFeePaid: false },
     });
 
     const paidMasternodeCount = Math.floor(paidFee / Config.masternode.fee);
