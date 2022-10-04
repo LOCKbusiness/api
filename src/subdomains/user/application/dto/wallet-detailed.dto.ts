@@ -31,12 +31,12 @@ export class WalletDetailedDto {
 
   @ApiProperty({
     description: 'KYC status of the user',
+    enum: KycStatus,
   })
   kycStatus: KycStatus;
 
   @ApiPropertyOptional({
     description: 'KYC link of the user',
-    enum: KycStatus,
   })
   kycLink: string;
 }
