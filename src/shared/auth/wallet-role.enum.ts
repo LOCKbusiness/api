@@ -3,6 +3,6 @@ export enum WalletRole {
   USER = 'User',
   ADMIN = 'Admin',
   // staking system roles
-  PAYOUT_MANAGER = 'PayoutManager',
+  TRANSACTION_CHECKER = 'TransactionChecker',
   MASTERNODE_MANAGER = 'MasternodeManager',
 }
