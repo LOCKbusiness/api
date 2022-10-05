@@ -5,11 +5,22 @@ import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { MasternodeService } from '../../application/services/masternode.service';
 import { AddMasternodeFee } from '../../application/dto/add-masternode-fee.dto';
+import { Masternode } from '../../domain/entities/masternode.entity';
 
 @ApiTags('masternode')
 @Controller('masternode')
 export class MasternodeController {
   constructor(private readonly masternodeService: MasternodeService) {}
+
+  // --- TRANSACTION CHECKER --- //
+
+  @Get()
+  @ApiBearerAuth()
+  @ApiExcludeEndpoint()
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.TRANSACTION_CHECKER))
+  getMasternodes(): Promise<Masternode[]> {
+    return this.masternodeService.get();
+  }
 
   // --- ADMIN --- //
 
