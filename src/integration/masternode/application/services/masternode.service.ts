@@ -14,14 +14,9 @@ import { In, IsNull, LessThan, MoreThan, Not } from 'typeorm';
 import { Masternode } from '../../domain/entities/masternode.entity';
 import { MasternodeState } from '../../../../subdomains/staking/domain/enums';
 import { MasternodeRepository } from '../repositories/masternode.repository';
-import { SignedMasternodeTxDto } from '../dto/signed-masternode-tx.dto';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { Util } from 'src/shared/util';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
-import { MasternodeManagerDto } from '../dto/masternode-manager.dto';
-import { JellyfishService } from 'src/blockchain/ain/jellyfish/jellyfish.service';
-import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
-import { RawTxMasternodeDto } from '../dto/raw-tx-masternode.dto';
 
 @Injectable()
 export class MasternodeService {
@@ -31,8 +26,6 @@ export class MasternodeService {
     private readonly masternodeRepo: MasternodeRepository,
     private readonly http: HttpService,
     private readonly settingService: SettingService,
-    private readonly jellyfishService: JellyfishService,
-    private readonly whaleService: WhaleService,
     nodeService: NodeService,
   ) {
     nodeService.getConnectedNode(NodeType.LIQ).subscribe((c) => (this.client = c));
@@ -60,70 +53,6 @@ export class MasternodeService {
         await this.masternodeRepo.save(newOperator);
       }
     }
-  }
-
-  async get(): Promise<Masternode[]> {
-    return this.masternodeRepo.find();
-  }
-
-  async getCreating(dto: MasternodeManagerDto): Promise<RawTxMasternodeDto[]> {
-    const masternodes = await this.getCreatingMasternodes(dto);
-
-    const rawTxDtos: RawTxMasternodeDto[] = [];
-    for (const masternode of masternodes) {
-      try {
-        const rawTx = await this.jellyfishService.rawTxForCreate(masternode);
-        rawTxDtos.push({
-          id: masternode.id,
-          accountIndex: masternode.accountIndex,
-          owner: masternode.owner,
-          operator: masternode.operator,
-          rawTx,
-          apiSignature: await this.signMessage(rawTx.hex),
-        });
-      } catch (e) {
-        // TODO (Krysh) do something meaningful with these errors
-        // maybe we want to receive an email with it? I am not quite sure,
-        // how we handle other or similar errors
-        console.error(e);
-
-        // (Krysh): I know a GET should not change data
-        // maybe it is anyway better as a POST, as we are generating raw txs
-        masternode.state = MasternodeState.ERROR_CREATE_RAW;
-        await this.masternodeRepo.save({ ...masternode });
-      }
-    }
-    return rawTxDtos;
-  }
-
-  async getResigning(dto: MasternodeManagerDto): Promise<RawTxMasternodeDto[]> {
-    const masternodes = await this.getResigningMasternodes(dto);
-
-    const rawTxDtos: RawTxMasternodeDto[] = [];
-    for (const masternode of masternodes) {
-      try {
-        const rawTx = await this.jellyfishService.rawTxForResign(masternode);
-        rawTxDtos.push({
-          id: masternode.id,
-          accountIndex: masternode.accountIndex,
-          owner: masternode.owner,
-          operator: masternode.operator,
-          rawTx,
-          apiSignature: await this.signMessage(rawTx.hex),
-        });
-      } catch (e) {
-        // TODO (Krysh) do something meaningful with these errors
-        // maybe we want to receive an email with it? I am not quite sure,
-        // how we handle other or similar errors
-        console.error(e);
-
-        // (Krysh): I know a GET should not change data
-        // maybe it is anyway better as a POST, as we are generating raw txs
-        masternode.state = MasternodeState.ERROR_RESIGN_RAW;
-        await this.masternodeRepo.save({ ...masternode });
-      }
-    }
-    return rawTxDtos;
   }
 
   async getIdleMasternodes(count: number): Promise<Masternode[]> {
@@ -157,7 +86,7 @@ export class MasternodeService {
   async getAllResigning(): Promise<Masternode[]> {
     return this.masternodeRepo.find({
       where: {
-        state: In([MasternodeState.RESIGN_REQUESTED, MasternodeState.RESIGN_CONFIRMED, MasternodeState.RESIGNING]),
+        state: In([MasternodeState.RESIGNING, MasternodeState.PRE_RESIGNING]),
       },
     });
   }
@@ -201,82 +130,52 @@ export class MasternodeService {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
 
-    masternode.state = MasternodeState.CREATING;
+    masternode.state = MasternodeState.ENABLING;
 
     await this.masternodeRepo.save(masternode);
   }
 
-  async create(id: number, dto: SignedMasternodeTxDto): Promise<Masternode> {
+  async create(id: number): Promise<Masternode> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (masternode.creationHash) throw new ConflictException('Masternode already created');
 
-    try {
-      masternode.creationHash = await this.whaleService.broadcast(dto.signedTx);
-      masternode.creationDate = new Date();
-      masternode.state = MasternodeState.CREATED;
-    } catch (e) {
-      // TODO (Krysh) do something meaningful with these errors
-      // maybe we want to receive an email with it? I am not quite sure,
-      // how we handle other or similar errors
-      console.log(e);
-      masternode.state = MasternodeState.ERROR_CREATE;
-    }
-
-    return await this.masternodeRepo.save({ ...masternode, ...dto });
-  }
-
-  async prepareResign(id: number, signature: string, masternodeState: MasternodeState): Promise<Masternode> {
-    const masternode = await this.masternodeRepo.findOne(id);
-    if (!masternode) throw new NotFoundException('Masternode not found');
-
-    if (masternodeState === MasternodeState.RESIGN_REQUESTED) {
-      if (masternode.state !== MasternodeState.CREATED) throw new ConflictException('Masternode not yet created');
-      masternode.signatureLiquidityManager = signature;
-    }
-
-    if (masternodeState === MasternodeState.RESIGN_CONFIRMED) {
-      if (masternode.state !== MasternodeState.RESIGN_REQUESTED)
-        throw new ConflictException('Masternode resign is not requested');
-      masternode.signaturePayoutManager = signature;
-    }
-
-    masternode.state = masternodeState;
+    masternode.state = MasternodeState.ENABLED;
 
     return await this.masternodeRepo.save(masternode);
   }
 
-  async resign(id: number, dto: SignedMasternodeTxDto): Promise<Masternode> {
+  async prepareResign(id: number, signature: string): Promise<Masternode> {
+    const masternode = await this.masternodeRepo.findOne(id);
+    if (!masternode) throw new NotFoundException('Masternode not found');
+    if (masternode.state !== MasternodeState.ENABLED) throw new ConflictException('Masternode not yet created');
+    masternode.signatureLiquidityManager = signature;
+
+    masternode.state = MasternodeState.RESIGNING;
+
+    return await this.masternodeRepo.save(masternode);
+  }
+
+  async resign(id: number): Promise<Masternode> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (!masternode.creationHash) throw new ConflictException('Masternode not yet created');
     if (masternode.resignHash) throw new ConflictException('Masternode already resigned');
-    if (masternode.state !== MasternodeState.RESIGN_CONFIRMED)
+    if (masternode.state !== MasternodeState.PRE_RESIGNING)
       throw new ConflictException('Masternode resign is not confirmed');
 
-    try {
-      masternode.resignHash = await this.whaleService.broadcast(dto.signedTx);
-      masternode.resignDate = new Date();
-      masternode.state = MasternodeState.RESIGNING;
-    } catch (e) {
-      // TODO (Krysh) do something meaningful with these errors
-      // maybe we want to receive an email with it? I am not quite sure,
-      // how we handle other or similar errors
-      console.log(e);
-      masternode.state = MasternodeState.ERROR_RESIGN;
-    }
+    masternode.state = MasternodeState.RESIGNING;
 
-    return await this.masternodeRepo.save({ ...masternode, ...dto });
+    return await this.masternodeRepo.save(masternode);
   }
 
-  async resigned(id: number, dto: SignedMasternodeTxDto): Promise<Masternode> {
+  async resigned(id: number): Promise<Masternode> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (!masternode.resignHash) throw new ConflictException('Masternode is not resigning');
     if (masternode.state !== MasternodeState.RESIGNING)
       throw new ConflictException('Masternode resigning has not started');
 
-    await this.whaleService.broadcast(dto.signedTx);
     masternode.state = MasternodeState.RESIGNED;
 
     return await this.masternodeRepo.save(masternode);
@@ -303,19 +202,5 @@ export class MasternodeService {
   private async getMasternodeTms(creationHash: string): Promise<{ hash: string; tms: number }> {
     const info = await this.client.getMasternodeInfo(creationHash);
     return { hash: creationHash, tms: Util.avg(info.targetMultipliers ?? []) };
-  }
-
-  private async getCreatingMasternodes(dto: MasternodeManagerDto): Promise<Masternode[]> {
-    return this.masternodeRepo.find({ where: { state: MasternodeState.CREATING, ownerWallet: dto.ownerWallet } });
-  }
-
-  private async getResigningMasternodes(dto: MasternodeManagerDto): Promise<Masternode[]> {
-    return this.masternodeRepo.find({
-      where: { state: MasternodeState.RESIGN_CONFIRMED, ownerWallet: dto.ownerWallet },
-    });
-  }
-
-  private async signMessage(message: string): Promise<string> {
-    return this.client.signMessage(Config.staking.liquiditySignatureAddress, message);
   }
 }
