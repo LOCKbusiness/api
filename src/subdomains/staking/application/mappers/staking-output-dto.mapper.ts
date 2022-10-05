@@ -7,6 +7,7 @@ export class StakingOutputDtoMapper {
     const dto = new StakingOutputDto();
 
     dto.id = staking.id;
+    dto.status = staking.status;
     dto.asset = staking.asset.name;
     dto.depositAddress = staking.depositAddress.address;
     dto.minimalStake = Config.staking.minimalStake;

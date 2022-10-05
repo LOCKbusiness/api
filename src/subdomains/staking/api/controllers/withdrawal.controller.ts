@@ -53,7 +53,7 @@ export class WithdrawalController {
     return this.stakingWithdrawalService.signWithdrawal(jwt.userId, jwt.walletId, +stakingId, +withdrawalId, dto);
   }
 
-  @Patch(':id/change-amount')
+  @Patch(':id/amount')
   @ApiBearerAuth()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   @ApiResponse({ status: 200, type: WithdrawalDraftOutputDto })
