@@ -4,7 +4,6 @@ import { Interval } from '@nestjs/schedule';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { Config } from 'src/config/config';
 import { Util } from 'src/shared/util';
-import { MasternodeState } from '../../domain/enums';
 import { MasternodeService } from 'src/integration/masternode/application/services/masternode.service';
 import { StakingWithdrawalService } from './staking-withdrawal.service';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
@@ -109,7 +108,7 @@ export class LiquidityManagementService {
       });
       const signature = await this.client.signMessage(Config.staking.liquidityWalletAddress, message);
 
-      await this.masternodeService.prepareResign(masternode.id, signature, MasternodeState.RESIGN_REQUESTED);
+      await this.masternodeService.prepareResign(masternode.id, signature);
     }
   }
 

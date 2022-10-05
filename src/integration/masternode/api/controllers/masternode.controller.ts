@@ -1,16 +1,10 @@
-import { Body, Controller, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { MasternodeService } from '../../application/services/masternode.service';
-import { Masternode } from '../../domain/entities/masternode.entity';
-import { MasternodeState } from '../../../../subdomains/staking/domain/enums';
-import { SignedMasternodeTxDto } from '../../application/dto/signed-masternode-tx.dto';
-import { PrepareResignMasternodeDto } from '../../application/dto/prepare-resign-masternode.dto';
 import { AddMasternodeFee } from '../../application/dto/add-masternode-fee.dto';
-import { MasternodeManagerDto } from '../../application/dto/masternode-manager.dto';
-import { RawTxMasternodeDto } from '../../application/dto/raw-tx-masternode.dto';
 
 @ApiTags('masternode')
 @Controller('masternode')
@@ -33,63 +27,5 @@ export class MasternodeController {
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   addFee(@Body() dto: AddMasternodeFee) {
     this.masternodeService.addFee(dto.feeAmount);
-  }
-
-  // --- MANAGERS --- //
-
-  @Get()
-  @ApiBearerAuth()
-  @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard([WalletRole.MASTERNODE_MANAGER, WalletRole.PAYOUT_MANAGER]))
-  getMasternodes(): Promise<Masternode[]> {
-    return this.masternodeService.get();
-  }
-
-  @Get('creating')
-  @ApiBearerAuth()
-  @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard([WalletRole.MASTERNODE_MANAGER]))
-  getMasternodesCreating(@Body() dto: MasternodeManagerDto): Promise<RawTxMasternodeDto[]> {
-    return this.masternodeService.getCreating(dto);
-  }
-
-  @Put(':id/create')
-  @ApiBearerAuth()
-  @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.MASTERNODE_MANAGER))
-  createMasternode(@Param('id') id: string, @Body() dto: SignedMasternodeTxDto): Promise<Masternode> {
-    return this.masternodeService.create(+id, dto);
-  }
-
-  @Put(':id/confirm-resign')
-  @ApiBearerAuth()
-  @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.PAYOUT_MANAGER))
-  confirmResignMasternode(@Param('id') id: string, @Body() dto: PrepareResignMasternodeDto): Promise<Masternode> {
-    return this.masternodeService.prepareResign(+id, dto.signature, MasternodeState.RESIGN_CONFIRMED);
-  }
-
-  @Get('resigning')
-  @ApiBearerAuth()
-  @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard([WalletRole.MASTERNODE_MANAGER]))
-  getMasternodesResigning(@Body() dto: MasternodeManagerDto): Promise<RawTxMasternodeDto[]> {
-    return this.masternodeService.getResigning(dto);
-  }
-
-  @Put(':id/resign')
-  @ApiBearerAuth()
-  @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.MASTERNODE_MANAGER))
-  async resignMasternode(@Param('id') id: string, @Body() dto: SignedMasternodeTxDto): Promise<Masternode> {
-    return this.masternodeService.resign(+id, dto);
-  }
-
-  @Put(':id/resigned')
-  @ApiBearerAuth()
-  @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.MASTERNODE_MANAGER))
-  async resignedMasternode(@Param('id') id: string, @Body() dto: SignedMasternodeTxDto): Promise<Masternode> {
-    return this.masternodeService.resigned(+id, dto);
   }
 }
