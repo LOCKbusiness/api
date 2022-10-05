@@ -90,7 +90,7 @@ export class MasternodeService {
   async getAllResigning(): Promise<Masternode[]> {
     return this.masternodeRepo.find({
       where: {
-        state: In([MasternodeState.RESIGNING, MasternodeState.PRE_RESIGNING]),
+        state: In([MasternodeState.RESIGNING, MasternodeState.PRE_RESIGNED]),
       },
     });
   }
@@ -165,7 +165,7 @@ export class MasternodeService {
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (!masternode.creationHash) throw new ConflictException('Masternode not yet created');
     if (masternode.resignHash) throw new ConflictException('Masternode already resigned');
-    if (masternode.state !== MasternodeState.PRE_RESIGNING)
+    if (masternode.state !== MasternodeState.PRE_RESIGNED)
       throw new ConflictException('Masternode resign is not confirmed');
 
     masternode.state = MasternodeState.RESIGNING;
