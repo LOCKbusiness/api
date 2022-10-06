@@ -18,22 +18,23 @@ export class KycService {
   async startKyc(userId: number): Promise<KycDto> {
     const user = await this.userService.getUser(userId);
 
-    //Check if KYC has already started
+    // check if KYC has already started
     if (user.kycHash) return this.toDto(user);
 
-    //Register at KYC provider
+    // generate KYC ID
     const wallet = this.cryptoService.createWallet(Config.kyc.phrase);
     user.kycId = await wallet.get(userId).getAddress();
+
+    await this.userService.updateUser(user.id, { kycId: user.kycId });
+
+    // register at KYC provider
     const signature = await this.getSignature(await wallet.get(userId).privateKey(), user.kycId);
     const accessToken = await this.signUp(user.kycId, signature);
     const kycUser = await this.getUser(accessToken);
 
-    return this.toDto(
-      await this.userService.updateUser(user.id, {
-        kycHash: kycUser.kycHash,
-        kycId: user.kycId,
-      }),
-    );
+    await this.userService.updateUser(user.id, { kycHash: kycUser.kycHash });
+
+    return this.toDto(user);
   }
 
   // --- HELPER METHODS --- //
