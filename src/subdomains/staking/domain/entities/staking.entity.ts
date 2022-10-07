@@ -88,9 +88,8 @@ export class Staking extends IEntity {
 
   addDeposit(deposit: Deposit): this {
     if (!this.deposits) this.deposits = [];
-    if (this.deposits.length === 0) this.status = StakingStatus.ACTIVE;
 
-    if (this.status !== StakingStatus.ACTIVE) throw new BadRequestException('Staking is inactive');
+    if (this.status === StakingStatus.BLOCKED) throw new BadRequestException('Staking is blocked');
 
     this.deposits.push(deposit);
     this.updateBalance();
@@ -99,6 +98,8 @@ export class Staking extends IEntity {
   }
 
   confirmDeposit(depositId: string, forwardTxId: string): this {
+    this.status = StakingStatus.ACTIVE;
+
     const deposit = this.getDeposit(depositId);
 
     deposit.confirmDeposit(forwardTxId);
