@@ -57,14 +57,14 @@ describe('TransactionService', () => {
   it('should return an empty array for open, if a tx got created and verified', () => {
     setup(TestSetup.CREATE_MASTERNODE);
     const txId = service.getOpen()[0].id;
-    service.verify(txId, 'verifier-signed-message');
+    service.verified(txId, 'verifier-signed-message');
     expect(service.getOpen()).toStrictEqual([]);
   });
 
   it('should return an empty array for open, if a tx got created, verified and signed', () => {
     setup(TestSetup.CREATE_MASTERNODE);
     const txId = service.getOpen()[0].id;
-    service.verify(txId, 'verifier-signed-message');
+    service.verified(txId, 'verifier-signed-message');
     service.signed(txId, 'signed-raw-tx-hex');
     expect(service.getOpen()).toStrictEqual([]);
   });
@@ -82,7 +82,7 @@ describe('TransactionService', () => {
   it('should return a tx for verified, if a tx got created and verified', () => {
     setup(TestSetup.CREATE_MASTERNODE);
     const txId = service.getOpen()[0].id;
-    service.verify(txId, 'verifier-signed-message');
+    service.verified(txId, 'verifier-signed-message');
     expect(service.getVerified()).toMatchObject([
       {
         issuerSignature: 'create-masternode-signed-message',
@@ -103,14 +103,14 @@ describe('TransactionService', () => {
   it('should return an empty array for verified, if a tx got created, verified and signed', () => {
     setup(TestSetup.CREATE_MASTERNODE);
     const txId = service.getOpen()[0].id;
-    service.verify(txId, 'verifier-signed-message');
+    service.verified(txId, 'verifier-signed-message');
     service.signed(txId, 'signed-raw-tx-hex');
     expect(service.getVerified()).toStrictEqual([]);
   });
 
-  it('should throw an exception (NotFoundException), if a tx can not be found on verify', () => {
+  it('should throw an exception (NotFoundException), if a tx can not be found on verified', () => {
     setup(TestSetup.CREATE_MASTERNODE);
-    expect(() => service.verify('some-tx-which-is-not-found', 'some-signature')).toThrow(NotFoundException);
+    expect(() => service.verified('some-tx-which-is-not-found', 'some-signature')).toThrow(NotFoundException);
   });
 
   it('should throw an exception (NotFoundException), if a tx can not be found on signed', () => {
