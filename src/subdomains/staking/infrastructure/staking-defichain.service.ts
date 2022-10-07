@@ -11,25 +11,26 @@ import { NetworkName } from '@defichain/jellyfish-network';
 @Injectable()
 export class StakingDeFiChainService {
   private inputClient: DeFiClient;
-  private liqClient: DeFiClient;
+  private liqClient: DeFiClient; // TODO (Krysh) remove
   private whaleClient: WhaleClient;
 
   constructor(nodeService: NodeService, whaleService: WhaleService) {
     nodeService.getConnectedNode(NodeType.INPUT).subscribe((client) => (this.inputClient = client));
-    nodeService.getConnectedNode(NodeType.LIQ).subscribe((client) => (this.liqClient = client));
+    nodeService.getConnectedNode(NodeType.LIQ).subscribe((client) => (this.liqClient = client)); // TODO (Krysh) remove
 
-    this.whaleClient = whaleService.getClient();
+    whaleService.getClient().subscribe((client) => (this.whaleClient = client));
   }
 
   //*** PUBLIC API ***//
 
   async forwardDeposit(sourceAddress: string, amount: number): Promise<string> {
-    return this.forwardUtxo(sourceAddress, Config.staking.liquidityWalletAddress, amount);
+    return this.forwardUtxo(sourceAddress, Config.staking.liquidity.address, amount);
   }
 
   async sendWithdrawal(withdrawal: Withdrawal): Promise<string> {
+    // TODO (Krysh) replace with raw tx
     const txId = await this.liqClient.sendUtxo(
-      Config.staking.liquidityWalletAddress,
+      Config.staking.liquidity.address,
       withdrawal.staking.withdrawalAddress.address,
       withdrawal.amount,
     );
