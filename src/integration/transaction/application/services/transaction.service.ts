@@ -49,6 +49,6 @@ export class TransactionService {
   }
 
   private select(filter: (tx: TransactionDto) => boolean): TransactionDto[] {
-    return Object.values(this.transactions).filter(filter);
+    return Array.from(this.transactions.values()).filter(filter);
   }
 }

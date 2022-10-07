@@ -24,10 +24,6 @@ export class TransactionExecutionService {
     nodeService.getConnectedNode(NodeType.INPUT).subscribe((client) => (this.nodeClient = client));
   }
 
-  private async receiveSignatureFor(rawTx: RawTxDto): Promise<string> {
-    return this.nodeClient.signMessage(Config.staking.signature.address, rawTx.hex);
-  }
-
   async createMasternode(data: CreateMasternodeData): Promise<string> {
     const rawTx = await this.jellyfishService.rawTxForCreate(data.masternode);
     return this.signAndBroadcast(rawTx, {
@@ -64,5 +60,9 @@ export class TransactionExecutionService {
     const signature = await this.receiveSignatureFor(rawTx);
     const hex = await this.transactionService.sign(rawTx, signature, payload);
     return await this.whaleClient.sendRaw(hex);
+  }
+
+  private async receiveSignatureFor(rawTx: RawTxDto): Promise<string> {
+    return this.nodeClient.signMessage(Config.staking.signature.address, rawTx.hex);
   }
 }
