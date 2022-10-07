@@ -37,12 +37,6 @@ export class Masternode extends IEntity {
   @Index({ unique: true, where: 'resignHash IS NOT NULL' })
   resignHash: string;
 
-  @Column({ nullable: true })
-  signatureLiquidityManager: string;
-
-  @Column({ nullable: true })
-  signaturePayoutManager: string;
-
   @Column({ default: MasternodeState.IDLE, nullable: false })
   state: MasternodeState;
 

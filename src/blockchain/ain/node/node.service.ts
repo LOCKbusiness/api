@@ -11,7 +11,7 @@ import { NodeClient, NodeMode } from './node-client';
 export enum NodeType {
   INPUT = 'inp',
   REW = 'rew',
-  LIQ = 'liq',
+  LIQ = 'liq', // TODO (Krysh) remove
 }
 
 export interface NodeError {

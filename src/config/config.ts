@@ -113,14 +113,15 @@ export class Configuration {
         'Withdraw_${amount}_${asset}_from_${address}_staking_id_${stakingId}_withdrawal_id_${withdrawalId}',
     },
 
-    liquidityWalletAddress: process.env.STAKING_LIQUIDITY_WALLET_ADDRESS,
-    liquiditySignatureAddress: process.env.STAKING_LIQUIDITY_SIGNATURE_ADDRESS,
-    masternodeWalletAddress: process.env.STAKING_MASTERNODE_WALLET_ADDRESS,
-    payoutWalletAddress: process.env.STAKING_PAYOUT_WALLET_ADDRESS,
+    signature: {
+      address: process.env.API_SIGN_ADDRESS,
+    },
 
     liquidity: {
       min: 20000,
       max: 40000,
+
+      address: process.env.LIQUIDITY_ADDRESS,
     },
     aprPeriod: 28, // days
   };
@@ -129,7 +130,6 @@ export class Configuration {
     collateral: 20000,
     fee: 10,
     creationFee: 0.00000232,
-    resignMessage: 'Resign_masternode_${id}_with_hash_${hash}',
     resignFee: 0.00000209,
   };
 

@@ -7,13 +7,18 @@ import { Injectable } from '@nestjs/common';
 import BigNumber from 'bignumber.js';
 import { Config } from 'src/config/config';
 import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
+import { WhaleClient } from '../whale/whale-client';
 import { WhaleService } from '../whale/whale.service';
 import { RawTxDto } from './dto/raw-tx.dto';
 import { RawTxUtil } from './raw-tx-util';
 
 @Injectable()
 export class JellyfishService {
-  constructor(private readonly whaleService: WhaleService) {}
+  private whaleClient: WhaleClient;
+
+  constructor(whaleService: WhaleService) {
+    whaleService.getClient().subscribe((client) => (this.whaleClient = client));
+  }
 
   public createWallet(seed: string[]): JellyfishWallet<WhaleWalletAccount, WalletHdNode> {
     return new JellyfishWallet(
@@ -42,7 +47,7 @@ export class JellyfishService {
     const expectedAmount = new BigNumber(
       Config.masternode.collateral + Config.masternode.creationFee + Config.masternode.fee,
     );
-    const unspent = await this.whaleService.getUnspent(masternode.owner, expectedAmount);
+    const unspent = await this.whaleClient.getUnspent(masternode.owner, expectedAmount);
     const [prevouts, scriptHex] = RawTxUtil.parseUnspent(unspent);
 
     const vins = RawTxUtil.createVins(prevouts);
@@ -74,7 +79,7 @@ export class JellyfishService {
     const [operatorScript, operatorPubKeyHash] = RawTxUtil.parseOperatorPubKeyHash(masternode.operator, network);
 
     const expectedAmount = new BigNumber(Config.masternode.resignFee);
-    const unspent = await this.whaleService.getUnspent(masternode.owner, expectedAmount);
+    const unspent = await this.whaleClient.getUnspent(masternode.owner, expectedAmount);
     const [prevouts, scriptHex] = RawTxUtil.parseUnspent(unspent);
 
     const vins = RawTxUtil.createVins(prevouts);
@@ -93,6 +98,24 @@ export class JellyfishService {
       hex: new CTransactionSegWit(tx).toHex(),
       scriptHex,
       prevouts,
+    };
+  }
+
+  async rawTxForSendFromLiq(to: string, amount: BigNumber): Promise<RawTxDto> {
+    // TODO (Krysh) implement raw tx
+    return {
+      hex: '',
+      scriptHex: '',
+      prevouts: [],
+    };
+  }
+
+  async rawTxForSendToLiq(from: string, amount: BigNumber): Promise<RawTxDto> {
+    // TODO (Krysh) implement raw tx
+    return {
+      hex: '',
+      scriptHex: '',
+      prevouts: [],
     };
   }
 
