@@ -1,6 +1,7 @@
 import { Masternode } from '../masternode.entity';
 
 const defaultMasternode: Partial<Masternode> = {
+  owner: 'owner-address',
   ownerWallet: 'cold-wallet-a',
   accountIndex: 1,
 };
