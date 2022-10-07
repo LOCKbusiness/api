@@ -1,6 +1,7 @@
-import { ApiPagedResponse, WhaleApiClient } from '@defichain/whale-api-client';
+import { WhaleApiClient } from '@defichain/whale-api-client';
 import { AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
-import { Transaction, TransactionVin } from '@defichain/whale-api-client/dist/api/transactions';
+import { TransactionVin } from '@defichain/whale-api-client/dist/api/transactions';
+import BigNumber from 'bignumber.js';
 import { GetConfig } from 'src/config/config';
 import { Util } from 'src/shared/util';
 
@@ -15,8 +16,13 @@ export class WhaleClient {
     return new WhaleApiClient(GetConfig().whale);
   }
 
-  async getUnspent(address: string): Promise<ApiPagedResponse<AddressUnspent>> {
-    return this.client.address.listTransactionUnspent(address);
+  async getUnspent(address: string, expectedAmount: BigNumber): Promise<AddressUnspent[]> {
+    const unspent = await this.client.address.listTransactionUnspent(address);
+
+    const wantedUnspent = unspent.find((u) => new BigNumber(u.vout.value).isEqualTo(expectedAmount));
+
+    if (!wantedUnspent) throw new Error(`Unspent on ${address} with amount of ${expectedAmount.toString()} not found`);
+    return [wantedUnspent];
   }
 
   async sendRaw(hex: string): Promise<string> {

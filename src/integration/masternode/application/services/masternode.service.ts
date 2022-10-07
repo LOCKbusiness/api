@@ -87,6 +87,14 @@ export class MasternodeService {
     return this.masternodeRepo.find({ where: { creationHash: Not(IsNull()), resignHash: IsNull() } });
   }
 
+  async getAllWithStates(states: MasternodeState[]): Promise<Masternode[]> {
+    return this.masternodeRepo.find({
+      where: {
+        state: In(states),
+      },
+    });
+  }
+
   async getAllResigning(): Promise<Masternode[]> {
     return this.masternodeRepo.find({
       where: {
@@ -130,7 +138,7 @@ export class MasternodeService {
     }
   }
 
-  async designateCreating(id: number): Promise<void> {
+  async designateEnabling(id: number): Promise<void> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
 
@@ -139,41 +147,53 @@ export class MasternodeService {
     await this.masternodeRepo.save(masternode);
   }
 
-  async create(id: number): Promise<Masternode> {
+  async designatePreEnabled(id: number, txId: string): Promise<void> {
+    const masternode = await this.masternodeRepo.findOne(id);
+    if (!masternode) throw new NotFoundException('Masternode not found');
+
+    masternode.state = MasternodeState.PRE_ENABLED;
+    masternode.creationHash = txId;
+    masternode.creationDate = new Date();
+
+    await this.masternodeRepo.save(masternode);
+  }
+
+  async enabled(id: number): Promise<void> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (masternode.creationHash) throw new ConflictException('Masternode already created');
 
     masternode.state = MasternodeState.ENABLED;
 
-    return await this.masternodeRepo.save(masternode);
+    await this.masternodeRepo.save(masternode);
   }
 
-  async prepareResign(id: number, signature: string): Promise<Masternode> {
+  async designateResigning(id: number): Promise<void> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (masternode.state !== MasternodeState.ENABLED) throw new ConflictException('Masternode not yet created');
-    masternode.signatureLiquidityManager = signature;
 
     masternode.state = MasternodeState.RESIGNING;
 
-    return await this.masternodeRepo.save(masternode);
+    await this.masternodeRepo.save(masternode);
   }
 
-  async resign(id: number): Promise<Masternode> {
+  async designatePreResigned(id: number, txId: string): Promise<void> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (!masternode.creationHash) throw new ConflictException('Masternode not yet created');
     if (masternode.resignHash) throw new ConflictException('Masternode already resigned');
-    if (masternode.state !== MasternodeState.PRE_RESIGNED)
+    if (masternode.state !== MasternodeState.RESIGNING)
       throw new ConflictException('Masternode resign is not confirmed');
 
-    masternode.state = MasternodeState.RESIGNING;
+    masternode.state = MasternodeState.PRE_RESIGNED;
+    masternode.resignHash = txId;
+    masternode.resignDate = new Date();
 
-    return await this.masternodeRepo.save(masternode);
+    await this.masternodeRepo.save(masternode);
   }
 
-  async resigned(id: number): Promise<Masternode> {
+  async resigned(id: number): Promise<void> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (!masternode.resignHash) throw new ConflictException('Masternode is not resigning');
@@ -182,7 +202,7 @@ export class MasternodeService {
 
     masternode.state = MasternodeState.RESIGNED;
 
-    return await this.masternodeRepo.save(masternode);
+    await this.masternodeRepo.save(masternode);
   }
 
   // --- HELPER METHODS --- //
@@ -194,7 +214,7 @@ export class MasternodeService {
   }
 
   private async request<T>(url: string, method: Method, data?: any): Promise<T> {
-    return await this.http.request<T>({
+    return this.http.request<T>({
       url,
       method: method,
       data: method !== 'GET' ? data : undefined,

@@ -16,6 +16,7 @@ import BigNumber from 'bignumber.js';
 import { SmartBuffer } from 'smart-buffer';
 import { AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
 import { Config } from 'src/config/config';
+import { MasternodeTimeLock } from 'src/subdomains/staking/domain/enums';
 
 interface OpPushData {
   type: string;
@@ -80,7 +81,7 @@ export class RawTxUtil {
     };
   }
 
-  static createVoutCreateMasternode(operatorPubKeyHash: string, timeLock: number): Vout {
+  static createVoutCreateMasternode(operatorPubKeyHash: string, timeLock: MasternodeTimeLock): Vout {
     return {
       value: new BigNumber(Config.masternode.fee),
       script: {
@@ -89,7 +90,7 @@ export class RawTxUtil {
           OP_CODES.OP_DEFI_TX_CREATE_MASTER_NODE({
             operatorType: 1,
             operatorPubKeyHash: operatorPubKeyHash,
-            timelock: timeLock != null ? timeLock : 0, // TODO (Krysh) should be enum, at least it is not allowed to send null here
+            timelock: timeLock,
           }),
         ],
       },
