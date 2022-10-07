@@ -21,7 +21,7 @@ export class TransactionService {
     return this.select((tx: TransactionDto) => TxCheck.isVerified(tx));
   }
 
-  verify(id: string, signature: string) {
+  verified(id: string, signature: string) {
     const tx = this.transactions.get(id);
     if (!tx) throw new NotFoundException('Transaction not found');
     tx.verifierSignature = signature;
