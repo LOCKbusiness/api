@@ -25,7 +25,6 @@ export class TransactionService {
     const tx = this.transactions.get(id);
     if (!tx) throw new NotFoundException('Transaction not found');
     tx.verifierSignature = signature;
-    this.transactions.set(tx.id, tx);
   }
 
   signed(id: string, hex: string) {

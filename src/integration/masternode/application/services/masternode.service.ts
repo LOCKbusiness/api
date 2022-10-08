@@ -138,7 +138,7 @@ export class MasternodeService {
     }
   }
 
-  async designateEnabling(id: number): Promise<void> {
+  async enabling(id: number): Promise<void> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
 
@@ -147,9 +147,10 @@ export class MasternodeService {
     await this.masternodeRepo.save(masternode);
   }
 
-  async designatePreEnabled(id: number, txId: string): Promise<void> {
+  async preEnabled(id: number, txId: string): Promise<void> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
+    if (masternode.creationHash) throw new ConflictException('Masternode already created');
 
     masternode.state = MasternodeState.PRE_ENABLED;
     masternode.creationHash = txId;
@@ -161,14 +162,13 @@ export class MasternodeService {
   async enabled(id: number): Promise<void> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
-    if (masternode.creationHash) throw new ConflictException('Masternode already created');
 
     masternode.state = MasternodeState.ENABLED;
 
     await this.masternodeRepo.save(masternode);
   }
 
-  async designateResigning(id: number): Promise<void> {
+  async resigning(id: number): Promise<void> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (masternode.state !== MasternodeState.ENABLED) throw new ConflictException('Masternode not yet created');
@@ -178,13 +178,11 @@ export class MasternodeService {
     await this.masternodeRepo.save(masternode);
   }
 
-  async designatePreResigned(id: number, txId: string): Promise<void> {
+  async preResigned(id: number, txId: string): Promise<void> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (!masternode.creationHash) throw new ConflictException('Masternode not yet created');
     if (masternode.resignHash) throw new ConflictException('Masternode already resigned');
-    if (masternode.state !== MasternodeState.RESIGNING)
-      throw new ConflictException('Masternode resign is not confirmed');
 
     masternode.state = MasternodeState.PRE_RESIGNED;
     masternode.resignHash = txId;
@@ -196,9 +194,6 @@ export class MasternodeService {
   async resigned(id: number): Promise<void> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
-    if (!masternode.resignHash) throw new ConflictException('Masternode is not resigning');
-    if (masternode.state !== MasternodeState.RESIGNING)
-      throw new ConflictException('Masternode resigning has not started');
 
     masternode.state = MasternodeState.RESIGNED;
 

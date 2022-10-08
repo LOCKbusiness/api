@@ -56,7 +56,7 @@ export class LiquidityManagementService {
     if (masternodeChangeCount > 0) {
       await this.startMasternodeEnabling(masternodeChangeCount);
     } else {
-      await this.startResignMasternodes(Math.abs(masternodeChangeCount));
+      await this.startMasternodeResigning(Math.abs(masternodeChangeCount));
     }
   }
 
@@ -99,7 +99,7 @@ export class LiquidityManagementService {
     return this.handleMasternodesWithState(idleMasternodes, MasternodeState.IDLE);
   }
 
-  private async startResignMasternodes(count: number): Promise<void | void[]> {
+  private async startMasternodeResigning(count: number): Promise<void | void[]> {
     const masternodes = await this.masternodeService.getOrderedByTms();
     return this.handleMasternodesWithState(masternodes.splice(0, count), MasternodeState.ENABLED);
   }
@@ -107,11 +107,16 @@ export class LiquidityManagementService {
   private async handleMasternodesWithState(masternodes: Masternode[], state: MasternodeState): Promise<void | void[]> {
     const filteredMasternodes = masternodes.filter((mn) => mn.state === state);
 
-    const [txFunction, updateFunction] = this.receiveTxFunctionFor(state);
+    const process = this.getProcessFunctionsFor(state);
 
     return Promise.all(
-      filteredMasternodes.map((node) => txFunction(node).then((txId: string) => updateFunction(node, txId))),
-    ).catch(console.error);
+      filteredMasternodes.map((node) =>
+        process
+          .txFunc(node)
+          .then((txId: string) => process.updateFunc(node, txId))
+          .catch(console.error),
+      ),
+    );
   }
 
   // --- WITHDRAWALS --- //
@@ -152,13 +157,14 @@ export class LiquidityManagementService {
     );
   }
 
-  private receiveTxFunctionFor(
-    state: MasternodeState,
-  ): [(masternode: Masternode) => Promise<string>, (masternode: Masternode, txId: string) => Promise<void>] {
+  private getProcessFunctionsFor(state: MasternodeState): {
+    txFunc: (masternode: Masternode) => Promise<string>;
+    updateFunc: (masternode: Masternode, txId: string) => Promise<void>;
+  } {
     switch (state) {
       case MasternodeState.IDLE:
-        return [
-          (masternode: Masternode) => {
+        return {
+          txFunc: (masternode: Masternode) => {
             return this.transactionCreationService.sendFromLiq({
               to: masternode.owner,
               amount: new BigNumber(
@@ -168,28 +174,28 @@ export class LiquidityManagementService {
               accountIndex: masternode.accountIndex,
             });
           },
-          (masternode: Masternode) => {
-            console.info(`Sending collateral to masternode owner: ${masternode.owner}`);
-            return this.masternodeService.designateEnabling(masternode.id);
+          updateFunc: (masternode: Masternode, txId: string) => {
+            console.info(`Sending collateral to masternode owner: ${masternode.owner}\n\twith tx: ${txId}`);
+            return this.masternodeService.enabling(masternode.id);
           },
-        ];
+        };
       case MasternodeState.ENABLING:
-        return [
-          (masternode: Masternode) => {
+        return {
+          txFunc: (masternode: Masternode) => {
             return this.transactionCreationService.createMasternode({
               masternode,
               ownerWallet: masternode.ownerWallet,
               accountIndex: masternode.accountIndex,
             });
           },
-          (masternode: Masternode, txId: string) => {
-            console.info(`Creating masternode for owner: ${masternode.owner}`);
-            return this.masternodeService.designatePreEnabled(masternode.id, txId);
+          updateFunc: (masternode: Masternode, txId: string) => {
+            console.info(`Creating masternode for owner: ${masternode.owner}\n\twith tx: ${txId}`);
+            return this.masternodeService.preEnabled(masternode.id, txId);
           },
-        ];
+        };
       case MasternodeState.ENABLED:
-        return [
-          (masternode: Masternode) => {
+        return {
+          txFunc: (masternode: Masternode) => {
             return this.transactionCreationService.sendFromLiq({
               to: masternode.owner,
               amount: new BigNumber(Config.masternode.resignFee),
@@ -197,25 +203,25 @@ export class LiquidityManagementService {
               accountIndex: masternode.accountIndex,
             });
           },
-          (masternode: Masternode) => {
-            console.info(`Sending resign fee to masternode owner: ${masternode.owner}`);
-            return this.masternodeService.designateResigning(masternode.id);
+          updateFunc: (masternode: Masternode, txId: string) => {
+            console.info(`Sending resign fee to masternode owner: ${masternode.owner}\n\twith tx: ${txId}`);
+            return this.masternodeService.resigning(masternode.id);
           },
-        ];
+        };
       case MasternodeState.RESIGNING:
-        return [
-          (masternode: Masternode) => {
+        return {
+          txFunc: (masternode: Masternode) => {
             return this.transactionCreationService.resignMasternode({
               masternode,
               ownerWallet: masternode.ownerWallet,
               accountIndex: masternode.accountIndex,
             });
           },
-          (masternode: Masternode, txId: string) => {
-            console.info(`Resigning masternode for owner: ${masternode.owner}`);
-            return this.masternodeService.designatePreResigned(masternode.id, txId);
+          updateFunc: (masternode: Masternode, txId: string) => {
+            console.info(`Resigning masternode for owner: ${masternode.owner}\n\twith tx: ${txId}`);
+            return this.masternodeService.preResigned(masternode.id, txId);
           },
-        ];
+        };
     }
   }
 }
