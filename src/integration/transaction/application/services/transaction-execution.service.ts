@@ -6,7 +6,13 @@ import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { Config } from 'src/config/config';
-import { CreateMasternodeData, ResignMasternodeData, SendFromLiqData, SendToLiqData } from '../types/creation-data';
+import {
+  CreateMasternodeData,
+  MasternodeBaseData,
+  ResignMasternodeData,
+  SendFromLiqData,
+  SendToLiqData,
+} from '../types/creation-data';
 import { TransactionService } from './transaction.service';
 
 @Injectable()
@@ -26,34 +32,29 @@ export class TransactionExecutionService {
 
   async createMasternode(data: CreateMasternodeData): Promise<string> {
     const rawTx = await this.jellyfishService.rawTxForCreate(data.masternode);
-    return this.signAndBroadcast(rawTx, {
-      ownerWallet: data.ownerWallet,
-      accountIndex: data.accountIndex,
-    });
+    return this.signAndBroadcast(rawTx, this.createPayloadFor(data));
   }
 
   async resignMasternode(data: ResignMasternodeData): Promise<string> {
     const rawTx = await this.jellyfishService.rawTxForResign(data.masternode);
-    return this.signAndBroadcast(rawTx, {
-      ownerWallet: data.ownerWallet,
-      accountIndex: data.accountIndex,
-    });
+    return this.signAndBroadcast(rawTx, this.createPayloadFor(data));
   }
 
   async sendFromLiq(data: SendFromLiqData): Promise<string> {
     const rawTx = await this.jellyfishService.rawTxForSendFromLiq(data.to, data.amount);
-    return this.signAndBroadcast(rawTx, {
-      ownerWallet: data.ownerWallet,
-      accountIndex: data.accountIndex,
-    });
+    return this.signAndBroadcast(rawTx, this.createPayloadFor(data));
   }
 
   async sendToLiq(data: SendToLiqData): Promise<string> {
     const rawTx = await this.jellyfishService.rawTxForSendToLiq(data.from, data.amount);
-    return this.signAndBroadcast(rawTx, {
+    return this.signAndBroadcast(rawTx, this.createPayloadFor(data));
+  }
+
+  private createPayloadFor(data: MasternodeBaseData): any {
+    return {
       ownerWallet: data.ownerWallet,
       accountIndex: data.accountIndex,
-    });
+    };
   }
 
   private async signAndBroadcast(rawTx: RawTxDto, payload?: any): Promise<string> {
