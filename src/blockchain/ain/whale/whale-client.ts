@@ -16,6 +16,10 @@ export class WhaleClient {
     return new WhaleApiClient(GetConfig().whale);
   }
 
+  async getAllUnspent(address: string): Promise<AddressUnspent[]> {
+    return await this.client.address.listTransactionUnspent(address);
+  }
+
   async getUnspent(address: string, expectedAmount: BigNumber): Promise<AddressUnspent[]> {
     const unspent = await this.client.address.listTransactionUnspent(address);
 

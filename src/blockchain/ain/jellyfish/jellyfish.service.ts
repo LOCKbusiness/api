@@ -1,5 +1,6 @@
 import { MainNet, Network, TestNet } from '@defichain/jellyfish-network';
-import { CTransactionSegWit } from '@defichain/jellyfish-transaction';
+import { CTransaction, CTransactionSegWit } from '@defichain/jellyfish-transaction';
+import { calculateFeeP2WPKH } from '@defichain/jellyfish-transaction-builder';
 import { JellyfishWallet, WalletHdNode } from '@defichain/jellyfish-wallet';
 import { Bip32Options, MnemonicHdNodeProvider } from '@defichain/jellyfish-wallet-mnemonic';
 import { WhaleWalletAccount, WhaleWalletAccountProvider } from '@defichain/whale-api-wallet';
@@ -41,7 +42,7 @@ export class JellyfishService {
 
   async rawTxForCreate(masternode: Masternode): Promise<RawTxDto> {
     const network = this.getNetwork();
-    const [ownerScript, ownerPubKeyHash] = RawTxUtil.parseOwnerAddress(masternode.owner, network);
+    const [ownerScript, ownerPubKeyHash] = RawTxUtil.parseAddress(masternode.owner, network);
     const [operatorScript, operatorPubKeyHash] = RawTxUtil.parseOperatorPubKeyHash(masternode.operator, network);
 
     const expectedAmount = new BigNumber(
@@ -53,7 +54,7 @@ export class JellyfishService {
     const vins = RawTxUtil.createVins(prevouts);
     const vouts = [
       RawTxUtil.createVoutCreateMasternode(operatorPubKeyHash, masternode.timeLock),
-      RawTxUtil.createVoutReturn(ownerScript),
+      RawTxUtil.createVoutReturn(ownerScript, new BigNumber(Config.masternode.collateral)),
     ];
 
     const witnesses = [
@@ -75,7 +76,7 @@ export class JellyfishService {
   async rawTxForResign(masternode: Masternode): Promise<RawTxDto> {
     const network = this.getNetwork();
 
-    const [ownerScript, ownerPubKeyHash] = RawTxUtil.parseOwnerAddress(masternode.owner, network);
+    const [ownerScript, ownerPubKeyHash] = RawTxUtil.parseAddress(masternode.owner, network);
     const [operatorScript, operatorPubKeyHash] = RawTxUtil.parseOperatorPubKeyHash(masternode.operator, network);
 
     const expectedAmount = new BigNumber(Config.masternode.resignFee);
@@ -102,11 +103,25 @@ export class JellyfishService {
   }
 
   async rawTxForSendFromLiq(to: string, amount: BigNumber): Promise<RawTxDto> {
-    // TODO (Krysh) implement raw tx
+    const network = this.getNetwork();
+
+    const [fromScript] = RawTxUtil.parseAddress(Config.staking.liquidity.address, network);
+    const [toScript] = RawTxUtil.parseAddress(to, network);
+
+    const unspent = await this.whaleClient.getAllUnspent(Config.staking.liquidity.address);
+    const [prevouts, total] = RawTxUtil.parseUnspentUntilAmount(unspent, amount);
+
+    const vins = RawTxUtil.createVins(prevouts);
+    const change = RawTxUtil.createVoutReturn(fromScript, total.minus(amount));
+    const vouts = [RawTxUtil.createVoutReturn(toScript, amount), change];
+
+    const tx = RawTxUtil.createTx(vins, vouts);
+    const fee = calculateFeeP2WPKH(new BigNumber(0.00001), tx);
+    change.value = change.value.minus(fee);
+
     return {
-      hex: '',
-      scriptHex: '',
-      prevouts: [],
+      hex: new CTransaction(tx).toHex(),
+      prevouts: prevouts,
     };
   }
 

@@ -40,7 +40,7 @@ export class TransactionController {
   @Put(':id/signed')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.TRANSACTION_SIGNER))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.MASTERNODE_MANAGER))
   signTransaction(@Param('id') id: string, @Body() dto: SignedTransactionDto) {
     this.transactionService.signed(id, dto.hex);
   }

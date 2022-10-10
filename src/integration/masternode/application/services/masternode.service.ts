@@ -61,7 +61,7 @@ export class MasternodeService {
 
   async getIdleMasternodes(count: number): Promise<Masternode[]> {
     const masternodes = await this.masternodeRepo.find({
-      where: { state: MasternodeState.IDLE, creationFeePaid: true },
+      where: { state: MasternodeState.IDLE },
       take: count,
     });
 
