@@ -23,9 +23,7 @@ import { MasternodeRepository } from '../../integration/masternode/application/r
 import { MasternodeService } from '../../integration/masternode/application/services/masternode.service';
 import { StakingAuthorizeService } from './infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from './infrastructure/staking-kyc-check.service';
-import { TransactionService } from 'src/integration/transaction/application/services/transaction.service';
 import { TransactionModule } from 'src/integration/transaction/transaction.module';
-import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
 
 @Module({
   imports: [
