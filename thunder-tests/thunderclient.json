@@ -88,5 +88,71 @@
       "form": []
     },
     "tests": []
+  },
+  {
+    "_id": "dbb59ff2-e3fb-4cec-ab25-d2323fffd277",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "731f1cc7-0880-423b-9bd4-6c9fa8edb82c",
+    "name": "open",
+    "url": "{{url}}/v1/transaction/open",
+    "method": "GET",
+    "sortNum": 100000,
+    "created": "2022-10-10T14:39:03.126Z",
+    "modified": "2022-10-10T14:39:34.169Z",
+    "headers": [],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "f8247c2e-c2e8-44ed-98d2-d4b1ae8c422b",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "731f1cc7-0880-423b-9bd4-6c9fa8edb82c",
+    "name": "verified",
+    "url": "{{url}}/v1/transaction/verified",
+    "method": "GET",
+    "sortNum": 110000,
+    "created": "2022-10-10T14:41:32.311Z",
+    "modified": "2022-10-10T14:41:41.604Z",
+    "headers": [],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "81968d20-3e30-4b38-8f68-c900f153cdfd",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "731f1cc7-0880-423b-9bd4-6c9fa8edb82c",
+    "name": "verified",
+    "url": "{{url}}/v1/transaction/changeMe/verified",
+    "method": "PUT",
+    "sortNum": 120000,
+    "created": "2022-10-10T14:41:56.862Z",
+    "modified": "2022-10-10T14:42:43.500Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"signature\": \"changeMe\"\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "eec6b993-395c-498f-a0fd-8ee9169204d0",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "731f1cc7-0880-423b-9bd4-6c9fa8edb82c",
+    "name": "signed",
+    "url": "{{url}}/v1/transaction/changeMe/signed",
+    "method": "PUT",
+    "sortNum": 130000,
+    "created": "2022-10-10T14:42:51.082Z",
+    "modified": "2022-10-10T14:43:17.577Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"hex\": \"changeMe\"\n}",
+      "form": []
+    },
+    "tests": []
   }
 ]

@@ -1,6 +1,7 @@
 import { Network } from '@defichain/jellyfish-network';
 import {
   DeFiTransactionConstants,
+  Transaction,
   TransactionSegWit,
   Witness,
   WitnessScript,
@@ -26,7 +27,7 @@ interface OpPushData {
 export class RawTxUtil {
   // --- PARSING --- //
 
-  static parseOwnerAddress(owner: string, network: Network): [Script, string] {
+  static parseAddress(owner: string, network: Network): [Script, string] {
     const decodedAddress = fromAddress(owner, network.name);
     const pushData: OpPushData = decodedAddress?.script.stack[1] as any;
     if (!decodedAddress.script || !pushData.hex) throw new Error('Could not parse owner address');
@@ -58,6 +59,33 @@ export class RawTxUtil {
     return [prevouts, rawScriptHex];
   }
 
+  static parseUnspentUntilAmount(unspent: AddressUnspent[], amount: BigNumber): [Prevout[], BigNumber] {
+    const prevouts = unspent.map((item): Prevout => {
+      return {
+        txid: item.vout.txid,
+        vout: item.vout.n,
+        value: new BigNumber(item.vout.value),
+        script: {
+          // TODO(fuxingloh): needs to refactor once jellyfish refactor this.
+          stack: toOPCodes(SmartBuffer.fromBuffer(Buffer.from(item.script.hex, 'hex'))),
+        },
+        tokenId: item.vout.tokenId ?? 0x00,
+      };
+    });
+    let total = new BigNumber(0);
+    const neededPrevouts: Prevout[] = [];
+    prevouts.forEach((p) => {
+      if (total.gte(amount)) return;
+      neededPrevouts.push(p);
+      total = total.plus(p.value);
+    });
+    if (total.lt(amount))
+      throw new Error(
+        `Not enough available liquidity for requested amount.\nTotal available: ${total}\nRequested amount: ${amount}`,
+      );
+    return [neededPrevouts, total];
+  }
+
   // --- VIN CREATION --- //
 
   static createVins(prevouts: Prevout[]): Vin[] {
@@ -73,9 +101,9 @@ export class RawTxUtil {
 
   // --- VOUT CREATION --- //
 
-  static createVoutReturn(script: Script): Vout {
+  static createVoutReturn(script: Script, amount: BigNumber): Vout {
     return {
-      value: new BigNumber(Config.masternode.collateral),
+      value: amount,
       script: script,
       tokenId: 0x00,
     };
@@ -126,6 +154,15 @@ export class RawTxUtil {
   }
 
   // --- TX CREATION --- //
+
+  static createTx(vins: Vin[], vouts: Vout[]): Transaction {
+    return {
+      version: DeFiTransactionConstants.Version,
+      vin: vins,
+      vout: vouts,
+      lockTime: 0x00000000,
+    };
+  }
 
   static createTxSegWit(vins: Vin[], vouts: Vout[], witnesses: Witness[]): TransactionSegWit {
     return {

@@ -25,6 +25,13 @@
         "containerId": "",
         "created": "2022-09-28T09:45:06.665Z",
         "sortNum": 50000
+      },
+      {
+        "_id": "731f1cc7-0880-423b-9bd4-6c9fa8edb82c",
+        "name": "Transaction",
+        "containerId": "",
+        "created": "2022-10-10T14:38:55.731Z",
+        "sortNum": 60000
       }
     ],
     "settings": {
