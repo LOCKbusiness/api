@@ -103,34 +103,40 @@ export class JellyfishService {
   }
 
   async rawTxForSendFromLiq(to: string, amount: BigNumber): Promise<RawTxDto> {
-    const network = this.getNetwork();
-
-    const [fromScript] = RawTxUtil.parseAddress(Config.staking.liquidity.address, network);
-    const [toScript] = RawTxUtil.parseAddress(to, network);
-
-    const unspent = await this.whaleClient.getAllUnspent(Config.staking.liquidity.address);
-    const [prevouts, total] = RawTxUtil.parseUnspentUntilAmount(unspent, amount);
-
-    const vins = RawTxUtil.createVins(prevouts);
-    const change = RawTxUtil.createVoutReturn(fromScript, total.minus(amount));
-    const vouts = [RawTxUtil.createVoutReturn(toScript, amount), change];
-
-    const tx = RawTxUtil.createTx(vins, vouts);
-    const fee = calculateFeeP2WPKH(new BigNumber(0.00001), tx);
-    change.value = change.value.minus(fee);
-
-    return {
-      hex: new CTransaction(tx).toHex(),
-      prevouts: prevouts,
-    };
+    return this.rawTxForSend(Config.staking.liquidity.address, to, amount, true);
   }
 
   async rawTxForSendToLiq(from: string, amount: BigNumber): Promise<RawTxDto> {
-    // TODO (Krysh) implement raw tx
+    return this.rawTxForSend(from, Config.staking.liquidity.address, amount, false);
+  }
+
+  private async rawTxForSend(from: string, to: string, amount: BigNumber, addChange: boolean): Promise<RawTxDto> {
+    const network = this.getNetwork();
+
+    const [fromScript] = RawTxUtil.parseAddress(from, network);
+    const [toScript] = RawTxUtil.parseAddress(to, network);
+
+    const unspent = addChange
+      ? await this.whaleClient.getAllUnspent(from)
+      : await this.whaleClient.getUnspent(from, amount);
+    const [prevouts, total, scriptHex] = RawTxUtil.parseUnspentUntilAmount(unspent, amount);
+
+    const vins = RawTxUtil.createVins(prevouts);
+    const vouts = [RawTxUtil.createVoutReturn(toScript, amount)];
+    if (addChange) {
+      const change = RawTxUtil.createVoutReturn(fromScript, total.minus(amount));
+      vouts.push(change);
+    }
+
+    const tx = RawTxUtil.createTx(vins, vouts);
+    const fee = calculateFeeP2WPKH(new BigNumber(0.00001), tx);
+    const lastElement = vouts[vouts.length - 1];
+    lastElement.value = lastElement.value.minus(fee);
+
     return {
-      hex: '',
-      scriptHex: '',
-      prevouts: [],
+      hex: new CTransaction(tx).toHex(),
+      scriptHex,
+      prevouts,
     };
   }
 

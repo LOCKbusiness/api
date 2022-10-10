@@ -170,12 +170,13 @@ export class LiquidityManagementService {
               amount: new BigNumber(
                 Config.masternode.collateral + Config.masternode.fee + Config.masternode.creationFee,
               ),
-              ownerWallet: masternode.ownerWallet,
-              accountIndex: masternode.accountIndex,
+              // use hardcoded infos for liq info
+              ownerWallet: 'cold-wallet-a',
+              accountIndex: 0,
             });
           },
           updateFunc: (masternode: Masternode, txId: string) => {
-            console.info(`Sending collateral to masternode owner: ${masternode.owner}\n\twith tx: ${txId}`);
+            console.info(`Sending collateral to masternode\n\towner: ${masternode.owner}\n\twith tx: ${txId}`);
             return this.masternodeService.enabling(masternode.id);
           },
         };
@@ -189,7 +190,7 @@ export class LiquidityManagementService {
             });
           },
           updateFunc: (masternode: Masternode, txId: string) => {
-            console.info(`Creating masternode for owner: ${masternode.owner}\n\twith tx: ${txId}`);
+            console.info(`Creating masternode for\n\towner: ${masternode.owner}\n\twith tx: ${txId}`);
             return this.masternodeService.preEnabled(masternode.id, txId);
           },
         };
@@ -199,12 +200,13 @@ export class LiquidityManagementService {
             return this.transactionCreationService.sendFromLiq({
               to: masternode.owner,
               amount: new BigNumber(Config.masternode.resignFee),
-              ownerWallet: masternode.ownerWallet,
-              accountIndex: masternode.accountIndex,
+              // use hardcoded infos for liq info
+              ownerWallet: 'cold-wallet-a',
+              accountIndex: 0,
             });
           },
           updateFunc: (masternode: Masternode, txId: string) => {
-            console.info(`Sending resign fee to masternode owner: ${masternode.owner}\n\twith tx: ${txId}`);
+            console.info(`Sending resign fee to masternode\n\towner: ${masternode.owner}\n\twith tx: ${txId}`);
             return this.masternodeService.resigning(masternode.id);
           },
         };
@@ -218,7 +220,7 @@ export class LiquidityManagementService {
             });
           },
           updateFunc: (masternode: Masternode, txId: string) => {
-            console.info(`Resigning masternode for owner: ${masternode.owner}\n\twith tx: ${txId}`);
+            console.info(`Resigning masternode for\n\towner: ${masternode.owner}\n\twith tx: ${txId}`);
             return this.masternodeService.preResigned(masternode.id, txId);
           },
         };

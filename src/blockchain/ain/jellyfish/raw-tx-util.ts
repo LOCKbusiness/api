@@ -59,8 +59,10 @@ export class RawTxUtil {
     return [prevouts, rawScriptHex];
   }
 
-  static parseUnspentUntilAmount(unspent: AddressUnspent[], amount: BigNumber): [Prevout[], BigNumber] {
+  static parseUnspentUntilAmount(unspent: AddressUnspent[], amount: BigNumber): [Prevout[], BigNumber, string] {
+    let rawScriptHex = '';
     const prevouts = unspent.map((item): Prevout => {
+      rawScriptHex = item.script.hex;
       return {
         txid: item.vout.txid,
         vout: item.vout.n,
@@ -83,7 +85,7 @@ export class RawTxUtil {
       throw new Error(
         `Not enough available liquidity for requested amount.\nTotal available: ${total}\nRequested amount: ${amount}`,
       );
-    return [neededPrevouts, total];
+    return [neededPrevouts, total, rawScriptHex];
   }
 
   // --- VIN CREATION --- //
