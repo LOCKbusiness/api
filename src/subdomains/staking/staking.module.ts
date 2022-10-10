@@ -46,8 +46,6 @@ import { TransactionExecutionService } from 'src/integration/transaction/applica
     StakingFactory,
     StakingBlockchainAddressService,
     MasternodeService,
-    TransactionService,
-    TransactionExecutionService,
     StakingAuthorizeService,
     StakingKycCheckService,
     LiquidityManagementService,

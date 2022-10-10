@@ -9,6 +9,6 @@ import { TransactionService } from './application/services/transaction.service';
   imports: [SharedModule, AinModule],
   controllers: [TransactionController],
   providers: [TransactionService, TransactionExecutionService],
-  exports: [],
+  exports: [TransactionService, TransactionExecutionService],
 })
 export class TransactionModule {}
