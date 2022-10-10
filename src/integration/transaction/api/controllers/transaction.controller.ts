@@ -16,7 +16,7 @@ export class TransactionController {
   @Get('open')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.TRANSACTION_CHECKER))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.TRANSACTION_SIGNER))
   getOpenTransactions(): TransactionDto[] {
     return this.transactionService.getOpen();
   }
@@ -32,7 +32,7 @@ export class TransactionController {
   @Put(':id/verified')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.TRANSACTION_CHECKER))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.TRANSACTION_SIGNER))
   verifyTransaction(@Param('id') id: string, @Body() dto: SignatureDto) {
     this.transactionService.verified(id, dto.signature);
   }
@@ -40,7 +40,7 @@ export class TransactionController {
   @Put(':id/signed')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.TRANSACTION_CHECKER))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.TRANSACTION_SIGNER))
   signTransaction(@Param('id') id: string, @Body() dto: SignedTransactionDto) {
     this.transactionService.signed(id, dto.hex);
   }
