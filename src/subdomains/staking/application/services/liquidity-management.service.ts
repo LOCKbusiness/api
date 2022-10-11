@@ -170,9 +170,8 @@ export class LiquidityManagementService {
               amount: new BigNumber(
                 Config.masternode.collateral + Config.masternode.fee + Config.masternode.creationFee,
               ),
-              // use hardcoded infos for liq info
-              ownerWallet: 'cold-wallet-a',
-              accountIndex: 0,
+              ownerWallet: Config.staking.liquidity.wallet,
+              accountIndex: +Config.staking.liquidity.account,
             });
           },
           updateFunc: (masternode: Masternode, txId: string) => {
@@ -200,9 +199,8 @@ export class LiquidityManagementService {
             return this.transactionCreationService.sendFromLiq({
               to: masternode.owner,
               amount: new BigNumber(Config.masternode.resignFee),
-              // use hardcoded infos for liq info
-              ownerWallet: 'cold-wallet-a',
-              accountIndex: 0,
+              ownerWallet: Config.staking.liquidity.wallet,
+              accountIndex: +Config.staking.liquidity.account,
             });
           },
           updateFunc: (masternode: Masternode, txId: string) => {
