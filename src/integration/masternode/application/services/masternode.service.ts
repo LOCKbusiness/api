@@ -13,6 +13,7 @@ import { SettingService } from 'src/shared/services/setting.service';
 import { In, IsNull, LessThan, MoreThan, Not } from 'typeorm';
 import { Masternode } from '../../domain/entities/masternode.entity';
 import { MasternodeState } from '../../../../subdomains/staking/domain/enums';
+import { MasternodeState as BlockchainMasternodeState } from '@defichain/jellyfish-api-core/dist/category/masternode';
 import { MasternodeRepository } from '../repositories/masternode.repository';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { Util } from 'src/shared/util';
@@ -109,6 +110,11 @@ export class MasternodeService {
       (a, b) =>
         tmsInfo.find((tms) => tms.hash === a.creationHash).tms - tmsInfo.find((tms) => tms.hash === b.creationHash).tms,
     );
+  }
+
+  async filterByBlockchainState(masternodes: Masternode[], state: BlockchainMasternodeState): Promise<Masternode[]> {
+    const infos = await Promise.all(masternodes.map((mn) => this.getMasternodeStates(mn.creationHash)));
+    return masternodes.filter((mn) => state === infos.find((info) => info.hash === mn.creationHash).state);
   }
 
   // get unpaid fee in DFI
@@ -217,5 +223,10 @@ export class MasternodeService {
   private async getMasternodeTms(creationHash: string): Promise<{ hash: string; tms: number }> {
     const info = await this.client.getMasternodeInfo(creationHash);
     return { hash: creationHash, tms: Util.avg(info.targetMultipliers ?? []) };
+  }
+
+  private async getMasternodeStates(creationHash: string): Promise<{ hash: string; state: BlockchainMasternodeState }> {
+    const info = await this.client.getMasternodeInfo(creationHash);
+    return { hash: creationHash, state: info.state };
   }
 }

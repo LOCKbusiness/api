@@ -123,13 +123,7 @@ export class LiquidityManagementService {
     let filteredMasternodes = masternodes.filter((mn) => mn.state === state);
 
     if (blockchainState) {
-      filteredMasternodes = filteredMasternodes.filter(async (mn) => {
-        const info = await this.client.getMasternodeInfo(mn.creationHash);
-        console.info(
-          `Receive ${info.state} for masternode ${mn.id} with hash ${mn.creationHash}. Filtering for ${blockchainState}`,
-        );
-        return info.state === blockchainState;
-      });
+      filteredMasternodes = await this.masternodeService.filterByBlockchainState(filteredMasternodes, blockchainState);
     }
 
     const process = this.getProcessFunctionsFor(state);
