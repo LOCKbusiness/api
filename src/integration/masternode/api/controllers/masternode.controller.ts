@@ -17,7 +17,7 @@ export class MasternodeController {
   @Get()
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.TRANSACTION_SIGNER))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.TRANSACTION_CHECKER))
   getMasternodes(): Promise<Masternode[]> {
     return this.masternodeService.get();
   }
