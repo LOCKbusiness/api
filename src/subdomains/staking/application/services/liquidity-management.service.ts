@@ -10,6 +10,7 @@ import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import BigNumber from 'bignumber.js';
 import { MasternodeState } from '../../domain/enums';
+import { MasternodeState as BlockchainMasternodeState } from '@defichain/jellyfish-api-core/dist/category/masternode';
 import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
 import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
 
@@ -25,7 +26,7 @@ export class LiquidityManagementService {
     private readonly transactionCreationService: TransactionExecutionService,
     nodeService: NodeService,
   ) {
-    nodeService.getConnectedNode(NodeType.LIQ).subscribe((c) => (this.client = c));
+    nodeService.getConnectedNode(NodeType.INPUT).subscribe((c) => (this.client = c));
 
     this.prepareWithdrawals();
   }
@@ -86,11 +87,21 @@ export class LiquidityManagementService {
     const allInProcessMasternodes = await this.masternodeService.getAllWithStates([
       MasternodeState.ENABLING,
       MasternodeState.RESIGNING,
+      MasternodeState.PRE_ENABLED,
+      MasternodeState.PRE_RESIGNED,
     ]);
     await this.handleMasternodesWithState(allInProcessMasternodes, MasternodeState.ENABLING);
     await this.handleMasternodesWithState(allInProcessMasternodes, MasternodeState.RESIGNING);
-
-    // TODO (Krysh) check blockchain if pre_enabled are created or pre_resigned are resigned
+    await this.handleMasternodesWithState(
+      allInProcessMasternodes,
+      MasternodeState.PRE_ENABLED,
+      BlockchainMasternodeState.ENABLED,
+    );
+    await this.handleMasternodesWithState(
+      allInProcessMasternodes,
+      MasternodeState.PRE_RESIGNED,
+      BlockchainMasternodeState.RESIGNED,
+    );
   }
 
   private async startMasternodeEnabling(count: number): Promise<void | void[]> {
@@ -104,8 +115,22 @@ export class LiquidityManagementService {
     return this.handleMasternodesWithState(masternodes.splice(0, count), MasternodeState.ENABLED);
   }
 
-  private async handleMasternodesWithState(masternodes: Masternode[], state: MasternodeState): Promise<void | void[]> {
-    const filteredMasternodes = masternodes.filter((mn) => mn.state === state);
+  private async handleMasternodesWithState(
+    masternodes: Masternode[],
+    state: MasternodeState,
+    blockchainState?: BlockchainMasternodeState,
+  ): Promise<void | void[]> {
+    let filteredMasternodes = masternodes.filter((mn) => mn.state === state);
+
+    if (blockchainState) {
+      filteredMasternodes = filteredMasternodes.filter(async (mn) => {
+        const info = await this.client.getMasternodeInfo(mn.creationHash);
+        console.info(
+          `Receive ${info.state} for masternode ${mn.id} with hash ${mn.creationHash}. Filtering for ${blockchainState}`,
+        );
+        return info.state === blockchainState;
+      });
+    }
 
     const process = this.getProcessFunctionsFor(state);
 
@@ -193,6 +218,16 @@ export class LiquidityManagementService {
             return this.masternodeService.preEnabled(masternode.id, txId);
           },
         };
+      case MasternodeState.PRE_ENABLED:
+        return {
+          txFunc: () => {
+            return Promise.resolve('');
+          },
+          updateFunc: (masternode: Masternode) => {
+            console.info(`Masternode got enabled\n\towner: ${masternode.owner}`);
+            return this.masternodeService.enabled(masternode.id);
+          },
+        };
       case MasternodeState.ENABLED:
         return {
           txFunc: (masternode: Masternode) => {
@@ -220,6 +255,23 @@ export class LiquidityManagementService {
           updateFunc: (masternode: Masternode, txId: string) => {
             console.info(`Resigning masternode for\n\towner: ${masternode.owner}\n\twith tx: ${txId}`);
             return this.masternodeService.preResigned(masternode.id, txId);
+          },
+        };
+      case MasternodeState.PRE_RESIGNED:
+        return {
+          txFunc: (masternode: Masternode) => {
+            return this.transactionCreationService.sendToLiq({
+              from: masternode.owner,
+              amount: new BigNumber(Config.masternode.collateral),
+              ownerWallet: masternode.ownerWallet,
+              accountIndex: masternode.accountIndex,
+            });
+          },
+          updateFunc: (masternode: Masternode, txId: string) => {
+            console.info(
+              `Sending collateral back to liquidity manager from\n\towner: ${masternode.owner}\n\twith tx: ${txId}`,
+            );
+            return this.masternodeService.resigned(masternode.id);
           },
         };
     }
