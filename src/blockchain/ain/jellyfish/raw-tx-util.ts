@@ -60,20 +60,8 @@ export class RawTxUtil {
   }
 
   static parseUnspentUntilAmount(unspent: AddressUnspent[], amount: BigNumber): [Prevout[], BigNumber, string] {
-    let rawScriptHex = '';
-    const prevouts = unspent.map((item): Prevout => {
-      rawScriptHex = item.script.hex;
-      return {
-        txid: item.vout.txid,
-        vout: item.vout.n,
-        value: new BigNumber(item.vout.value),
-        script: {
-          // TODO(fuxingloh): needs to refactor once jellyfish refactor this.
-          stack: toOPCodes(SmartBuffer.fromBuffer(Buffer.from(item.script.hex, 'hex'))),
-        },
-        tokenId: item.vout.tokenId ?? 0x00,
-      };
-    });
+    const [prevouts, rawScriptHex] = this.parseUnspent(unspent);
+
     let total = new BigNumber(0);
     const neededPrevouts: Prevout[] = [];
     prevouts.forEach((p) => {

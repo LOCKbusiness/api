@@ -18,9 +18,6 @@ param nodeAllowAllIps bool
 param nodePassword string
 @secure()
 param nodeWalletPassword string
-param stakingLiquidityWalletAddress string
-param stakingMasternodeWalletAddress string
-param stakingPayoutWalletAddress string
 
 param nodeServicePlanSkuName string
 param nodeServicePlanSkuTier string
@@ -38,6 +35,11 @@ param kycWebhookIps string
 param kycPhrase string
 param kycApiUrl string
 param kycFrontendUrl string
+
+param apiSignAddress string
+param liquidityAddress string
+param liquidityWalletName string
+param liquidityAccountIndex string
 
 // --- VARIABLES --- //
 var compName = 'lock'
@@ -321,18 +323,6 @@ resource apiAppService 'Microsoft.Web/sites@2018-11-01' = if (env != 'loc') {
           value: nodes[2].outputs.urlStg
         }
         {
-          name: 'STAKING_LIQUIDITY_WALLET_ADDRESS'
-          value: stakingLiquidityWalletAddress
-        }
-        {
-          name: 'STAKING_MASTERNODE_WALLET_ADDRESS'
-          value: stakingMasternodeWalletAddress
-        }
-        {
-          name: 'STAKING_PAYOUT_WALLET_ADDRESS'
-          value: stakingPayoutWalletAddress
-        }
-        {
           name: 'MYDEFICHAIN_USER'
           value: myDeFiChainUser
         }
@@ -360,7 +350,22 @@ resource apiAppService 'Microsoft.Web/sites@2018-11-01' = if (env != 'loc') {
           name: 'KYC_FRONTEND_URL'
           value: kycFrontendUrl
         }
-
+        {
+          name: 'API_SIGN_ADDRESS'
+          value: apiSignAddress
+        }
+        {
+          name: 'LIQUIDITY_ADDRESS'
+          value: liquidityAddress
+        }
+        {
+          name: 'LIQUIDITY_WALLET_NAME'
+          value: liquidityWalletName
+        }
+        {
+          name: 'LIQUIDITY_ACCOUNT_INDEX'
+          value: liquidityAccountIndex
+        }
       ]
     }
   }

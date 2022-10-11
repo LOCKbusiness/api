@@ -103,27 +103,27 @@ export class JellyfishService {
   }
 
   async rawTxForSendFromLiq(to: string, amount: BigNumber): Promise<RawTxDto> {
-    return this.rawTxForSend(Config.staking.liquidity.address, to, amount, true);
+    return this.rawTxForSend(Config.staking.liquidity.address, to, amount, false);
   }
 
   async rawTxForSendToLiq(from: string, amount: BigNumber): Promise<RawTxDto> {
-    return this.rawTxForSend(from, Config.staking.liquidity.address, amount, false);
+    return this.rawTxForSend(from, Config.staking.liquidity.address, amount, true);
   }
 
-  private async rawTxForSend(from: string, to: string, amount: BigNumber, addChange: boolean): Promise<RawTxDto> {
+  private async rawTxForSend(from: string, to: string, amount: BigNumber, sendFullAmount: boolean): Promise<RawTxDto> {
     const network = this.getNetwork();
 
     const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from, network);
     const [toScript, toPubKeyHash] = RawTxUtil.parseAddress(to, network);
 
-    const unspent = addChange
+    const unspent = !sendFullAmount
       ? await this.whaleClient.getAllUnspent(from)
       : await this.whaleClient.getUnspent(from, amount);
     const [prevouts, total, scriptHex] = RawTxUtil.parseUnspentUntilAmount(unspent, amount);
 
     const vins = RawTxUtil.createVins(prevouts);
     const vouts = [RawTxUtil.createVoutReturn(toScript, amount)];
-    if (addChange) {
+    if (!sendFullAmount) {
       const change = RawTxUtil.createVoutReturn(fromScript, total.minus(amount));
       vouts.push(change);
     }
@@ -135,7 +135,7 @@ export class JellyfishService {
     ];
 
     const tx = RawTxUtil.createTxSegWit(vins, vouts, witnesses);
-    const fee = calculateFeeP2WPKH(new BigNumber(0.00001), tx);
+    const fee = calculateFeeP2WPKH(new BigNumber(Config.blockchain.minFeeRate), tx);
     const lastElement = vouts[vouts.length - 1];
     lastElement.value = lastElement.value.minus(fee);
 
