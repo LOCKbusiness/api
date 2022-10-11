@@ -12,16 +12,6 @@ import { Masternode } from '../../domain/entities/masternode.entity';
 export class MasternodeController {
   constructor(private readonly masternodeService: MasternodeService) {}
 
-  // --- TRANSACTION CHECKER --- //
-
-  @Get()
-  @ApiBearerAuth()
-  @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.TRANSACTION_CHECKER))
-  getMasternodes(): Promise<Masternode[]> {
-    return this.masternodeService.get();
-  }
-
   // --- ADMIN --- //
 
   @Get('unpaid-fee')
