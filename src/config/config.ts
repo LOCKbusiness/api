@@ -122,6 +122,8 @@ export class Configuration {
       max: 40000,
 
       address: process.env.LIQUIDITY_ADDRESS,
+      wallet: process.env.LIQUIDITY_WALLET_NAME,
+      account: process.env.LIQUIDITY_ACCOUNT_INDEX,
     },
     aprPeriod: 28, // days
   };
