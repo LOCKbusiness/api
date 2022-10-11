@@ -1,5 +1,5 @@
 import { MainNet, Network, TestNet } from '@defichain/jellyfish-network';
-import { CTransaction, CTransactionSegWit } from '@defichain/jellyfish-transaction';
+import { CTransactionSegWit } from '@defichain/jellyfish-transaction';
 import { calculateFeeP2WPKH } from '@defichain/jellyfish-transaction-builder';
 import { JellyfishWallet, WalletHdNode } from '@defichain/jellyfish-wallet';
 import { Bip32Options, MnemonicHdNodeProvider } from '@defichain/jellyfish-wallet-mnemonic';
@@ -113,8 +113,8 @@ export class JellyfishService {
   private async rawTxForSend(from: string, to: string, amount: BigNumber, addChange: boolean): Promise<RawTxDto> {
     const network = this.getNetwork();
 
-    const [fromScript] = RawTxUtil.parseAddress(from, network);
-    const [toScript] = RawTxUtil.parseAddress(to, network);
+    const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from, network);
+    const [toScript, toPubKeyHash] = RawTxUtil.parseAddress(to, network);
 
     const unspent = addChange
       ? await this.whaleClient.getAllUnspent(from)
@@ -127,14 +127,20 @@ export class JellyfishService {
       const change = RawTxUtil.createVoutReturn(fromScript, total.minus(amount));
       vouts.push(change);
     }
+    const witnesses = [
+      RawTxUtil.createWitness([
+        RawTxUtil.createWitnessScript(fromScript, fromPubKeyHash),
+        RawTxUtil.createWitnessScript(toScript, toPubKeyHash),
+      ]),
+    ];
 
-    const tx = RawTxUtil.createTx(vins, vouts);
+    const tx = RawTxUtil.createTxSegWit(vins, vouts, witnesses);
     const fee = calculateFeeP2WPKH(new BigNumber(0.00001), tx);
     const lastElement = vouts[vouts.length - 1];
     lastElement.value = lastElement.value.minus(fee);
 
     return {
-      hex: new CTransaction(tx).toHex(),
+      hex: new CTransactionSegWit(tx).toHex(),
       scriptHex,
       prevouts,
     };
