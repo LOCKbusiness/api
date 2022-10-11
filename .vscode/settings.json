@@ -33,10 +33,13 @@
         "typeorm",
         "UTXO",
         "Utxo",
+        "utxos",
+        "Utxos",
         "vout",
         "vouts",
         "Vout",
         "walletpassphrase",
+        "WPKH",
     ],
     "editor.formatOnSave": true
 }
