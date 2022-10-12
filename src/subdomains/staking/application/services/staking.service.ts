@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Lock } from 'src/shared/lock';
@@ -8,13 +8,14 @@ import { Util } from 'src/shared/util';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { Staking } from '../../domain/entities/staking.entity';
 import { DepositStatus, WithdrawalStatus } from '../../domain/enums';
+import { CoinGeckoService } from '../../infrastructure/coin-gecko.service';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
 import { GetOrCreateStakingQuery } from '../dto/input/get-staking.query';
 import { SetStakingFeeDto } from '../dto/input/set-staking-fee.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
-import { PriceProvider } from '../interfaces';
+import { FiatPriceProvider, FIAT_PRICE_PROVIDER } from '../interfaces';
 import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
 import { StakingRepository } from '../repositories/staking.repository';
 import { StakingBlockchainAddressService } from './staking-blockchain-address.service';
@@ -36,7 +37,7 @@ export class StakingService {
     private readonly factory: StakingFactory,
     private readonly addressService: StakingBlockchainAddressService,
     private readonly assetService: AssetService,
-    private readonly priceProvider: PriceProvider,
+    @Inject(() => FIAT_PRICE_PROVIDER) private readonly fiatPriceProvider: FiatPriceProvider,
   ) {}
 
   //*** PUBLIC API ***//
@@ -199,7 +200,7 @@ export class StakingService {
 
     for (const assetName of uniqueAssetNames) {
       for (const fiatName of Object.values(Fiat)) {
-        const price = await this.priceProvider.getPriceForFiat(fiatName, assetName);
+        const price = await this.fiatPriceProvider.getFiatPrice(fiatName, assetName);
 
         prices.push(price);
       }

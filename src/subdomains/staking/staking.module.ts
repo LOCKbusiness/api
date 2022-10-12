@@ -24,6 +24,7 @@ import { MasternodeService } from '../../integration/masternode/application/serv
 import { StakingAuthorizeService } from './infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from './infrastructure/staking-kyc-check.service';
 import { CoinGeckoService } from './infrastructure/coin-gecko.service';
+import { FIAT_PRICE_PROVIDER } from './application/interfaces';
 
 @Module({
   imports: [
@@ -45,8 +46,11 @@ import { CoinGeckoService } from './infrastructure/coin-gecko.service';
     MasternodeService,
     StakingAuthorizeService,
     StakingKycCheckService,
-    CoinGeckoService,
     LiquidityManagementService,
+    {
+      useClass: CoinGeckoService,
+      provide: FIAT_PRICE_PROVIDER,
+    },
   ],
   exports: [StakingService],
 })
