@@ -1,7 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
 import { Config } from 'src/config/config';
+import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { IEntity } from 'src/shared/models/entity';
+import { Price } from 'src/shared/models/price';
 import { Util } from 'src/shared/util';
 import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { WithdrawalStatus } from '../enums';
@@ -33,6 +35,15 @@ export class Withdrawal extends IEntity {
 
   @Column({ nullable: true })
   withdrawalTxId: string;
+
+  @Column({ type: 'float', nullable: false, default: 0 })
+  amountEur: number;
+
+  @Column({ type: 'float', nullable: false, default: 0 })
+  amountUsd: number;
+
+  @Column({ type: 'float', nullable: false, default: 0 })
+  amountChf: number;
 
   //*** FACTORY METHODS ***//
 
@@ -106,6 +117,14 @@ export class Withdrawal extends IEntity {
 
   failWithdrawal(): this {
     this.status = WithdrawalStatus.FAILED;
+
+    return this;
+  }
+
+  calculateFiatReferences(prices: Price[]): this {
+    this.amountChf = Staking.calculateReferenceFiatAmount(Fiat.CHF, this.asset.name, this.amount, prices);
+    this.amountUsd = Staking.calculateReferenceFiatAmount(Fiat.USD, this.asset.name, this.amount, prices);
+    this.amountEur = Staking.calculateReferenceFiatAmount(Fiat.EUR, this.asset.name, this.amount, prices);
 
     return this;
   }

@@ -9,6 +9,8 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Util } from 'src/shared/util';
 import { StakingBlockchainAddress } from './staking-blockchain-address.entity';
 import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wallet-blockchain-address.entity';
+import { Fiat } from 'src/shared/enums/fiat.enum';
+import { Price } from 'src/shared/models/price';
 
 @Entity()
 export class Staking extends IEntity {
@@ -230,6 +232,27 @@ export class Staking extends IEntity {
 
   getPayingOutWithdrawals(): Withdrawal[] {
     return this.getWithdrawalsByStatus(WithdrawalStatus.PAYING_OUT);
+  }
+
+  //*** HELPER STATIC METHODS ***//
+
+  static calculateReferenceFiatAmount(
+    referenceFiat: Fiat,
+    assetName: string,
+    assetAmount: number,
+    prices: Price[],
+  ): number {
+    const price = prices.find((p) => p.source === referenceFiat && p.target === assetName);
+
+    if (!price) {
+      throw new Error(`Cannot calculate reference Fiat amount, ${assetName}/${referenceFiat} price is missing`);
+    }
+
+    if (!price.price) {
+      throw new Error(`Cannot calculate reference Fiat amount of ${assetName}/${referenceFiat} , price value is 0`);
+    }
+
+    return Util.round(assetAmount * price.price, 8);
   }
 
   //*** HELPER METHODS ***//
