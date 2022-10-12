@@ -7,16 +7,20 @@ import { Config } from 'src/config/config';
 import { Withdrawal } from '../domain/entities/withdrawal.entity';
 import { fromScriptHex } from '@defichain/jellyfish-address';
 import { NetworkName } from '@defichain/jellyfish-network';
+import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
+import BigNumber from 'bignumber.js';
 
 @Injectable()
 export class StakingDeFiChainService {
   private inputClient: DeFiClient;
-  private liqClient: DeFiClient; // TODO (Krysh) remove
   private whaleClient: WhaleClient;
 
-  constructor(nodeService: NodeService, whaleService: WhaleService) {
+  constructor(
+    nodeService: NodeService,
+    whaleService: WhaleService,
+    private readonly transactionExecutionService: TransactionExecutionService,
+  ) {
     nodeService.getConnectedNode(NodeType.INPUT).subscribe((client) => (this.inputClient = client));
-    nodeService.getConnectedNode(NodeType.LIQ).subscribe((client) => (this.liqClient = client)); // TODO (Krysh) remove
 
     whaleService.getClient().subscribe((client) => (this.whaleClient = client));
   }
@@ -28,16 +32,10 @@ export class StakingDeFiChainService {
   }
 
   async sendWithdrawal(withdrawal: Withdrawal): Promise<string> {
-    // TODO (Krysh) replace with raw tx
-    const txId = await this.liqClient.sendUtxo(
-      Config.staking.liquidity.address,
-      withdrawal.staking.withdrawalAddress.address,
-      withdrawal.amount,
-    );
-
-    await this.liqClient
-      .waitForTx(txId)
-      .catch((e) => console.error(`Wait for withdrawal prepare transaction failed: ${e}`));
+    const txId = await this.transactionExecutionService.sendFromLiqToCustomer({
+      to: withdrawal.staking.withdrawalAddress.address,
+      amount: new BigNumber(withdrawal.amount),
+    });
 
     return txId;
   }
@@ -48,9 +46,9 @@ export class StakingDeFiChainService {
   }
 
   async isWithdrawalTxComplete(withdrawalTxId: string): Promise<boolean> {
-    const transaction = await this.liqClient.getTx(withdrawalTxId);
+    const transaction = await this.whaleClient.getTx(withdrawalTxId);
 
-    return transaction && transaction.blockhash && transaction.confirmations > 0;
+    return transaction && transaction.block.hash && transaction.block.height > 0;
   }
 
   //*** HELPER METHODS **//

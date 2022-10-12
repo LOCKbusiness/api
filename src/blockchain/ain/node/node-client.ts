@@ -80,10 +80,6 @@ export class NodeClient {
     return this.callNode((c) => c.wallet.listUnspent());
   }
 
-  async getBalance(): Promise<number> {
-    return this.callNode((c) => c.wallet.getBalance()).then((b) => b.toNumber());
-  }
-
   // forwarding
   async sendRpcCommand(command: string): Promise<any> {
     return this.http.post(this.url, command, {

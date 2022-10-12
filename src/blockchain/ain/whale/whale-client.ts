@@ -1,6 +1,6 @@
 import { WhaleApiClient } from '@defichain/whale-api-client';
 import { AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
-import { TransactionVin } from '@defichain/whale-api-client/dist/api/transactions';
+import { Transaction, TransactionVin } from '@defichain/whale-api-client/dist/api/transactions';
 import BigNumber from 'bignumber.js';
 import { GetConfig } from 'src/config/config';
 import { Util } from 'src/shared/util';
@@ -14,6 +14,10 @@ export class WhaleClient {
 
   private createWhaleClient(): WhaleApiClient {
     return new WhaleApiClient(GetConfig().whale);
+  }
+
+  async getUTXOBalance(address: string): Promise<BigNumber> {
+    return this.client.address.getBalance(address).then(BigNumber);
   }
 
   async getAllUnspent(address: string): Promise<AddressUnspent[]> {
@@ -45,6 +49,10 @@ export class WhaleClient {
     if (tx) return tx.id;
 
     throw new Error(`Wait for TX ${txId} timed out`);
+  }
+
+  async getTx(txId: string): Promise<Transaction> {
+    return await this.client.transactions.get(txId);
   }
 
   async getTxVins(txId: string): Promise<TransactionVin[]> {
