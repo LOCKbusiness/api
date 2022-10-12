@@ -36,13 +36,13 @@ export class Withdrawal extends IEntity {
   @Column({ nullable: true })
   withdrawalTxId: string;
 
-  @Column({ type: 'float', nullable: false, default: 0 })
+  @Column({ type: 'float', nullable: true })
   amountEur: number;
 
-  @Column({ type: 'float', nullable: false, default: 0 })
+  @Column({ type: 'float', nullable: true })
   amountUsd: number;
 
-  @Column({ type: 'float', nullable: false, default: 0 })
+  @Column({ type: 'float', nullable: true })
   amountChf: number;
 
   //*** FACTORY METHODS ***//

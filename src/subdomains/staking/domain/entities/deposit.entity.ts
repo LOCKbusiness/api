@@ -27,13 +27,13 @@ export class Deposit extends IEntity {
   @Column({ nullable: true })
   forwardTxId: string;
 
-  @Column({ type: 'float', nullable: false, default: 0 })
+  @Column({ type: 'float', nullable: true })
   amountEur: number;
 
-  @Column({ type: 'float', nullable: false, default: 0 })
+  @Column({ type: 'float', nullable: true })
   amountUsd: number;
 
-  @Column({ type: 'float', nullable: false, default: 0 })
+  @Column({ type: 'float', nullable: true })
   amountChf: number;
 
   //*** FACTORY METHODS ***//
