@@ -74,13 +74,6 @@ var nodeProps = [
     fileShareNameA: 'node-rew-data-a'
     fileShareNameB: 'node-rew-data-b'
   }
-  {
-    name: 'nodes-liq-${env}'
-    servicePlanName: 'plan-${compName}-${nodeName}-liq-${env}'
-    appName: 'app-${compName}-${nodeName}-liq-${env}'
-    fileShareNameA: 'node-liq-data-a'
-    fileShareNameB: 'node-liq-data-b'
-  }
 ]
 
 // --- RESOURCES --- //
@@ -313,14 +306,6 @@ resource apiAppService 'Microsoft.Web/sites@2018-11-01' = if (env != 'loc') {
         {
           name: 'NODE_REW_URL_PASSIVE'
           value: nodes[1].outputs.urlStg
-        }
-        {
-          name: 'NODE_LIQ_URL_ACTIVE'
-          value: nodes[2].outputs.url
-        }
-        {
-          name: 'NODE_LIQ_URL_PASSIVE'
-          value: nodes[2].outputs.urlStg
         }
         {
           name: 'MYDEFICHAIN_USER'
