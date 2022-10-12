@@ -47,7 +47,7 @@ export class TransactionExecutionService {
   }
 
   async sendFromLiqToCustomer(data: SendFromLiqToCustomerData): Promise<string> {
-    const rawTx = await this.jellyfishService.rawTxForSendFromLiqToCustomer(data.to, data.amount);
+    const rawTx = await this.jellyfishService.rawTxForSendFromLiq(data.to, data.amount);
     return this.signAndBroadcast(rawTx);
   }
 

@@ -106,10 +106,6 @@ export class JellyfishService {
     return this.rawTxForSend(Config.staking.liquidity.address, to, amount, true);
   }
 
-  async rawTxForSendFromLiqToCustomer(to: string, amount: BigNumber): Promise<RawTxDto> {
-    return this.rawTxForSend(Config.staking.liquidity.address, to, amount, true);
-  }
-
   async rawTxForSendToLiq(from: string, amount: BigNumber): Promise<RawTxDto> {
     return this.rawTxForSend(from, Config.staking.liquidity.address, amount, false);
   }
