@@ -222,9 +222,12 @@ export class StakingService {
   }
 
   private async calculateFiatReferencesForStakings(stakings: StakingReference[], prices: Price[]): Promise<void> {
+    const confirmedStakings = [];
+
     for (const ref of stakings) {
       try {
         await this.calculateFiatReferencesForStaking(ref.stakingId, prices);
+        confirmedStakings.push(ref.stakingId);
       } catch (e) {
         console.error(
           `Could not calculate fiat reference amount for Staking Id: ${ref.stakingId}. Asset Id: ${ref.assetId}`,
@@ -233,6 +236,12 @@ export class StakingService {
         continue;
       }
     }
+
+    confirmedStakings.length > 0 &&
+      console.info(
+        `Successfully added fiat references to ${confirmedStakings.length} staking(s). Staking Id(s):`,
+        confirmedStakings.map((s) => s.stakingId),
+      );
   }
 
   private async calculateFiatReferencesForStaking(stakingId: number, prices: Price[]): Promise<void> {
