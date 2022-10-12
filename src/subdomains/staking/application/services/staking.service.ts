@@ -199,9 +199,14 @@ export class StakingService {
 
     for (const assetId of uniqueAssetIds) {
       for (const fiatName of Object.values(Fiat)) {
-        const price = await this.fiatPriceProvider.getFiatPrice(fiatName, assetId);
+        try {
+          const price = await this.fiatPriceProvider.getFiatPrice(fiatName, assetId);
 
-        prices.push(price);
+          prices.push(price);
+        } catch (e) {
+          console.error(`Could not find fiat price for assetId ${assetId} and fiat '${fiatName}'`, e);
+          continue;
+        }
       }
     }
 
@@ -210,18 +215,22 @@ export class StakingService {
 
   private async calculateFiatForStakings(stakings: StakingReference[], prices: Price[]): Promise<void> {
     for (const ref of stakings) {
-      await this.calculateFiatForStaking(ref.stakingId, prices);
+      try {
+        await this.calculateFiatForStaking(ref.stakingId, prices);
+      } catch (e) {
+        console.error(
+          `Could not calculate fiat reference amount for Staking Id: ${ref.stakingId}. Asset Id: ${ref.assetId}`,
+          e,
+        );
+        continue;
+      }
     }
   }
 
   private async calculateFiatForStaking(stakingId: number, prices: Price[]): Promise<void> {
-    try {
-      const staking = await this.repository.findOne(stakingId);
+    const staking = await this.repository.findOne(stakingId);
 
-      staking.calculateFiatReferences(prices);
-      await this.repository.save(staking);
-    } catch (e) {
-      console.error(`Error calculating fiat reference amounts for deposits in staking ID: ${stakingId}`, e);
-    }
+    staking.calculateFiatReferences(prices);
+    await this.repository.save(staking);
   }
 }
