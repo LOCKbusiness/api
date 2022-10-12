@@ -22,13 +22,19 @@ import { MasternodeController } from '../../integration/masternode/api/controlle
 import { MasternodeService } from '../../integration/masternode/application/services/masternode.service';
 import { StakingAuthorizeService } from './infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from './infrastructure/staking-kyc-check.service';
+import { MasternodeRepository } from 'src/integration/masternode/application/repositories/masternode.repository';
 import { CoinGeckoService } from './infrastructure/coin-gecko.service';
 import { FIAT_PRICE_PROVIDER } from './application/interfaces';
 import { AssetStakingMetadataRepository } from './application/repositories/asset-staking-metadata.repository';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([StakingRepository, StakingBlockchainAddressRepository, AssetStakingMetadataRepository]),
+    TypeOrmModule.forFeature([
+      StakingRepository,
+      StakingBlockchainAddressRepository,
+      MasternodeRepository,
+      AssetStakingMetadataRepository,
+    ]),
     BlockchainModule,
     SharedModule,
     UserModule,
@@ -36,6 +42,10 @@ import { AssetStakingMetadataRepository } from './application/repositories/asset
   ],
   controllers: [StakingController, DepositController, RewardController, WithdrawalController, MasternodeController],
   providers: [
+    {
+      provide: FIAT_PRICE_PROVIDER,
+      useClass: CoinGeckoService,
+    },
     StakingService,
     StakingDepositService,
     StakingDeFiChainService,
@@ -47,10 +57,6 @@ import { AssetStakingMetadataRepository } from './application/repositories/asset
     StakingAuthorizeService,
     StakingKycCheckService,
     LiquidityManagementService,
-    {
-      useClass: CoinGeckoService,
-      provide: FIAT_PRICE_PROVIDER,
-    },
   ],
   exports: [StakingService],
 })

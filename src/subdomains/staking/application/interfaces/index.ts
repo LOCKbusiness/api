@@ -1,7 +1,7 @@
 import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Price } from 'src/shared/models/price';
 
-export const FIAT_PRICE_PROVIDER = 'PriceProvider';
+export const FIAT_PRICE_PROVIDER = 'FIAT_PRICE_PROVIDER';
 
 export interface FiatPriceProvider {
   getFiatPrice(fiatName: Fiat, assetId: number): Promise<Price>;

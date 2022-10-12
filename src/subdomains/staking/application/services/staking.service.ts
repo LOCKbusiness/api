@@ -36,7 +36,7 @@ export class StakingService {
     private readonly factory: StakingFactory,
     private readonly addressService: StakingBlockchainAddressService,
     private readonly assetService: AssetService,
-    @Inject(() => FIAT_PRICE_PROVIDER) private readonly fiatPriceProvider: FiatPriceProvider,
+    @Inject(FIAT_PRICE_PROVIDER) private readonly fiatPriceProvider: FiatPriceProvider,
   ) {}
 
   //*** PUBLIC API ***//
