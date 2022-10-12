@@ -23,6 +23,7 @@ import { MasternodeRepository } from '../../integration/masternode/application/r
 import { MasternodeService } from '../../integration/masternode/application/services/masternode.service';
 import { StakingAuthorizeService } from './infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from './infrastructure/staking-kyc-check.service';
+import { CoinGeckoService } from './infrastructure/coin-gecko.service';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { StakingKycCheckService } from './infrastructure/staking-kyc-check.servi
     MasternodeService,
     StakingAuthorizeService,
     StakingKycCheckService,
+    CoinGeckoService,
     LiquidityManagementService,
   ],
   exports: [StakingService],

@@ -178,6 +178,22 @@ export class Staking extends IEntity {
     return addresses.every((a) => a === this.withdrawalAddress.address);
   }
 
+  calculateFiatReferencesForDeposits(prices: Price[]): this {
+    const deposits = this.deposits.filter((d) => !d.amountChf || !d.amountEur || !d.amountUsd);
+
+    deposits.forEach((d) => d.calculateFiatReferences(prices));
+
+    return this;
+  }
+
+  calculateFiatReferencesForWithdrawals(prices: Price[]): this {
+    const withdrawals = this.withdrawals.filter((w) => !w.amountChf || !w.amountEur || !w.amountUsd);
+
+    withdrawals.forEach((w) => w.calculateFiatReferences(prices));
+
+    return this;
+  }
+
   //*** GETTERS ***//
 
   getWithdrawal(withdrawalId: number): Withdrawal {
