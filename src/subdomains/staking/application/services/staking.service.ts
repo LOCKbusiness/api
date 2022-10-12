@@ -104,7 +104,7 @@ export class StakingService {
 
   //*** JOBS ***//
 
-  @Interval(60000)
+  @Interval(20000)
   async calculateFiatReferenceAmounts(): Promise<void> {
     if (!this.lock.acquire()) return;
 
@@ -186,9 +186,15 @@ export class StakingService {
       .createQueryBuilder('staking')
       .leftJoin('staking.deposits', 'deposit')
       .leftJoin('staking.withdrawals', 'withdrawal')
-      .leftJoin('staking.asset', 'asset')
-      .where('deposit.amountEur IS NULL OR deposit.amountUsd IS NULL OR deposit.amountChf IS NULL')
-      .orWhere('withdrawal.amountEur IS NULL OR withdrawal.amountUsd IS NULL OR withdrawal.amountChf IS NULL')
+      .leftJoinAndSelect('staking.asset', 'asset')
+      .where(
+        'deposit.amountEur IS NULL OR deposit.amountUsd IS NULL OR deposit.amountChf IS NULL AND deposit.status = :depositStatus',
+        { depositStatus: DepositStatus.CONFIRMED },
+      )
+      .orWhere(
+        'withdrawal.amountEur IS NULL OR withdrawal.amountUsd IS NULL OR withdrawal.amountChf IS NULL AND withdrawal.status = :withdrawalStatus',
+        { withdrawalStatus: WithdrawalStatus.CONFIRMED },
+      )
       .getMany()
       .then((s) => s.map((i) => ({ stakingId: i.id, assetId: i.asset.id })));
 
