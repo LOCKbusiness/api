@@ -103,36 +103,36 @@ export class JellyfishService {
   }
 
   async rawTxForSendFromLiq(to: string, amount: BigNumber): Promise<RawTxDto> {
-    return this.rawTxForSend(Config.staking.liquidity.address, to, amount, false);
+    return this.rawTxForSend(Config.staking.liquidity.address, to, amount, true);
+  }
+
+  async rawTxForSendFromLiqToCustomer(to: string, amount: BigNumber): Promise<RawTxDto> {
+    return this.rawTxForSend(Config.staking.liquidity.address, to, amount, true);
   }
 
   async rawTxForSendToLiq(from: string, amount: BigNumber): Promise<RawTxDto> {
-    return this.rawTxForSend(from, Config.staking.liquidity.address, amount, true);
+    return this.rawTxForSend(from, Config.staking.liquidity.address, amount, false);
   }
 
-  private async rawTxForSend(from: string, to: string, amount: BigNumber, sendFullAmount: boolean): Promise<RawTxDto> {
+  private async rawTxForSend(from: string, to: string, amount: BigNumber, sendExactAmount: boolean): Promise<RawTxDto> {
     const network = this.getNetwork();
 
     const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from, network);
-    const [toScript, toPubKeyHash] = RawTxUtil.parseAddress(to, network);
+    const [toScript] = RawTxUtil.parseAddress(to, network);
 
-    const unspent = !sendFullAmount
+    const unspent = sendExactAmount
       ? await this.whaleClient.getAllUnspent(from)
       : await this.whaleClient.getUnspent(from, amount);
     const [prevouts, total, scriptHex] = RawTxUtil.parseUnspentUntilAmount(unspent, amount);
 
     const vins = RawTxUtil.createVins(prevouts);
     const vouts = [RawTxUtil.createVoutReturn(toScript, amount)];
-    if (!sendFullAmount) {
+    if (sendExactAmount) {
       const change = RawTxUtil.createVoutReturn(fromScript, total.minus(amount));
       vouts.push(change);
     }
-    const witnesses = [
-      RawTxUtil.createWitness([
-        RawTxUtil.createWitnessScript(fromScript, fromPubKeyHash),
-        RawTxUtil.createWitnessScript(toScript, toPubKeyHash),
-      ]),
-    ];
+    const fromWitness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(fromScript, fromPubKeyHash)]);
+    const witnesses = new Array(vins.length).fill(fromWitness);
 
     const tx = RawTxUtil.createTxSegWit(vins, vouts, witnesses);
     const fee = calculateFeeP2WPKH(new BigNumber(Config.blockchain.minFeeRate), tx);

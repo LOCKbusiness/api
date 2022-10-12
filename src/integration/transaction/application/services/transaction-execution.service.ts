@@ -11,6 +11,7 @@ import {
   MasternodeBaseData,
   ResignMasternodeData,
   SendFromLiqData,
+  SendFromLiqToCustomerData,
   SendToLiqData,
 } from '../types/creation-data';
 import { TransactionService } from './transaction.service';
@@ -43,6 +44,11 @@ export class TransactionExecutionService {
   async sendFromLiq(data: SendFromLiqData): Promise<string> {
     const rawTx = await this.jellyfishService.rawTxForSendFromLiq(data.to, data.amount);
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data));
+  }
+
+  async sendFromLiqToCustomer(data: SendFromLiqToCustomerData): Promise<string> {
+    const rawTx = await this.jellyfishService.rawTxForSendFromLiqToCustomer(data.to, data.amount);
+    return this.signAndBroadcast(rawTx);
   }
 
   async sendToLiq(data: SendToLiqData): Promise<string> {

@@ -1,33 +1,32 @@
 import { Lock } from 'src/shared/lock';
 import { Injectable } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
-import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { Config } from 'src/config/config';
 import { Util } from 'src/shared/util';
 import { MasternodeService } from 'src/integration/masternode/application/services/masternode.service';
 import { StakingWithdrawalService } from './staking-withdrawal.service';
-import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import BigNumber from 'bignumber.js';
 import { MasternodeState } from '../../domain/enums';
 import { MasternodeState as BlockchainMasternodeState } from '@defichain/jellyfish-api-core/dist/category/masternode';
 import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
 import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
+import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
+import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 
 @Injectable()
 export class LiquidityManagementService {
   private readonly lock = new Lock(1800);
 
-  private client: DeFiClient;
+  private client: WhaleClient;
 
   constructor(
     private readonly masternodeService: MasternodeService,
     private readonly withdrawalService: StakingWithdrawalService,
     private readonly transactionCreationService: TransactionExecutionService,
-    nodeService: NodeService,
+    whaleService: WhaleService,
   ) {
-    nodeService.getConnectedNode(NodeType.INPUT).subscribe((c) => (this.client = c));
-
+    whaleService.getClient().subscribe((c) => (this.client = c));
     this.prepareWithdrawals();
   }
 
@@ -49,10 +48,9 @@ export class LiquidityManagementService {
   async checkLiquidity(): Promise<void> {
     const excessiveLiquidity = await this.getExcessiveLiquidity();
 
-    const masternodeChangeCount =
-      excessiveLiquidity > 0
-        ? Math.floor(excessiveLiquidity / (Config.masternode.collateral + Config.masternode.fee))
-        : Math.floor(excessiveLiquidity / Config.masternode.collateral);
+    const masternodeChangeCount = excessiveLiquidity.gt(0)
+      ? Math.floor(excessiveLiquidity.div(Config.masternode.collateral + Config.masternode.fee).toNumber())
+      : Math.floor(excessiveLiquidity.div(Config.masternode.collateral).toNumber());
 
     if (masternodeChangeCount > 0) {
       await this.startMasternodeEnabling(masternodeChangeCount);
@@ -61,17 +59,17 @@ export class LiquidityManagementService {
     }
   }
 
-  private async getExcessiveLiquidity(): Promise<number> {
+  private async getExcessiveLiquidity(): Promise<BigNumber> {
     const currentLiquidity = await this.getCurrentLiquidity();
 
-    if (currentLiquidity > Config.staking.liquidity.max) return currentLiquidity - Config.staking.liquidity.max;
-    if (currentLiquidity < Config.staking.liquidity.min) return currentLiquidity - Config.staking.liquidity.min;
+    if (currentLiquidity.gt(Config.staking.liquidity.max)) return currentLiquidity.minus(Config.staking.liquidity.max);
+    if (currentLiquidity.lt(Config.staking.liquidity.min)) return currentLiquidity.minus(Config.staking.liquidity.min);
 
-    return 0;
+    return new BigNumber(0);
   }
 
-  private async getCurrentLiquidity(): Promise<number> {
-    const balance = await this.client.getBalance();
+  private async getCurrentLiquidity(): Promise<BigNumber> {
+    const balance = await this.client.getUTXOBalance(Config.staking.liquidity.address);
 
     const resigningMasternodes = await this.masternodeService.getAllResigning();
     const pendingResignAmount = resigningMasternodes.length * Config.masternode.collateral;
@@ -79,7 +77,7 @@ export class LiquidityManagementService {
     const pendingWithdrawals = await this.getPendingWithdrawals();
     const pendingWithdrawalAmount = Util.sumObj(pendingWithdrawals, 'amount');
 
-    return balance + pendingResignAmount - pendingWithdrawalAmount;
+    return balance.plus(pendingResignAmount).minus(pendingWithdrawalAmount);
   }
 
   // --- MASTERNODES ---- //
@@ -140,7 +138,7 @@ export class LiquidityManagementService {
 
   // --- WITHDRAWALS --- //
   async prepareWithdrawals(): Promise<void> {
-    const balance = await this.client.getBalance();
+    const balance = await this.client.getUTXOBalance(Config.staking.liquidity.address);
     const withdrawals = await this.getPendingWithdrawals();
 
     const sortedWithdrawals = withdrawals.sort((a, b) => a.amount - b.amount);
@@ -150,7 +148,7 @@ export class LiquidityManagementService {
     let withdrawalSum = 0;
     for (const withdrawal of sortedWithdrawals) {
       withdrawalSum += withdrawal.amount;
-      if (withdrawalSum > balance - 1) break;
+      if (balance.minus(1).lt(withdrawalSum)) break;
 
       possibleWithdrawals.push(withdrawal);
     }
