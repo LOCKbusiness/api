@@ -4,5 +4,5 @@ import { Price } from 'src/shared/models/price';
 export const FIAT_PRICE_PROVIDER = 'PriceProvider';
 
 export interface FiatPriceProvider {
-  getFiatPrice(fiatName: Fiat, assetName: string): Promise<Price>;
+  getFiatPrice(fiatName: Fiat, assetId: number): Promise<Price>;
 }

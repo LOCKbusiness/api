@@ -19,16 +19,16 @@ import { StakingWithdrawalService } from './application/services/staking-withdra
 import { StakingService } from './application/services/staking.service';
 import { StakingDeFiChainService } from './infrastructure/staking-defichain.service';
 import { MasternodeController } from '../../integration/masternode/api/controllers/masternode.controller';
-import { MasternodeRepository } from '../../integration/masternode/application/repositories/masternode.repository';
 import { MasternodeService } from '../../integration/masternode/application/services/masternode.service';
 import { StakingAuthorizeService } from './infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from './infrastructure/staking-kyc-check.service';
 import { CoinGeckoService } from './infrastructure/coin-gecko.service';
 import { FIAT_PRICE_PROVIDER } from './application/interfaces';
+import { AssetStakingMetadataRepository } from './application/repositories/asset-staking-metadata.repository';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([StakingRepository, StakingBlockchainAddressRepository, MasternodeRepository]),
+    TypeOrmModule.forFeature([StakingRepository, StakingBlockchainAddressRepository, AssetStakingMetadataRepository]),
     BlockchainModule,
     SharedModule,
     UserModule,

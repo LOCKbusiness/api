@@ -21,7 +21,7 @@ import { StakingBlockchainAddressService } from './staking-blockchain-address.se
 
 interface StakingReference {
   stakingId: number;
-  assetName: string;
+  assetId: number;
 }
 
 @Injectable()
@@ -190,16 +190,16 @@ export class StakingService {
       .where('deposit.amountEur IS NULL OR deposit.amountUsd IS NULL OR deposit.amountChf IS NULL')
       .orWhere('withdrawal.amountEur IS NULL OR withdrawal.amountUsd IS NULL OR withdrawal.amountChf IS NULL')
       .getMany()
-      .then((s) => s.map((i) => ({ stakingId: i.id, assetName: i.asset.name })));
+      .then((s) => s.map((i) => ({ stakingId: i.id, assetId: i.asset.id })));
   }
 
   private async getReferencePrices(stakings: StakingReference[]): Promise<Price[]> {
     const prices = [];
-    const uniqueAssetNames = [...new Set(stakings.map((s) => s.assetName))];
+    const uniqueAssetIds = [...new Set(stakings.map((s) => s.assetId))];
 
-    for (const assetName of uniqueAssetNames) {
+    for (const assetId of uniqueAssetIds) {
       for (const fiatName of Object.values(Fiat)) {
-        const price = await this.fiatPriceProvider.getFiatPrice(fiatName, assetName);
+        const price = await this.fiatPriceProvider.getFiatPrice(fiatName, assetId);
 
         prices.push(price);
       }
