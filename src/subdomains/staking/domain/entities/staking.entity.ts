@@ -179,8 +179,8 @@ export class Staking extends IEntity {
   }
 
   calculateFiatReferences(prices: Price[]): this {
-    const deposits = this.deposits.filter((d) => !d.amountChf || !d.amountEur || !d.amountUsd);
-    const withdrawals = this.withdrawals.filter((w) => !w.amountChf || !w.amountEur || !w.amountUsd);
+    const deposits = this.getDepositsWithoutFiatReferences();
+    const withdrawals = this.getWithdrawalsWithoutFiatReferences();
 
     deposits.forEach((d) => d.calculateFiatReferences(prices));
     withdrawals.forEach((w) => w.calculateFiatReferences(prices));
@@ -226,6 +226,15 @@ export class Staking extends IEntity {
     return this.getDepositsByStatus(DepositStatus.PENDING);
   }
 
+  getDepositsWithoutFiatReferences(): Deposit[] {
+    return this.deposits.filter(
+      (d) =>
+        (!d.amountChf && d.amountChf !== 0) ||
+        (!d.amountEur && d.amountEur !== 0) ||
+        (!d.amountUsd && d.amountUsd !== 0),
+    );
+  }
+
   getUnconfirmedDepositsAmount(): number {
     const unconfirmedDeposits = this.getDepositsByStatus([DepositStatus.OPEN, DepositStatus.PENDING]);
 
@@ -242,6 +251,15 @@ export class Staking extends IEntity {
 
   getPayingOutWithdrawals(): Withdrawal[] {
     return this.getWithdrawalsByStatus(WithdrawalStatus.PAYING_OUT);
+  }
+
+  getWithdrawalsWithoutFiatReferences(): Withdrawal[] {
+    return this.withdrawals.filter(
+      (w) =>
+        (!w.amountChf && w.amountChf !== 0) ||
+        (!w.amountEur && w.amountEur !== 0) ||
+        (!w.amountUsd && w.amountUsd !== 0),
+    );
   }
 
   //*** HELPER STATIC METHODS ***//
