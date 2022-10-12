@@ -77,10 +77,6 @@ export class Configuration {
         active: process.env.NODE_REW_URL_ACTIVE,
         passive: process.env.NODE_REW_URL_PASSIVE,
       },
-      liq: {
-        active: process.env.NODE_LIQ_URL_ACTIVE,
-        passive: process.env.NODE_LIQ_URL_PASSIVE,
-      },
     },
   };
 

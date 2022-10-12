@@ -29,7 +29,7 @@ export class MasternodeService {
     private readonly settingService: SettingService,
     nodeService: NodeService,
   ) {
-    nodeService.getConnectedNode(NodeType.LIQ).subscribe((c) => (this.client = c));
+    nodeService.getConnectedNode(NodeType.INPUT).subscribe((c) => (this.client = c));
   }
 
   // --- MASTERNODE SYNC --- //

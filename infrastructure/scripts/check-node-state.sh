@@ -1,4 +1,4 @@
-nodes=( "inp" "rew" "liq")
+nodes=( "inp" "rew")
 
 for i in "${nodes[@]}"
 do
