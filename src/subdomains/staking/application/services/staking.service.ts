@@ -111,7 +111,7 @@ export class StakingService {
     try {
       const stakings = await this.getStakingsWithoutFiatReferences();
       const prices = await this.getReferencePrices(stakings);
-      await this.calculateFiatForStakings(stakings, prices);
+      await this.calculateFiatReferencesForStakings(stakings, prices);
     } catch (e) {
       console.error('Exception during staking deposits and withdrawals fiat reference calculation:', e);
     } finally {
@@ -182,7 +182,7 @@ export class StakingService {
 
   private async getStakingsWithoutFiatReferences(): Promise<StakingReference[]> {
     // not querying Stakings, because eager query is not supported, thus unsafe to fetch entire entity
-    return this.repository
+    const stakingReferences = await this.repository
       .createQueryBuilder('staking')
       .leftJoin('staking.deposits', 'deposit')
       .leftJoin('staking.withdrawals', 'withdrawal')
@@ -191,6 +191,14 @@ export class StakingService {
       .orWhere('withdrawal.amountEur IS NULL OR withdrawal.amountUsd IS NULL OR withdrawal.amountChf IS NULL')
       .getMany()
       .then((s) => s.map((i) => ({ stakingId: i.id, assetId: i.asset.id })));
+
+    stakingReferences.length > 0 &&
+      console.info(
+        `Adding fiat references to ${stakingReferences.length} staking(s). Staking Id(s):`,
+        stakingReferences.map((s) => s.stakingId),
+      );
+
+    return stakingReferences;
   }
 
   private async getReferencePrices(stakings: StakingReference[]): Promise<Price[]> {
@@ -213,10 +221,10 @@ export class StakingService {
     return prices;
   }
 
-  private async calculateFiatForStakings(stakings: StakingReference[], prices: Price[]): Promise<void> {
+  private async calculateFiatReferencesForStakings(stakings: StakingReference[], prices: Price[]): Promise<void> {
     for (const ref of stakings) {
       try {
-        await this.calculateFiatForStaking(ref.stakingId, prices);
+        await this.calculateFiatReferencesForStaking(ref.stakingId, prices);
       } catch (e) {
         console.error(
           `Could not calculate fiat reference amount for Staking Id: ${ref.stakingId}. Asset Id: ${ref.assetId}`,
@@ -227,7 +235,7 @@ export class StakingService {
     }
   }
 
-  private async calculateFiatForStaking(stakingId: number, prices: Price[]): Promise<void> {
+  private async calculateFiatReferencesForStaking(stakingId: number, prices: Price[]): Promise<void> {
     const staking = await this.repository.findOne(stakingId);
 
     staking.calculateFiatReferences(prices);
