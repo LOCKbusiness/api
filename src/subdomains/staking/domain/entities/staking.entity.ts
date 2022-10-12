@@ -178,17 +178,11 @@ export class Staking extends IEntity {
     return addresses.every((a) => a === this.withdrawalAddress.address);
   }
 
-  calculateFiatReferencesForDeposits(prices: Price[]): this {
+  calculateFiatReferences(prices: Price[]): this {
     const deposits = this.deposits.filter((d) => !d.amountChf || !d.amountEur || !d.amountUsd);
-
-    deposits.forEach((d) => d.calculateFiatReferences(prices));
-
-    return this;
-  }
-
-  calculateFiatReferencesForWithdrawals(prices: Price[]): this {
     const withdrawals = this.withdrawals.filter((w) => !w.amountChf || !w.amountEur || !w.amountUsd);
 
+    deposits.forEach((d) => d.calculateFiatReferences(prices));
     withdrawals.forEach((w) => w.calculateFiatReferences(prices));
 
     return this;
@@ -252,20 +246,15 @@ export class Staking extends IEntity {
 
   //*** HELPER STATIC METHODS ***//
 
-  static calculateReferenceFiatAmount(
-    referenceFiat: Fiat,
-    assetName: string,
-    assetAmount: number,
-    prices: Price[],
-  ): number {
-    const price = prices.find((p) => p.source === referenceFiat && p.target === assetName);
+  static calculateFiatReferenceAmount(fiatName: Fiat, assetName: string, assetAmount: number, prices: Price[]): number {
+    const price = prices.find((p) => p.source === fiatName && p.target === assetName);
 
     if (!price) {
-      throw new Error(`Cannot calculate reference Fiat amount, ${assetName}/${referenceFiat} price is missing`);
+      throw new Error(`Cannot calculate reference Fiat amount, ${assetName}/${fiatName} price is missing`);
     }
 
     if (!price.price) {
-      throw new Error(`Cannot calculate reference Fiat amount of ${assetName}/${referenceFiat} , price value is 0`);
+      throw new Error(`Cannot calculate reference Fiat amount of ${assetName}/${fiatName} , price value is 0`);
     }
 
     return Util.round(assetAmount * price.price, 8);

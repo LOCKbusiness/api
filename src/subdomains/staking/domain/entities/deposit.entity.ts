@@ -71,9 +71,9 @@ export class Deposit extends IEntity {
   }
 
   calculateFiatReferences(prices: Price[]): this {
-    this.amountChf = Staking.calculateReferenceFiatAmount(Fiat.CHF, this.asset.name, this.amount, prices);
-    this.amountUsd = Staking.calculateReferenceFiatAmount(Fiat.USD, this.asset.name, this.amount, prices);
-    this.amountEur = Staking.calculateReferenceFiatAmount(Fiat.EUR, this.asset.name, this.amount, prices);
+    this.amountChf = Staking.calculateFiatReferenceAmount(Fiat.CHF, this.asset.name, this.amount, prices);
+    this.amountUsd = Staking.calculateFiatReferenceAmount(Fiat.USD, this.asset.name, this.amount, prices);
+    this.amountEur = Staking.calculateFiatReferenceAmount(Fiat.EUR, this.asset.name, this.amount, prices);
 
     return this;
   }

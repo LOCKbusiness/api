@@ -19,6 +19,11 @@ import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
 import { StakingRepository } from '../repositories/staking.repository';
 import { StakingBlockchainAddressService } from './staking-blockchain-address.service';
 
+interface StakingReference {
+  stakingId: number;
+  assetName: string;
+}
+
 @Injectable()
 export class StakingService {
   private readonly lock = new Lock(7200);
@@ -104,9 +109,9 @@ export class StakingService {
     if (!this.lock.acquire()) return;
 
     try {
-      const prices = await this.getReferencePrices();
-      await this.calculateFiatForDeposits(prices);
-      await this.calculateFiatForWithdrawals(prices);
+      const stakings = await this.getStakingsWithoutFiatReferences();
+      const prices = await this.getReferencePrices(stakings);
+      await this.calculateFiatForStakings(stakings, prices);
     } catch (e) {
       console.error('Exception during staking deposits and withdrawals fiat reference calculation:', e);
     } finally {
@@ -175,62 +180,45 @@ export class StakingService {
       .then((b) => b.amount);
   }
 
-  private async getReferencePrices(): Promise<Price[]> {
+  private async getStakingsWithoutFiatReferences(): Promise<StakingReference[]> {
+    // not querying Stakings, because eager query is not supported, thus unsafe to fetch entire entity
+    return this.repository
+      .createQueryBuilder('staking')
+      .leftJoin('staking.deposits', 'deposit')
+      .leftJoin('staking.withdrawals', 'withdrawal')
+      .leftJoin('staking.asset', 'asset')
+      .where('deposit.amountEur IS NULL OR deposit.amountUsd IS NULL OR deposit.amountChf IS NULL')
+      .orWhere('withdrawal.amountEur IS NULL OR withdrawal.amountUsd IS NULL OR withdrawal.amountChf IS NULL')
+      .getMany()
+      .then((s) => s.map((i) => ({ stakingId: i.id, assetName: i.asset.name })));
+  }
+
+  private async getReferencePrices(stakings: StakingReference[]): Promise<Price[]> {
     const prices = [];
+    const uniqueAssetNames = [...new Set(stakings.map((s) => s.assetName))];
 
-    for (const fiat of Object.values(Fiat)) {
-      const price = await this.priceProvider.getPriceForFiat(fiat);
+    for (const assetName of uniqueAssetNames) {
+      for (const fiatName of Object.values(Fiat)) {
+        const price = await this.priceProvider.getPriceForFiat(fiatName, assetName);
 
-      prices.push(price);
+        prices.push(price);
+      }
     }
 
     return prices;
   }
 
-  private async calculateFiatForDeposits(prices: Price[]): Promise<void> {
-    // not querying Stakings, because eager query is not supported, thus unsafe to fetch entire entity
-    const stakingIds = await this.repository
-      .createQueryBuilder('staking')
-      .leftJoin('staking.deposits', 'deposit')
-      .where('deposit.amountEur IS NULL OR deposit.amountUsd IS NULL OR deposit.amountChf IS NULL')
-      .getMany()
-      .then((s) => s.map((i) => i.id));
-
-    for (const stakingId of stakingIds) {
-      await this.calculateFiatForDepositsInStaking(stakingId, prices);
+  private async calculateFiatForStakings(stakings: StakingReference[], prices: Price[]): Promise<void> {
+    for (const ref of stakings) {
+      await this.calculateFiatForStaking(ref.stakingId, prices);
     }
   }
 
-  private async calculateFiatForWithdrawals(prices: Price[]): Promise<void> {
-    // not querying Stakings, because eager query is not supported, thus unsafe to fetch entire entity
-    const stakingIds = await this.repository
-      .createQueryBuilder('staking')
-      .leftJoin('staking.withdrawals', 'withdrawal')
-      .where('withdrawal.amountEur IS NULL OR withdrawal.amountUsd IS NULL OR withdrawal.amountChf IS NULL')
-      .getMany()
-      .then((s) => s.map((i) => i.id));
-
-    for (const stakingId of stakingIds) {
-      await this.calculateFiatForWithdrawalsInStaking(stakingId, prices);
-    }
-  }
-
-  private async calculateFiatForDepositsInStaking(stakingId: number, prices: Price[]): Promise<void> {
+  private async calculateFiatForStaking(stakingId: number, prices: Price[]): Promise<void> {
     try {
       const staking = await this.repository.findOne(stakingId);
 
-      staking.calculateFiatReferencesForDeposits(prices);
-      await this.repository.save(staking);
-    } catch (e) {
-      console.error(`Error calculating fiat reference amounts for deposits in staking ID: ${stakingId}`, e);
-    }
-  }
-
-  private async calculateFiatForWithdrawalsInStaking(stakingId: number, prices: Price[]): Promise<void> {
-    try {
-      const staking = await this.repository.findOne(stakingId);
-
-      staking.calculateFiatReferencesForWithdrawals(prices);
+      staking.calculateFiatReferences(prices);
       await this.repository.save(staking);
     } catch (e) {
       console.error(`Error calculating fiat reference amounts for deposits in staking ID: ${stakingId}`, e);
