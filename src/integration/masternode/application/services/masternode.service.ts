@@ -13,12 +13,13 @@ import { SettingService } from 'src/shared/services/setting.service';
 import { In, IsNull, LessThan, MoreThan, Not } from 'typeorm';
 import { Masternode } from '../../domain/entities/masternode.entity';
 import { MasternodeState } from '../../../../subdomains/staking/domain/enums';
-import { ResignMasternodeDto } from '../dto/resign-masternode.dto';
+import { MasternodeState as BlockchainMasternodeState } from '@defichain/jellyfish-api-core/dist/category/masternode';
 import { MasternodeRepository } from '../repositories/masternode.repository';
-import { CreateMasternodeDto } from '../dto/create-masternode.dto';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { Util } from 'src/shared/util';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
+import { MasternodeOwnerService } from './masternode-owner.service';
+import { MasternodeOwnerDto } from '../dto/masternode-owner.dto';
 
 @Injectable()
 export class MasternodeService {
@@ -26,11 +27,12 @@ export class MasternodeService {
 
   constructor(
     private readonly masternodeRepo: MasternodeRepository,
+    private readonly masternodeOwnerService: MasternodeOwnerService,
     private readonly http: HttpService,
     private readonly settingService: SettingService,
     nodeService: NodeService,
   ) {
-    nodeService.getConnectedNode(NodeType.LIQ).subscribe((c) => (this.client = c));
+    nodeService.getConnectedNode(NodeType.INPUT).subscribe((c) => (this.client = c));
   }
 
   // --- MASTERNODE SYNC --- //
@@ -57,12 +59,11 @@ export class MasternodeService {
     }
   }
 
-  async get(): Promise<Masternode[]> {
-    return this.masternodeRepo.find();
-  }
-
   async getIdleMasternodes(count: number): Promise<Masternode[]> {
-    const masternodes = await this.masternodeRepo.find({ where: { state: MasternodeState.IDLE }, take: count });
+    const masternodes = await this.masternodeRepo.find({
+      where: { state: MasternodeState.IDLE },
+      take: count,
+    });
 
     if (masternodes.length !== count) {
       console.error(
@@ -71,6 +72,20 @@ export class MasternodeService {
     }
 
     return masternodes;
+  }
+
+  async getNewOwners(count: number): Promise<MasternodeOwnerDto[]> {
+    const lastUsed = await this.masternodeRepo.findOne({
+      where: { owner: Not(IsNull()) },
+      order: { id: 'DESC' },
+    });
+    const owners = await this.masternodeOwnerService.provide(count, lastUsed.owner);
+
+    if (owners.length !== count) {
+      console.error(`Could not get enough owners, requested ${count}, returning available: ${owners.length}`);
+    }
+
+    return owners;
   }
 
   async getActiveCount(date: Date = new Date()): Promise<number> {
@@ -86,10 +101,18 @@ export class MasternodeService {
     return this.masternodeRepo.find({ where: { creationHash: Not(IsNull()), resignHash: IsNull() } });
   }
 
-  async getResigning(): Promise<Masternode[]> {
+  async getAllWithStates(states: MasternodeState[]): Promise<Masternode[]> {
     return this.masternodeRepo.find({
       where: {
-        state: In([MasternodeState.RESIGN_REQUESTED, MasternodeState.RESIGN_CONFIRMED, MasternodeState.RESIGNING]),
+        state: In(states),
+      },
+    });
+  }
+
+  async getAllResigning(): Promise<Masternode[]> {
+    return this.masternodeRepo.find({
+      where: {
+        state: In([MasternodeState.RESIGNING, MasternodeState.PRE_RESIGNED]),
       },
     });
   }
@@ -104,6 +127,11 @@ export class MasternodeService {
       (a, b) =>
         tmsInfo.find((tms) => tms.hash === a.creationHash).tms - tmsInfo.find((tms) => tms.hash === b.creationHash).tms,
     );
+  }
+
+  async filterByBlockchainState(masternodes: Masternode[], state: BlockchainMasternodeState): Promise<Masternode[]> {
+    const infos = await Promise.all(masternodes.map((mn) => this.getMasternodeStates(mn.creationHash)));
+    return masternodes.filter((mn) => state === infos.find((info) => info.hash === mn.creationHash).state);
   }
 
   // get unpaid fee in DFI
@@ -129,68 +157,66 @@ export class MasternodeService {
     }
   }
 
-  async designateCreating(id: number): Promise<void> {
+  async enabling(id: number): Promise<void> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
 
-    masternode.state = MasternodeState.CREATING;
+    masternode.state = MasternodeState.ENABLING;
 
     await this.masternodeRepo.save(masternode);
   }
 
-  async create(id: number, dto: CreateMasternodeDto): Promise<Masternode> {
+  async preEnabled(id: number, txId: string): Promise<void> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (masternode.creationHash) throw new ConflictException('Masternode already created');
 
-    masternode.state = MasternodeState.CREATED;
+    masternode.state = MasternodeState.PRE_ENABLED;
+    masternode.creationHash = txId;
+    masternode.creationDate = new Date();
 
-    return await this.masternodeRepo.save({ ...masternode, ...dto });
+    await this.masternodeRepo.save(masternode);
   }
 
-  async prepareResign(id: number, signature: string, masternodeState: MasternodeState): Promise<Masternode> {
+  async enabled(id: number): Promise<void> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
 
-    if (masternodeState === MasternodeState.RESIGN_REQUESTED) {
-      if (masternode.state !== MasternodeState.CREATED) throw new ConflictException('Masternode not yet created');
-      masternode.signatureLiquidityManager = signature;
-    }
+    masternode.state = MasternodeState.ENABLED;
 
-    if (masternodeState === MasternodeState.RESIGN_CONFIRMED) {
-      if (masternode.state !== MasternodeState.RESIGN_REQUESTED)
-        throw new ConflictException('Masternode resign is not requested');
-      masternode.signaturePayoutManager = signature;
-    }
-
-    masternode.state = masternodeState;
-
-    return await this.masternodeRepo.save(masternode);
+    await this.masternodeRepo.save(masternode);
   }
 
-  async resign(id: number, dto: ResignMasternodeDto): Promise<Masternode> {
+  async resigning(id: number): Promise<void> {
+    const masternode = await this.masternodeRepo.findOne(id);
+    if (!masternode) throw new NotFoundException('Masternode not found');
+    if (masternode.state !== MasternodeState.ENABLED) throw new ConflictException('Masternode not yet created');
+
+    masternode.state = MasternodeState.RESIGNING;
+
+    await this.masternodeRepo.save(masternode);
+  }
+
+  async preResigned(id: number, txId: string): Promise<void> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (!masternode.creationHash) throw new ConflictException('Masternode not yet created');
     if (masternode.resignHash) throw new ConflictException('Masternode already resigned');
-    if (masternode.state !== MasternodeState.RESIGN_CONFIRMED)
-      throw new ConflictException('Masternode resign is not confirmed');
 
-    masternode.state = MasternodeState.RESIGNING;
+    masternode.state = MasternodeState.PRE_RESIGNED;
+    masternode.resignHash = txId;
+    masternode.resignDate = new Date();
 
-    return await this.masternodeRepo.save({ ...masternode, ...dto });
+    await this.masternodeRepo.save(masternode);
   }
 
-  async resigned(id: number): Promise<Masternode> {
+  async resigned(id: number): Promise<void> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
-    if (masternode.resignHash) throw new ConflictException('Masternode is not resigning');
-    if (masternode.state !== MasternodeState.RESIGNING)
-      throw new ConflictException('Masternode resigning has not started');
 
     masternode.state = MasternodeState.RESIGNED;
 
-    return await this.masternodeRepo.save(masternode);
+    await this.masternodeRepo.save(masternode);
   }
 
   // --- HELPER METHODS --- //
@@ -202,7 +228,7 @@ export class MasternodeService {
   }
 
   private async request<T>(url: string, method: Method, data?: any): Promise<T> {
-    return await this.http.request<T>({
+    return this.http.request<T>({
       url,
       method: method,
       data: method !== 'GET' ? data : undefined,
@@ -214,5 +240,10 @@ export class MasternodeService {
   private async getMasternodeTms(creationHash: string): Promise<{ hash: string; tms: number }> {
     const info = await this.client.getMasternodeInfo(creationHash);
     return { hash: creationHash, tms: Util.avg(info.targetMultipliers ?? []) };
+  }
+
+  private async getMasternodeStates(creationHash: string): Promise<{ hash: string; state: BlockchainMasternodeState }> {
+    const info = await this.client.getMasternodeInfo(creationHash);
+    return { hash: creationHash, state: info.state };
   }
 }

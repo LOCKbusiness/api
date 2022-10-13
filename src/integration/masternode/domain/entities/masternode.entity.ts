@@ -1,6 +1,6 @@
 import { IEntity } from 'src/shared/models/entity';
 import { Column, Entity, Index } from 'typeorm';
-import { MasternodeState } from '../../../../subdomains/staking/domain/enums';
+import { MasternodeState, MasternodeTimeLock } from '../../../../subdomains/staking/domain/enums';
 
 @Entity()
 export class Masternode extends IEntity {
@@ -20,8 +20,8 @@ export class Masternode extends IEntity {
   @Column({ nullable: true })
   ownerWallet: string;
 
-  @Column({ type: 'integer', nullable: true })
-  timeLock: number;
+  @Column({ nullable: true })
+  timeLock: MasternodeTimeLock;
 
   @Column({ type: 'datetime2', nullable: true })
   creationDate: Date;
@@ -36,12 +36,6 @@ export class Masternode extends IEntity {
   @Column({ nullable: true })
   @Index({ unique: true, where: 'resignHash IS NOT NULL' })
   resignHash: string;
-
-  @Column({ nullable: true })
-  signatureLiquidityManager: string;
-
-  @Column({ nullable: true })
-  signaturePayoutManager: string;
 
   @Column({ default: MasternodeState.IDLE, nullable: false })
   state: MasternodeState;

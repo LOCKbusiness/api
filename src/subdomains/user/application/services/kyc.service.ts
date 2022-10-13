@@ -1,5 +1,6 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { Method } from 'axios';
+import { JellyfishService } from 'src/blockchain/ain/jellyfish/jellyfish.service';
 import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
 import { Config } from 'src/config/config';
 import { HttpError, HttpService } from 'src/shared/services/http.service';
@@ -12,6 +13,7 @@ export class KycService {
   constructor(
     private readonly http: HttpService,
     private readonly cryptoService: CryptoService,
+    private readonly jellyfishService: JellyfishService,
     private readonly userService: UserService,
   ) {}
 
@@ -21,8 +23,8 @@ export class KycService {
     // check if KYC has already started
     if (user.kycHash) return this.toDto(user);
 
-    // generate KYC ID
-    const wallet = this.cryptoService.createWallet(Config.kyc.phrase);
+    //Register at KYC provider
+    const wallet = this.jellyfishService.createWallet(Config.kyc.phrase);
     user.kycId = await wallet.get(userId).getAddress();
 
     await this.userService.updateUser(user.id, { kycId: user.kycId });

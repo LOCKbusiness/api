@@ -1,7 +1,6 @@
 import { ApiClient } from '@defichain/jellyfish-api-core';
 import { Block, BlockchainInfo } from '@defichain/jellyfish-api-core/dist/category/blockchain';
 import { MasternodeInfo } from '@defichain/jellyfish-api-core/dist/category/masternode';
-import { RawTransaction } from '@defichain/jellyfish-api-core/dist/category/rawtx';
 import { InWalletTransaction, UTXO } from '@defichain/jellyfish-api-core/dist/category/wallet';
 import { JsonRpcClient } from '@defichain/jellyfish-api-jsonrpc';
 import { ServiceUnavailableException } from '@nestjs/common';
@@ -81,10 +80,6 @@ export class NodeClient {
     return this.callNode((c) => c.wallet.listUnspent());
   }
 
-  async getBalance(): Promise<number> {
-    return this.callNode((c) => c.wallet.getBalance()).then((b) => b.toNumber());
-  }
-  
   // forwarding
   async sendRpcCommand(command: string): Promise<any> {
     return this.http.post(this.url, command, {

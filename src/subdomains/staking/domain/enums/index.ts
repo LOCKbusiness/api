@@ -31,10 +31,16 @@ export enum StakingAddressPurposes {
 
 export enum MasternodeState {
   IDLE = 'Idle',
-  CREATING = 'Creating',
-  CREATED = 'Created',
-  RESIGN_REQUESTED = 'ResignRequested',
-  RESIGN_CONFIRMED = 'ResignConfirmed',
+  ENABLING = 'Enabling',
+  PRE_ENABLED = 'PreEnabled',
+  ENABLED = 'Enabled',
   RESIGNING = 'Resigning',
+  PRE_RESIGNED = 'PreResigned',
   RESIGNED = 'Resigned',
+}
+
+export enum MasternodeTimeLock {
+  NONE = 0,
+  FIVE_YEAR_FREEZER = 260,
+  TEN_YEAR_FREEZER = 520,
 }

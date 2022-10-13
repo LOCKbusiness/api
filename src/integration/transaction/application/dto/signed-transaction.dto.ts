@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class PrepareResignMasternodeDto {
+export class SignedTransactionDto {
   @IsNotEmpty()
   @IsString()
-  signature: string;
+  hex: string;
 }

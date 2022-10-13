@@ -18,6 +18,7 @@ import { UserService } from './application/services/user.service';
 import { WalletProviderService } from './application/services/wallet-provider.service';
 import { WalletService } from './application/services/wallet.service';
 import { AdminController } from './api/controllers/admin.controller';
+import { BlockchainModule } from 'src/blockchain/blockchain.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AdminController } from './api/controllers/admin.controller';
       WalletRepository,
     ]),
     SharedModule,
+    BlockchainModule,
   ],
   controllers: [UserController, KycController, AuthController, AdminController],
   providers: [

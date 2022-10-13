@@ -1,28 +1,32 @@
 import { Lock } from 'src/shared/lock';
 import { Injectable } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
-import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { Config } from 'src/config/config';
 import { Util } from 'src/shared/util';
-import { MasternodeState } from '../../domain/enums';
 import { MasternodeService } from 'src/integration/masternode/application/services/masternode.service';
 import { StakingWithdrawalService } from './staking-withdrawal.service';
-import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
+import BigNumber from 'bignumber.js';
+import { MasternodeState, MasternodeTimeLock } from '../../domain/enums';
+import { MasternodeState as BlockchainMasternodeState } from '@defichain/jellyfish-api-core/dist/category/masternode';
+import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
+import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
+import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
+import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 
 @Injectable()
 export class LiquidityManagementService {
   private readonly lock = new Lock(1800);
 
-  private client: DeFiClient;
+  private client: WhaleClient;
 
   constructor(
     private readonly masternodeService: MasternodeService,
     private readonly withdrawalService: StakingWithdrawalService,
-    nodeService: NodeService,
+    private readonly transactionCreationService: TransactionExecutionService,
+    whaleService: WhaleService,
   ) {
-    nodeService.getConnectedNode(NodeType.LIQ).subscribe((c) => (this.client = c));
-
+    whaleService.getClient().subscribe((c) => (this.client = c));
     this.prepareWithdrawals();
   }
 
@@ -31,6 +35,7 @@ export class LiquidityManagementService {
     if (!this.lock.acquire()) return;
 
     try {
+      await this.checkMasternodesInProcess();
       await this.checkLiquidity();
       await this.prepareWithdrawals();
     } catch (e) {
@@ -43,79 +48,105 @@ export class LiquidityManagementService {
   async checkLiquidity(): Promise<void> {
     const excessiveLiquidity = await this.getExcessiveLiquidity();
 
-    const masternodeChangeCount =
-      excessiveLiquidity > 0
-        ? Math.floor(excessiveLiquidity / (Config.masternode.collateral + Config.masternode.fee))
-        : Math.floor(excessiveLiquidity / Config.masternode.collateral);
+    const masternodeChangeCount = excessiveLiquidity.gt(0)
+      ? Math.floor(excessiveLiquidity.div(Config.masternode.collateral + Config.masternode.fee).toNumber())
+      : Math.floor(excessiveLiquidity.div(Config.masternode.collateral).toNumber());
 
     if (masternodeChangeCount > 0) {
-      await this.createMasternodes(masternodeChangeCount);
+      await this.startMasternodeEnabling(masternodeChangeCount);
     } else {
-      await this.resignMasternodes(Math.abs(masternodeChangeCount));
+      await this.startMasternodeResigning(Math.abs(masternodeChangeCount));
     }
   }
 
-  private async getExcessiveLiquidity(): Promise<number> {
+  private async getExcessiveLiquidity(): Promise<BigNumber> {
     const currentLiquidity = await this.getCurrentLiquidity();
 
-    if (currentLiquidity > Config.staking.liquidity.max) return currentLiquidity - Config.staking.liquidity.max;
-    if (currentLiquidity < Config.staking.liquidity.min) return currentLiquidity - Config.staking.liquidity.min;
+    if (currentLiquidity.gt(Config.staking.liquidity.max)) return currentLiquidity.minus(Config.staking.liquidity.max);
+    if (currentLiquidity.lt(Config.staking.liquidity.min)) return currentLiquidity.minus(Config.staking.liquidity.min);
 
-    return 0;
+    return new BigNumber(0);
   }
 
-  private async getCurrentLiquidity(): Promise<number> {
-    const balance = await this.client.getBalance();
+  private async getCurrentLiquidity(): Promise<BigNumber> {
+    const balance = await this.client.getUTXOBalance(Config.staking.liquidity.address);
 
-    const resigningMasternodes = await this.masternodeService.getResigning();
+    const resigningMasternodes = await this.masternodeService.getAllResigning();
     const pendingResignAmount = resigningMasternodes.length * Config.masternode.collateral;
 
     const pendingWithdrawals = await this.getPendingWithdrawals();
     const pendingWithdrawalAmount = Util.sumObj(pendingWithdrawals, 'amount');
 
-    return balance + pendingResignAmount - pendingWithdrawalAmount;
+    return balance.plus(pendingResignAmount).minus(pendingWithdrawalAmount);
   }
 
   // --- MASTERNODES ---- //
-  private async createMasternodes(count: number): Promise<void> {
-    // get n addresses from the masternode table, where masternode state is idle
-    const idleMasternodes = await this.masternodeService.getIdleMasternodes(count);
-
-    let tx: string;
-    for (const node of idleMasternodes) {
-      tx = await this.client.sendUtxo(
-        Config.staking.liquidityWalletAddress,
-        node.owner,
-        Config.masternode.collateral + Config.masternode.fee + Config.masternode.creationFee,
-      );
-
-      console.info(`Sending collateral to masternode wallet: ${tx}`);
-
-      await this.masternodeService.designateCreating(node.id);
-    }
-
-    if (tx) await this.client.waitForTx(tx).catch((e) => console.error(`Wait for creation TX failed: ${e}`));
+  private async checkMasternodesInProcess(): Promise<void> {
+    const allInProcessMasternodes = await this.masternodeService.getAllWithStates([
+      MasternodeState.ENABLING,
+      MasternodeState.RESIGNING,
+      MasternodeState.PRE_ENABLED,
+      MasternodeState.PRE_RESIGNED,
+    ]);
+    await this.handleMasternodesWithState(allInProcessMasternodes, MasternodeState.ENABLING);
+    await this.handleMasternodesWithState(allInProcessMasternodes, MasternodeState.RESIGNING);
+    await this.handleMasternodesWithState(
+      allInProcessMasternodes,
+      MasternodeState.PRE_ENABLED,
+      BlockchainMasternodeState.ENABLED,
+    );
+    await this.handleMasternodesWithState(
+      allInProcessMasternodes,
+      MasternodeState.PRE_RESIGNED,
+      BlockchainMasternodeState.RESIGNED,
+    );
   }
 
-  private async resignMasternodes(count: number): Promise<void> {
+  private async startMasternodeEnabling(count: number, timeLock = MasternodeTimeLock.NONE): Promise<void | void[]> {
+    // get n addresses from the masternode table, where masternode state is idle
+    const idleMasternodes = await this.masternodeService.getIdleMasternodes(count);
+    const newOwners = await this.masternodeService.getNewOwners(count);
+    idleMasternodes.forEach((node, i) => {
+      const info = newOwners[i];
+      node.accountIndex = info.index;
+      node.owner = info.address;
+      node.ownerWallet = info.wallet;
+      node.timeLock = timeLock;
+    });
+    return this.handleMasternodesWithState(idleMasternodes, MasternodeState.IDLE);
+  }
+
+  private async startMasternodeResigning(count: number): Promise<void | void[]> {
     const masternodes = await this.masternodeService.getOrderedByTms();
+    return this.handleMasternodesWithState(masternodes.splice(0, count), MasternodeState.ENABLED);
+  }
 
-    for (const masternode of masternodes.slice(0, count)) {
-      console.info(`Resigning masternode ${masternode.id}`);
+  private async handleMasternodesWithState(
+    masternodes: Masternode[],
+    state: MasternodeState,
+    blockchainState?: BlockchainMasternodeState,
+  ): Promise<void | void[]> {
+    let filteredMasternodes = masternodes.filter((mn) => mn.state === state);
 
-      const message = Util.template(Config.masternode.resignMessage, {
-        id: masternode.id.toString(),
-        hash: masternode.creationHash,
-      });
-      const signature = await this.client.signMessage(Config.staking.liquidityWalletAddress, message);
-
-      await this.masternodeService.prepareResign(masternode.id, signature, MasternodeState.RESIGN_REQUESTED);
+    if (blockchainState) {
+      filteredMasternodes = await this.masternodeService.filterByBlockchainState(filteredMasternodes, blockchainState);
     }
+
+    const process = this.getProcessFunctionsFor(state);
+
+    return Promise.all(
+      filteredMasternodes.map((node) =>
+        process
+          .txFunc(node)
+          .then((txId: string) => process.updateFunc(node, txId))
+          .catch(console.error),
+      ),
+    );
   }
 
   // --- WITHDRAWALS --- //
   async prepareWithdrawals(): Promise<void> {
-    const balance = await this.client.getBalance();
+    const balance = await this.client.getUTXOBalance(Config.staking.liquidity.address);
     const withdrawals = await this.getPendingWithdrawals();
 
     const sortedWithdrawals = withdrawals.sort((a, b) => a.amount - b.amount);
@@ -125,7 +156,7 @@ export class LiquidityManagementService {
     let withdrawalSum = 0;
     for (const withdrawal of sortedWithdrawals) {
       withdrawalSum += withdrawal.amount;
-      if (withdrawalSum > balance - 1) break;
+      if (balance.minus(1).lt(withdrawalSum)) break;
 
       possibleWithdrawals.push(withdrawal);
     }
@@ -149,5 +180,100 @@ export class LiquidityManagementService {
       (prev, curr) => prev.concat(curr.getPendingWithdrawals().map((w) => Object.assign(w, { staking: curr }))),
       [],
     );
+  }
+
+  private getProcessFunctionsFor(state: MasternodeState): {
+    txFunc: (masternode: Masternode) => Promise<string>;
+    updateFunc: (masternode: Masternode, txId: string) => Promise<void>;
+  } {
+    switch (state) {
+      case MasternodeState.IDLE:
+        return {
+          txFunc: (masternode: Masternode) => {
+            return this.transactionCreationService.sendFromLiq({
+              to: masternode.owner,
+              amount: new BigNumber(
+                Config.masternode.collateral + Config.masternode.fee + Config.masternode.creationFee,
+              ),
+              ownerWallet: Config.staking.liquidity.wallet,
+              accountIndex: +Config.staking.liquidity.account,
+            });
+          },
+          updateFunc: (masternode: Masternode, txId: string) => {
+            console.info(`Sending collateral to masternode\n\towner: ${masternode.owner}\n\twith tx: ${txId}`);
+            return this.masternodeService.enabling(masternode.id);
+          },
+        };
+      case MasternodeState.ENABLING:
+        return {
+          txFunc: (masternode: Masternode) => {
+            return this.transactionCreationService.createMasternode({
+              masternode,
+              ownerWallet: masternode.ownerWallet,
+              accountIndex: masternode.accountIndex,
+            });
+          },
+          updateFunc: (masternode: Masternode, txId: string) => {
+            console.info(`Creating masternode for\n\towner: ${masternode.owner}\n\twith tx: ${txId}`);
+            return this.masternodeService.preEnabled(masternode.id, txId);
+          },
+        };
+      case MasternodeState.PRE_ENABLED:
+        return {
+          txFunc: () => {
+            return Promise.resolve('');
+          },
+          updateFunc: (masternode: Masternode) => {
+            console.info(`Masternode got enabled\n\towner: ${masternode.owner}`);
+            return this.masternodeService.enabled(masternode.id);
+          },
+        };
+      case MasternodeState.ENABLED:
+        return {
+          txFunc: (masternode: Masternode) => {
+            return this.transactionCreationService.sendFromLiq({
+              to: masternode.owner,
+              amount: new BigNumber(Config.masternode.resignFee),
+              ownerWallet: Config.staking.liquidity.wallet,
+              accountIndex: +Config.staking.liquidity.account,
+            });
+          },
+          updateFunc: (masternode: Masternode, txId: string) => {
+            console.info(`Sending resign fee to masternode\n\towner: ${masternode.owner}\n\twith tx: ${txId}`);
+            return this.masternodeService.resigning(masternode.id);
+          },
+        };
+      case MasternodeState.RESIGNING:
+        return {
+          txFunc: (masternode: Masternode) => {
+            return this.transactionCreationService.resignMasternode({
+              masternode,
+              ownerWallet: masternode.ownerWallet,
+              accountIndex: masternode.accountIndex,
+            });
+          },
+          updateFunc: (masternode: Masternode, txId: string) => {
+            console.info(`Resigning masternode for\n\towner: ${masternode.owner}\n\twith tx: ${txId}`);
+            return this.masternodeService.preResigned(masternode.id, txId);
+          },
+        };
+      case MasternodeState.PRE_RESIGNED:
+        return {
+          txFunc: (masternode: Masternode) => {
+            return this.transactionCreationService.sendToLiq({
+              from: masternode.owner,
+              amount: new BigNumber(Config.masternode.collateral),
+              ownerWallet: masternode.ownerWallet,
+              accountIndex: masternode.accountIndex,
+            });
+          },
+          updateFunc: (masternode: Masternode, txId: string) => {
+            console.info(
+              `Sending collateral back to liquidity manager from\n\towner: ${masternode.owner}\n\twith tx: ${txId}`,
+            );
+            return this.masternodeService.resigned(masternode.id);
+          },
+        };
+    }
   }
 }

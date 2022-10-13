@@ -64,6 +64,7 @@ export class Configuration {
   };
 
   blockchain = {
+    minFeeRate: 0.00001,
     default: {
       user: process.env.NODE_USER,
       password: process.env.NODE_PASSWORD,
@@ -75,10 +76,6 @@ export class Configuration {
       rew: {
         active: process.env.NODE_REW_URL_ACTIVE,
         passive: process.env.NODE_REW_URL_PASSIVE,
-      },
-      liq: {
-        active: process.env.NODE_LIQ_URL_ACTIVE,
-        passive: process.env.NODE_LIQ_URL_PASSIVE,
       },
     },
   };
@@ -113,13 +110,17 @@ export class Configuration {
         'Withdraw_${amount}_${asset}_from_${address}_staking_id_${stakingId}_withdrawal_id_${withdrawalId}',
     },
 
-    liquidityWalletAddress: process.env.STAKING_LIQUIDITY_WALLET_ADDRESS,
-    masternodeWalletAddress: process.env.STAKING_MASTERNODE_WALLET_ADDRESS,
-    payoutWalletAddress: process.env.STAKING_PAYOUT_WALLET_ADDRESS,
+    signature: {
+      address: process.env.API_SIGN_ADDRESS,
+    },
 
     liquidity: {
       min: 20000,
       max: 40000,
+
+      address: process.env.LIQUIDITY_ADDRESS,
+      wallet: process.env.LIQUIDITY_WALLET_NAME,
+      account: process.env.LIQUIDITY_ACCOUNT_INDEX,
     },
     aprPeriod: 28, // days
   };
@@ -134,7 +135,7 @@ export class Configuration {
     collateral: 20000,
     fee: 10,
     creationFee: 0.00000232,
-    resignMessage: 'Resign_masternode_${id}_with_hash_${hash}',
+    resignFee: 0.00000209,
   };
 
   get addressFormat(): RegExp {
