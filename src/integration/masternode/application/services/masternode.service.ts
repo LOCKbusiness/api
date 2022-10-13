@@ -18,6 +18,8 @@ import { MasternodeRepository } from '../repositories/masternode.repository';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { Util } from 'src/shared/util';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
+import { MasternodeOwnerService } from './masternode-owner.service';
+import { MasternodeOwnerDto } from '../dto/masternode-owner.dto';
 
 @Injectable()
 export class MasternodeService {
@@ -25,6 +27,7 @@ export class MasternodeService {
 
   constructor(
     private readonly masternodeRepo: MasternodeRepository,
+    private readonly masternodeOwnerService: MasternodeOwnerService,
     private readonly http: HttpService,
     private readonly settingService: SettingService,
     nodeService: NodeService,
@@ -69,6 +72,20 @@ export class MasternodeService {
     }
 
     return masternodes;
+  }
+
+  async getNewOwners(count: number): Promise<MasternodeOwnerDto[]> {
+    const lastUsed = await this.masternodeRepo.findOne({
+      where: { owner: Not(IsNull()) },
+      order: { id: 'DESC' },
+    });
+    const owners = await this.masternodeOwnerService.provide(count, lastUsed.owner);
+
+    if (owners.length !== count) {
+      console.error(`Could not get enough owners, requested ${count}, returning available: ${owners.length}`);
+    }
+
+    return owners;
   }
 
   async getActiveCount(date: Date = new Date()): Promise<number> {
