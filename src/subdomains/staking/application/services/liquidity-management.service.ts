@@ -27,7 +27,6 @@ export class LiquidityManagementService {
     whaleService: WhaleService,
   ) {
     whaleService.getClient().subscribe((c) => (this.client = c));
-    this.prepareWithdrawals();
   }
 
   @Interval(300000)
