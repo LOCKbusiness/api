@@ -182,21 +182,26 @@ export class StakingService {
 
   private async getStakingsWithoutFiatReferences(): Promise<StakingReference[]> {
     // not querying Stakings, because eager query is not supported, thus unsafe to fetch entire entity
-    const stakingReferences = await this.repository
+    const queryByDeposits = await this.repository
       .createQueryBuilder('staking')
-      .leftJoin('staking.deposits', 'deposit')
-      .leftJoin('staking.withdrawals', 'withdrawal')
+      .innerJoin('staking.deposits', 'deposit')
+      .where('deposit.status = :depositStatus', { depositStatus: DepositStatus.CONFIRMED })
+      .andWhere('(deposit.amountEur IS NULL OR deposit.amountUsd IS NULL OR deposit.amountChf IS NULL)')
       .leftJoinAndSelect('staking.asset', 'asset')
-      .where(
-        'deposit.amountEur IS NULL OR deposit.amountUsd IS NULL OR deposit.amountChf IS NULL AND deposit.status = :depositStatus',
-        { depositStatus: DepositStatus.CONFIRMED },
-      )
-      .orWhere(
-        'withdrawal.amountEur IS NULL OR withdrawal.amountUsd IS NULL OR withdrawal.amountChf IS NULL AND withdrawal.status = :withdrawalStatus',
-        { withdrawalStatus: WithdrawalStatus.CONFIRMED },
-      )
       .getMany()
       .then((s) => s.map((i) => ({ stakingId: i.id, assetId: i.asset.id })));
+
+    // not querying Stakings, because eager query is not supported, thus unsafe to fetch entire entity
+    const queryByWithdrawals = await this.repository
+      .createQueryBuilder('staking')
+      .innerJoin('staking.withdrawals', 'withdrawal')
+      .where('withdrawal.status = :withdrawalStatus', { withdrawalStatus: WithdrawalStatus.CONFIRMED })
+      .andWhere('(withdrawal.amountEur IS NULL OR withdrawal.amountUsd IS NULL OR withdrawal.amountChf IS NULL)')
+      .leftJoinAndSelect('staking.asset', 'asset')
+      .getMany()
+      .then((s) => s.map((i) => ({ stakingId: i.id, assetId: i.asset.id })));
+
+    const stakingReferences = this.removeStakingReferencesDuplicates(queryByDeposits.concat(queryByWithdrawals));
 
     stakingReferences.length > 0 &&
       console.info(
@@ -246,7 +251,7 @@ export class StakingService {
     confirmedStakings.length > 0 &&
       console.info(
         `Successfully added fiat references to ${confirmedStakings.length} staking(s). Staking Id(s):`,
-        confirmedStakings.map((s) => s.stakingId),
+        confirmedStakings,
       );
   }
 
@@ -255,5 +260,15 @@ export class StakingService {
 
     staking.calculateFiatReferences(prices);
     await this.repository.save(staking);
+  }
+
+  private removeStakingReferencesDuplicates(stakings: StakingReference[] = []): StakingReference[] {
+    return stakings.reduce((res, curr) => {
+      const existing = res.find((r) => r.stakingId === curr.stakingId);
+
+      !existing && res.push(curr);
+
+      return res;
+    }, []);
   }
 }

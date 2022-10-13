@@ -124,10 +124,10 @@ export class Configuration {
     aprPeriod: 28, // days
   };
 
-  priceProviders: {
+  priceProviders = {
     coinGecko: {
-      baseUrl: 'https://api.coingecko.com/api/v3';
-    };
+      baseUrl: 'https://api.coingecko.com/api/v3',
+    },
   };
 
   masternode = {
