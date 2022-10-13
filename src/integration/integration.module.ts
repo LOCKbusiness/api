@@ -6,6 +6,6 @@ import { TransactionModule } from './transaction/transaction.module';
   imports: [MasternodeModule, TransactionModule],
   controllers: [],
   providers: [],
-  exports: [],
+  exports: [MasternodeModule, TransactionModule],
 })
 export class IntegrationModule {}

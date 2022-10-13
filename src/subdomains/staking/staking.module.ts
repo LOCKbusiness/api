@@ -20,11 +20,9 @@ import { StakingService } from './application/services/staking.service';
 import { StakingDeFiChainService } from './infrastructure/staking-defichain.service';
 import { MasternodeController } from '../../integration/masternode/api/controllers/masternode.controller';
 import { MasternodeRepository } from '../../integration/masternode/application/repositories/masternode.repository';
-import { MasternodeService } from '../../integration/masternode/application/services/masternode.service';
 import { StakingAuthorizeService } from './infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from './infrastructure/staking-kyc-check.service';
-import { TransactionModule } from 'src/integration/transaction/transaction.module';
-import { MasternodeOwnerService } from 'src/integration/masternode/application/services/masternode-owner.service';
+import { IntegrationModule } from 'src/integration/integration.module';
 
 @Module({
   imports: [
@@ -33,7 +31,7 @@ import { MasternodeOwnerService } from 'src/integration/masternode/application/s
     SharedModule,
     UserModule,
     PayInModule,
-    TransactionModule,
+    IntegrationModule,
   ],
   controllers: [StakingController, DepositController, RewardController, WithdrawalController, MasternodeController],
   providers: [
@@ -44,8 +42,6 @@ import { MasternodeOwnerService } from 'src/integration/masternode/application/s
     StakingWithdrawalService,
     StakingFactory,
     StakingBlockchainAddressService,
-    MasternodeService,
-    MasternodeOwnerService,
     StakingAuthorizeService,
     StakingKycCheckService,
     LiquidityManagementService,
