@@ -7,7 +7,7 @@ import { MasternodeService } from 'src/integration/masternode/application/servic
 import { StakingWithdrawalService } from './staking-withdrawal.service';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import BigNumber from 'bignumber.js';
-import { MasternodeState } from '../../domain/enums';
+import { MasternodeState, MasternodeTimeLock } from '../../domain/enums';
 import { MasternodeState as BlockchainMasternodeState } from '@defichain/jellyfish-api-core/dist/category/masternode';
 import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
 import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
@@ -102,7 +102,7 @@ export class LiquidityManagementService {
     );
   }
 
-  private async startMasternodeEnabling(count: number): Promise<void | void[]> {
+  private async startMasternodeEnabling(count: number, timeLock = MasternodeTimeLock.NONE): Promise<void | void[]> {
     // get n addresses from the masternode table, where masternode state is idle
     const idleMasternodes = await this.masternodeService.getIdleMasternodes(count);
     const newOwners = await this.masternodeService.getNewOwners(count);
@@ -111,6 +111,7 @@ export class LiquidityManagementService {
       node.accountIndex = info.index;
       node.owner = info.address;
       node.ownerWallet = info.wallet;
+      node.timeLock = timeLock;
     });
     return this.handleMasternodesWithState(idleMasternodes, MasternodeState.IDLE);
   }
