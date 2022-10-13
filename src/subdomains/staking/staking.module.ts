@@ -24,6 +24,7 @@ import { MasternodeService } from '../../integration/masternode/application/serv
 import { StakingAuthorizeService } from './infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from './infrastructure/staking-kyc-check.service';
 import { TransactionModule } from 'src/integration/transaction/transaction.module';
+import { MasternodeOwnerService } from 'src/integration/masternode/application/services/masternode-owner.service';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { TransactionModule } from 'src/integration/transaction/transaction.modul
     StakingFactory,
     StakingBlockchainAddressService,
     MasternodeService,
+    MasternodeOwnerService,
     StakingAuthorizeService,
     StakingKycCheckService,
     LiquidityManagementService,

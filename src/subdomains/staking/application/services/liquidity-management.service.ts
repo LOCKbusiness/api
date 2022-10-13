@@ -105,6 +105,13 @@ export class LiquidityManagementService {
   private async startMasternodeEnabling(count: number): Promise<void | void[]> {
     // get n addresses from the masternode table, where masternode state is idle
     const idleMasternodes = await this.masternodeService.getIdleMasternodes(count);
+    const newOwners = await this.masternodeService.getNewOwners(count);
+    idleMasternodes.forEach((node, i) => {
+      const info = newOwners[i];
+      node.accountIndex = info.index;
+      node.owner = info.address;
+      node.ownerWallet = info.wallet;
+    });
     return this.handleMasternodesWithState(idleMasternodes, MasternodeState.IDLE);
   }
 
