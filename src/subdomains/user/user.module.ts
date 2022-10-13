@@ -18,6 +18,7 @@ import { UserService } from './application/services/user.service';
 import { WalletProviderService } from './application/services/wallet-provider.service';
 import { WalletService } from './application/services/wallet.service';
 import { AdminController } from './api/controllers/admin.controller';
+import { AinModule } from 'src/blockchain/ain/ain.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AdminController } from './api/controllers/admin.controller';
       WalletRepository,
     ]),
     SharedModule,
+    AinModule,
   ],
   controllers: [UserController, KycController, AuthController, AdminController],
   providers: [
