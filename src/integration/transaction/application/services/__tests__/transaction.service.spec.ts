@@ -23,10 +23,12 @@ describe('TransactionService', () => {
         break;
       case TestSetup.CREATE_MASTERNODE:
         const masternode = createDefaultMasternode();
-        await service.sign(rawTxCreateMasternode, 'create-masternode-signed-message', {
-          ownerWallet: masternode.ownerWallet,
-          accountIndex: masternode.accountIndex,
-        });
+        try {
+          await service.sign(rawTxCreateMasternode, 'create-masternode-signed-message', {
+            ownerWallet: masternode.ownerWallet,
+            accountIndex: masternode.accountIndex,
+          });
+        } catch (e) {}
         break;
     }
   }
@@ -58,6 +60,13 @@ describe('TransactionService', () => {
     setup(TestSetup.CREATE_MASTERNODE);
     const txId = service.getOpen()[0].id;
     service.verified(txId, 'verifier-signed-message');
+    expect(service.getOpen()).toStrictEqual([]);
+  });
+
+  it('should return an empty array for open, if a tx got created and invalidated', () => {
+    setup(TestSetup.CREATE_MASTERNODE);
+    const txId = service.getOpen()[0].id;
+    service.invalidated(txId, 'invalidation-reason');
     expect(service.getOpen()).toStrictEqual([]);
   });
 
@@ -111,6 +120,11 @@ describe('TransactionService', () => {
   it('should throw an exception (NotFoundException), if a tx can not be found on verified', () => {
     setup(TestSetup.CREATE_MASTERNODE);
     expect(() => service.verified('some-tx-which-is-not-found', 'some-signature')).toThrow(NotFoundException);
+  });
+
+  it('should throw an exception (NotFoundException), if a tx can not be found on invalidated', () => {
+    setup(TestSetup.CREATE_MASTERNODE);
+    expect(() => service.invalidated('some-tx-which-is-not-found', 'some-signed-raw-hex')).toThrow(NotFoundException);
   });
 
   it('should throw an exception (NotFoundException), if a tx can not be found on signed', () => {

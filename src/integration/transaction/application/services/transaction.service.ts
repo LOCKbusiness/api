@@ -27,6 +27,14 @@ export class TransactionService {
     tx.verifierSignature = signature;
   }
 
+  invalidated(id: string, reason?: string) {
+    const tx = this.transactions.get(id);
+    if (!tx) throw new NotFoundException('Transaction not found');
+    console.warn(`Invalidated ${id} with reason: ${reason}`);
+    this.transactions.delete(tx.id);
+    tx.invalidated();
+  }
+
   signed(id: string, hex: string) {
     const tx = this.transactions.get(id);
     if (!tx) throw new NotFoundException('Transaction not found');
@@ -42,8 +50,8 @@ export class TransactionService {
       payload,
     };
 
-    return new Promise((resolve) => {
-      this.transactions.set(dto.id, { ...dto, signed: resolve });
+    return new Promise((resolve, reject) => {
+      this.transactions.set(dto.id, { ...dto, signed: resolve, invalidated: reject });
     });
   }
 
