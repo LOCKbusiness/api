@@ -104,7 +104,7 @@ export class StakingService {
 
   //*** JOBS ***//
 
-  @Interval(20000)
+  @Interval(60000)
   async calculateFiatReferenceAmounts(): Promise<void> {
     if (!this.lock.acquire()) return;
 
