@@ -20,7 +20,7 @@ export class Masternode extends IEntity {
   @Column({ nullable: true })
   ownerWallet: string;
 
-  @Column({ default: MasternodeTimeLock.NONE, nullable: false })
+  @Column({ nullable: true })
   timeLock: MasternodeTimeLock;
 
   @Column({ type: 'datetime2', nullable: true })
