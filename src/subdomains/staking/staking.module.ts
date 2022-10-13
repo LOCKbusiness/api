@@ -18,8 +18,6 @@ import { StakingRewardService } from './application/services/staking-reward.serv
 import { StakingWithdrawalService } from './application/services/staking-withdrawal.service';
 import { StakingService } from './application/services/staking.service';
 import { StakingDeFiChainService } from './infrastructure/staking-defichain.service';
-import { MasternodeController } from '../../integration/masternode/api/controllers/masternode.controller';
-import { MasternodeRepository } from '../../integration/masternode/application/repositories/masternode.repository';
 import { StakingAuthorizeService } from './infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from './infrastructure/staking-kyc-check.service';
 import { IntegrationModule } from 'src/integration/integration.module';
@@ -36,7 +34,7 @@ import { AssetStakingMetadataRepository } from './application/repositories/asset
     PayInModule,
     IntegrationModule,
   ],
-  controllers: [StakingController, DepositController, RewardController, WithdrawalController, MasternodeController],
+  controllers: [StakingController, DepositController, RewardController, WithdrawalController],
   providers: [
     {
       provide: FIAT_PRICE_PROVIDER,
