@@ -35,6 +35,7 @@ export class StakingDeFiChainService {
     const txId = await this.transactionExecutionService.sendFromLiqToCustomer({
       to: withdrawal.staking.withdrawalAddress.address,
       amount: new BigNumber(withdrawal.amount),
+      withdrawalId: withdrawal.id,
     });
 
     return txId;
