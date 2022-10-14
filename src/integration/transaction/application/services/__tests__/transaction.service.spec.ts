@@ -8,7 +8,9 @@ enum TestSetup {
   CREATE_MASTERNODE,
 }
 
-const rawTxCreateMasternode = createCustomRawTxDto({ hex: 'create-masternode' });
+const hex =
+  '04000000000101a4f9f60d4a61750d4b75e3c21dd203ed38ce4077e2e29dd7c094a21f5ce9be230000000000ffffffff0200ca9a3b000000001e6a1c4466547843018d0781d01e84fa086c16d7e74729eec3831ef17600000000204aa9d10100001600143faf3d07e5fa516122195bacd67a7436180b75020002148d0781d01e84fa086c16d7e74729eec3831ef176143faf3d07e5fa516122195bacd67a7436180b750200000000';
+const rawTxCreateMasternode = createCustomRawTxDto({ hex });
 
 describe('TransactionService', () => {
   let service: TransactionService;
@@ -44,7 +46,7 @@ describe('TransactionService', () => {
       {
         issuerSignature: 'create-masternode-signed-message',
         rawTx: {
-          hex: 'create-masternode',
+          hex,
           scriptHex: '0',
           prevouts: [],
         },
@@ -97,7 +99,7 @@ describe('TransactionService', () => {
         issuerSignature: 'create-masternode-signed-message',
         verifierSignature: 'verifier-signed-message',
         rawTx: {
-          hex: 'create-masternode',
+          hex,
           scriptHex: '0',
           prevouts: [],
         },
