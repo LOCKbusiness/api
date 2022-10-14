@@ -7,7 +7,7 @@ import { UserModule } from '../user/user.module';
 import { DepositController } from './api/controllers/deposit.controller';
 import { RewardController } from './api/controllers/reward.controller';
 import { StakingController } from './api/controllers/staking.controller';
-import { WithdrawalController } from './api/controllers/withdrawal.controller';
+import { StakingWithdrawalController } from './api/controllers/staking-withdrawal.controller';
 import { StakingFactory } from './application/factories/staking.factory';
 import { StakingBlockchainAddressRepository } from './application/repositories/staking-blockchain-address.repository';
 import { StakingRepository } from './application/repositories/staking.repository';
@@ -23,17 +23,32 @@ import { MasternodeRepository } from '../../integration/masternode/application/r
 import { StakingAuthorizeService } from './infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from './infrastructure/staking-kyc-check.service';
 import { IntegrationModule } from 'src/integration/integration.module';
+import { WithdrawalService } from './application/services/withdrawal.service';
+import { WithdrawalRepository } from './application/repositories/withdrawal.repository';
+import { WithdrawalController } from './api/controllers/withdrawal.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([StakingRepository, StakingBlockchainAddressRepository, MasternodeRepository]),
+    TypeOrmModule.forFeature([
+      StakingRepository,
+      StakingBlockchainAddressRepository,
+      MasternodeRepository,
+      WithdrawalRepository,
+    ]),
     BlockchainModule,
     SharedModule,
     UserModule,
     PayInModule,
     IntegrationModule,
   ],
-  controllers: [StakingController, DepositController, RewardController, WithdrawalController, MasternodeController],
+  controllers: [
+    StakingController,
+    DepositController,
+    RewardController,
+    StakingWithdrawalController,
+    WithdrawalController,
+    MasternodeController,
+  ],
   providers: [
     StakingService,
     StakingDepositService,
@@ -45,6 +60,7 @@ import { IntegrationModule } from 'src/integration/integration.module';
     StakingAuthorizeService,
     StakingKycCheckService,
     LiquidityManagementService,
+    WithdrawalService,
   ],
   exports: [StakingService],
 })
