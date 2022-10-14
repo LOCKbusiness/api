@@ -13,7 +13,7 @@ export class WithdrawalService {
 
   private toOutputDto(input: Withdrawal[]): WithdrawalOutputDto[] {
     return input.map((w) => {
-      return { signMessage: w.signMessage, signature: w.signature, asset: w.asset, amount: w.amount };
+      return { id: w.id, signMessage: w.signMessage, signature: w.signature, asset: w.asset, amount: w.amount };
     });
   }
 }

@@ -27,4 +27,5 @@ export interface ResignMasternodeData extends MasternodeBaseData {
 export interface SendFromLiqToCustomerData {
   to: string;
   amount: BigNumber;
+  withdrawalId: number;
 }
