@@ -173,5 +173,19 @@
       "form": []
     },
     "tests": []
+  },
+  {
+    "_id": "99859688-ff49-4b7d-88a1-0f24f1daa32e",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "e24ed742-1678-4ac6-91c0-7695fa853084",
+    "name": "Pending",
+    "url": "{{url}}/v1/withdrawal/pending",
+    "method": "GET",
+    "sortNum": 150000,
+    "created": "2022-10-14T11:00:49.489Z",
+    "modified": "2022-10-14T11:01:00.706Z",
+    "headers": [],
+    "params": [],
+    "tests": []
   }
 ]

@@ -9,7 +9,7 @@ import { SignedTransactionDto } from '../../application/dto/signed-transaction.d
 import { TransactionDto } from '../../application/dto/transaction.dto';
 import { TransactionService } from '../../application/services/transaction.service';
 
-@ApiTags('transaction')
+@ApiTags('Transaction')
 @Controller('transaction')
 export class TransactionController {
   constructor(private readonly transactionService: TransactionService) {}
