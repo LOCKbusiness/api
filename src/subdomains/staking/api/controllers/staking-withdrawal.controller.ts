@@ -12,7 +12,7 @@ import { WithdrawalDraftOutputDto } from '../../application/dto/output/withdrawa
 import { CreateWithdrawalDraftDto } from '../../application/dto/input/create-withdrawal-draft.dto';
 import { ChangeWithdrawalAmountDto } from '../../application/dto/input/change-withdrawal-amount.dto';
 
-@ApiTags('withdrawal')
+@ApiTags('Withdrawal')
 @Controller('staking/:stakingId/withdrawal')
 export class StakingWithdrawalController {
   constructor(private readonly stakingWithdrawalService: StakingWithdrawalService) {}

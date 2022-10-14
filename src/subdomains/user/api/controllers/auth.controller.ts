@@ -7,7 +7,7 @@ import { AuthResponseDto } from '../../application/dto/auth-response.dto';
 import { SignUpDto } from '../../application/dto/sign-up.dto';
 import { SignMessageDto } from '../../application/dto/sign-message.dto';
 
-@ApiTags('auth')
+@ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}

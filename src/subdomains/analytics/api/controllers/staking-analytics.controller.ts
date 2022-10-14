@@ -3,7 +3,7 @@ import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { StakingAnalyticsOutputDto } from '../../application/dto/output/staking-analytics.output.dto';
 import { StakingAnalyticsService } from '../../application/services/staking-analytics.service';
 
-@ApiTags('analytics')
+@ApiTags('Analytics')
 @Controller('analytics/staking')
 export class StakingAnalyticsController {
   constructor(private readonly stakingAnalyticsService: StakingAnalyticsService) {}
