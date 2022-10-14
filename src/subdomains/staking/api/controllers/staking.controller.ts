@@ -10,7 +10,7 @@ import { StakingOutputDto } from '../../application/dto/output/staking.output.dt
 import { SetStakingFeeDto } from '../../application/dto/input/set-staking-fee.dto';
 import { GetOrCreateStakingQuery } from '../../application/dto/input/get-staking.query';
 
-@ApiTags('staking')
+@ApiTags('Staking')
 @Controller('staking')
 export class StakingController {
   constructor(private readonly stakingService: StakingService) {}

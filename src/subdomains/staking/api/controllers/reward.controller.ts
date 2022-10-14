@@ -7,7 +7,7 @@ import { StakingRewardService } from '../../application/services/staking-reward.
 import { CreateRewardDto } from '../../application/dto/input/create-reward.dto';
 import { StakingOutputDto } from '../../application/dto/output/staking.output.dto';
 
-@ApiTags('reward')
+@ApiTags('Reward')
 @Controller('staking/:stakingId/reward')
 export class RewardController {
   constructor(private readonly stakingRewardService: StakingRewardService) {}
