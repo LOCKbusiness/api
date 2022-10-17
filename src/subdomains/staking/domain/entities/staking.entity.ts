@@ -227,12 +227,7 @@ export class Staking extends IEntity {
   }
 
   getDepositsWithoutFiatReferences(): Deposit[] {
-    return this.deposits.filter(
-      (d) =>
-        (!d.amountChf && d.amountChf !== 0) ||
-        (!d.amountEur && d.amountEur !== 0) ||
-        (!d.amountUsd && d.amountUsd !== 0),
-    );
+    return this.deposits.filter((d) => d.amountChf == null || d.amountEur == null || d.amountUsd == null);
   }
 
   getUnconfirmedDepositsAmount(): number {
@@ -254,12 +249,7 @@ export class Staking extends IEntity {
   }
 
   getWithdrawalsWithoutFiatReferences(): Withdrawal[] {
-    return this.withdrawals.filter(
-      (w) =>
-        (!w.amountChf && w.amountChf !== 0) ||
-        (!w.amountEur && w.amountEur !== 0) ||
-        (!w.amountUsd && w.amountUsd !== 0),
-    );
+    return this.withdrawals.filter((w) => w.amountChf == null || w.amountEur == null || w.amountUsd == null);
   }
 
   //*** HELPER STATIC METHODS ***//

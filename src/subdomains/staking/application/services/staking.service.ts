@@ -6,6 +6,7 @@ import { AssetService } from 'src/shared/models/asset/asset.service';
 import { Price } from 'src/shared/models/price';
 import { Util } from 'src/shared/util';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
+import { Brackets } from 'typeorm';
 import { Staking } from '../../domain/entities/staking.entity';
 import { DepositStatus, WithdrawalStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
@@ -182,26 +183,37 @@ export class StakingService {
 
   private async getStakingsWithoutFiatReferences(): Promise<StakingReference[]> {
     // not querying Stakings, because eager query is not supported, thus unsafe to fetch entire entity
-    const queryByDeposits = await this.repository
+    const stakings = await this.repository
       .createQueryBuilder('staking')
-      .innerJoin('staking.deposits', 'deposit')
-      .where('deposit.status = :depositStatus', { depositStatus: DepositStatus.CONFIRMED })
-      .andWhere('(deposit.amountEur IS NULL OR deposit.amountUsd IS NULL OR deposit.amountChf IS NULL)')
+      .leftJoin('staking.deposits', 'deposit')
+      .leftJoin('staking.withdrawals', 'withdrawal')
+      .where(
+        new Brackets((qb) => {
+          qb.where('deposit.status = :depositStatus', { depositStatus: DepositStatus.CONFIRMED }).andWhere(
+            new Brackets((qb) => {
+              qb.where('deposit.amountEur IS NULL')
+                .orWhere('deposit.amountUsd IS NULL')
+                .orWhere('deposit.amountChf IS NULL');
+            }),
+          );
+        }),
+      )
+      .orWhere(
+        new Brackets((qb) => {
+          qb.where('withdrawal.status = :withdrawalStatus', { withdrawalStatus: WithdrawalStatus.CONFIRMED }).andWhere(
+            new Brackets((qb) => {
+              qb.where('withdrawal.amountEur IS NULL')
+                .orWhere('withdrawal.amountUsd IS NULL')
+                .orWhere('withdrawal.amountChf IS NULL');
+            }),
+          );
+        }),
+      )
       .leftJoinAndSelect('staking.asset', 'asset')
       .getMany()
       .then((s) => s.map((i) => ({ stakingId: i.id, assetId: i.asset.id })));
 
-    // not querying Stakings, because eager query is not supported, thus unsafe to fetch entire entity
-    const queryByWithdrawals = await this.repository
-      .createQueryBuilder('staking')
-      .innerJoin('staking.withdrawals', 'withdrawal')
-      .where('withdrawal.status = :withdrawalStatus', { withdrawalStatus: WithdrawalStatus.CONFIRMED })
-      .andWhere('(withdrawal.amountEur IS NULL OR withdrawal.amountUsd IS NULL OR withdrawal.amountChf IS NULL)')
-      .leftJoinAndSelect('staking.asset', 'asset')
-      .getMany()
-      .then((s) => s.map((i) => ({ stakingId: i.id, assetId: i.asset.id })));
-
-    const stakingReferences = this.removeStakingReferencesDuplicates(queryByDeposits.concat(queryByWithdrawals));
+    const stakingReferences = this.removeStakingReferencesDuplicates(stakings);
 
     stakingReferences.length > 0 &&
       console.info(
@@ -263,12 +275,6 @@ export class StakingService {
   }
 
   private removeStakingReferencesDuplicates(stakings: StakingReference[] = []): StakingReference[] {
-    return stakings.reduce((res, curr) => {
-      const existing = res.find((r) => r.stakingId === curr.stakingId);
-
-      !existing && res.push(curr);
-
-      return res;
-    }, []);
+    return stakings.filter((item, pos, self) => self.findIndex((i) => i.stakingId === item.stakingId) === pos);
   }
 }
