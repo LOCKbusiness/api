@@ -79,7 +79,7 @@ export class MasternodeService {
       where: { owner: Not(IsNull()) },
       order: { id: 'DESC' },
     });
-    const owners = await this.masternodeOwnerService.provide(count, lastUsed.owner);
+    const owners = this.masternodeOwnerService.provide(count, lastUsed?.owner);
 
     if (owners.length !== count) {
       console.error(`Could not get enough owners, requested ${count}, returning available: ${owners.length}`);
