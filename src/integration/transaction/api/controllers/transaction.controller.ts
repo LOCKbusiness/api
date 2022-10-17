@@ -33,7 +33,7 @@ export class TransactionController {
   @Put(':id/verified')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  // @UseGuards(AuthGuard(), new RoleGuard(WalletRole.TRANSACTION_CHECKER))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.TRANSACTION_CHECKER))
   verifyTransaction(@Param('id') id: string, @Body() dto: SignatureDto) {
     this.transactionService.verified(id, dto.signature);
   }

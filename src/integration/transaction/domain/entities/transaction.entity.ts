@@ -30,9 +30,6 @@ export class Transaction {
   @Column({ length: 2048, nullable: true })
   signedHex: string;
 
-  @Column({ default: false })
-  broadcasted: boolean;
-
   @Column({ nullable: true })
   invalidationReason: string;
 
@@ -51,7 +48,6 @@ export class Transaction {
   }
 
   signed(hex: string): this {
-    this.broadcasted = true;
     this.signedHex = hex;
     return this;
   }

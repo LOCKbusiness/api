@@ -6,6 +6,7 @@ import { Transaction } from '../types/transaction';
 import { Transaction as TransactionEntity } from '../../domain/entities/transaction.entity';
 import { SmartBuffer } from 'smart-buffer';
 import { TransactionRepository } from '../repositories/transaction.repository';
+import { Config } from 'src/config/config';
 
 @Injectable()
 export class TransactionService {
@@ -55,6 +56,8 @@ export class TransactionService {
 
     const promise = new Promise<string>((resolve, reject) => {
       this.transactions.set(tx.id, { signed: resolve, invalidated: reject });
+
+      setTimeout(() => reject('Timeout'), Config.staking.signature.timeout);
     });
 
     if (tx.signedHex) {
