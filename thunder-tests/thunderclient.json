@@ -154,5 +154,38 @@
       "form": []
     },
     "tests": []
+  },
+  {
+    "_id": "c6d676ff-2b07-4cdb-af3c-6215de41b28f",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "731f1cc7-0880-423b-9bd4-6c9fa8edb82c",
+    "name": "invalidated",
+    "url": "{{url}}/v1/transaction/7235bb94-c4c4-49f3-b45f-e3e0ef940664/invalidated",
+    "method": "PUT",
+    "sortNum": 140000,
+    "created": "2022-10-13T15:06:37.043Z",
+    "modified": "2022-10-13T15:06:57.914Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"reason\": \"some reason\"\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "99859688-ff49-4b7d-88a1-0f24f1daa32e",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "e24ed742-1678-4ac6-91c0-7695fa853084",
+    "name": "Pending",
+    "url": "{{url}}/v1/withdrawal/pending",
+    "method": "GET",
+    "sortNum": 150000,
+    "created": "2022-10-14T11:00:49.489Z",
+    "modified": "2022-10-14T11:01:00.706Z",
+    "headers": [],
+    "params": [],
+    "tests": []
   }
 ]

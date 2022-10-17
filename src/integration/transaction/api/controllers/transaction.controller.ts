@@ -3,12 +3,13 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
+import { InvalidateDto } from '../../application/dto/invalidate.dto';
 import { SignatureDto } from '../../application/dto/signature.dto';
 import { SignedTransactionDto } from '../../application/dto/signed-transaction.dto';
 import { TransactionDto } from '../../application/dto/transaction.dto';
 import { TransactionService } from '../../application/services/transaction.service';
 
-@ApiTags('transaction')
+@ApiTags('Transaction')
 @Controller('transaction')
 export class TransactionController {
   constructor(private readonly transactionService: TransactionService) {}
@@ -35,6 +36,14 @@ export class TransactionController {
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.TRANSACTION_CHECKER))
   verifyTransaction(@Param('id') id: string, @Body() dto: SignatureDto) {
     this.transactionService.verified(id, dto.signature);
+  }
+
+  @Put(':id/invalidated')
+  @ApiBearerAuth()
+  @ApiExcludeEndpoint()
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.TRANSACTION_CHECKER))
+  invalidateTransaction(@Param('id') id: string, @Body() dto: InvalidateDto) {
+    this.transactionService.invalidated(id, dto.reason);
   }
 
   @Put(':id/signed')

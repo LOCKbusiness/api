@@ -16,7 +16,8 @@ import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 
 @Injectable()
 export class LiquidityManagementService {
-  private readonly lock = new Lock(1800);
+  private readonly lockWithdrawals = new Lock(1800);
+  private readonly lockMasternodes = new Lock(1800);
 
   private client: WhaleClient;
 
@@ -30,18 +31,30 @@ export class LiquidityManagementService {
   }
 
   @Interval(300000)
-  async doTasks() {
-    if (!this.lock.acquire()) return;
+  async doWithdrawalsTasks() {
+    if (!this.lockWithdrawals.acquire()) return;
+
+    try {
+      await this.prepareWithdrawals();
+    } catch (e) {
+      console.error(`Exception during withdrawals cronjob: ${e}`);
+    }
+
+    this.lockWithdrawals.release();
+  }
+
+  @Interval(300000)
+  async doMasternodesTasks() {
+    if (!this.lockMasternodes.acquire()) return;
 
     try {
       await this.checkMasternodesInProcess();
       await this.checkLiquidity();
-      await this.prepareWithdrawals();
     } catch (e) {
-      console.error(`Exception during liquidity check: ${e}`);
+      console.error(`Exception during masternodes cronjob: ${e}`);
     }
 
-    this.lock.release();
+    this.lockMasternodes.release();
   }
 
   async checkLiquidity(): Promise<void> {
@@ -200,7 +213,13 @@ export class LiquidityManagementService {
           },
           updateFunc: (masternode: Masternode, txId: string) => {
             console.info(`Sending collateral to masternode\n\towner: ${masternode.owner}\n\twith tx: ${txId}`);
-            return this.masternodeService.enabling(masternode.id);
+            return this.masternodeService.enabling(
+              masternode.id,
+              masternode.owner,
+              masternode.ownerWallet,
+              masternode.timeLock,
+              masternode.accountIndex,
+            );
           },
         };
       case MasternodeState.ENABLING:

@@ -7,7 +7,7 @@ import { UserModule } from '../user/user.module';
 import { DepositController } from './api/controllers/deposit.controller';
 import { RewardController } from './api/controllers/reward.controller';
 import { StakingController } from './api/controllers/staking.controller';
-import { WithdrawalController } from './api/controllers/withdrawal.controller';
+import { StakingWithdrawalController } from './api/controllers/staking-withdrawal.controller';
 import { StakingFactory } from './application/factories/staking.factory';
 import { StakingBlockchainAddressRepository } from './application/repositories/staking-blockchain-address.repository';
 import { StakingRepository } from './application/repositories/staking.repository';
@@ -24,17 +24,31 @@ import { IntegrationModule } from 'src/integration/integration.module';
 import { CoinGeckoService } from './infrastructure/coin-gecko.service';
 import { FIAT_PRICE_PROVIDER } from './application/interfaces';
 import { AssetStakingMetadataRepository } from './application/repositories/asset-staking-metadata.repository';
+import { WithdrawalService } from './application/services/withdrawal.service';
+import { WithdrawalRepository } from './application/repositories/withdrawal.repository';
+import { WithdrawalController } from './api/controllers/withdrawal.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([StakingRepository, StakingBlockchainAddressRepository, AssetStakingMetadataRepository]),
+    TypeOrmModule.forFeature([
+      StakingRepository,
+      StakingBlockchainAddressRepository,
+      WithdrawalRepository,
+      AssetStakingMetadataRepository,
+    ]),
     BlockchainModule,
     SharedModule,
     UserModule,
     PayInModule,
     IntegrationModule,
   ],
-  controllers: [StakingController, DepositController, RewardController, WithdrawalController],
+  controllers: [
+    StakingController,
+    DepositController,
+    RewardController,
+    StakingWithdrawalController,
+    WithdrawalController,
+  ],
   providers: [
     {
       provide: FIAT_PRICE_PROVIDER,
@@ -50,6 +64,7 @@ import { AssetStakingMetadataRepository } from './application/repositories/asset
     StakingAuthorizeService,
     StakingKycCheckService,
     LiquidityManagementService,
+    WithdrawalService,
   ],
   exports: [StakingService],
 })

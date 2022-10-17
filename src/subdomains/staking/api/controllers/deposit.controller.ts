@@ -9,7 +9,7 @@ import { StakingDepositService } from '../../application/services/staking-deposi
 import { CreateDepositDto } from '../../application/dto/input/create-deposit.dto';
 import { StakingOutputDto } from '../../application/dto/output/staking.output.dto';
 
-@ApiTags('deposit')
+@ApiTags('Deposit')
 @Controller('staking/:stakingId/deposit')
 export class DepositController {
   constructor(private readonly stakingDepositService: StakingDepositService) {}

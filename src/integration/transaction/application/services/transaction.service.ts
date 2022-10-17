@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { randomUUID } from 'crypto';
+import { CTransactionSegWit } from '@defichain/jellyfish-transaction';
 import { RawTxDto } from 'src/blockchain/ain/jellyfish/dto/raw-tx.dto';
 import { TransactionDto } from '../dto/transaction.dto';
 import { Transaction } from '../types/transaction';
 import { TxCheck } from '../util/tx-check';
+import { SmartBuffer } from 'smart-buffer';
 
 @Injectable()
 export class TransactionService {
@@ -27,6 +28,14 @@ export class TransactionService {
     tx.verifierSignature = signature;
   }
 
+  invalidated(id: string, reason?: string) {
+    const tx = this.transactions.get(id);
+    if (!tx) throw new NotFoundException('Transaction not found');
+    console.warn(`Invalidated ${id} with reason: ${reason}`);
+    this.transactions.delete(tx.id);
+    tx.invalidated();
+  }
+
   signed(id: string, hex: string) {
     const tx = this.transactions.get(id);
     if (!tx) throw new NotFoundException('Transaction not found');
@@ -36,15 +45,19 @@ export class TransactionService {
 
   async sign(rawTx: RawTxDto, signature: string, payload?: any): Promise<string> {
     const dto: TransactionDto = {
-      id: randomUUID(),
+      id: this.receiveIdFor(rawTx),
       issuerSignature: signature,
       rawTx,
       payload,
     };
 
-    return new Promise((resolve) => {
-      this.transactions.set(dto.id, { ...dto, signed: resolve });
+    return new Promise((resolve, reject) => {
+      this.transactions.set(dto.id, { ...dto, signed: resolve, invalidated: reject });
     });
+  }
+
+  private receiveIdFor(rawTx: RawTxDto): string {
+    return new CTransactionSegWit(SmartBuffer.fromBuffer(Buffer.from(rawTx.hex, 'hex'))).txId;
   }
 
   private select(filter: (tx: TransactionDto) => boolean): TransactionDto[] {

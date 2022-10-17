@@ -14,7 +14,7 @@ import { KycDto } from '../../application/dto/kyc.dto';
 import { UserService } from '../../application/services/user.service';
 import { KycResult } from '../../domain/enums';
 
-@ApiTags('kyc')
+@ApiTags('Kyc')
 @Controller('kyc')
 export class KycController {
   constructor(

@@ -8,7 +8,7 @@ import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { WalletService } from '../../application/services/wallet.service';
 import { WalletDetailedDto } from '../../application/dto/wallet-detailed.dto';
 
-@ApiTags('user')
+@ApiTags('User')
 @Controller('user')
 export class UserController {
   constructor(private readonly walletService: WalletService) {}

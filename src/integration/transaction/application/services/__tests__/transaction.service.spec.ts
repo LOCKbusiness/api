@@ -8,7 +8,9 @@ enum TestSetup {
   CREATE_MASTERNODE,
 }
 
-const rawTxCreateMasternode = createCustomRawTxDto({ hex: 'create-masternode' });
+const hex =
+  '04000000000101a4f9f60d4a61750d4b75e3c21dd203ed38ce4077e2e29dd7c094a21f5ce9be230000000000ffffffff0200ca9a3b000000001e6a1c4466547843018d0781d01e84fa086c16d7e74729eec3831ef17600000000204aa9d10100001600143faf3d07e5fa516122195bacd67a7436180b75020002148d0781d01e84fa086c16d7e74729eec3831ef176143faf3d07e5fa516122195bacd67a7436180b750200000000';
+const rawTxCreateMasternode = createCustomRawTxDto({ hex });
 
 describe('TransactionService', () => {
   let service: TransactionService;
@@ -23,10 +25,12 @@ describe('TransactionService', () => {
         break;
       case TestSetup.CREATE_MASTERNODE:
         const masternode = createDefaultMasternode();
-        await service.sign(rawTxCreateMasternode, 'create-masternode-signed-message', {
-          ownerWallet: masternode.ownerWallet,
-          accountIndex: masternode.accountIndex,
-        });
+        try {
+          await service.sign(rawTxCreateMasternode, 'create-masternode-signed-message', {
+            ownerWallet: masternode.ownerWallet,
+            accountIndex: masternode.accountIndex,
+          });
+        } catch (e) {}
         break;
     }
   }
@@ -42,7 +46,7 @@ describe('TransactionService', () => {
       {
         issuerSignature: 'create-masternode-signed-message',
         rawTx: {
-          hex: 'create-masternode',
+          hex,
           scriptHex: '0',
           prevouts: [],
         },
@@ -58,6 +62,13 @@ describe('TransactionService', () => {
     setup(TestSetup.CREATE_MASTERNODE);
     const txId = service.getOpen()[0].id;
     service.verified(txId, 'verifier-signed-message');
+    expect(service.getOpen()).toStrictEqual([]);
+  });
+
+  it('should return an empty array for open, if a tx got created and invalidated', () => {
+    setup(TestSetup.CREATE_MASTERNODE);
+    const txId = service.getOpen()[0].id;
+    service.invalidated(txId, 'invalidation-reason');
     expect(service.getOpen()).toStrictEqual([]);
   });
 
@@ -88,7 +99,7 @@ describe('TransactionService', () => {
         issuerSignature: 'create-masternode-signed-message',
         verifierSignature: 'verifier-signed-message',
         rawTx: {
-          hex: 'create-masternode',
+          hex,
           scriptHex: '0',
           prevouts: [],
         },
@@ -111,6 +122,11 @@ describe('TransactionService', () => {
   it('should throw an exception (NotFoundException), if a tx can not be found on verified', () => {
     setup(TestSetup.CREATE_MASTERNODE);
     expect(() => service.verified('some-tx-which-is-not-found', 'some-signature')).toThrow(NotFoundException);
+  });
+
+  it('should throw an exception (NotFoundException), if a tx can not be found on invalidated', () => {
+    setup(TestSetup.CREATE_MASTERNODE);
+    expect(() => service.invalidated('some-tx-which-is-not-found', 'some-signed-raw-hex')).toThrow(NotFoundException);
   });
 
   it('should throw an exception (NotFoundException), if a tx can not be found on signed', () => {
