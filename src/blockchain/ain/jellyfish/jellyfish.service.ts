@@ -43,7 +43,7 @@ export class JellyfishService {
   async rawTxForCreate(masternode: Masternode): Promise<RawTxDto> {
     const network = this.getNetwork();
     const [ownerScript, ownerPubKeyHash] = RawTxUtil.parseAddress(masternode.owner, network);
-    const [operatorScript, operatorPubKeyHash] = RawTxUtil.parseOperatorPubKeyHash(masternode.operator, network);
+    const [, operatorPubKeyHash] = RawTxUtil.parseOperatorPubKeyHash(masternode.operator, network);
 
     const expectedAmount = new BigNumber(
       Config.masternode.collateral + Config.masternode.creationFee + Config.masternode.fee,
@@ -59,8 +59,8 @@ export class JellyfishService {
 
     const witnesses = [
       RawTxUtil.createWitness([
-        RawTxUtil.createWitnessScript(operatorScript, operatorPubKeyHash),
-        RawTxUtil.createWitnessScript(ownerScript, ownerPubKeyHash),
+        RawTxUtil.createWitnessScript(operatorPubKeyHash),
+        RawTxUtil.createWitnessScript(ownerPubKeyHash),
       ]),
     ];
 
@@ -76,8 +76,8 @@ export class JellyfishService {
   async rawTxForResign(masternode: Masternode): Promise<RawTxDto> {
     const network = this.getNetwork();
 
-    const [ownerScript, ownerPubKeyHash] = RawTxUtil.parseAddress(masternode.owner, network);
-    const [operatorScript, operatorPubKeyHash] = RawTxUtil.parseOperatorPubKeyHash(masternode.operator, network);
+    const [, ownerPubKeyHash] = RawTxUtil.parseAddress(masternode.owner, network);
+    const [, operatorPubKeyHash] = RawTxUtil.parseOperatorPubKeyHash(masternode.operator, network);
 
     const expectedAmount = new BigNumber(Config.masternode.resignFee);
     const unspent = await this.whaleClient.getUnspent(masternode.owner, expectedAmount);
@@ -88,8 +88,8 @@ export class JellyfishService {
 
     const witnesses = [
       RawTxUtil.createWitness([
-        RawTxUtil.createWitnessScript(operatorScript, operatorPubKeyHash),
-        RawTxUtil.createWitnessScript(ownerScript, ownerPubKeyHash),
+        RawTxUtil.createWitnessScript(operatorPubKeyHash),
+        RawTxUtil.createWitnessScript(ownerPubKeyHash),
       ]),
     ];
 
@@ -127,7 +127,7 @@ export class JellyfishService {
       const change = RawTxUtil.createVoutReturn(fromScript, total.minus(amount));
       vouts.push(change);
     }
-    const fromWitness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(fromScript, fromPubKeyHash)]);
+    const fromWitness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(fromPubKeyHash)]);
     const witnesses = new Array(vins.length).fill(fromWitness);
 
     const tx = RawTxUtil.createTxSegWit(vins, vouts, witnesses);
