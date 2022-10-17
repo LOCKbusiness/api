@@ -213,7 +213,13 @@ export class LiquidityManagementService {
           },
           updateFunc: (masternode: Masternode, txId: string) => {
             console.info(`Sending collateral to masternode\n\towner: ${masternode.owner}\n\twith tx: ${txId}`);
-            return this.masternodeService.enabling(masternode.id);
+            return this.masternodeService.enabling(
+              masternode.id,
+              masternode.owner,
+              masternode.ownerWallet,
+              masternode.timeLock,
+              masternode.accountIndex,
+            );
           },
         };
       case MasternodeState.ENABLING:

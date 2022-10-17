@@ -12,7 +12,7 @@ import { HttpError, HttpService } from 'src/shared/services/http.service';
 import { SettingService } from 'src/shared/services/setting.service';
 import { In, IsNull, LessThan, MoreThan, Not } from 'typeorm';
 import { Masternode } from '../../domain/entities/masternode.entity';
-import { MasternodeState } from '../../../../subdomains/staking/domain/enums';
+import { MasternodeState, MasternodeTimeLock } from '../../../../subdomains/staking/domain/enums';
 import { MasternodeState as BlockchainMasternodeState } from '@defichain/jellyfish-api-core/dist/category/masternode';
 import { MasternodeRepository } from '../repositories/masternode.repository';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
@@ -157,11 +157,21 @@ export class MasternodeService {
     }
   }
 
-  async enabling(id: number): Promise<void> {
+  async enabling(
+    id: number,
+    owner: string,
+    ownerWallet: string,
+    timeLock: MasternodeTimeLock,
+    accountIndex: number,
+  ): Promise<void> {
     const masternode = await this.masternodeRepo.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
 
     masternode.state = MasternodeState.ENABLING;
+    masternode.owner = owner;
+    masternode.ownerWallet = ownerWallet;
+    masternode.timeLock = timeLock;
+    masternode.accountIndex = accountIndex;
 
     await this.masternodeRepo.save(masternode);
   }
