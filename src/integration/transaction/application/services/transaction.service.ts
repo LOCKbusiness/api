@@ -1,66 +1,83 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CTransactionSegWit } from '@defichain/jellyfish-transaction';
 import { RawTxDto } from 'src/blockchain/ain/jellyfish/dto/raw-tx.dto';
-import { TransactionDto } from '../dto/transaction.dto';
+import { TransactionOutputDto } from '../dto/transaction.dto';
 import { Transaction } from '../types/transaction';
-import { TxCheck } from '../util/tx-check';
+import { Transaction as TransactionEntity } from '../../domain/entities/transaction.entity';
 import { SmartBuffer } from 'smart-buffer';
+import { TransactionRepository } from '../repositories/transaction.repository';
 
 @Injectable()
 export class TransactionService {
   private readonly transactions: Map<string, Transaction>;
 
-  constructor() {
+  constructor(private readonly repository: TransactionRepository) {
     this.transactions = new Map<string, Transaction>();
   }
 
-  getOpen(): TransactionDto[] {
-    return this.select((tx: TransactionDto) => TxCheck.isOpen(tx));
+  async getOpen(): Promise<TransactionOutputDto[]> {
+    return this.repository.getOpen().then(this.toDto);
   }
 
-  getVerified(): TransactionDto[] {
-    return this.select((tx: TransactionDto) => TxCheck.isVerified(tx));
+  async getVerified(): Promise<TransactionOutputDto[]> {
+    return this.repository.getVerified().then(this.toDto);
   }
 
-  verified(id: string, signature: string) {
-    const tx = this.transactions.get(id);
+  async verified(id: string, signature: string) {
+    const tx = await this.repository.findOne(id);
     if (!tx) throw new NotFoundException('Transaction not found');
-    tx.verifierSignature = signature;
+    this.repository.save(tx.verified(signature));
   }
 
-  invalidated(id: string, reason?: string) {
-    const tx = this.transactions.get(id);
-    if (!tx) throw new NotFoundException('Transaction not found');
-    console.warn(`Invalidated ${id} with reason: ${reason}`);
-    this.transactions.delete(tx.id);
-    tx.invalidated();
-  }
-
-  signed(id: string, hex: string) {
-    const tx = this.transactions.get(id);
+  async invalidated(id: string, reason?: string) {
+    const tx = await this.repository.findOne(id);
+    const txPromise = this.transactions.get(tx.id);
     if (!tx) throw new NotFoundException('Transaction not found');
     this.transactions.delete(tx.id);
-    tx.signed(hex);
+    txPromise?.invalidated();
+    this.repository.save(tx.invalidated(reason));
+  }
+
+  async signed(id: string, hex: string) {
+    const tx = await this.repository.findOne(id);
+    const txPromise = this.transactions.get(tx.id);
+    if (!tx) throw new NotFoundException('Transaction not found');
+    this.transactions.delete(tx.id);
+    txPromise?.signed(hex);
+    this.repository.save(tx.signed(hex));
   }
 
   async sign(rawTx: RawTxDto, signature: string, payload?: any): Promise<string> {
-    const dto: TransactionDto = {
-      id: this.receiveIdFor(rawTx),
-      issuerSignature: signature,
-      rawTx,
-      payload,
-    };
+    const id = this.receiveIdFor(rawTx);
+    await this.repository.save(TransactionEntity.create(id, rawTx, payload, signature));
 
-    return new Promise((resolve, reject) => {
-      this.transactions.set(dto.id, { ...dto, signed: resolve, invalidated: reject });
+    const tx = await this.repository.findOne(id);
+
+    const promise = new Promise<string>((resolve, reject) => {
+      this.transactions.set(tx.id, { signed: resolve, invalidated: reject });
     });
+
+    if (tx.signedHex) {
+      const txPromise = this.transactions.get(tx.id);
+      txPromise.signed(tx.signedHex);
+    }
+
+    return promise;
   }
 
   private receiveIdFor(rawTx: RawTxDto): string {
     return new CTransactionSegWit(SmartBuffer.fromBuffer(Buffer.from(rawTx.hex, 'hex'))).txId;
   }
 
-  private select(filter: (tx: TransactionDto) => boolean): TransactionDto[] {
-    return Array.from(this.transactions.values()).filter(filter);
+  private toDto(transactions: TransactionEntity[]): TransactionOutputDto[] {
+    return transactions.map((t) => {
+      return {
+        id: t.id,
+        issuerSignature: t.issuerSignature,
+        verifierSignature: t.verifierSignature,
+        rawTx: JSON.parse(t.rawTx) as RawTxDto,
+        payload: JSON.parse(t.payload),
+      };
+    });
   }
 }
