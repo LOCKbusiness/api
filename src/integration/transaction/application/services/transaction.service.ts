@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CTransactionSegWit } from '@defichain/jellyfish-transaction';
 import { RawTxDto } from 'src/blockchain/ain/jellyfish/dto/raw-tx.dto';
-import { TransactionOutputDto } from '../dto/transaction.dto';
+import { TransactionOutputDto } from '../dto/transaction.output.dto';
 import { Transaction } from '../types/transaction';
 import { Transaction as TransactionEntity } from '../../domain/entities/transaction.entity';
 import { SmartBuffer } from 'smart-buffer';
@@ -27,45 +27,42 @@ export class TransactionService {
   async verified(id: string, signature: string) {
     const tx = await this.repository.findOne(id);
     if (!tx) throw new NotFoundException('Transaction not found');
-    this.repository.save(tx.verified(signature));
+    await this.repository.save(tx.verified(signature));
   }
 
   async invalidated(id: string, reason?: string) {
     const tx = await this.repository.findOne(id);
-    const txPromise = this.transactions.get(tx.id);
     if (!tx) throw new NotFoundException('Transaction not found');
+    await this.repository.save(tx.invalidated(reason));
+
+    const txPromise = this.transactions.get(tx.id);
     this.transactions.delete(tx.id);
     txPromise?.invalidated();
-    this.repository.save(tx.invalidated(reason));
   }
 
   async signed(id: string, hex: string) {
     const tx = await this.repository.findOne(id);
-    const txPromise = this.transactions.get(tx.id);
     if (!tx) throw new NotFoundException('Transaction not found');
+    await this.repository.save(tx.signed(hex));
+
+    const txPromise = this.transactions.get(tx.id);
     this.transactions.delete(tx.id);
     txPromise?.signed(hex);
-    this.repository.save(tx.signed(hex));
   }
 
   async sign(rawTx: RawTxDto, signature: string, payload?: any): Promise<string> {
     const id = this.receiveIdFor(rawTx);
-    await this.repository.save(TransactionEntity.create(id, rawTx, payload, signature));
 
     const tx = await this.repository.findOne(id);
+    if (tx.signedHex) return Promise.resolve(tx.signedHex);
 
-    const promise = new Promise<string>((resolve, reject) => {
+    await this.repository.save(TransactionEntity.create(id, rawTx, payload, signature));
+
+    return new Promise<string>((resolve, reject) => {
       this.transactions.set(tx.id, { signed: resolve, invalidated: reject });
 
       setTimeout(() => reject('Timeout'), Config.staking.signature.timeout);
     });
-
-    if (tx.signedHex) {
-      const txPromise = this.transactions.get(tx.id);
-      txPromise.signed(tx.signedHex);
-    }
-
-    return promise;
   }
 
   private receiveIdFor(rawTx: RawTxDto): string {
