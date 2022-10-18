@@ -54,7 +54,7 @@ export class TransactionService {
     const id = this.receiveIdFor(rawTx);
 
     const tx = await this.repository.findOne(id);
-    if (tx.signedHex) return Promise.resolve(tx.signedHex);
+    if (tx && tx.signedHex) return Promise.resolve(tx.signedHex);
 
     await this.repository.save(TransactionEntity.create(id, rawTx, payload, signature));
 
