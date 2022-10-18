@@ -24,7 +24,6 @@ import { IntegrationModule } from 'src/integration/integration.module';
 import { CoinGeckoService } from './infrastructure/coin-gecko.service';
 import { FIAT_PRICE_PROVIDER } from './application/interfaces';
 import { AssetStakingMetadataRepository } from './application/repositories/asset-staking-metadata.repository';
-import { WithdrawalService } from './application/services/withdrawal.service';
 import { WithdrawalRepository } from './application/repositories/withdrawal.repository';
 import { WithdrawalController } from './api/controllers/withdrawal.controller';
 
@@ -64,7 +63,6 @@ import { WithdrawalController } from './api/controllers/withdrawal.controller';
     StakingAuthorizeService,
     StakingKycCheckService,
     LiquidityManagementService,
-    WithdrawalService,
   ],
   exports: [StakingService],
 })
