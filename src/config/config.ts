@@ -126,6 +126,12 @@ export class Configuration {
     aprPeriod: 28, // days
   };
 
+  priceProviders = {
+    coinGecko: {
+      baseUrl: 'https://api.coingecko.com/api/v3',
+    },
+  };
+
   masternode = {
     collateral: 20000,
     fee: 10,

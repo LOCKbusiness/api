@@ -1,6 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
+import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { IEntity } from 'src/shared/models/entity';
+import { Price } from 'src/shared/models/price';
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { DepositStatus } from '../enums';
 import { Staking } from './staking.entity';
@@ -24,6 +26,15 @@ export class Deposit extends IEntity {
 
   @Column({ nullable: true })
   forwardTxId: string;
+
+  @Column({ type: 'float', nullable: true, default: null })
+  amountEur: number;
+
+  @Column({ type: 'float', nullable: true, default: null })
+  amountUsd: number;
+
+  @Column({ type: 'float', nullable: true, default: null })
+  amountChf: number;
 
   //*** FACTORY METHODS ***//
 
@@ -57,5 +68,13 @@ export class Deposit extends IEntity {
 
     this.amount = amount;
     this.status = DepositStatus.PENDING;
+  }
+
+  calculateFiatReferences(prices: Price[]): this {
+    this.amountChf = Staking.calculateFiatReferenceAmount(Fiat.CHF, this.asset.name, this.amount, prices);
+    this.amountUsd = Staking.calculateFiatReferenceAmount(Fiat.USD, this.asset.name, this.amount, prices);
+    this.amountEur = Staking.calculateFiatReferenceAmount(Fiat.EUR, this.asset.name, this.amount, prices);
+
+    return this;
   }
 }

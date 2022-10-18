@@ -18,12 +18,12 @@ import { StakingRewardService } from './application/services/staking-reward.serv
 import { StakingWithdrawalService } from './application/services/staking-withdrawal.service';
 import { StakingService } from './application/services/staking.service';
 import { StakingDeFiChainService } from './infrastructure/staking-defichain.service';
-import { MasternodeController } from '../../integration/masternode/api/controllers/masternode.controller';
-import { MasternodeRepository } from '../../integration/masternode/application/repositories/masternode.repository';
 import { StakingAuthorizeService } from './infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from './infrastructure/staking-kyc-check.service';
 import { IntegrationModule } from 'src/integration/integration.module';
-import { WithdrawalService } from './application/services/withdrawal.service';
+import { CoinGeckoService } from './infrastructure/coin-gecko.service';
+import { FIAT_PRICE_PROVIDER } from './application/interfaces';
+import { AssetStakingMetadataRepository } from './application/repositories/asset-staking-metadata.repository';
 import { WithdrawalRepository } from './application/repositories/withdrawal.repository';
 import { WithdrawalController } from './api/controllers/withdrawal.controller';
 
@@ -32,8 +32,8 @@ import { WithdrawalController } from './api/controllers/withdrawal.controller';
     TypeOrmModule.forFeature([
       StakingRepository,
       StakingBlockchainAddressRepository,
-      MasternodeRepository,
       WithdrawalRepository,
+      AssetStakingMetadataRepository,
     ]),
     BlockchainModule,
     SharedModule,
@@ -47,9 +47,12 @@ import { WithdrawalController } from './api/controllers/withdrawal.controller';
     RewardController,
     StakingWithdrawalController,
     WithdrawalController,
-    MasternodeController,
   ],
   providers: [
+    {
+      provide: FIAT_PRICE_PROVIDER,
+      useClass: CoinGeckoService,
+    },
     StakingService,
     StakingDepositService,
     StakingDeFiChainService,
@@ -60,7 +63,6 @@ import { WithdrawalController } from './api/controllers/withdrawal.controller';
     StakingAuthorizeService,
     StakingKycCheckService,
     LiquidityManagementService,
-    WithdrawalService,
   ],
   exports: [StakingService],
 })

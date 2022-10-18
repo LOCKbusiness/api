@@ -9,6 +9,8 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Util } from 'src/shared/util';
 import { StakingBlockchainAddress } from './staking-blockchain-address.entity';
 import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wallet-blockchain-address.entity';
+import { Fiat } from 'src/shared/enums/fiat.enum';
+import { Price } from 'src/shared/models/price';
 
 @Entity()
 export class Staking extends IEntity {
@@ -176,6 +178,16 @@ export class Staking extends IEntity {
     return addresses.every((a) => a === this.withdrawalAddress.address);
   }
 
+  calculateFiatReferences(prices: Price[]): this {
+    const deposits = this.getDepositsWithoutFiatReferences();
+    const withdrawals = this.getWithdrawalsWithoutFiatReferences();
+
+    deposits.forEach((d) => d.calculateFiatReferences(prices));
+    withdrawals.forEach((w) => w.calculateFiatReferences(prices));
+
+    return this;
+  }
+
   //*** GETTERS ***//
 
   getWithdrawal(withdrawalId: number): Withdrawal {
@@ -214,6 +226,10 @@ export class Staking extends IEntity {
     return this.getDepositsByStatus(DepositStatus.PENDING);
   }
 
+  getDepositsWithoutFiatReferences(): Deposit[] {
+    return this.deposits.filter((d) => d.amountChf == null || d.amountEur == null || d.amountUsd == null);
+  }
+
   getUnconfirmedDepositsAmount(): number {
     const unconfirmedDeposits = this.getDepositsByStatus([DepositStatus.OPEN, DepositStatus.PENDING]);
 
@@ -230,6 +246,26 @@ export class Staking extends IEntity {
 
   getPayingOutWithdrawals(): Withdrawal[] {
     return this.getWithdrawalsByStatus(WithdrawalStatus.PAYING_OUT);
+  }
+
+  getWithdrawalsWithoutFiatReferences(): Withdrawal[] {
+    return this.withdrawals.filter((w) => w.amountChf == null || w.amountEur == null || w.amountUsd == null);
+  }
+
+  //*** HELPER STATIC METHODS ***//
+
+  static calculateFiatReferenceAmount(fiatName: Fiat, assetName: string, assetAmount: number, prices: Price[]): number {
+    const price = prices.find((p) => p.source === fiatName && p.target === assetName);
+
+    if (!price) {
+      throw new Error(`Cannot calculate reference Fiat amount, ${assetName}/${fiatName} price is missing`);
+    }
+
+    if (!price.price) {
+      throw new Error(`Cannot calculate reference Fiat amount of ${assetName}/${fiatName} , price value is 0`);
+    }
+
+    return Util.round(assetAmount * price.price, 2);
   }
 
   //*** HELPER METHODS ***//
