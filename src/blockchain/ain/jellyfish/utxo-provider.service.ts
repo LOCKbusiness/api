@@ -5,9 +5,8 @@ import { SmartBuffer } from 'smart-buffer';
 import { toOPCodes } from '@defichain/jellyfish-transaction';
 import { WhaleClient } from '../whale/whale-client';
 import { WhaleService } from '../whale/whale.service';
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
-import { QueueHandler } from 'src/shared/queue-handler';
-import { SchedulerRegistry } from '@nestjs/schedule';
+import { Injectable } from '@nestjs/common';
+import { Config } from 'src/config/config';
 
 export interface UtxoInformation {
   prevouts: Prevout[];
@@ -22,67 +21,29 @@ export class UtxoProviderService {
   private currentPrevouts = new Map<string, Prevout[]>();
 
   private whaleClient?: WhaleClient;
-  private readonly queue: QueueHandler;
 
-  constructor(whaleService: WhaleService, scheduler: SchedulerRegistry) {
-    this.queue = new QueueHandler(scheduler, 65000);
-    whaleService.getClient().subscribe((client) => {
-      this.whaleClient = client;
-      // this.queue.activate();
-    });
+  constructor(whaleService: WhaleService) {
+    whaleService.getClient().subscribe((client) => (this.whaleClient = client));
   }
 
   // --- QUEUED ENTRY POINTS --- //
   async provideExactAmount(address: string, amount: BigNumber): Promise<UtxoInformation> {
-    console.log('provideExactAmount', address, amount.toString());
-    return this.callApi(() => this.executeProvideExactAmount(address, amount));
-  }
-
-  async provideUntilAmount(address: string, amount: BigNumber): Promise<UtxoInformation> {
-    console.log('provideUntilAmount', address, amount.toString());
-    return this.callApi(() => this.executeProvideUntilAmount(address, amount));
-  }
-
-  async insertPrevout(prevout: Prevout, address: string): Promise<void> {
-    console.log('insertPrevout', prevout.txid, address);
-    return this.callApi(() => this.executeInsertPrevout(prevout, address));
-  }
-
-  // --- REAL LOGIC --- //
-  private async executeProvideExactAmount(address: string, amount: BigNumber): Promise<UtxoInformation> {
-    console.log('executeProvideExactAmount', address, amount.toString(), this.blockHeight);
     const [utxo, prevouts] = await this.retrieveUtxoAndPrevouts(address);
     return this.markUsed(address, UtxoProviderService.provideExactAmount(address, utxo, prevouts, amount));
   }
 
-  private async executeProvideUntilAmount(address: string, amount: BigNumber): Promise<UtxoInformation> {
-    console.log('executeProvideUntilAmount', address, amount.toString(), this.blockHeight);
+  async provideUntilAmount(address: string, amount: BigNumber): Promise<UtxoInformation> {
     const [utxo, prevouts] = await this.retrieveUtxoAndPrevouts(address);
     return this.markUsed(address, UtxoProviderService.provideUntilAmount(utxo, prevouts, amount));
   }
 
-  private async executeInsertPrevout(prevout: Prevout, address: string): Promise<void> {
-    console.log('executeInsertPrevout', prevout.txid, address);
+  async insertPrevout(prevout: Prevout, address: string): Promise<void> {
     const alreadyExisting = this.currentPrevouts.get(address);
     this.currentPrevouts.set(address, (alreadyExisting ?? []).concat(prevout));
   }
 
   // --- HELPER METHODS --- //
-  protected async callApi<T>(call: () => Promise<T>): Promise<T> {
-    try {
-      return await this.call(call);
-    } catch (e) {
-      console.log('Exception during api call:', e);
-      throw new ServiceUnavailableException(e);
-    }
-  }
-
-  private call<T>(call: () => Promise<T>): Promise<T> {
-    return this.queue.handle(() => call());
-  }
-
   private markUsed(address: string, utxo: UtxoInformation): UtxoInformation {
-    console.log('markUsed', address, utxo.prevouts);
     this.unspent.set(
       address,
       this.unspent.get(address)?.filter((u) => !utxo.prevouts.map((p) => p.txid).includes(u.vout.txid)),
@@ -103,16 +64,12 @@ export class UtxoProviderService {
 
   private async checkBlockAndInvalidate(address: string) {
     const forceNew = this.unspent.get(address) === undefined || this.currentPrevouts.get(address) === undefined;
-    console.log(`should force invalidations for ${address}? ${forceNew ? 'yes' : 'no'}`);
     const currentBlockHeight = await this.whaleClient.getBlockHeight();
-    console.log(`  blockHeight stored ${this.blockHeight} current ${currentBlockHeight}`);
     if (!forceNew && this.blockHeight === currentBlockHeight) return;
 
     this.blockHeight = currentBlockHeight;
 
-    console.log(`  receiving all unspent for ${address}`);
     const currentUnspent = await this.whaleClient.getAllUnspent(address);
-    console.log(`  storing unspent ${currentUnspent.map((u) => u.id)}`);
     this.unspent.set(address, currentUnspent);
     this.currentPrevouts.set(address, []);
   }
@@ -131,17 +88,18 @@ export class UtxoProviderService {
   }
 
   private static provideUntilAmount(utxo: UtxoInformation, prevouts: Prevout[], amount: BigNumber): UtxoInformation {
+    const amountPlusFeeBuffer = amount.plus(Config.blockchain.minFeeBuffer);
     let total = new BigNumber(0);
     const neededPrevouts: Prevout[] = [];
     const prevoutsToUse = UtxoProviderService.combine(utxo, prevouts);
     prevoutsToUse.forEach((p) => {
-      if (total.gte(amount)) return;
+      if (total.gte(amountPlusFeeBuffer)) return;
       neededPrevouts.push(p);
       total = total.plus(p ? p.value : 0);
     });
-    if (total.lt(amount))
+    if (total.lt(amountPlusFeeBuffer))
       throw new Error(
-        `Not enough available liquidity for requested amount.\nTotal available: ${total}\nRequested amount: ${amount}`,
+        `Not enough available liquidity for requested amount.\nTotal available: ${total}\nRequested amount: ${amountPlusFeeBuffer}`,
       );
     return { prevouts: neededPrevouts, scriptHex: utxo.scriptHex, total };
   }

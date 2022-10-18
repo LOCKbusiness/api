@@ -4,17 +4,22 @@ import { calculateFeeP2WPKH } from '@defichain/jellyfish-transaction-builder';
 import { JellyfishWallet, WalletHdNode } from '@defichain/jellyfish-wallet';
 import { Bip32Options, MnemonicHdNodeProvider } from '@defichain/jellyfish-wallet-mnemonic';
 import { WhaleWalletAccount, WhaleWalletAccountProvider } from '@defichain/whale-api-wallet';
-import { Injectable } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { SchedulerRegistry } from '@nestjs/schedule';
 import BigNumber from 'bignumber.js';
 import { Config } from 'src/config/config';
 import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
+import { QueueHandler } from 'src/shared/queue-handler';
 import { RawTxDto } from './dto/raw-tx.dto';
 import { RawTxUtil } from './raw-tx-util';
 import { UtxoProviderService } from './utxo-provider.service';
 
 @Injectable()
 export class JellyfishService {
-  constructor(private readonly utxoProvider: UtxoProviderService) {}
+  private readonly queue: QueueHandler;
+  constructor(private readonly utxoProvider: UtxoProviderService, scheduler: SchedulerRegistry) {
+    this.queue = new QueueHandler(scheduler, 65000);
+  }
 
   public createWallet(seed: string[]): JellyfishWallet<WhaleWalletAccount, WalletHdNode> {
     return new JellyfishWallet(
@@ -36,6 +41,24 @@ export class JellyfishService {
   }
 
   async rawTxForCreate(masternode: Masternode): Promise<RawTxDto> {
+    return this.call(() => this.generateRawTxForCreate(masternode));
+  }
+
+  async rawTxForResign(masternode: Masternode): Promise<RawTxDto> {
+    return this.call(() => this.generateRawTxForResign(masternode));
+  }
+
+  async rawTxForSendFromLiq(to: string, amount: BigNumber): Promise<RawTxDto> {
+    return this.call(() => this.generateRawTxForSend(Config.staking.liquidity.address, to, amount, true));
+  }
+
+  async rawTxForSendToLiq(from: string, amount: BigNumber): Promise<RawTxDto> {
+    return this.call(() => this.generateRawTxForSend(from, Config.staking.liquidity.address, amount, false));
+  }
+
+  // --- RAW TX GENERATION --- //
+
+  private async generateRawTxForCreate(masternode: Masternode): Promise<RawTxDto> {
     const network = this.getNetwork();
     const [ownerScript, ownerPubKeyHash] = RawTxUtil.parseAddress(masternode.owner, network);
     const [, operatorPubKeyHash] = RawTxUtil.parseOperatorPubKeyHash(masternode.operator, network);
@@ -67,7 +90,7 @@ export class JellyfishService {
     };
   }
 
-  async rawTxForResign(masternode: Masternode): Promise<RawTxDto> {
+  private async generateRawTxForResign(masternode: Masternode): Promise<RawTxDto> {
     const network = this.getNetwork();
 
     const [, ownerPubKeyHash] = RawTxUtil.parseAddress(masternode.owner, network);
@@ -95,15 +118,12 @@ export class JellyfishService {
     };
   }
 
-  async rawTxForSendFromLiq(to: string, amount: BigNumber): Promise<RawTxDto> {
-    return this.rawTxForSend(Config.staking.liquidity.address, to, amount, true);
-  }
-
-  async rawTxForSendToLiq(from: string, amount: BigNumber): Promise<RawTxDto> {
-    return this.rawTxForSend(from, Config.staking.liquidity.address, amount, false);
-  }
-
-  private async rawTxForSend(from: string, to: string, amount: BigNumber, useChangeOutput: boolean): Promise<RawTxDto> {
+  private async generateRawTxForSend(
+    from: string,
+    to: string,
+    amount: BigNumber,
+    useChangeOutput: boolean,
+  ): Promise<RawTxDto> {
     const network = this.getNetwork();
 
     const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from, network);
@@ -139,6 +159,11 @@ export class JellyfishService {
       scriptHex: utxo.scriptHex,
       prevouts: utxo.prevouts,
     };
+  }
+
+  // --- HELPER METHODS --- //
+  private call<T>(call: () => Promise<T>): Promise<T> {
+    return this.queue.handle(() => call());
   }
 
   private getNetwork(): Network {
