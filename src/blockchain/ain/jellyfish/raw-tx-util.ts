@@ -30,15 +30,15 @@ export class RawTxUtil {
   static parseAddress(owner: string, network: Network): [Script, string] {
     const decodedAddress = fromAddress(owner, network.name);
     const pushData: OpPushData = decodedAddress?.script.stack[1] as any;
-    if (!decodedAddress.script || !pushData.hex) throw new Error('Could not parse owner address');
+    if (!decodedAddress?.script || !pushData?.hex) throw new Error('Could not parse owner address');
     return [decodedAddress.script, pushData.hex];
   }
 
   static parseOperatorPubKeyHash(operator: string, network: Network): [Script, string] {
     const decodedAddress = fromAddress(operator, network.name);
     const pushData: OpPushData = decodedAddress?.script.stack[2] as any;
-    if (!decodedAddress.script || !pushData.hex) throw new Error('Could not parse operator address');
-    return [decodedAddress?.script, pushData?.hex];
+    if (!decodedAddress?.script || !pushData?.hex) throw new Error('Could not parse operator address');
+    return [decodedAddress.script, pushData.hex];
   }
 
   static parseUnspent(unspent: AddressUnspent[]): [Prevout[], string] {
@@ -139,8 +139,8 @@ export class RawTxUtil {
     };
   }
 
-  static createWitnessScript(script: Script, pubKeyHash: string): WitnessScript {
-    return { ...script, hex: pubKeyHash };
+  static createWitnessScript(pubKeyHash: string): WitnessScript {
+    return { hex: pubKeyHash };
   }
 
   // --- TX CREATION --- //

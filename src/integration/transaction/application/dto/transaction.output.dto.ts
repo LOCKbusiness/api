@@ -1,6 +1,6 @@
 import { RawTxDto } from 'src/blockchain/ain/jellyfish/dto/raw-tx.dto';
 
-export class TransactionDto {
+export class TransactionOutputDto {
   id: string;
   issuerSignature: string;
   verifierSignature?: string;

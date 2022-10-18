@@ -6,7 +6,7 @@ import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { InvalidateDto } from '../../application/dto/invalidate.dto';
 import { SignatureDto } from '../../application/dto/signature.dto';
 import { SignedTransactionDto } from '../../application/dto/signed-transaction.dto';
-import { TransactionDto } from '../../application/dto/transaction.dto';
+import { TransactionOutputDto } from '../../application/dto/transaction.output.dto';
 import { TransactionService } from '../../application/services/transaction.service';
 
 @ApiTags('Transaction')
@@ -18,7 +18,7 @@ export class TransactionController {
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.TRANSACTION_CHECKER))
-  getOpenTransactions(): TransactionDto[] {
+  getOpenTransactions(): Promise<TransactionOutputDto[]> {
     return this.transactionService.getOpen();
   }
 
@@ -26,7 +26,7 @@ export class TransactionController {
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.TRANSACTION_SIGNER))
-  getVerifiedTransactions(): TransactionDto[] {
+  getVerifiedTransactions(): Promise<TransactionOutputDto[]> {
     return this.transactionService.getVerified();
   }
 

@@ -1,6 +1,4 @@
-import { TransactionDto } from '../dto/transaction.dto';
-
-export type Transaction = TransactionDto & {
+export type Transaction = {
   signed: (hex: string) => void;
   invalidated: () => void;
 };

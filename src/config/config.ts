@@ -112,6 +112,7 @@ export class Configuration {
 
     signature: {
       address: process.env.API_SIGN_ADDRESS,
+      timeout: 300000, // 5 minutes
     },
 
     liquidity: {
