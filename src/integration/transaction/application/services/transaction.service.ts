@@ -56,10 +56,10 @@ export class TransactionService {
     const tx = await this.repository.findOne(id);
     if (tx && tx.signedHex) return Promise.resolve(tx.signedHex);
 
-    await this.repository.save(TransactionEntity.create(id, rawTx, payload, signature));
+    const storedTx = await this.repository.save(TransactionEntity.create(id, rawTx, payload, signature));
 
     return new Promise<string>((resolve, reject) => {
-      this.transactions.set(tx.id, { signed: resolve, invalidated: reject });
+      this.transactions.set(storedTx.id, { signed: resolve, invalidated: reject });
 
       setTimeout(() => reject('Timeout'), Config.staking.signature.timeout);
     });
