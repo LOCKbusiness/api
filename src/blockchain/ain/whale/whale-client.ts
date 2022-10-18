@@ -20,17 +20,12 @@ export class WhaleClient {
     return this.client.address.getBalance(address).then(BigNumber);
   }
 
-  async getAllUnspent(address: string): Promise<AddressUnspent[]> {
-    return await this.client.address.listTransactionUnspent(address);
+  async getBlockHeight(): Promise<number> {
+    return (await this.client.stats.get()).count.blocks;
   }
 
-  async getUnspent(address: string, expectedAmount: BigNumber): Promise<AddressUnspent[]> {
-    const unspent = await this.client.address.listTransactionUnspent(address);
-
-    const wantedUnspent = unspent.find((u) => new BigNumber(u.vout.value).isEqualTo(expectedAmount));
-
-    if (!wantedUnspent) throw new Error(`Unspent on ${address} with amount of ${expectedAmount.toString()} not found`);
-    return [wantedUnspent];
+  async getAllUnspent(address: string): Promise<AddressUnspent[]> {
+    return await this.client.address.listTransactionUnspent(address);
   }
 
   async sendRaw(hex: string): Promise<string> {

@@ -7,15 +7,12 @@ import {
   WitnessScript,
   Script,
   OP_CODES,
-  toOPCodes,
   Vin,
   Vout,
 } from '@defichain/jellyfish-transaction';
 import { fromAddress } from '@defichain/jellyfish-address';
 import { Prevout } from '@defichain/jellyfish-transaction-builder';
 import BigNumber from 'bignumber.js';
-import { SmartBuffer } from 'smart-buffer';
-import { AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
 import { Config } from 'src/config/config';
 import { MasternodeTimeLock } from 'src/subdomains/staking/domain/enums';
 
@@ -39,41 +36,6 @@ export class RawTxUtil {
     const pushData: OpPushData = decodedAddress?.script.stack[2] as any;
     if (!decodedAddress?.script || !pushData?.hex) throw new Error('Could not parse operator address');
     return [decodedAddress.script, pushData.hex];
-  }
-
-  static parseUnspent(unspent: AddressUnspent[]): [Prevout[], string] {
-    let rawScriptHex = '';
-    const prevouts = unspent.map((item): Prevout => {
-      rawScriptHex = item.script.hex;
-      return {
-        txid: item.vout.txid,
-        vout: item.vout.n,
-        value: new BigNumber(item.vout.value),
-        script: {
-          // TODO(fuxingloh): needs to refactor once jellyfish refactor this.
-          stack: toOPCodes(SmartBuffer.fromBuffer(Buffer.from(item.script.hex, 'hex'))),
-        },
-        tokenId: item.vout.tokenId ?? 0x00,
-      };
-    });
-    return [prevouts, rawScriptHex];
-  }
-
-  static parseUnspentUntilAmount(unspent: AddressUnspent[], amount: BigNumber): [Prevout[], BigNumber, string] {
-    const [prevouts, rawScriptHex] = this.parseUnspent(unspent);
-
-    let total = new BigNumber(0);
-    const neededPrevouts: Prevout[] = [];
-    prevouts.forEach((p) => {
-      if (total.gte(amount)) return;
-      neededPrevouts.push(p);
-      total = total.plus(p.value);
-    });
-    if (total.lt(amount))
-      throw new Error(
-        `Not enough available liquidity for requested amount.\nTotal available: ${total}\nRequested amount: ${amount}`,
-      );
-    return [neededPrevouts, total, rawScriptHex];
   }
 
   // --- VIN CREATION --- //

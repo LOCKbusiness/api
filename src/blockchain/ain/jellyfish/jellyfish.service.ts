@@ -8,18 +8,13 @@ import { Injectable } from '@nestjs/common';
 import BigNumber from 'bignumber.js';
 import { Config } from 'src/config/config';
 import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
-import { WhaleClient } from '../whale/whale-client';
-import { WhaleService } from '../whale/whale.service';
 import { RawTxDto } from './dto/raw-tx.dto';
 import { RawTxUtil } from './raw-tx-util';
+import { UtxoProviderService } from './utxo-provider.service';
 
 @Injectable()
 export class JellyfishService {
-  private whaleClient: WhaleClient;
-
-  constructor(whaleService: WhaleService) {
-    whaleService.getClient().subscribe((client) => (this.whaleClient = client));
-  }
+  constructor(private readonly utxoProvider: UtxoProviderService) {}
 
   public createWallet(seed: string[]): JellyfishWallet<WhaleWalletAccount, WalletHdNode> {
     return new JellyfishWallet(
@@ -48,10 +43,9 @@ export class JellyfishService {
     const expectedAmount = new BigNumber(
       Config.masternode.collateral + Config.masternode.creationFee + Config.masternode.fee,
     );
-    const unspent = await this.whaleClient.getUnspent(masternode.owner, expectedAmount);
-    const [prevouts, scriptHex] = RawTxUtil.parseUnspent(unspent);
+    const utxo = await this.utxoProvider.provideExactAmount(masternode.owner, expectedAmount);
 
-    const vins = RawTxUtil.createVins(prevouts);
+    const vins = RawTxUtil.createVins(utxo.prevouts);
     const vouts = [
       RawTxUtil.createVoutCreateMasternode(operatorPubKeyHash, masternode.timeLock),
       RawTxUtil.createVoutReturn(ownerScript, new BigNumber(Config.masternode.collateral)),
@@ -68,8 +62,8 @@ export class JellyfishService {
 
     return {
       hex: new CTransactionSegWit(tx).toHex(),
-      scriptHex,
-      prevouts,
+      scriptHex: utxo.scriptHex,
+      prevouts: utxo.prevouts,
     };
   }
 
@@ -80,10 +74,9 @@ export class JellyfishService {
     const [, operatorPubKeyHash] = RawTxUtil.parseOperatorPubKeyHash(masternode.operator, network);
 
     const expectedAmount = new BigNumber(Config.masternode.resignFee);
-    const unspent = await this.whaleClient.getUnspent(masternode.owner, expectedAmount);
-    const [prevouts, scriptHex] = RawTxUtil.parseUnspent(unspent);
+    const utxo = await this.utxoProvider.provideExactAmount(masternode.owner, expectedAmount);
 
-    const vins = RawTxUtil.createVins(prevouts);
+    const vins = RawTxUtil.createVins(utxo.prevouts);
     const vouts = [RawTxUtil.createVoutResignMasternode(masternode.creationHash)];
 
     const witnesses = [
@@ -97,8 +90,8 @@ export class JellyfishService {
 
     return {
       hex: new CTransactionSegWit(tx).toHex(),
-      scriptHex,
-      prevouts,
+      scriptHex: utxo.scriptHex,
+      prevouts: utxo.prevouts,
     };
   }
 
@@ -110,21 +103,20 @@ export class JellyfishService {
     return this.rawTxForSend(from, Config.staking.liquidity.address, amount, false);
   }
 
-  private async rawTxForSend(from: string, to: string, amount: BigNumber, sendExactAmount: boolean): Promise<RawTxDto> {
+  private async rawTxForSend(from: string, to: string, amount: BigNumber, useChangeOutput: boolean): Promise<RawTxDto> {
     const network = this.getNetwork();
 
     const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from, network);
     const [toScript] = RawTxUtil.parseAddress(to, network);
 
-    const unspent = sendExactAmount
-      ? await this.whaleClient.getAllUnspent(from)
-      : await this.whaleClient.getUnspent(from, amount);
-    const [prevouts, total, scriptHex] = RawTxUtil.parseUnspentUntilAmount(unspent, amount);
+    const utxo = useChangeOutput
+      ? await this.utxoProvider.provideUntilAmount(from, amount)
+      : await this.utxoProvider.provideExactAmount(from, amount);
 
-    const vins = RawTxUtil.createVins(prevouts);
+    const vins = RawTxUtil.createVins(utxo.prevouts);
     const vouts = [RawTxUtil.createVoutReturn(toScript, amount)];
-    if (sendExactAmount) {
-      const change = RawTxUtil.createVoutReturn(fromScript, total.minus(amount));
+    if (useChangeOutput) {
+      const change = RawTxUtil.createVoutReturn(fromScript, utxo.total?.minus(amount));
       vouts.push(change);
     }
     const fromWitness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(fromPubKeyHash)]);
@@ -135,10 +127,17 @@ export class JellyfishService {
     const lastElement = vouts[vouts.length - 1];
     lastElement.value = lastElement.value.minus(fee);
 
+    const txObj = new CTransactionSegWit(tx);
+    if (useChangeOutput) {
+      const voutIndex = txObj.vout.length - 1;
+      const change = txObj.vout[voutIndex];
+      await this.utxoProvider.insertPrevout({ ...change, txid: txObj.txId, vout: voutIndex }, from);
+    }
+
     return {
-      hex: new CTransactionSegWit(tx).toHex(),
-      scriptHex,
-      prevouts,
+      hex: txObj.toHex(),
+      scriptHex: utxo.scriptHex,
+      prevouts: utxo.prevouts,
     };
   }
 
