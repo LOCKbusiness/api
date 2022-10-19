@@ -24,8 +24,8 @@ export class Transaction {
   @Column({ nullable: true })
   verifierSignature: string;
 
-  @Column({ default: true })
-  active: boolean;
+  @Column({ default: false })
+  inBlockchain: boolean;
 
   @Column({ length: 2048, nullable: true })
   signedHex: string;
@@ -39,6 +39,7 @@ export class Transaction {
     tx.rawTx = JSON.stringify(rawTx);
     tx.issuerSignature = issuerSignature;
     tx.payload = payload && JSON.stringify(payload);
+    tx.invalidationReason = null;
     return tx;
   }
 
@@ -53,8 +54,20 @@ export class Transaction {
   }
 
   invalidated(reason?: string): this {
-    this.active = false;
+    this.inBlockchain = false;
     this.invalidationReason = reason;
+    return this;
+  }
+
+  foundOnBlockchain(): this {
+    this.inBlockchain = true;
+    this.invalidationReason = null;
+    return this;
+  }
+
+  notFoundOnBlockchain(): this {
+    this.inBlockchain = false;
+    this.invalidationReason = 'Not found';
     return this;
   }
 }

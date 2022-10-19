@@ -7,13 +7,34 @@ import { Transaction as TransactionEntity } from '../../domain/entities/transact
 import { SmartBuffer } from 'smart-buffer';
 import { TransactionRepository } from '../repositories/transaction.repository';
 import { Config } from 'src/config/config';
+import { Interval } from '@nestjs/schedule';
+import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
+import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 
 @Injectable()
 export class TransactionService {
   private readonly transactions: Map<string, Transaction>;
 
-  constructor(private readonly repository: TransactionRepository) {
+  private client: WhaleClient;
+
+  constructor(private readonly repository: TransactionRepository, whaleService: WhaleService) {
+    whaleService.getClient().subscribe((c) => (this.client = c));
     this.transactions = new Map<string, Transaction>();
+
+    this.doTransactionChecks();
+  }
+
+  @Interval(600000)
+  async doTransactionChecks() {
+    const txs = await this.repository.getUndecidedTransactions();
+    for (const tx of txs) {
+      try {
+        await this.client.getTx(tx.id);
+        await this.repository.save(tx.foundOnBlockchain());
+      } catch {
+        await this.repository.save(tx.notFoundOnBlockchain());
+      }
+    }
   }
 
   async getOpen(): Promise<TransactionOutputDto[]> {
@@ -61,7 +82,7 @@ export class TransactionService {
     return new Promise<string>((resolve, reject) => {
       this.transactions.set(storedTx.id, { signed: resolve, invalidated: reject });
 
-      setTimeout(() => reject('Timeout'), Config.staking.signature.timeout);
+      setTimeout(() => reject('Timeout'), Config.staking.timeout.signature);
     });
   }
 

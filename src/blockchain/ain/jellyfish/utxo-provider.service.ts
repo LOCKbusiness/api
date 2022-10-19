@@ -18,6 +18,7 @@ export interface UtxoInformation {
 export class UtxoProviderService {
   private blockHeight = 0;
   private unspent = new Map<string, AddressUnspent[]>();
+  private spent = new Map<string, NodeJS.Timeout>();
 
   private whaleClient?: WhaleClient;
 
@@ -38,6 +39,15 @@ export class UtxoProviderService {
 
   // --- HELPER METHODS --- //
   private markUsed(address: string, utxo: UtxoInformation): UtxoInformation {
+    utxo.prevouts.forEach((p) => {
+      const id = UtxoProviderService.idForPrevout(p);
+      this.spent.set(
+        id,
+        setTimeout(() => {
+          this.spent.delete(id);
+        }, Config.staking.timeout.utxo),
+      );
+    });
     this.unspent.set(
       address,
       this.unspent.get(address)?.filter((u) => !utxo.prevouts.map((p) => p.txid).includes(u.vout.txid)),
@@ -59,11 +69,10 @@ export class UtxoProviderService {
     this.blockHeight = currentBlockHeight;
 
     const currentUnspent = await this.whaleClient.getAllUnspent(address);
-    console.log(
-      'store unspent',
-      currentUnspent.map((u) => u.vout.txid),
+    this.unspent.set(
+      address,
+      currentUnspent.filter((u) => !this.spent.has(UtxoProviderService.idForUnspent(u))),
     );
-    this.unspent.set(address, currentUnspent);
   }
 
   private static provideExactAmount(
@@ -91,6 +100,14 @@ export class UtxoProviderService {
         `Not enough available liquidity for requested amount.\nTotal available: ${total}\nRequested amount: ${amountPlusFeeBuffer}`,
       );
     return { prevouts: neededPrevouts, scriptHex: utxo.scriptHex, total };
+  }
+
+  private static idForPrevout(prevout: Prevout): string {
+    return `${prevout.txid}|${prevout.vout}`;
+  }
+
+  private static idForUnspent(unspent: AddressUnspent): string {
+    return `${unspent.vout.txid}|${unspent.vout.n}`;
   }
 
   // --- PARSING --- //

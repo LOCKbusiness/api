@@ -1,10 +1,16 @@
-import { EntityRepository, IsNull, Not, Repository } from 'typeorm';
+import { EntityRepository, IsNull, LessThan, Not, Repository } from 'typeorm';
 import { Transaction } from '../../domain/entities/transaction.entity';
 
 @EntityRepository(Transaction)
 export class TransactionRepository extends Repository<Transaction> {
-  async getActive(): Promise<Transaction[]> {
-    return this.find({ where: { active: true } });
+  async getUndecidedTransactions(): Promise<Transaction[]> {
+    return this.find({
+      where: {
+        inBlockchain: false,
+        invalidationReason: IsNull(),
+        updated: LessThan(this.oneHourInPast()),
+      },
+    });
   }
 
   async getOpen(): Promise<Transaction[]> {
@@ -15,5 +21,9 @@ export class TransactionRepository extends Repository<Transaction> {
     return this.find({
       where: { issuerSignature: Not(IsNull()), verifierSignature: Not(IsNull()), signedHex: IsNull() },
     });
+  }
+
+  private oneHourInPast(): string {
+    return new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString();
   }
 }

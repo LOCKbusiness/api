@@ -111,9 +111,13 @@ export class Configuration {
         'Withdraw_${amount}_${asset}_from_${address}_staking_id_${stakingId}_withdrawal_id_${withdrawalId}',
     },
 
+    timeout: {
+      signature: 300000, // 5 minutes
+      utxo: 360000, // 6 minutes
+    },
+
     signature: {
       address: process.env.API_SIGN_ADDRESS,
-      timeout: 300000, // 5 minutes
     },
 
     liquidity: {
