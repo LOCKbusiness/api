@@ -4,7 +4,7 @@ import { calculateFeeP2WPKH } from '@defichain/jellyfish-transaction-builder';
 import { JellyfishWallet, WalletHdNode } from '@defichain/jellyfish-wallet';
 import { Bip32Options, MnemonicHdNodeProvider } from '@defichain/jellyfish-wallet-mnemonic';
 import { WhaleWalletAccount, WhaleWalletAccountProvider } from '@defichain/whale-api-wallet';
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import BigNumber from 'bignumber.js';
 import { Config } from 'src/config/config';
@@ -147,15 +147,8 @@ export class JellyfishService {
     const lastElement = vouts[vouts.length - 1];
     lastElement.value = lastElement.value.minus(fee);
 
-    const txObj = new CTransactionSegWit(tx);
-    if (useChangeOutput) {
-      const voutIndex = txObj.vout.length - 1;
-      const change = txObj.vout[voutIndex];
-      await this.utxoProvider.insertPrevout({ ...change, txid: txObj.txId, vout: voutIndex }, from);
-    }
-
     return {
-      hex: txObj.toHex(),
+      hex: new CTransactionSegWit(tx).toHex(),
       scriptHex: utxo.scriptHex,
       prevouts: utxo.prevouts,
     };
