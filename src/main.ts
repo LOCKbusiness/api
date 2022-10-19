@@ -31,7 +31,7 @@ async function bootstrap() {
 
   const swaggerOptions = new DocumentBuilder()
     .setTitle('LOCK API')
-    .setDescription('LOCK API')
+    .setDescription(`LOCK API (updated on ${new Date().toLocaleString()})`)
     .setVersion('v1')
     .addBearerAuth()
     .build();
