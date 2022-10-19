@@ -1,4 +1,4 @@
-import { Body, Controller, ForbiddenException, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, NotFoundException, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiExcludeEndpoint, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { WalletService } from '../../application/services/wallet.service';
@@ -48,9 +48,19 @@ export class KycController {
   @ApiExcludeEndpoint()
   async handoverKycWebhook(@RealIP() ip: string, @Body() dto: KycWebhookDto) {
     this.checkIp(ip, dto.data);
-    if (dto.result === KycResult.STATUS_CHANGED) {
-      const user = await this.userService.getUserByKycId(dto.id);
-      this.userService.updateUser(user.id, dto.data);
+
+    switch (dto.result) {
+      case KycResult.STATUS_CHANGED:
+        const user = await this.userService.getUserByKycId(dto.id);
+        if (!user) throw new NotFoundException('User not found');
+
+        this.userService.updateUser(user.id, dto.data);
+        break;
+      case KycResult.FAILED:
+        console.error(`Received KYC failed webhook for user with KYC ID ${dto.id}`);
+        break;
+      default:
+        console.error(`Received KYC webhook with invalid result ${dto.result}`);
     }
   }
 
