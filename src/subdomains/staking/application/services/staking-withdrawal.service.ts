@@ -120,7 +120,7 @@ export class StakingWithdrawalService {
 
     withdrawal.designateWithdrawalPayout(txId);
 
-    await this.stakingRepo.save(withdrawal.staking);
+    await this.withdrawalRepo.save(withdrawal);
   }
 
   async getDraftWithdrawals(userId: number, walletId: number, stakingId: number): Promise<WithdrawalDraftOutputDto[]> {
@@ -133,16 +133,11 @@ export class StakingWithdrawalService {
     return draftWithdrawals.map((w) => WithdrawalDraftOutputDtoMapper.entityToDto(w));
   }
 
-  async getStakingWithPendingWithdrawals(): Promise<Staking[]> {
-    return this.stakingRepo
-      .createQueryBuilder('staking')
-      .leftJoinAndSelect('staking.withdrawals', 'withdrawal')
-      .leftJoinAndSelect('staking.withdrawalAddress', 'withdrawalAddress')
-      .where('withdrawal.status = :status', { status: WithdrawalStatus.PENDING })
-      .getMany();
+  async getPendingWithdrawals(): Promise<Withdrawal[]> {
+    return this.withdrawalRepo.getPending();
   }
 
-  async getPendingWithdrawals(): Promise<WithdrawalOutputDto[]> {
+  async getPendingWithdrawalDtos(): Promise<WithdrawalOutputDto[]> {
     return this.withdrawalRepo.getPending().then((ws) => ws.map(WithdrawalOutputDtoMapper.entityToDto));
   }
 

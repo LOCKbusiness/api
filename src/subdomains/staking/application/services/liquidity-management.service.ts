@@ -159,7 +159,7 @@ export class LiquidityManagementService {
   // --- WITHDRAWALS --- //
   async prepareWithdrawals(): Promise<void> {
     const balance = await this.client.getUTXOBalance(Config.staking.liquidity.address);
-    const withdrawals = await this.getPendingWithdrawals();
+    const withdrawals = await this.withdrawalService.getPendingWithdrawals();
 
     const sortedWithdrawals = withdrawals.sort((a, b) => a.amount - b.amount);
 
@@ -186,14 +186,6 @@ export class LiquidityManagementService {
   }
 
   // --- HELPER METHODS --- //
-  private async getPendingWithdrawals(): Promise<Withdrawal[]> {
-    const stakingList = await this.withdrawalService.getStakingWithPendingWithdrawals();
-    return stakingList.reduce(
-      (prev, curr) => prev.concat(curr.getPendingWithdrawals().map((w) => Object.assign(w, { staking: curr }))),
-      [],
-    );
-  }
-
   private getProcessFunctionsFor(state: MasternodeState): {
     txFunc: (masternode: Masternode) => Promise<string>;
     updateFunc: (masternode: Masternode, txId: string) => Promise<void>;
