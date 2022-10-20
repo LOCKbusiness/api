@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
+import { Staking } from '../../domain/entities/staking.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { WithdrawalStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
@@ -117,9 +118,11 @@ export class StakingWithdrawalService {
   async designateWithdrawal(withdrawal: Withdrawal): Promise<void> {
     const txId = await this.deFiChainService.sendWithdrawal(withdrawal);
 
-    withdrawal.designateWithdrawalPayout(txId);
+    const staking = await this.stakingRepo.findOne(withdrawal.staking.id);
 
-    await this.withdrawalRepo.save(withdrawal);
+    staking.designateWithdrawalPayout(withdrawal.id, txId);
+
+    await this.stakingRepo.save(staking);
   }
 
   async getDraftWithdrawals(userId: number, walletId: number, stakingId: number): Promise<WithdrawalDraftOutputDto[]> {
@@ -132,11 +135,16 @@ export class StakingWithdrawalService {
     return draftWithdrawals.map((w) => WithdrawalDraftOutputDtoMapper.entityToDto(w));
   }
 
-  async getPendingWithdrawals(): Promise<Withdrawal[]> {
-    return this.withdrawalRepo.getPending();
+  async getStakingWithPendingWithdrawals(): Promise<Staking[]> {
+    return this.stakingRepo
+      .createQueryBuilder('staking')
+      .leftJoinAndSelect('staking.withdrawals', 'withdrawal')
+      .leftJoinAndSelect('staking.withdrawalAddress', 'withdrawalAddress')
+      .where('withdrawal.status = :status', { status: WithdrawalStatus.PENDING })
+      .getMany();
   }
 
-  async getPendingWithdrawalDtos(): Promise<WithdrawalOutputDto[]> {
+  async getPendingWithdrawals(): Promise<WithdrawalOutputDto[]> {
     return this.withdrawalRepo.getPending().then((ws) => ws.map(WithdrawalOutputDtoMapper.entityToDto));
   }
 
