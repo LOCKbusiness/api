@@ -86,7 +86,7 @@ export class LiquidityManagementService {
     const resigningMasternodes = await this.masternodeService.getAllResigning();
     const pendingResignAmount = resigningMasternodes.length * Config.masternode.collateral;
 
-    const pendingWithdrawals = await this.getPendingWithdrawals();
+    const pendingWithdrawals = await this.withdrawalService.getPendingWithdrawals();
     const pendingWithdrawalAmount = Util.sumObj(pendingWithdrawals, 'amount');
 
     return balance.plus(pendingResignAmount).minus(pendingWithdrawalAmount);
@@ -159,7 +159,7 @@ export class LiquidityManagementService {
   // --- WITHDRAWALS --- //
   async prepareWithdrawals(): Promise<void> {
     const balance = await this.client.getUTXOBalance(Config.staking.liquidity.address);
-    const withdrawals = await this.getPendingWithdrawals();
+    const withdrawals = await this.withdrawalService.getPendingWithdrawals();
 
     const sortedWithdrawals = withdrawals.sort((a, b) => a.amount - b.amount);
 
@@ -179,21 +179,13 @@ export class LiquidityManagementService {
     await Promise.all(
       possibleWithdrawals.map((w) =>
         this.withdrawalService
-          .designateWithdrawal(w)
+          .designateWithdrawal(w.id)
           .catch((e) => console.error(`Failed to prepare withdrawal ${w.id}:`, e)),
       ),
     );
   }
 
   // --- HELPER METHODS --- //
-  private async getPendingWithdrawals(): Promise<Withdrawal[]> {
-    const stakingList = await this.withdrawalService.getStakingWithPendingWithdrawals();
-    return stakingList.reduce(
-      (prev, curr) => prev.concat(curr.getPendingWithdrawals().map((w) => Object.assign(w, { staking: curr }))),
-      [],
-    );
-  }
-
   private getProcessFunctionsFor(state: MasternodeState): {
     txFunc: (masternode: Masternode) => Promise<string>;
     updateFunc: (masternode: Masternode, txId: string) => Promise<void>;
