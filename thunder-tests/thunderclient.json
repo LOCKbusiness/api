@@ -187,5 +187,24 @@
     "headers": [],
     "params": [],
     "tests": []
+  },
+  {
+    "_id": "9759a5d1-8a31-436b-953e-acedabc8bb80",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "017dd981-fe87-4832-83c0-e62dcffb5a9d",
+    "name": "Sign Up",
+    "url": "{{url}}/v1/auth/sign-up",
+    "method": "POST",
+    "sortNum": 60000,
+    "created": "2022-10-19T08:51:25.190Z",
+    "modified": "2022-10-20T16:31:13.382Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"address\": \"changeMe\",\n  \"signature\": \"changeMe\",\n  \"blockchain\": \"DeFiChain\",\n  \"walletName\": \"DFX\"\n}",
+      "form": []
+    },
+    "tests": []
   }
 ]
