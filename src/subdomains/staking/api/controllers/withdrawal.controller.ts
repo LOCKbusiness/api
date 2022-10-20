@@ -16,6 +16,6 @@ export class WithdrawalController {
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.TRANSACTION_CHECKER))
   async getPendingWithdrawals(): Promise<WithdrawalOutputDto[]> {
-    return this.withdrawalService.getPendingWithdrawalDtos();
+    return this.withdrawalService.getPendingWithdrawals();
   }
 }

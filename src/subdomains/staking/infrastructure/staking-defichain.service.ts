@@ -32,13 +32,11 @@ export class StakingDeFiChainService {
   }
 
   async sendWithdrawal(withdrawal: Withdrawal): Promise<string> {
-    const txId = await this.transactionExecutionService.sendFromLiqToCustomer({
+    return this.transactionExecutionService.sendFromLiqToCustomer({
       to: withdrawal.staking.withdrawalAddress.address,
       amount: new BigNumber(withdrawal.amount),
       withdrawalId: withdrawal.id,
     });
-
-    return txId;
   }
 
   async getSourceAddresses(txId: string): Promise<string[]> {
