@@ -6,7 +6,7 @@ import { Staking } from './staking.entity';
 
 @Entity()
 export class Reward extends IEntity {
-  @ManyToOne(() => Staking, (staking) => staking.rewards, { eager: true, nullable: true })
+  @ManyToOne(() => Staking, (staking) => staking.rewards, { eager: true, nullable: false })
   staking: Staking;
 
   @Column({ nullable: false })
