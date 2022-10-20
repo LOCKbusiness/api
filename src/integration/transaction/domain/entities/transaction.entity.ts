@@ -15,7 +15,7 @@ export class Transaction {
   @Column({ length: 'MAX', nullable: true })
   payload: string;
 
-  @Column({ length: 'MAX', nullable: true })
+  @Column({ length: 'MAX' })
   rawTx: string;
 
   @Column()
