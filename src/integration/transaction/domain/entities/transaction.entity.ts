@@ -67,7 +67,7 @@ export class Transaction {
 
   notFoundOnBlockchain(): this {
     this.inBlockchain = false;
-    this.invalidationReason = 'Not found';
+    this.invalidationReason = 'Not found on blockchain';
     return this;
   }
 }

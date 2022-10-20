@@ -11,7 +11,7 @@ import { Config } from 'src/config/config';
 export interface UtxoInformation {
   prevouts: Prevout[];
   scriptHex: string;
-  total?: BigNumber;
+  total: BigNumber;
 }
 
 @Injectable()
@@ -28,19 +28,23 @@ export class UtxoProviderService {
 
   // --- QUEUED ENTRY POINTS --- //
   async provideExactAmount(address: string, amount: BigNumber): Promise<UtxoInformation> {
-    const utxo = await this.retrieveUtxoAndPrevouts(address);
-    return this.markUsed(address, UtxoProviderService.provideExactAmount(address, utxo, amount));
+    const unspent = await this.retrieveUnspent(address);
+    return UtxoProviderService.parseUnspent(
+      this.markUsed(address, UtxoProviderService.provideExactAmount(address, unspent, amount)),
+    );
   }
 
   async provideUntilAmount(address: string, amount: BigNumber): Promise<UtxoInformation> {
-    const utxo = await this.retrieveUtxoAndPrevouts(address);
-    return this.markUsed(address, UtxoProviderService.provideUntilAmount(utxo, amount));
+    const unspent = await this.retrieveUnspent(address);
+    return UtxoProviderService.parseUnspent(
+      this.markUsed(address, UtxoProviderService.provideUntilAmount(unspent, amount)),
+    );
   }
 
   // --- HELPER METHODS --- //
-  private markUsed(address: string, utxo: UtxoInformation): UtxoInformation {
-    utxo.prevouts.forEach((p) => {
-      const id = UtxoProviderService.idForPrevout(p);
+  private markUsed(address: string, unspent: AddressUnspent[]): AddressUnspent[] {
+    unspent.forEach((u) => {
+      const id = UtxoProviderService.idForUnspent(u);
       this.spent.set(
         id,
         setTimeout(() => {
@@ -50,15 +54,19 @@ export class UtxoProviderService {
     });
     this.unspent.set(
       address,
-      this.unspent.get(address)?.filter((u) => !utxo.prevouts.map((p) => p.txid).includes(u.vout.txid)),
+      this.unspent
+        .get(address)
+        ?.filter(
+          (u) =>
+            !unspent.map((us) => UtxoProviderService.idForUnspent(us)).includes(UtxoProviderService.idForUnspent(u)),
+        ),
     );
-    return utxo;
+    return unspent;
   }
 
-  private async retrieveUtxoAndPrevouts(address: string): Promise<UtxoInformation> {
+  private async retrieveUnspent(address: string): Promise<AddressUnspent[]> {
     await this.checkBlockAndInvalidate(address);
-    const utxo = UtxoProviderService.parseUnspent(this.unspent.get(address));
-    return utxo;
+    return this.unspent.get(address);
   }
 
   private async checkBlockAndInvalidate(address: string) {
@@ -77,33 +85,29 @@ export class UtxoProviderService {
 
   private static provideExactAmount(
     address: string,
-    utxo: UtxoInformation,
+    unspent: AddressUnspent[],
     expectedAmount: BigNumber,
-  ): UtxoInformation {
-    const wantedUtxo = utxo.prevouts.find((u) => u.value.isEqualTo(expectedAmount));
+  ): AddressUnspent[] {
+    const wantedUnspent = unspent.find((u) => new BigNumber(u.vout.value).isEqualTo(expectedAmount));
 
-    if (!wantedUtxo) throw new Error(`Unspent on ${address} with amount of ${expectedAmount.toString()} not found`);
-    return { ...utxo, prevouts: [wantedUtxo] };
+    if (!wantedUnspent) throw new Error(`Unspent on ${address} with amount of ${expectedAmount.toString()} not found`);
+    return [wantedUnspent];
   }
 
-  private static provideUntilAmount(utxo: UtxoInformation, amount: BigNumber): UtxoInformation {
+  private static provideUntilAmount(unspent: AddressUnspent[], amount: BigNumber): AddressUnspent[] {
     const amountPlusFeeBuffer = amount.plus(Config.blockchain.minFeeBuffer);
     let total = new BigNumber(0);
-    const neededPrevouts: Prevout[] = [];
-    utxo.prevouts.forEach((p) => {
+    const neededUnspent: AddressUnspent[] = [];
+    unspent.forEach((u) => {
       if (total.gte(amountPlusFeeBuffer)) return;
-      neededPrevouts.push(p);
-      total = total.plus(p ? p.value : 0);
+      neededUnspent.push(u);
+      total = total.plus(u ? new BigNumber(u.vout.value) : 0);
     });
     if (total.lt(amountPlusFeeBuffer))
       throw new Error(
         `Not enough available liquidity for requested amount.\nTotal available: ${total}\nRequested amount: ${amountPlusFeeBuffer}`,
       );
-    return { prevouts: neededPrevouts, scriptHex: utxo.scriptHex, total };
-  }
-
-  private static idForPrevout(prevout: Prevout): string {
-    return `${prevout.txid}|${prevout.vout}`;
+    return neededUnspent;
   }
 
   private static idForUnspent(unspent: AddressUnspent): string {
@@ -113,8 +117,10 @@ export class UtxoProviderService {
   // --- PARSING --- //
   private static parseUnspent(unspent: AddressUnspent[]): UtxoInformation {
     let scriptHex = '';
+    let total = new BigNumber(0);
     const prevouts = unspent?.map((item): Prevout => {
       scriptHex = item.script.hex;
+      total = total.plus(item ? new BigNumber(item.vout.value) : 0);
       return {
         txid: item.vout.txid,
         vout: item.vout.n,
@@ -126,6 +132,6 @@ export class UtxoProviderService {
         tokenId: item.vout.tokenId ?? 0x00,
       };
     });
-    return { prevouts, scriptHex };
+    return { prevouts, scriptHex, total };
   }
 }

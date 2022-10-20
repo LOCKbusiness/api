@@ -1,3 +1,4 @@
+import { Util } from 'src/shared/util';
 import { EntityRepository, IsNull, LessThan, Not, Repository } from 'typeorm';
 import { Transaction } from '../../domain/entities/transaction.entity';
 
@@ -8,7 +9,7 @@ export class TransactionRepository extends Repository<Transaction> {
       where: {
         inBlockchain: false,
         invalidationReason: IsNull(),
-        updated: LessThan(this.oneHourInPast()),
+        updated: LessThan(Util.hourBefore(1).toISOString()),
       },
     });
   }
@@ -21,9 +22,5 @@ export class TransactionRepository extends Repository<Transaction> {
     return this.find({
       where: { issuerSignature: Not(IsNull()), verifierSignature: Not(IsNull()), signedHex: IsNull() },
     });
-  }
-
-  private oneHourInPast(): string {
-    return new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString();
   }
 }

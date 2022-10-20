@@ -69,6 +69,16 @@ export class Util {
     return this.daysAfter(-days, from);
   }
 
+  static hoursAfter(hours: number, from?: Date): Date {
+    const date = from ? new Date(from) : new Date();
+    date.setHours(date.getHours() + hours);
+    return date;
+  }
+
+  static hourBefore(hours: number, from?: Date): Date {
+    return this.hoursAfter(-hours, from);
+  }
+
   static isoDate(date: Date): string {
     return date.toISOString().split('T')[0];
   }
