@@ -12,10 +12,10 @@ export class Transaction {
   @CreateDateColumn()
   created: Date;
 
-  @Column({ type: 'simple-json', nullable: true })
+  @Column({ length: 'MAX', nullable: true })
   payload: string;
 
-  @Column({ type: 'simple-json' })
+  @Column({ length: 'MAX', nullable: true })
   rawTx: string;
 
   @Column()
@@ -27,7 +27,7 @@ export class Transaction {
   @Column({ default: false })
   inBlockchain: boolean;
 
-  @Column({ type: 'simple-json', nullable: true })
+  @Column({ length: 'MAX', nullable: true })
   signedHex: string;
 
   @Column({ nullable: true })

@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
-import { Staking } from '../../domain/entities/staking.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { WithdrawalStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
