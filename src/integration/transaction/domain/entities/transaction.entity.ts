@@ -27,7 +27,7 @@ export class Transaction {
   @Column({ default: false })
   inBlockchain: boolean;
 
-  @Column({ length: 2048, nullable: true })
+  @Column({ type: 'simple-json', nullable: true })
   signedHex: string;
 
   @Column({ nullable: true })

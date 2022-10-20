@@ -1,4 +1,4 @@
-import { WhaleApiClient } from '@defichain/whale-api-client';
+import { ApiPagedResponse, WhaleApiClient } from '@defichain/whale-api-client';
 import { AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
 import { Transaction, TransactionVin } from '@defichain/whale-api-client/dist/api/transactions';
 import BigNumber from 'bignumber.js';
@@ -25,7 +25,7 @@ export class WhaleClient {
   }
 
   async getAllUnspent(address: string): Promise<AddressUnspent[]> {
-    return await this.client.address.listTransactionUnspent(address);
+    return await this.getAll(() => this.client.address.listTransactionUnspent(address, 200));
   }
 
   async sendRaw(hex: string): Promise<string> {
@@ -52,5 +52,18 @@ export class WhaleClient {
 
   async getTxVins(txId: string): Promise<TransactionVin[]> {
     return await this.client.transactions.getVins(txId);
+  }
+
+  private async getAll<T>(method: () => Promise<ApiPagedResponse<T>>): Promise<T[]> {
+    const batches = [await method()];
+    while (batches[batches.length - 1].hasNext) {
+      try {
+        batches.push(await this.client.paginate(batches[batches.length - 1]));
+      } catch (e) {
+        break;
+      }
+    }
+
+    return batches.reduce((prev, curr) => prev.concat(curr), [] as T[]);
   }
 }
