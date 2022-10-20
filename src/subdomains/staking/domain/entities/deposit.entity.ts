@@ -9,7 +9,7 @@ import { Staking } from './staking.entity';
 
 @Entity()
 export class Deposit extends IEntity {
-  @ManyToOne(() => Staking, (staking) => staking.deposits, { nullable: true })
+  @ManyToOne(() => Staking, (staking) => staking.deposits, { nullable: false })
   staking: Staking;
 
   @Column({ nullable: false })

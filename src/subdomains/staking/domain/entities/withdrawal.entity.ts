@@ -18,7 +18,7 @@ export class Withdrawal extends IEntity {
   @Column({ nullable: true })
   signature: string;
 
-  @ManyToOne(() => Staking, (staking) => staking.withdrawals, { nullable: true })
+  @ManyToOne(() => Staking, (staking) => staking.withdrawals, { nullable: false })
   staking: Staking;
 
   @Column({ nullable: false })

@@ -14,7 +14,7 @@ export class Wallet extends IEntity {
   @Column()
   signature: string;
 
-  @ManyToOne(() => WalletProvider)
+  @ManyToOne(() => WalletProvider, { nullable: false })
   walletProvider: WalletProvider;
 
   @Column({ unique: true })
