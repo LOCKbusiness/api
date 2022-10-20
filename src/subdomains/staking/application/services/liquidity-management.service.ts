@@ -86,7 +86,7 @@ export class LiquidityManagementService {
     const resigningMasternodes = await this.masternodeService.getAllResigning();
     const pendingResignAmount = resigningMasternodes.length * Config.masternode.collateral;
 
-    const pendingWithdrawals = await this.getPendingWithdrawals();
+    const pendingWithdrawals = await this.withdrawalService.getPendingWithdrawals();
     const pendingWithdrawalAmount = Util.sumObj(pendingWithdrawals, 'amount');
 
     return balance.plus(pendingResignAmount).minus(pendingWithdrawalAmount);
