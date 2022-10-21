@@ -38,7 +38,7 @@ export class PayInService {
 
   //*** JOBS ***//
 
-  @Interval(300000)
+  @Interval(30000)
   async checkPayInTransactions(): Promise<void> {
     if (!this.lock.acquire()) return;
 

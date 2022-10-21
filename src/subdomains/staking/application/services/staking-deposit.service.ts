@@ -18,7 +18,8 @@ import { StakingRepository } from '../repositories/staking.repository';
 
 @Injectable()
 export class StakingDepositService {
-  private readonly lock = new Lock(7200);
+  private readonly recordLock = new Lock(7200);
+  private readonly forwardLock = new Lock(7200);
 
   constructor(
     private readonly repository: StakingRepository,
@@ -54,15 +55,27 @@ export class StakingDepositService {
 
   @Interval(60000)
   async checkBlockchainDepositInputs(): Promise<void> {
-    if (!this.lock.acquire()) return;
+    if (!this.recordLock.acquire()) return;
 
     try {
       await this.recordDepositTransactions();
-      await this.forwardDepositsToStaking();
     } catch (e) {
       console.error('Exception during staking deposit checks:', e);
     } finally {
-      this.lock.release();
+      this.recordLock.release();
+    }
+  }
+
+  @Interval(60000)
+  async checkBlockchainNeedForwardInputs(): Promise<void> {
+    if (!this.forwardLock.acquire()) return;
+
+    try {
+      await this.forwardDepositsToStaking();
+    } catch (e) {
+      console.error('Exception during staking forwarding:', e);
+    } finally {
+      this.forwardLock.release();
     }
   }
 

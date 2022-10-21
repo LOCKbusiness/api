@@ -30,7 +30,7 @@ export class LiquidityManagementService {
     whaleService.getClient().subscribe((c) => (this.client = c));
   }
 
-  @Interval(300000)
+  @Interval(60000)
   async doWithdrawalsTasks() {
     if (!this.lockWithdrawals.acquire()) return;
 
@@ -43,7 +43,7 @@ export class LiquidityManagementService {
     this.lockWithdrawals.release();
   }
 
-  @Interval(300000)
+  @Interval(60000)
   async doMasternodesTasks() {
     if (!this.lockMasternodes.acquire()) return;
 
