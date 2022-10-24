@@ -8,6 +8,7 @@ export class TransactionRepository extends Repository<Transaction> {
     return this.find({
       where: {
         inBlockchain: false,
+        signedHex: Not(IsNull()),
         invalidationReason: IsNull(),
         updated: LessThan(Util.hourBefore(1).toISOString()),
       },
