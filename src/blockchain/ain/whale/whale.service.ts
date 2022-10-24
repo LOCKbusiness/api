@@ -1,15 +1,16 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { WhaleClient } from './whale-client';
+
 @Injectable()
 export class WhaleService {
-  private readonly client: WhaleClient;
+  readonly #client: BehaviorSubject<WhaleClient>;
 
   constructor() {
-    this.client = new WhaleClient();
+    this.#client = new BehaviorSubject(new WhaleClient());
   }
 
-  getClient(): WhaleClient {
-    if (!this.client) throw new InternalServerErrorException(`Whale client init failed`);
-    return this.client;
+  getClient(): Observable<WhaleClient> {
+    return this.#client.asObservable();
   }
 }

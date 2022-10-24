@@ -35,7 +35,16 @@
     "nodeWalletPassword": {
       "value": "xxx"
     },
-    "stakingWalletAddress": {
+    "apiSignAddress": {
+      "value": "xxx"
+    },
+    "liquidityAddress": {
+      "value": "xxx"
+    },
+    "liquidityWalletName": {
+      "value": "xxx"
+    },
+    "liquidityAccountIndex": {
       "value": "xxx"
     },
     "nodeServicePlanSkuName": {
@@ -52,6 +61,21 @@
     },
     "myDeFiChainPassword": {
       "value": "xxx"
+    },
+    "kycSecret": {
+      "value": "xxx"
+    },
+    "kycWebhookIps": {
+      "value": "xxx"
+    },
+    "kycPhrase": {
+      "value": "xxx"
+    },
+    "kycApiUrl": {
+      "value": "https://api.dfx.swiss/v1"
+    },
+    "kycFrontendUrl": {
+      "value": "https://payment.dfx.swiss"
     }
   }
 }

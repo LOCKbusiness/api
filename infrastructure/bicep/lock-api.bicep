@@ -18,7 +18,6 @@ param nodeAllowAllIps bool
 param nodePassword string
 @secure()
 param nodeWalletPassword string
-param stakingWalletAddress string
 
 param nodeServicePlanSkuName string
 param nodeServicePlanSkuTier string
@@ -27,6 +26,20 @@ param hasBackupNodes bool
 param myDeFiChainUser string
 @secure()
 param myDeFiChainPassword string
+
+@secure()
+param kycSecret string
+@secure()
+param kycWebhookIps string
+@secure()
+param kycPhrase string
+param kycApiUrl string
+param kycFrontendUrl string
+
+param apiSignAddress string
+param liquidityAddress string
+param liquidityWalletName string
+param liquidityAccountIndex string
 
 // --- VARIABLES --- //
 var compName = 'lock'
@@ -55,7 +68,7 @@ var nodeProps = [
     fileShareNameB: 'node-inp-data-b'
   }
   {
-    name: 'nodes-rewards-${env}'
+    name: 'nodes-reward-${env}'
     servicePlanName: 'plan-${compName}-${nodeName}-rew-${env}'
     appName: 'app-${compName}-${nodeName}-rew-${env}'
     fileShareNameA: 'node-rew-data-a'
@@ -295,16 +308,48 @@ resource apiAppService 'Microsoft.Web/sites@2018-11-01' = if (env != 'loc') {
           value: nodes[1].outputs.urlStg
         }
         {
-          name: 'STAKING_WALLET_ADDRESS'
-          value: stakingWalletAddress
-        }
-        {
           name: 'MYDEFICHAIN_USER'
           value: myDeFiChainUser
         }
         {
           name: 'MYDEFICHAIN_PASSWORD'
           value: myDeFiChainPassword
+        }
+        {
+          name: 'KYC_SECRET'
+          value: kycSecret
+        }
+        {
+          name: 'KYC_WEBHOOK_IPS'
+          value: kycWebhookIps
+        }
+        {
+          name: 'KYC_PHRASE'
+          value: kycPhrase
+        }
+        {
+          name: 'KYC_API_URL'
+          value: kycApiUrl
+        }
+        {
+          name: 'KYC_FRONTEND_URL'
+          value: kycFrontendUrl
+        }
+        {
+          name: 'API_SIGN_ADDRESS'
+          value: apiSignAddress
+        }
+        {
+          name: 'LIQUIDITY_ADDRESS'
+          value: liquidityAddress
+        }
+        {
+          name: 'LIQUIDITY_WALLET_NAME'
+          value: liquidityWalletName
+        }
+        {
+          name: 'LIQUIDITY_ACCOUNT_INDEX'
+          value: liquidityAccountIndex
         }
       ]
     }

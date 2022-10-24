@@ -1,0 +1,17 @@
+import { IEntity } from 'src/shared/models/entity';
+import { Column, Entity } from 'typeorm';
+
+@Entity()
+export class Country extends IEntity {
+  @Column({ unique: true, length: 10 })
+  symbol: string;
+
+  @Column()
+  name: string;
+
+  @Column({ default: true })
+  enable: boolean;
+
+  @Column({ default: true })
+  ipEnable: boolean;
+}

@@ -1,6 +1,6 @@
 import { BlockchainInfo } from '@defichain/jellyfish-api-core/dist/category/blockchain';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { SchedulerRegistry } from '@nestjs/schedule';
+import { Interval, SchedulerRegistry } from '@nestjs/schedule';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Config } from 'src/config/config';
 import { HttpService } from 'src/shared/services/http.service';
@@ -24,10 +24,26 @@ interface NodeCheckResult {
   info: BlockchainInfo | undefined;
 }
 
+type TypedNodeClient = DeFiClient;
+
+interface NodePoolState {
+  type: NodeType;
+  nodes: NodeState[];
+}
+
+interface NodeState {
+  type: NodeType;
+  mode: NodeMode;
+  isDown: boolean;
+  errors: string[];
+}
+
 @Injectable()
 export class NodeService {
   readonly #allNodes: Map<NodeType, Record<NodeMode, NodeClient | null>> = new Map();
   readonly #connectedNodes: Map<NodeType, BehaviorSubject<NodeClient | null>> = new Map();
+
+  private nodeState: NodePoolState[] = [];
 
   constructor(private readonly http: HttpService, private readonly scheduler: SchedulerRegistry) {
     this.initAllNodes();
@@ -44,11 +60,11 @@ export class NodeService {
 
   // --- PUBLIC API --- //
 
-  getConnectedNode<T extends NodeType>(type: T): Observable<NodeClient> {
+  getConnectedNode<T extends NodeType>(type: T): Observable<TypedNodeClient> {
     const client = this.connectedNodes.get(type);
 
     if (client) {
-      return client.asObservable() as Observable<NodeClient>;
+      return client.asObservable() as Observable<TypedNodeClient>;
     }
 
     throw new BadRequestException(`No node for type '${type}'`);
@@ -196,5 +212,72 @@ export class NodeService {
 
   get connectedNodes(): Map<NodeType, BehaviorSubject<NodeClient | null>> {
     return this.#connectedNodes;
+  }
+
+  // --- MONITORING --- //
+  @Interval(60000)
+  async checkState(): Promise<void> {
+    const poolStates = await this.getState();
+    await this.handleErrors(poolStates);
+    this.nodeState = poolStates;
+  }
+
+  async getState(): Promise<NodePoolState[]> {
+    const errors = await this.checkNodes();
+
+    // batch errors by pool and node and get state (up/down)
+    return Object.values(NodeType).map((type) => ({
+      type,
+      nodes: Object.values(NodeMode)
+        .map((mode) => ({
+          type,
+          mode,
+          errors: errors.filter((e) => e.nodeType === type && e.mode === mode).map((e) => e.message),
+        }))
+        .filter((n) => this.allNodes.get(n.type)?.[n.mode])
+        .map((n) => ({ ...n, isDown: n.errors.length > 0 })),
+    }));
+  }
+
+  private async handleErrors(poolStates: NodePoolState[]): Promise<void> {
+    const messages: string[] = [];
+
+    // handle errors by pool
+    for (const poolState of poolStates) {
+      const previousPoolState = this.nodeState.find((p) => p.type === poolState.type);
+
+      // check, if swap required
+      const { value: connectedNode } = this.connectedNodes.get(poolState.type);
+      const preferredNode = poolState.nodes.find((n) => !n.isDown);
+
+      if (!preferredNode) {
+        // all available nodes down
+        if (!previousPoolState || previousPoolState.nodes.some((n) => !n.isDown)) {
+          messages.push(`ALERT! Node '${poolState.type}' is fully down.`);
+        }
+      } else if (preferredNode.mode !== connectedNode.mode) {
+        // swap required
+        this.swapNode(poolState.type, preferredNode.mode);
+        messages.push(`WARN. Node '${poolState.type}' switched from ${connectedNode.mode} to ${preferredNode.mode}`);
+      }
+
+      // check for single node state changes
+      for (const node of poolState.nodes) {
+        const previous = previousPoolState?.nodes.find((pn) => pn.mode === node.mode);
+        if (node.isDown !== (previous?.isDown ?? false)) {
+          // node state changed
+          const errors =
+            node.errors.length > 0
+              ? node.errors.map((e) => `ERR. ${e}`)
+              : [`OK. Node '${node.type}' ${node.mode} is up`];
+          messages.push(...errors);
+        }
+      }
+    }
+
+    // log the messages
+    if (messages.length > 0) {
+      console.log(messages);
+    }
   }
 }

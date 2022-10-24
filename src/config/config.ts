@@ -44,6 +44,14 @@ export class Configuration {
     password: process.env.MYDEFICHAIN_PASSWORD,
   };
 
+  kyc = {
+    secret: process.env.KYC_SECRET,
+    phrase: process.env.KYC_PHRASE?.split(','),
+    allowedWebhookIps: process.env.KYC_WEBHOOK_IPS?.split(','),
+    apiUrl: process.env.KYC_API_URL,
+    frontendUrl: process.env.KYC_FRONTEND_URL,
+  };
+
   auth = {
     jwt: {
       secret: process.env.JWT_SECRET,
@@ -51,9 +59,13 @@ export class Configuration {
         expiresIn: process.env.JWT_EXPIRES_IN ?? 172800,
       },
     },
+    signMessage:
+      'By_signing_this_message,_you_confirm_to_LOCK_that_you_are_the_sole_owner_of_the_provided_Blockchain_address._Your_ID:_',
   };
 
   blockchain = {
+    minFeeRate: 0.00001,
+    minFeeBuffer: 0.0001,
     default: {
       user: process.env.NODE_USER,
       password: process.env.NODE_PASSWORD,
@@ -74,6 +86,84 @@ export class Configuration {
     network: this.network,
     url: 'https://ocean.defichain.com',
   };
+
+  payIn = {
+    minPayIn: {
+      Fiat: {
+        USD: 1,
+      },
+      Bitcoin: {
+        BTC: 0.0005,
+      },
+      DeFiChain: {
+        DFI: 0.01,
+        USD: 1,
+      },
+    },
+  };
+
+  staking = {
+    minimalStake: 1,
+    minimalDeposit: 0.01,
+    stakingFee: 0.05,
+    signatureTemplates: {
+      signWithdrawalMessage:
+        'Withdraw_${amount}_${asset}_from_${address}_staking_id_${stakingId}_withdrawal_id_${withdrawalId}',
+    },
+
+    timeout: {
+      signature: 300000, // 5 minutes
+      utxo: 360000, // 6 minutes
+    },
+
+    signature: {
+      address: process.env.API_SIGN_ADDRESS,
+    },
+
+    liquidity: {
+      min: 20000,
+      max: 40000,
+
+      address: process.env.LIQUIDITY_ADDRESS,
+      wallet: process.env.LIQUIDITY_WALLET_NAME,
+      account: process.env.LIQUIDITY_ACCOUNT_INDEX,
+    },
+    aprPeriod: 28, // days
+  };
+
+  utxo = {
+    maxInputs: 300,
+    minOperateValue: 100,
+    amount: {
+      min: 200,
+      max: 500,
+    },
+    split: 10,
+    merge: 100,
+  };
+
+  priceProviders = {
+    coinGecko: {
+      baseUrl: 'https://api.coingecko.com/api/v3',
+    },
+  };
+
+  masternode = {
+    collateral: 20000,
+    fee: 10,
+    creationFee: 0.00000232,
+    resignFee: 0.00000209,
+  };
+
+  get addressFormat(): RegExp {
+    return this.environment === 'prd'
+      ? /^(8\w{33}|d\w{33}|d\w{41}|0x\w{40}|(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39})$/
+      : /^((7|8)\w{33}|(t|d)\w{33}|(t|d)\w{41}|0x\w{40}|(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39})$/;
+  }
+
+  get signatureFormat(): RegExp {
+    return /^(.{87}=|[a-f0-9]{130}|[a-f0-9x]{132})$/;
+  }
 }
 
 @Injectable()

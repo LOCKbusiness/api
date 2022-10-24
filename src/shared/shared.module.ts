@@ -9,19 +9,24 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { GetConfig } from 'src/config/config';
 import { ConfigModule } from 'src/config/config.module';
 import { I18nModule } from 'nestjs-i18n';
+import { AssetService } from './models/asset/asset.service';
+import { AssetRepository } from './models/asset/asset.repository';
+import { SettingService } from './services/setting.service';
+import { SettingRepository } from './repositories/setting.repository';
+import { ApiKeyStrategy } from './auth/api-key.strategy';
 
 @Module({
   imports: [
     HttpModule,
     ConfigModule,
-    TypeOrmModule.forFeature([]),
+    TypeOrmModule.forFeature([SettingRepository, AssetRepository]),
     PassportModule.register({ defaultStrategy: 'jwt', session: true }),
     JwtModule.register(GetConfig().auth.jwt),
     I18nModule.forRoot(GetConfig().i18n),
     ScheduleModule.forRoot(),
   ],
   controllers: [],
-  providers: [HttpService, JwtStrategy],
-  exports: [PassportModule, JwtModule, ScheduleModule, HttpService],
+  providers: [HttpService, JwtStrategy, ApiKeyStrategy, SettingService, AssetService],
+  exports: [PassportModule, JwtModule, ScheduleModule, HttpService, SettingService, AssetService],
 })
 export class SharedModule {}

@@ -3,7 +3,7 @@ import { BadRequestException, Body, Controller, Get, Param, Post, UseGuards } fr
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
-import { UserRole } from 'src/shared/auth/user-role.enum';
+import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { HttpError } from 'src/shared/services/http.service';
 import { CommandDto } from './dto/command.dto';
 import { NodeMode } from './node-client';
@@ -16,7 +16,7 @@ export class NodeController {
   @Post(':node/rpc')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async rpc(@Param('node') node: NodeType, @Body() command: string): Promise<any> {
     return this.nodeService
       .getCurrentConnectedNode(node)
@@ -27,7 +27,7 @@ export class NodeController {
   @Post(':node/cmd')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async cmd(@Param('node') node: NodeType, @Body() dto: CommandDto): Promise<any> {
     const client = this.nodeService.getCurrentConnectedNode(node);
 
@@ -41,7 +41,7 @@ export class NodeController {
   @Get(':node/tx/:txId')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async waitForTx(@Param('node') node: NodeType, @Param('txId') txId: string): Promise<InWalletTransaction> {
     return this.nodeService.getCurrentConnectedNode(node).waitForTx(txId);
   }
@@ -49,7 +49,7 @@ export class NodeController {
   @Post(':node/:mode/rpc')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async rpcForMode(
     @Param('node') node: NodeType,
     @Param('mode') mode: NodeMode,
@@ -64,7 +64,7 @@ export class NodeController {
   @Post(':node/:mode/cmd')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async cmdForMode(
     @Param('node') node: NodeType,
     @Param('mode') mode: NodeMode,
@@ -82,7 +82,7 @@ export class NodeController {
   @Get(':node/:mode/tx/:txId')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async waitForTxForMode(
     @Param('node') node: NodeType,
     @Param('mode') mode: NodeMode,
