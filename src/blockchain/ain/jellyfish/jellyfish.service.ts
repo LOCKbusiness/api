@@ -1,5 +1,5 @@
 import { MainNet, Network, TestNet } from '@defichain/jellyfish-network';
-import { CTransactionSegWit } from '@defichain/jellyfish-transaction';
+import { CTransactionSegWit, Vin, Vout, Witness } from '@defichain/jellyfish-transaction';
 import { calculateFeeP2WPKH } from '@defichain/jellyfish-transaction-builder';
 import { JellyfishWallet, WalletHdNode } from '@defichain/jellyfish-wallet';
 import { Bip32Options, MnemonicHdNodeProvider } from '@defichain/jellyfish-wallet-mnemonic';
@@ -12,7 +12,7 @@ import { Masternode } from 'src/integration/masternode/domain/entities/masternod
 import { QueueHandler } from 'src/shared/queue-handler';
 import { RawTxDto } from './dto/raw-tx.dto';
 import { RawTxUtil } from './raw-tx-util';
-import { UtxoProviderService, UtxoSizePriority } from './utxo-provider.service';
+import { UtxoInformation, UtxoProviderService, UtxoSizePriority } from './utxo-provider.service';
 
 @Injectable()
 export class JellyfishService {
@@ -54,6 +54,14 @@ export class JellyfishService {
 
   async rawTxForSendToLiq(from: string, amount: BigNumber): Promise<RawTxDto> {
     return this.call(() => this.generateRawTxForSend(from, Config.staking.liquidity.address, amount, false));
+  }
+
+  async rawTxForSplitUtxo(address: string, split: number): Promise<RawTxDto> {
+    return this.call(() => this.generateRawTxForUtxoManagement(address, split, UtxoSizePriority.BIG));
+  }
+
+  async rawTxForMergeUtxos(address: string, merge: number): Promise<RawTxDto> {
+    return this.call(() => this.generateRawTxForUtxoManagement(address, merge, UtxoSizePriority.SMALL));
   }
 
   // --- RAW TX GENERATION --- //
@@ -143,6 +151,33 @@ export class JellyfishService {
     const fromWitness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(fromPubKeyHash)]);
     const witnesses = new Array(vins.length).fill(fromWitness);
 
+    return this.createTxAndCalcFee(utxo, vins, vouts, witnesses);
+  }
+
+  private async generateRawTxForUtxoManagement(
+    address: string,
+    numberOf: number,
+    sizePriority: UtxoSizePriority,
+  ): Promise<RawTxDto> {
+    const network = this.getNetwork();
+
+    const numberOfInputs = sizePriority === UtxoSizePriority.SMALL ? numberOf : 1;
+    const numberOfOutputs = sizePriority === UtxoSizePriority.BIG ? numberOf : 1;
+
+    const [script, pubKeyHash] = RawTxUtil.parseAddress(address, network);
+
+    const utxo = await this.utxoProvider.provideNumber(address, numberOfInputs, sizePriority);
+
+    const vins = RawTxUtil.createVins(utxo.prevouts);
+    const vouts = new Array(numberOfOutputs).fill(RawTxUtil.createVoutReturn(script, utxo.total.div(numberOfOutputs)));
+    const witness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(pubKeyHash)]);
+    const witnesses = new Array(vins.length).fill(witness);
+
+    return this.createTxAndCalcFee(utxo, vins, vouts, witnesses);
+  }
+
+  // --- HELPER METHODS --- //
+  private createTxAndCalcFee(utxo: UtxoInformation, vins: Vin[], vouts: Vout[], witnesses: Witness[]): RawTxDto {
     const tx = RawTxUtil.createTxSegWit(vins, vouts, witnesses);
     const fee = calculateFeeP2WPKH(new BigNumber(Config.blockchain.minFeeRate), tx);
     const lastElement = vouts[vouts.length - 1];
@@ -155,7 +190,6 @@ export class JellyfishService {
     };
   }
 
-  // --- HELPER METHODS --- //
   private call<T>(call: () => Promise<T>): Promise<T> {
     return this.queue.handle(() => call());
   }

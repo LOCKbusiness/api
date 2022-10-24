@@ -10,10 +10,12 @@ import { Config } from 'src/config/config';
 import {
   CreateMasternodeData,
   MasternodeBaseData,
+  MergeData,
   ResignMasternodeData,
   SendFromLiqData,
   SendFromLiqToCustomerData,
   SendToLiqData,
+  SplitData,
 } from '../types/creation-data';
 import { TransactionService } from './transaction.service';
 
@@ -55,6 +57,16 @@ export class TransactionExecutionService {
   async sendToLiq(data: SendToLiqData): Promise<string> {
     const rawTx = await this.jellyfishService.rawTxForSendToLiq(data.from, data.amount);
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data));
+  }
+
+  async splitBiggestUtxo(data: SplitData): Promise<string> {
+    const rawTx = await this.jellyfishService.rawTxForSplitUtxo(data.address, data.split);
+    return this.signAndBroadcast(rawTx);
+  }
+
+  async mergeSmallestUtxos(data: MergeData): Promise<string> {
+    const rawTx = await this.jellyfishService.rawTxForMergeUtxos(data.address, data.merge);
+    return this.signAndBroadcast(rawTx);
   }
 
   private createPayloadFor(data: MasternodeBaseData): any {

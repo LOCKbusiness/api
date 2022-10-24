@@ -5,7 +5,6 @@ import { Config } from 'src/config/config';
 import { Util } from 'src/shared/util';
 import { MasternodeService } from 'src/integration/masternode/application/services/masternode.service';
 import { StakingWithdrawalService } from './staking-withdrawal.service';
-import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import BigNumber from 'bignumber.js';
 import { MasternodeState, MasternodeTimeLock } from '../../domain/enums';
 import { MasternodeState as BlockchainMasternodeState } from '@defichain/jellyfish-api-core/dist/category/masternode';
@@ -13,12 +12,13 @@ import { Masternode } from 'src/integration/masternode/domain/entities/masternod
 import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
-import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/utxo-provider.service';
+import { UtxoProviderService, UtxoSizePriority } from 'src/blockchain/ain/jellyfish/utxo-provider.service';
 
 @Injectable()
 export class LiquidityManagementService {
   private readonly lockWithdrawals = new Lock(1800);
   private readonly lockMasternodes = new Lock(1800);
+  private readonly lockUtxoManagement = new Lock(1800);
 
   private client: WhaleClient;
 
@@ -26,6 +26,7 @@ export class LiquidityManagementService {
     private readonly masternodeService: MasternodeService,
     private readonly withdrawalService: StakingWithdrawalService,
     private readonly transactionCreationService: TransactionExecutionService,
+    private readonly utxoProviderService: UtxoProviderService,
     whaleService: WhaleService,
   ) {
     whaleService.getClient().subscribe((c) => (this.client = c));
@@ -56,6 +57,19 @@ export class LiquidityManagementService {
     }
 
     this.lockMasternodes.release();
+  }
+
+  @Interval(60000)
+  async doUtxoManagement() {
+    if (!this.lockUtxoManagement.acquire()) return;
+
+    try {
+      await this.checkUtxos();
+    } catch (e) {
+      console.error(`Exception during masternodes cronjob: ${e}`);
+    }
+
+    this.lockUtxoManagement.release();
   }
 
   async checkLiquidity(): Promise<void> {
@@ -184,6 +198,25 @@ export class LiquidityManagementService {
           .catch((e) => console.error(`Failed to prepare withdrawal ${w.id}:`, e)),
       ),
     );
+  }
+
+  // --- UTXO MANAGEMENT --- //
+  async checkUtxos(): Promise<void> {
+    const liqBalance = await this.client.getUTXOBalance(Config.staking.liquidity.address);
+    if (liqBalance.lt(Config.utxo.minOperateValue)) throw new Error('Too low liquidity to operate');
+
+    const numberOfUnspent = await this.utxoProviderService.getCurrentNumberOfUnspent(Config.staking.liquidity.address);
+    if (numberOfUnspent < Config.utxo.amount.min) {
+      await this.transactionCreationService.splitBiggestUtxo({
+        address: Config.staking.liquidity.address,
+        split: Config.utxo.split,
+      });
+    } else if (numberOfUnspent > Config.utxo.amount.max) {
+      await this.transactionCreationService.mergeSmallestUtxos({
+        address: Config.staking.liquidity.address,
+        merge: Config.utxo.merge,
+      });
+    }
   }
 
   // --- HELPER METHODS --- //

@@ -31,7 +31,13 @@ export class UtxoProviderService {
     whaleService.getClient().subscribe((client) => (this.whaleClient = client));
   }
 
-  // --- QUEUED ENTRY POINTS --- //
+  async getCurrentNumberOfUnspent(address: string): Promise<number> {
+    if (!this.unspent.has(address)) {
+      await this.retrieveUnspent(address);
+    }
+    return this.unspent.get(address)?.length ?? 0;
+  }
+
   async provideExactAmount(address: string, amount: BigNumber): Promise<UtxoInformation> {
     const unspent = await this.retrieveUnspent(address);
     return UtxoProviderService.parseUnspent(
@@ -47,6 +53,17 @@ export class UtxoProviderService {
     const unspent = await this.retrieveUnspent(address);
     return UtxoProviderService.parseUnspent(
       this.markUsed(address, UtxoProviderService.provideUntilAmount(unspent, amount, sizePriority)),
+    );
+  }
+
+  async provideNumber(
+    address: string,
+    numberOfUtxos: number,
+    sizePriority: UtxoSizePriority,
+  ): Promise<UtxoInformation> {
+    const unspent = await this.retrieveUnspent(address);
+    return UtxoProviderService.parseUnspent(
+      this.markUsed(address, UtxoProviderService.provideNumber(unspent, numberOfUtxos, sizePriority)),
     );
   }
 
@@ -126,6 +143,17 @@ export class UtxoProviderService {
     if (neededUnspent.length > Config.utxo.maxInputs)
       throw new Error(`Exceeding amount of max allowed inputs of ${Config.utxo.maxInputs}`);
     return neededUnspent;
+  }
+
+  private static provideNumber(
+    unspent: AddressUnspent[],
+    numberOfUtxos: number,
+    sizePriority: UtxoSizePriority,
+  ): AddressUnspent[] {
+    unspent = unspent.sort((a, b) =>
+      sizePriority === UtxoSizePriority.BIG ? this.orderDescending(a, b) : this.orderAscending(a, b),
+    );
+    return unspent.slice(0, numberOfUtxos);
   }
 
   private static idForUnspent(unspent: AddressUnspent): string {

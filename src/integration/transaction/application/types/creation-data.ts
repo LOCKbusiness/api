@@ -31,3 +31,13 @@ export interface SendFromLiqToCustomerData {
   amount: BigNumber;
   withdrawalId: number;
 }
+
+export interface SplitData {
+  address: string;
+  split: number;
+}
+
+export interface MergeData {
+  address: string;
+  merge: number;
+}

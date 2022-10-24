@@ -133,6 +133,13 @@ export class Configuration {
 
   utxo = {
     maxInputs: 300,
+    minOperateValue: 100,
+    amount: {
+      min: 200,
+      max: 500,
+    },
+    split: 10,
+    merge: 100,
   };
 
   priceProviders = {
