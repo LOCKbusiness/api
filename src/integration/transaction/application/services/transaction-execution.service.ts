@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { RawTxDto } from 'src/blockchain/ain/jellyfish/dto/raw-tx.dto';
 import { JellyfishService } from 'src/blockchain/ain/jellyfish/jellyfish.service';
+import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/utxo-provider.service';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
@@ -42,12 +43,12 @@ export class TransactionExecutionService {
   }
 
   async sendFromLiq(data: SendFromLiqData): Promise<string> {
-    const rawTx = await this.jellyfishService.rawTxForSendFromLiq(data.to, data.amount);
+    const rawTx = await this.jellyfishService.rawTxForSendFromLiq(data.to, data.amount, data.sizePriority);
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data));
   }
 
   async sendFromLiqToCustomer(data: SendFromLiqToCustomerData): Promise<string> {
-    const rawTx = await this.jellyfishService.rawTxForSendFromLiq(data.to, data.amount);
+    const rawTx = await this.jellyfishService.rawTxForSendFromLiq(data.to, data.amount, UtxoSizePriority.BIG);
     return this.signAndBroadcast(rawTx, { id: data.withdrawalId });
   }
 

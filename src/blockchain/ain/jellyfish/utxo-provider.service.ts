@@ -14,6 +14,11 @@ export interface UtxoInformation {
   total: BigNumber;
 }
 
+export enum UtxoSizePriority {
+  BIG,
+  SMALL,
+}
+
 @Injectable()
 export class UtxoProviderService {
   private blockHeight = 0;
@@ -34,10 +39,14 @@ export class UtxoProviderService {
     );
   }
 
-  async provideUntilAmount(address: string, amount: BigNumber): Promise<UtxoInformation> {
+  async provideUntilAmount(
+    address: string,
+    amount: BigNumber,
+    sizePriority: UtxoSizePriority,
+  ): Promise<UtxoInformation> {
     const unspent = await this.retrieveUnspent(address);
     return UtxoProviderService.parseUnspent(
-      this.markUsed(address, UtxoProviderService.provideUntilAmount(unspent, amount)),
+      this.markUsed(address, UtxoProviderService.provideUntilAmount(unspent, amount, sizePriority)),
     );
   }
 
@@ -94,10 +103,17 @@ export class UtxoProviderService {
     return [wantedUnspent];
   }
 
-  private static provideUntilAmount(unspent: AddressUnspent[], amount: BigNumber): AddressUnspent[] {
+  private static provideUntilAmount(
+    unspent: AddressUnspent[],
+    amount: BigNumber,
+    sizePriority: UtxoSizePriority,
+  ): AddressUnspent[] {
     const amountPlusFeeBuffer = amount.plus(Config.blockchain.minFeeBuffer);
     let total = new BigNumber(0);
     const neededUnspent: AddressUnspent[] = [];
+    unspent = unspent.sort((a, b) =>
+      sizePriority === UtxoSizePriority.BIG ? this.orderDescending(a, b) : this.orderAscending(a, b),
+    );
     unspent.forEach((u) => {
       if (total.gte(amountPlusFeeBuffer)) return;
       neededUnspent.push(u);
@@ -112,6 +128,14 @@ export class UtxoProviderService {
 
   private static idForUnspent(unspent: AddressUnspent): string {
     return `${unspent.vout.txid}|${unspent.vout.n}`;
+  }
+
+  private static orderAscending(a: AddressUnspent, b: AddressUnspent): number {
+    return new BigNumber(a.vout.value).minus(new BigNumber(b.vout.value)).toNumber();
+  }
+
+  private static orderDescending(a: AddressUnspent, b: AddressUnspent): number {
+    return new BigNumber(b.vout.value).minus(new BigNumber(a.vout.value)).toNumber();
   }
 
   // --- PARSING --- //

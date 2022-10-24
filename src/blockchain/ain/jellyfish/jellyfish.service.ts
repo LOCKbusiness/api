@@ -12,7 +12,7 @@ import { Masternode } from 'src/integration/masternode/domain/entities/masternod
 import { QueueHandler } from 'src/shared/queue-handler';
 import { RawTxDto } from './dto/raw-tx.dto';
 import { RawTxUtil } from './raw-tx-util';
-import { UtxoProviderService } from './utxo-provider.service';
+import { UtxoProviderService, UtxoSizePriority } from './utxo-provider.service';
 
 @Injectable()
 export class JellyfishService {
@@ -48,8 +48,8 @@ export class JellyfishService {
     return this.call(() => this.generateRawTxForResign(masternode));
   }
 
-  async rawTxForSendFromLiq(to: string, amount: BigNumber): Promise<RawTxDto> {
-    return this.call(() => this.generateRawTxForSend(Config.staking.liquidity.address, to, amount, true));
+  async rawTxForSendFromLiq(to: string, amount: BigNumber, sizePriority: UtxoSizePriority): Promise<RawTxDto> {
+    return this.call(() => this.generateRawTxForSend(Config.staking.liquidity.address, to, amount, true, sizePriority));
   }
 
   async rawTxForSendToLiq(from: string, amount: BigNumber): Promise<RawTxDto> {
@@ -123,6 +123,7 @@ export class JellyfishService {
     to: string,
     amount: BigNumber,
     useChangeOutput: boolean,
+    sizePriority: UtxoSizePriority = UtxoSizePriority.SMALL,
   ): Promise<RawTxDto> {
     const network = this.getNetwork();
 
@@ -130,7 +131,7 @@ export class JellyfishService {
     const [toScript] = RawTxUtil.parseAddress(to, network);
 
     const utxo = useChangeOutput
-      ? await this.utxoProvider.provideUntilAmount(from, amount)
+      ? await this.utxoProvider.provideUntilAmount(from, amount, sizePriority)
       : await this.utxoProvider.provideExactAmount(from, amount);
 
     const vins = RawTxUtil.createVins(utxo.prevouts);
