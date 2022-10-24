@@ -4,6 +4,7 @@ import BigNumber from 'bignumber.js';
 import { BehaviorSubject } from 'rxjs';
 import { createCustomRawTxDto } from 'src/blockchain/ain/jellyfish/dto/__mocks__/raw-tx.dto.mock';
 import { JellyfishService } from 'src/blockchain/ain/jellyfish/jellyfish.service';
+import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/utxo-provider.service';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { NodeService } from 'src/blockchain/ain/node/node.service';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
@@ -131,10 +132,15 @@ describe('TransactionExecutionService', () => {
       amount: new BigNumber(42),
       ownerWallet: masternode.ownerWallet,
       accountIndex: masternode.accountIndex,
+      sizePriority: UtxoSizePriority.BIG,
     });
 
     expect(txId).toStrictEqual('tx-id');
-    expect(jellyfishService.rawTxForSendFromLiq).toBeCalledWith('owner-address', new BigNumber(42));
+    expect(jellyfishService.rawTxForSendFromLiq).toBeCalledWith(
+      'owner-address',
+      new BigNumber(42),
+      UtxoSizePriority.BIG,
+    );
     expect(nodeClient.signMessage).toBeCalledWith('some-test-address', 'send-from-liq');
     expect(transactionService.sign).toBeCalledWith(rawTxSendFromLiq, 'signed-tx-hex-as-message', {
       ownerWallet: 'cold-wallet-a',
