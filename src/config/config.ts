@@ -131,6 +131,10 @@ export class Configuration {
     aprPeriod: 28, // days
   };
 
+  utxo = {
+    maxInputs: 300,
+  };
+
   priceProviders = {
     coinGecko: {
       baseUrl: 'https://api.coingecko.com/api/v3',

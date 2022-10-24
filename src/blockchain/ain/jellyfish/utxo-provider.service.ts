@@ -123,6 +123,8 @@ export class UtxoProviderService {
       throw new Error(
         `Not enough available liquidity for requested amount.\nTotal available: ${total}\nRequested amount: ${amountPlusFeeBuffer}`,
       );
+    if (neededUnspent.length > Config.utxo.maxInputs)
+      throw new Error(`Exceeding amount of max allowed inputs of ${Config.utxo.maxInputs}`);
     return neededUnspent;
   }
 
