@@ -150,10 +150,10 @@ export class Staking extends IEntity {
     return this;
   }
 
-  designateWithdrawalPayout(withdrawalId: number, txId: string): this {
+  payoutWithdrawal(withdrawalId: number, txId: string): this {
     const withdrawal = this.getWithdrawal(withdrawalId);
 
-    withdrawal.designateWithdrawalPayout(txId);
+    withdrawal.payoutWithdrawal(txId);
 
     return this;
   }
@@ -306,21 +306,21 @@ export class Staking extends IEntity {
   }
 
   private getInProgressWithdrawalsAmount(): number {
-    const pendingWithdrawals = this.getWithdrawalsByStatus(WithdrawalStatus.PENDING);
-    const payingOutWithdrawals = this.getWithdrawalsByStatus(WithdrawalStatus.PAYING_OUT);
+    const withdrawals = this.getWithdrawalsByStatus([
+      WithdrawalStatus.PENDING,
+      WithdrawalStatus.PAYOUT_DESIGNATED,
+      WithdrawalStatus.PAYING_OUT,
+    ]);
 
-    const pendingAmount = Util.sumObj(pendingWithdrawals, 'amount');
-    const payingOutAmount = Util.sumObj(payingOutWithdrawals, 'amount');
-
-    return pendingAmount + payingOutAmount;
+    return Util.sumObj(withdrawals, 'amount');
   }
 
   private getDepositsByStatus(status: DepositStatus | DepositStatus[]): Deposit[] {
     return this.deposits.filter((d) => status.includes(d.status));
   }
 
-  private getWithdrawalsByStatus(status: WithdrawalStatus): Withdrawal[] {
-    return this.withdrawals.filter((w) => w.status === status);
+  private getWithdrawalsByStatus(status: WithdrawalStatus | WithdrawalStatus[]): Withdrawal[] {
+    return this.withdrawals.filter((w) => status.includes(w.status));
   }
 
   private getRewardsByStatus(status: RewardStatus): Reward[] {
