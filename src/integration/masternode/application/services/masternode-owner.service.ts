@@ -7,9 +7,9 @@ import { Config } from 'src/config/config';
 
 @Injectable()
 export class MasternodeOwnerService {
-  provide(amount: number, lastUsedOwner?: string): MasternodeOwnerDto[] {
-    const indexOfBegin = this.ownersAsList().findIndex((owner) => owner.address === lastUsedOwner) + 1;
-    return this.ownersAsList().slice(indexOfBegin, indexOfBegin + amount);
+  provide(amount: number, usedOwners: string[]): MasternodeOwnerDto[] {
+    const filteredList = this.ownersAsList().filter((owner) => !usedOwners.includes(owner.address));
+    return filteredList.slice(0, amount);
   }
 
   private ownersAsList(): MasternodeOwnerDto[] {

@@ -32,7 +32,7 @@ export class MasternodeService {
     private readonly settingService: SettingService,
     nodeService: NodeService,
   ) {
-    nodeService.getConnectedNode(NodeType.INPUT).subscribe((c) => (this.client = c));
+    nodeService.getConnectedNode(NodeType.REW).subscribe((c) => (this.client = c));
   }
 
   // --- MASTERNODE SYNC --- //
@@ -75,17 +75,36 @@ export class MasternodeService {
   }
 
   async getNewOwners(count: number): Promise<MasternodeOwnerDto[]> {
-    const lastUsed = await this.masternodeRepo.findOne({
+    const masternodes = await this.masternodeRepo.find({
       where: { owner: Not(IsNull()) },
-      order: { id: 'DESC' },
     });
-    const owners = this.masternodeOwnerService.provide(count, lastUsed?.owner);
+    const owners = this.masternodeOwnerService.provide(
+      count,
+      masternodes.map((m) => m.owner),
+    );
 
     if (owners.length !== count) {
       console.error(`Could not get enough owners, requested ${count}, returning available: ${owners.length}`);
     }
 
     return owners;
+  }
+
+  async assignOwnersToMasternodes(
+    owners: MasternodeOwnerDto[],
+    masternodes: Masternode[],
+    timeLock: MasternodeTimeLock,
+  ): Promise<Masternode[]> {
+    masternodes.forEach(async (node, i) => {
+      const info = owners[i];
+      node.accountIndex = info.index;
+      node.owner = info.address;
+      node.ownerWallet = info.wallet;
+      node.timeLock = timeLock;
+      await this.masternodeRepo.save(node);
+    });
+
+    return masternodes;
   }
 
   async getActiveCount(date: Date = new Date()): Promise<number> {
