@@ -89,10 +89,10 @@ export class JellyfishService {
       ]),
     ];
 
-    const tx = RawTxUtil.createTxSegWit(vins, vouts, witnesses);
-
+    const tx = new CTransactionSegWit(RawTxUtil.createTxSegWit(vins, vouts, witnesses));
     return {
-      hex: new CTransactionSegWit(tx).toHex(),
+      id: tx.txId,
+      hex: tx.toHex(),
       scriptHex: utxo.scriptHex,
       prevouts: utxo.prevouts,
     };
@@ -117,10 +117,10 @@ export class JellyfishService {
       ]),
     ];
 
-    const tx = RawTxUtil.createTxSegWit(vins, vouts, witnesses);
-
+    const tx = new CTransactionSegWit(RawTxUtil.createTxSegWit(vins, vouts, witnesses));
     return {
-      hex: new CTransactionSegWit(tx).toHex(),
+      id: tx.txId,
+      hex: tx.toHex(),
       scriptHex: utxo.scriptHex,
       prevouts: utxo.prevouts,
     };
@@ -183,8 +183,10 @@ export class JellyfishService {
     const lastElement = vouts[vouts.length - 1];
     lastElement.value = lastElement.value.minus(fee);
 
+    const txObj = new CTransactionSegWit(tx);
     return {
-      hex: new CTransactionSegWit(tx).toHex(),
+      id: txObj.txId,
+      hex: txObj.toHex(),
       scriptHex: utxo.scriptHex,
       prevouts: utxo.prevouts,
     };

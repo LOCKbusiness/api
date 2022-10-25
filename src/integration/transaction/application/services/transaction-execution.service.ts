@@ -36,36 +36,43 @@ export class TransactionExecutionService {
 
   async createMasternode(data: CreateMasternodeData): Promise<string> {
     const rawTx = await this.jellyfishService.rawTxForCreate(data.masternode);
+    console.info(`Create masternode tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data));
   }
 
   async resignMasternode(data: ResignMasternodeData): Promise<string> {
     const rawTx = await this.jellyfishService.rawTxForResign(data.masternode);
+    console.info(`Resign masternode tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data));
   }
 
   async sendFromLiq(data: SendFromLiqData): Promise<string> {
     const rawTx = await this.jellyfishService.rawTxForSendFromLiq(data.to, data.amount, data.sizePriority);
+    console.info(`Send from liq tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data));
   }
 
   async sendFromLiqToCustomer(data: SendFromLiqToCustomerData): Promise<string> {
     const rawTx = await this.jellyfishService.rawTxForSendFromLiq(data.to, data.amount, UtxoSizePriority.BIG);
+    console.info(`Send from liq to customer tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, { id: data.withdrawalId });
   }
 
   async sendToLiq(data: SendToLiqData): Promise<string> {
     const rawTx = await this.jellyfishService.rawTxForSendToLiq(data.from, data.amount);
+    console.info(`Send to liq tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data));
   }
 
   async splitBiggestUtxo(data: SplitData): Promise<string> {
     const rawTx = await this.jellyfishService.rawTxForSplitUtxo(data.address, data.split);
+    console.info(`Split tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx);
   }
 
   async mergeSmallestUtxos(data: MergeData): Promise<string> {
     const rawTx = await this.jellyfishService.rawTxForMergeUtxos(data.address, data.merge);
+    console.info(`Merge tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx);
   }
 

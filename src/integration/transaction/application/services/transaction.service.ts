@@ -48,12 +48,14 @@ export class TransactionService {
   async verified(id: string, signature: string) {
     const tx = await this.repository.findOne(id);
     if (!tx) throw new NotFoundException('Transaction not found');
+    console.info(`${tx.id} verified`);
     await this.repository.save(tx.verified(signature));
   }
 
   async invalidated(id: string, reason?: string) {
     const tx = await this.repository.findOne(id);
     if (!tx) throw new NotFoundException('Transaction not found');
+    console.info(`${tx.id} invalidated with reason: ${reason}`);
     await this.repository.save(tx.invalidated(reason));
 
     const txPromise = this.transactions.get(tx.id);
@@ -65,6 +67,7 @@ export class TransactionService {
     const tx = await this.repository.findOne(id);
     if (!tx) throw new NotFoundException('Transaction not found');
     if (tx.invalidationReason) throw new BadRequestException('Transaction is invalidated');
+    console.info(`${tx.id} signed`);
     await this.repository.save(tx.signed(hex));
 
     const txPromise = this.transactions.get(tx.id);
@@ -73,12 +76,12 @@ export class TransactionService {
   }
 
   async sign(rawTx: RawTxDto, signature: string, payload?: any): Promise<string> {
-    const id = this.receiveIdFor(rawTx);
-
+    const id = rawTx.id ?? this.receiveIdFor(rawTx);
     const tx = await this.repository.findOne(id);
     if (tx && tx.signedHex) return Promise.resolve(tx.signedHex);
 
     const storedTx = await this.repository.save(TransactionEntity.create(id, rawTx, payload, signature));
+    console.info(`Added ${id} for signing`);
 
     return new Promise<string>((resolve, reject) => {
       this.transactions.set(storedTx.id, { signed: resolve, invalidated: reject });
