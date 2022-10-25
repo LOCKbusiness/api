@@ -16,12 +16,19 @@ export class TransactionRepository extends Repository<Transaction> {
   }
 
   async getOpen(): Promise<Transaction[]> {
-    return this.find({ where: { issuerSignature: Not(IsNull()), verifierSignature: IsNull() } });
+    return this.find({
+      where: { issuerSignature: Not(IsNull()), verifierSignature: IsNull(), invalidationReason: IsNull() },
+    });
   }
 
   async getVerified(): Promise<Transaction[]> {
     return this.find({
-      where: { issuerSignature: Not(IsNull()), verifierSignature: Not(IsNull()), signedHex: IsNull() },
+      where: {
+        issuerSignature: Not(IsNull()),
+        verifierSignature: Not(IsNull()),
+        signedHex: IsNull(),
+        invalidationReason: IsNull(),
+      },
     });
   }
 }

@@ -1,5 +1,5 @@
 import { MainNet, Network, TestNet } from '@defichain/jellyfish-network';
-import { CTransactionSegWit, Vin, Vout, Witness } from '@defichain/jellyfish-transaction';
+import { CTransactionSegWit, Vin, Vout, Witness, Script } from '@defichain/jellyfish-transaction';
 import { calculateFeeP2WPKH } from '@defichain/jellyfish-transaction-builder';
 import { JellyfishWallet, WalletHdNode } from '@defichain/jellyfish-wallet';
 import { Bip32Options, MnemonicHdNodeProvider } from '@defichain/jellyfish-wallet-mnemonic';
@@ -89,10 +89,10 @@ export class JellyfishService {
       ]),
     ];
 
-    const tx = RawTxUtil.createTxSegWit(vins, vouts, witnesses);
-
+    const tx = new CTransactionSegWit(RawTxUtil.createTxSegWit(vins, vouts, witnesses));
     return {
-      hex: new CTransactionSegWit(tx).toHex(),
+      id: tx.txId,
+      hex: tx.toHex(),
       scriptHex: utxo.scriptHex,
       prevouts: utxo.prevouts,
     };
@@ -117,10 +117,10 @@ export class JellyfishService {
       ]),
     ];
 
-    const tx = RawTxUtil.createTxSegWit(vins, vouts, witnesses);
-
+    const tx = new CTransactionSegWit(RawTxUtil.createTxSegWit(vins, vouts, witnesses));
     return {
-      hex: new CTransactionSegWit(tx).toHex(),
+      id: tx.txId,
+      hex: tx.toHex(),
       scriptHex: utxo.scriptHex,
       prevouts: utxo.prevouts,
     };
@@ -169,7 +169,10 @@ export class JellyfishService {
     const utxo = await this.utxoProvider.provideNumber(address, numberOfInputs, sizePriority);
 
     const vins = RawTxUtil.createVins(utxo.prevouts);
-    const vouts = new Array(numberOfOutputs).fill(RawTxUtil.createVoutReturn(script, utxo.total.div(numberOfOutputs)));
+    const vouts =
+      numberOfOutputs > 1
+        ? this.calculateSplittedOutputs(utxo.total, numberOfOutputs, script)
+        : [RawTxUtil.createVoutReturn(script, utxo.total)];
     const witness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(pubKeyHash)]);
     const witnesses = new Array(vins.length).fill(witness);
 
@@ -183,11 +186,23 @@ export class JellyfishService {
     const lastElement = vouts[vouts.length - 1];
     lastElement.value = lastElement.value.minus(fee);
 
+    const txObj = new CTransactionSegWit(tx);
     return {
-      hex: new CTransactionSegWit(tx).toHex(),
+      id: txObj.txId,
+      hex: txObj.toHex(),
       scriptHex: utxo.scriptHex,
       prevouts: utxo.prevouts,
     };
+  }
+
+  private calculateSplittedOutputs(total: BigNumber, numberOfOutputs: number, script: Script): Vout[] {
+    // dividedToIntegerBy does a floor based on description
+    const amountPerOutput = total.dividedToIntegerBy(numberOfOutputs);
+    const numberOfSameSizedOutputs = numberOfOutputs - 1;
+    const totalSameSizedOutputs = amountPerOutput.multipliedBy(numberOfSameSizedOutputs);
+    return new Array(numberOfSameSizedOutputs)
+      .fill(RawTxUtil.createVoutReturn(script, amountPerOutput))
+      .concat([RawTxUtil.createVoutReturn(script, total.minus(totalSameSizedOutputs))]);
   }
 
   private call<T>(call: () => Promise<T>): Promise<T> {

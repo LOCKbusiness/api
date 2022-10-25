@@ -32,7 +32,7 @@ export class MasternodeService {
     private readonly settingService: SettingService,
     nodeService: NodeService,
   ) {
-    nodeService.getConnectedNode(NodeType.INPUT).subscribe((c) => (this.client = c));
+    nodeService.getConnectedNode(NodeType.REW).subscribe((c) => (this.client = c));
   }
 
   // --- MASTERNODE SYNC --- //
@@ -75,17 +75,38 @@ export class MasternodeService {
   }
 
   async getNewOwners(count: number): Promise<MasternodeOwnerDto[]> {
-    const lastUsed = await this.masternodeRepo.findOne({
+    const masternodes = await this.masternodeRepo.find({
       where: { owner: Not(IsNull()) },
-      order: { id: 'DESC' },
     });
-    const owners = this.masternodeOwnerService.provide(count, lastUsed?.owner);
+    const owners = this.masternodeOwnerService.provide(
+      count,
+      masternodes.map((m) => m.owner),
+    );
 
     if (owners.length !== count) {
       console.error(`Could not get enough owners, requested ${count}, returning available: ${owners.length}`);
     }
 
     return owners;
+  }
+
+  async assignOwnersToMasternodes(
+    owners: MasternodeOwnerDto[],
+    masternodes: Masternode[],
+    timeLock: MasternodeTimeLock,
+  ): Promise<Masternode[]> {
+    await Promise.all(
+      masternodes.map((node, i) => {
+        const info = owners[i];
+        node.accountIndex = info.index;
+        node.owner = info.address;
+        node.ownerWallet = info.wallet;
+        node.timeLock = timeLock;
+        return this.masternodeRepo.save(node);
+      }),
+    );
+
+    return masternodes;
   }
 
   async getActiveCount(date: Date = new Date()): Promise<number> {
@@ -112,7 +133,7 @@ export class MasternodeService {
   async getAllResigning(): Promise<Masternode[]> {
     return this.masternodeRepo.find({
       where: {
-        state: In([MasternodeState.RESIGNING, MasternodeState.PRE_RESIGNED]),
+        state: In([MasternodeState.RESIGNING, MasternodeState.PRE_RESIGNED, MasternodeState.MOVING_COLLATERAL]),
       },
     });
   }
@@ -216,6 +237,15 @@ export class MasternodeService {
     masternode.state = MasternodeState.PRE_RESIGNED;
     masternode.resignHash = txId;
     masternode.resignDate = new Date();
+
+    await this.masternodeRepo.save(masternode);
+  }
+
+  async movingCollateral(id: number): Promise<void> {
+    const masternode = await this.masternodeRepo.findOne(id);
+    if (!masternode) throw new NotFoundException('Masternode not found');
+
+    masternode.state = MasternodeState.MOVING_COLLATERAL;
 
     await this.masternodeRepo.save(masternode);
   }

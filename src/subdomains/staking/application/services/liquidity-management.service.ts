@@ -39,7 +39,7 @@ export class LiquidityManagementService {
     try {
       await this.prepareWithdrawals();
     } catch (e) {
-      console.error(`Exception during withdrawals cronjob: ${e}`);
+      console.error('Exception during withdrawals cronjob:', e);
     }
 
     this.lockWithdrawals.release();
@@ -51,9 +51,24 @@ export class LiquidityManagementService {
 
     try {
       await this.checkMasternodesInProcess();
+
+      const updatedList = await this.masternodeService.getAllWithStates([
+        MasternodeState.ENABLING,
+        MasternodeState.MOVING_COLLATERAL,
+      ]);
+
+      const enabling = updatedList.filter((node) => node.state === MasternodeState.ENABLING).length;
+      const movingCollateral = updatedList.filter((node) => node.state === MasternodeState.MOVING_COLLATERAL).length;
+
+      if (enabling > 0 || movingCollateral > 0) {
+        console.info(
+          `Stopping masternode cronjob due to ${enabling} enabling or ${movingCollateral} moving collateral masternodes`,
+        );
+        return;
+      }
       await this.checkLiquidity();
     } catch (e) {
-      console.error(`Exception during masternodes cronjob: ${e}`);
+      console.error('Exception during masternodes cronjob:', e);
     }
 
     this.lockMasternodes.release();
@@ -66,7 +81,7 @@ export class LiquidityManagementService {
     try {
       await this.checkUtxos();
     } catch (e) {
-      console.error(`Exception during masternodes cronjob: ${e}`);
+      console.error('Exception during utxo-management cronjob:', e);
     }
 
     this.lockUtxoManagement.release();
@@ -79,9 +94,11 @@ export class LiquidityManagementService {
       ? Math.floor(excessiveLiquidity.div(Config.masternode.collateral + Config.masternode.fee).toNumber())
       : Math.floor(excessiveLiquidity.div(Config.masternode.collateral).toNumber());
 
+    if (masternodeChangeCount !== 0) console.info(`Masternode change info ${masternodeChangeCount}`);
+
     if (masternodeChangeCount > 0) {
       await this.startMasternodeEnabling(masternodeChangeCount);
-    } else {
+    } else if (masternodeChangeCount < 0) {
       await this.startMasternodeResigning(Math.abs(masternodeChangeCount));
     }
   }
@@ -114,7 +131,14 @@ export class LiquidityManagementService {
       MasternodeState.RESIGNING,
       MasternodeState.PRE_ENABLED,
       MasternodeState.PRE_RESIGNED,
+      MasternodeState.MOVING_COLLATERAL,
     ]);
+    if (allInProcessMasternodes.length > 0)
+      console.info(
+        `masternodes are in process\n${allInProcessMasternodes.map(
+          (node) => `${node.id} ${node.state} ${node.owner}\n`,
+        )}`,
+      );
     await this.handleMasternodesWithState(allInProcessMasternodes, MasternodeState.ENABLING);
     await this.handleMasternodesWithState(allInProcessMasternodes, MasternodeState.RESIGNING);
     await this.handleMasternodesWithState(
@@ -127,19 +151,14 @@ export class LiquidityManagementService {
       MasternodeState.PRE_RESIGNED,
       BlockchainMasternodeState.RESIGNED,
     );
+    await this.handleMasternodesWithState(allInProcessMasternodes, MasternodeState.MOVING_COLLATERAL);
   }
 
   private async startMasternodeEnabling(count: number, timeLock = MasternodeTimeLock.NONE): Promise<void | void[]> {
     // get n addresses from the masternode table, where masternode state is idle
-    const idleMasternodes = await this.masternodeService.getIdleMasternodes(count);
+    let idleMasternodes = await this.masternodeService.getIdleMasternodes(count);
     const newOwners = await this.masternodeService.getNewOwners(count);
-    idleMasternodes.forEach((node, i) => {
-      const info = newOwners[i];
-      node.accountIndex = info.index;
-      node.owner = info.address;
-      node.ownerWallet = info.wallet;
-      node.timeLock = timeLock;
-    });
+    idleMasternodes = await this.masternodeService.assignOwnersToMasternodes(newOwners, idleMasternodes, timeLock);
     return this.handleMasternodesWithState(idleMasternodes, MasternodeState.IDLE);
   }
 
@@ -158,6 +177,8 @@ export class LiquidityManagementService {
     if (blockchainState) {
       filteredMasternodes = await this.masternodeService.filterByBlockchainState(filteredMasternodes, blockchainState);
     }
+    if (filteredMasternodes.length > 0)
+      console.info(`${filteredMasternodes.length} masternodes are in state ${state} and will be now processed`);
 
     const process = this.getProcessFunctionsFor(state);
 
@@ -165,7 +186,7 @@ export class LiquidityManagementService {
       filteredMasternodes.map((node) =>
         process
           .txFunc(node)
-          .then((txId: string) => process.updateFunc(node, txId))
+          .then((value: string) => process.updateFunc(node, value)) // value can be txId or balance
           .catch(console.error),
       ),
     );
@@ -194,7 +215,7 @@ export class LiquidityManagementService {
     await Promise.all(
       possibleWithdrawals.map((w) =>
         this.withdrawalService
-          .designateWithdrawal(w.id)
+          .executeWithdrawal(w.id)
           .catch((e) => console.error(`Failed to prepare withdrawal ${w.id}:`, e)),
       ),
     );
@@ -317,6 +338,16 @@ export class LiquidityManagementService {
             console.info(
               `Sending collateral back to liquidity manager from\n\towner: ${masternode.owner}\n\twith tx: ${txId}`,
             );
+            return this.masternodeService.movingCollateral(masternode.id);
+          },
+        };
+      case MasternodeState.MOVING_COLLATERAL:
+        return {
+          txFunc: (masternode: Masternode) => {
+            return this.client.getUTXOBalance(masternode.owner).then((balance) => balance.toString());
+          },
+          updateFunc: (masternode: Masternode, balance: string) => {
+            if (new BigNumber(balance).gt(0)) return;
             return this.masternodeService.resigned(masternode.id);
           },
         };

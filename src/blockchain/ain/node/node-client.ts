@@ -48,6 +48,7 @@ export class NodeClient {
   }
 
   async getBlock(hash: string): Promise<Block<string>> {
+    if (!hash) throw new Error('Hash is undefined');
     return this.callNode((c) => c.blockchain.getBlock(hash, 1));
   }
 
@@ -64,14 +65,17 @@ export class NodeClient {
   }
 
   async getTx(txId: string): Promise<InWalletTransaction> {
+    if (!txId) throw new Error('TxId is undefined');
     return this.callNode((c) => c.wallet.getTransaction(txId));
   }
 
   async getMasternodeInfo(id: string): Promise<MasternodeInfo> {
+    if (!id) throw new Error('Id is undefined');
     return this.callNode((c) => c.masternode.getMasternode(id).then((r) => r[id]));
   }
 
   async signMessage(address: string, message: string): Promise<string> {
+    if (!address || !message) throw new Error('Address, message or both are undefined');
     return this.callNode((c) => c.call('signmessage', [address, message], 'number'), true);
   }
 
