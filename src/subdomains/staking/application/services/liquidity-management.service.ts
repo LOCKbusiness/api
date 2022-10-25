@@ -30,6 +30,8 @@ export class LiquidityManagementService {
     whaleService: WhaleService,
   ) {
     whaleService.getClient().subscribe((c) => (this.client = c));
+
+    this.checkMasternodesInProcess();
   }
 
   @Interval(60000)
@@ -51,6 +53,7 @@ export class LiquidityManagementService {
 
     try {
       await this.checkMasternodesInProcess();
+
       const updatedList = await this.masternodeService.getAllWithStates([
         MasternodeState.ENABLING,
         MasternodeState.MOVING_COLLATERAL,
@@ -132,9 +135,12 @@ export class LiquidityManagementService {
       MasternodeState.PRE_RESIGNED,
       MasternodeState.MOVING_COLLATERAL,
     ]);
-    console.info(
-      `masternodes are in process\n${allInProcessMasternodes.map((node) => `${node.id} ${node.state} ${node.owner}`)}`,
-    );
+    if (allInProcessMasternodes.length > 0)
+      console.info(
+        `masternodes are in process\n${allInProcessMasternodes.map(
+          (node) => `${node.id} ${node.state} ${node.owner}\n`,
+        )}`,
+      );
     await this.handleMasternodesWithState(allInProcessMasternodes, MasternodeState.ENABLING);
     await this.handleMasternodesWithState(allInProcessMasternodes, MasternodeState.RESIGNING);
     await this.handleMasternodesWithState(
@@ -147,18 +153,7 @@ export class LiquidityManagementService {
       MasternodeState.PRE_RESIGNED,
       BlockchainMasternodeState.RESIGNED,
     );
-    await this.checkIfOwnerIsEmpty(
-      allInProcessMasternodes.filter((node) => node.state === MasternodeState.MOVING_COLLATERAL),
-    );
-  }
-
-  private async checkIfOwnerIsEmpty(masternodes: Masternode[]): Promise<void> {
-    for (const node of masternodes) {
-      const balance = await this.client.getUTXOBalance(node.owner);
-      if (balance.isEqualTo(0)) {
-        await this.masternodeService.resigned(node.id);
-      }
-    }
+    await this.handleMasternodesWithState(allInProcessMasternodes, MasternodeState.MOVING_COLLATERAL);
   }
 
   private async startMasternodeEnabling(count: number, timeLock = MasternodeTimeLock.NONE): Promise<void | void[]> {
@@ -193,7 +188,7 @@ export class LiquidityManagementService {
       filteredMasternodes.map((node) =>
         process
           .txFunc(node)
-          .then((txId: string) => process.updateFunc(node, txId))
+          .then((value: string) => process.updateFunc(node, value)) // value can be txId or balance
           .catch(console.error),
       ),
     );
@@ -346,6 +341,16 @@ export class LiquidityManagementService {
               `Sending collateral back to liquidity manager from\n\towner: ${masternode.owner}\n\twith tx: ${txId}`,
             );
             return this.masternodeService.movingCollateral(masternode.id);
+          },
+        };
+      case MasternodeState.MOVING_COLLATERAL:
+        return {
+          txFunc: async (masternode: Masternode) => {
+            return this.client.getUTXOBalance(masternode.owner).then((balance) => balance.toString());
+          },
+          updateFunc: (masternode: Masternode, balance: string) => {
+            if (new BigNumber(balance).gt(0)) return;
+            return this.masternodeService.resigned(masternode.id);
           },
         };
     }

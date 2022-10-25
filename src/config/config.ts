@@ -135,8 +135,8 @@ export class Configuration {
     maxInputs: 300,
     minOperateValue: 100,
     amount: {
-      min: 200,
-      max: 500,
+      min: 100,
+      max: 300,
     },
     split: 10,
     merge: 100,
