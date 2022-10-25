@@ -131,7 +131,7 @@ export class MasternodeService {
   async getAllResigning(): Promise<Masternode[]> {
     return this.masternodeRepo.find({
       where: {
-        state: In([MasternodeState.RESIGNING, MasternodeState.PRE_RESIGNED]),
+        state: In([MasternodeState.RESIGNING, MasternodeState.PRE_RESIGNED, MasternodeState.MOVING_COLLATERAL]),
       },
     });
   }
@@ -235,6 +235,15 @@ export class MasternodeService {
     masternode.state = MasternodeState.PRE_RESIGNED;
     masternode.resignHash = txId;
     masternode.resignDate = new Date();
+
+    await this.masternodeRepo.save(masternode);
+  }
+
+  async movingCollateral(id: number): Promise<void> {
+    const masternode = await this.masternodeRepo.findOne(id);
+    if (!masternode) throw new NotFoundException('Masternode not found');
+
+    masternode.state = MasternodeState.MOVING_COLLATERAL;
 
     await this.masternodeRepo.save(masternode);
   }

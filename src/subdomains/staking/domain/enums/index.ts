@@ -37,6 +37,7 @@ export enum MasternodeState {
   ENABLED = 'Enabled',
   RESIGNING = 'Resigning',
   PRE_RESIGNED = 'PreResigned',
+  MOVING_COLLATERAL = 'MovingCollateral',
   RESIGNED = 'Resigned',
 }
 
