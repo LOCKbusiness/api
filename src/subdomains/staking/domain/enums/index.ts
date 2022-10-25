@@ -8,6 +8,7 @@ export enum WithdrawalStatus {
   // be careful changing the value of Draft enum -> withdrawal.entity.ts -> Entity Index
   DRAFT = 'Draft',
   PENDING = 'Pending',
+  PAYOUT_DESIGNATED = 'PayoutDesignated',
   PAYING_OUT = 'PayingOut',
   CONFIRMED = 'Confirmed',
   FAILED = 'Failed',

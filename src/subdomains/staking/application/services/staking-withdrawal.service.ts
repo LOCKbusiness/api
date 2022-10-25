@@ -114,16 +114,18 @@ export class StakingWithdrawalService {
     return WithdrawalDraftOutputDtoMapper.entityToDto(withdrawal);
   }
 
-  async designateWithdrawal(withdrawalId: number): Promise<void> {
-    // payout
+  async executeWithdrawal(withdrawalId: number): Promise<void> {
+    // designate
     const withdrawal = await this.withdrawalRepo.findOne(withdrawalId, { relations: ['staking'] });
+    withdrawal.designateWithdrawal();
+    await this.withdrawalRepo.save(withdrawal);
+
+    // payout
     const txId = await this.deFiChainService.sendWithdrawal(withdrawal);
 
     // update
     const staking = await this.stakingRepo.findOne(withdrawal.staking.id);
-
-    staking.designateWithdrawalPayout(withdrawal.id, txId);
-
+    staking.payoutWithdrawal(withdrawalId, txId);
     await this.stakingRepo.save(staking);
   }
 
