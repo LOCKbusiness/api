@@ -30,8 +30,6 @@ export class LiquidityManagementService {
     whaleService: WhaleService,
   ) {
     whaleService.getClient().subscribe((c) => (this.client = c));
-
-    this.checkMasternodesInProcess();
   }
 
   @Interval(60000)
@@ -345,7 +343,7 @@ export class LiquidityManagementService {
         };
       case MasternodeState.MOVING_COLLATERAL:
         return {
-          txFunc: async (masternode: Masternode) => {
+          txFunc: (masternode: Masternode) => {
             return this.client.getUTXOBalance(masternode.owner).then((balance) => balance.toString());
           },
           updateFunc: (masternode: Masternode, balance: string) => {
