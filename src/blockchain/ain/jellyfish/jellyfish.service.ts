@@ -1,5 +1,5 @@
 import { MainNet, Network, TestNet } from '@defichain/jellyfish-network';
-import { CTransactionSegWit, Vin, Vout, Witness } from '@defichain/jellyfish-transaction';
+import { CTransactionSegWit, Vin, Vout, Witness, Script } from '@defichain/jellyfish-transaction';
 import { calculateFeeP2WPKH } from '@defichain/jellyfish-transaction-builder';
 import { JellyfishWallet, WalletHdNode } from '@defichain/jellyfish-wallet';
 import { Bip32Options, MnemonicHdNodeProvider } from '@defichain/jellyfish-wallet-mnemonic';
@@ -169,7 +169,10 @@ export class JellyfishService {
     const utxo = await this.utxoProvider.provideNumber(address, numberOfInputs, sizePriority);
 
     const vins = RawTxUtil.createVins(utxo.prevouts);
-    const vouts = new Array(numberOfOutputs).fill(RawTxUtil.createVoutReturn(script, utxo.total.div(numberOfOutputs)));
+    const vouts =
+      numberOfOutputs > 1
+        ? this.calculateSplittedOutputs(utxo.total, numberOfOutputs, script)
+        : [RawTxUtil.createVoutReturn(script, utxo.total.div(numberOfOutputs))];
     const witness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(pubKeyHash)]);
     const witnesses = new Array(vins.length).fill(witness);
 
@@ -190,6 +193,16 @@ export class JellyfishService {
       scriptHex: utxo.scriptHex,
       prevouts: utxo.prevouts,
     };
+  }
+
+  private calculateSplittedOutputs(total: BigNumber, numberOfOutputs: number, script: Script): Vout[] {
+    // dividedToIntegerBy does a floor based on description
+    const parts = total.dividedToIntegerBy(numberOfOutputs);
+    const numberOfSameSizedOuputs = numberOfOutputs - 1;
+    const totalSameSizedOutputs = parts.multipliedBy(numberOfSameSizedOuputs);
+    return new Array(numberOfSameSizedOuputs)
+      .fill(RawTxUtil.createVoutReturn(script, parts))
+      .concat([RawTxUtil.createVoutReturn(script, total.minus(totalSameSizedOutputs))]);
   }
 
   private call<T>(call: () => Promise<T>): Promise<T> {
