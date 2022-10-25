@@ -172,7 +172,7 @@ export class JellyfishService {
     const vouts =
       numberOfOutputs > 1
         ? this.calculateSplittedOutputs(utxo.total, numberOfOutputs, script)
-        : [RawTxUtil.createVoutReturn(script, utxo.total.div(numberOfOutputs))];
+        : [RawTxUtil.createVoutReturn(script, utxo.total)];
     const witness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(pubKeyHash)]);
     const witnesses = new Array(vins.length).fill(witness);
 
@@ -197,11 +197,11 @@ export class JellyfishService {
 
   private calculateSplittedOutputs(total: BigNumber, numberOfOutputs: number, script: Script): Vout[] {
     // dividedToIntegerBy does a floor based on description
-    const parts = total.dividedToIntegerBy(numberOfOutputs);
-    const numberOfSameSizedOuputs = numberOfOutputs - 1;
-    const totalSameSizedOutputs = parts.multipliedBy(numberOfSameSizedOuputs);
-    return new Array(numberOfSameSizedOuputs)
-      .fill(RawTxUtil.createVoutReturn(script, parts))
+    const amountPerOutput = total.dividedToIntegerBy(numberOfOutputs);
+    const numberOfSameSizedOutputs = numberOfOutputs - 1;
+    const totalSameSizedOutputs = amountPerOutput.multipliedBy(numberOfSameSizedOutputs);
+    return new Array(numberOfSameSizedOutputs)
+      .fill(RawTxUtil.createVoutReturn(script, amountPerOutput))
       .concat([RawTxUtil.createVoutReturn(script, total.minus(totalSameSizedOutputs))]);
   }
 

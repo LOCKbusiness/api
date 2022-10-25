@@ -95,14 +95,16 @@ export class MasternodeService {
     masternodes: Masternode[],
     timeLock: MasternodeTimeLock,
   ): Promise<Masternode[]> {
-    masternodes.forEach(async (node, i) => {
-      const info = owners[i];
-      node.accountIndex = info.index;
-      node.owner = info.address;
-      node.ownerWallet = info.wallet;
-      node.timeLock = timeLock;
-      await this.masternodeRepo.save(node);
-    });
+    await Promise.all(
+      masternodes.map((node, i) => {
+        const info = owners[i];
+        node.accountIndex = info.index;
+        node.owner = info.address;
+        node.ownerWallet = info.wallet;
+        node.timeLock = timeLock;
+        return this.masternodeRepo.save(node);
+      }),
+    );
 
     return masternodes;
   }
