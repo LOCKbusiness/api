@@ -56,6 +56,7 @@ export class Transaction {
   invalidated(reason?: string): this {
     this.inBlockchain = false;
     this.invalidationReason = reason;
+    this.signedHex = null;
     return this;
   }
 

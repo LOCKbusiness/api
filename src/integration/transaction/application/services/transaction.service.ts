@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CTransactionSegWit } from '@defichain/jellyfish-transaction';
 import { RawTxDto } from 'src/blockchain/ain/jellyfish/dto/raw-tx.dto';
 import { TransactionOutputDto } from '../dto/transaction.output.dto';
@@ -58,12 +58,13 @@ export class TransactionService {
 
     const txPromise = this.transactions.get(tx.id);
     this.transactions.delete(tx.id);
-    txPromise?.invalidated();
+    txPromise?.invalidated(`${tx.id} ${reason}`);
   }
 
   async signed(id: string, hex: string) {
     const tx = await this.repository.findOne(id);
     if (!tx) throw new NotFoundException('Transaction not found');
+    if (tx.invalidationReason) throw new BadRequestException('Transaction is invalidated');
     await this.repository.save(tx.signed(hex));
 
     const txPromise = this.transactions.get(tx.id);
@@ -82,7 +83,7 @@ export class TransactionService {
     return new Promise<string>((resolve, reject) => {
       this.transactions.set(storedTx.id, { signed: resolve, invalidated: reject });
 
-      setTimeout(() => reject('Timeout'), Config.staking.timeout.signature);
+      setTimeout(() => reject(`${tx.id} timed out`), Config.staking.timeout.signature);
     });
   }
 

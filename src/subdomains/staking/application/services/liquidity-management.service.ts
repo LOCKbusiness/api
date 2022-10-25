@@ -39,7 +39,7 @@ export class LiquidityManagementService {
     try {
       await this.prepareWithdrawals();
     } catch (e) {
-      console.error(`Exception during withdrawals cronjob: ${e}`);
+      console.error('Exception during withdrawals cronjob:', e);
     }
 
     this.lockWithdrawals.release();
@@ -53,7 +53,7 @@ export class LiquidityManagementService {
       await this.checkMasternodesInProcess();
       await this.checkLiquidity();
     } catch (e) {
-      console.error(`Exception during masternodes cronjob: ${e}`);
+      console.error('Exception during masternodes cronjob:', e);
     }
 
     this.lockMasternodes.release();
@@ -66,7 +66,7 @@ export class LiquidityManagementService {
     try {
       await this.checkUtxos();
     } catch (e) {
-      console.error(`Exception during masternodes cronjob: ${e}`);
+      console.error('Exception during utxo-management cronjob:', e);
     }
 
     this.lockUtxoManagement.release();
@@ -81,7 +81,7 @@ export class LiquidityManagementService {
 
     if (masternodeChangeCount > 0) {
       await this.startMasternodeEnabling(masternodeChangeCount);
-    } else {
+    } else if (masternodeChangeCount < 0) {
       await this.startMasternodeResigning(Math.abs(masternodeChangeCount));
     }
   }
