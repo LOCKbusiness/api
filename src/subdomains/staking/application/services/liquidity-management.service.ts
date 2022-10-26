@@ -22,6 +22,11 @@ export class LiquidityManagementService {
 
   private client: WhaleClient;
 
+  private masternodeChange = {
+    count: 0,
+    updated: new Date(),
+  };
+
   constructor(
     private readonly masternodeService: MasternodeService,
     private readonly withdrawalService: StakingWithdrawalService,
@@ -51,21 +56,6 @@ export class LiquidityManagementService {
 
     try {
       await this.checkMasternodesInProcess();
-
-      const updatedList = await this.masternodeService.getAllWithStates([
-        MasternodeState.ENABLING,
-        MasternodeState.MOVING_COLLATERAL,
-      ]);
-
-      const enabling = updatedList.filter((node) => node.state === MasternodeState.ENABLING).length;
-      const movingCollateral = updatedList.filter((node) => node.state === MasternodeState.MOVING_COLLATERAL).length;
-
-      if (enabling > 0 || movingCollateral > 0) {
-        console.info(
-          `Stopping masternode cronjob due to ${enabling} enabling or ${movingCollateral} moving collateral masternodes`,
-        );
-        return;
-      }
       await this.checkLiquidity();
     } catch (e) {
       console.error('Exception during masternodes cronjob:', e);
@@ -94,12 +84,22 @@ export class LiquidityManagementService {
       ? Math.floor(excessiveLiquidity.div(Config.masternode.collateral + Config.masternode.fee).toNumber())
       : Math.floor(excessiveLiquidity.div(Config.masternode.collateral).toNumber());
 
-    if (masternodeChangeCount !== 0) console.info(`Masternode change info ${masternodeChangeCount}`);
+    // only apply masternode change if the required change has been constant for a while
+    if (masternodeChangeCount !== this.masternodeChange.count) {
+      console.info(`Masternode change count changed from ${this.masternodeChange.count} to ${masternodeChangeCount}`);
+      this.masternodeChange.count = masternodeChangeCount;
+      this.masternodeChange.updated = new Date();
+      return;
+    }
+
+    if (Util.secondsDiff(this.masternodeChange.updated, new Date()) < Config.staking.liquidity.minChangePeriod) return;
 
     if (masternodeChangeCount > 0) {
+      console.info(`Building ${masternodeChangeCount} masternodes`);
       await this.startMasternodeEnabling(masternodeChangeCount);
     } else if (masternodeChangeCount < 0) {
-      await this.startMasternodeResigning(Math.abs(masternodeChangeCount));
+      console.info(`Resigning ${-masternodeChangeCount} masternodes`);
+      await this.startMasternodeResigning(-masternodeChangeCount);
     }
   }
 
@@ -178,7 +178,7 @@ export class LiquidityManagementService {
       filteredMasternodes = await this.masternodeService.filterByBlockchainState(filteredMasternodes, blockchainState);
     }
     if (filteredMasternodes.length > 0)
-      console.info(`${filteredMasternodes.length} masternodes are in state ${state} and will be now processed`);
+      console.info(`${filteredMasternodes.length} ${state} masternodes will be processed now`);
 
     const process = this.getProcessFunctionsFor(state);
 

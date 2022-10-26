@@ -123,6 +123,7 @@ export class Configuration {
     liquidity: {
       min: 20000,
       max: 40000,
+      minChangePeriod: 900, // 15 minutes
 
       address: process.env.LIQUIDITY_ADDRESS,
       wallet: process.env.LIQUIDITY_WALLET_NAME,
