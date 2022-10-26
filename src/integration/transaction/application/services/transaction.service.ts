@@ -26,14 +26,18 @@ export class TransactionService {
 
   @Interval(600000)
   async doTransactionChecks() {
-    const txs = await this.repository.getUndecidedTransactions();
-    for (const tx of txs) {
-      try {
-        await this.client.getTx(tx.id);
-        await this.repository.save(tx.foundOnBlockchain());
-      } catch {
-        await this.repository.save(tx.notFoundOnBlockchain());
+    try {
+      const txs = await this.repository.getUndecidedTransactions();
+      for (const tx of txs) {
+        try {
+          await this.client.getTx(tx.id);
+          await this.repository.save(tx.foundOnBlockchain());
+        } catch {
+          await this.repository.save(tx.notFoundOnBlockchain());
+        }
       }
+    } catch (e) {
+      console.error('Exception during transaction check:', e);
     }
   }
 
