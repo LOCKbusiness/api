@@ -135,8 +135,8 @@ export class LiquidityManagementService {
     ]);
     if (allInProcessMasternodes.length > 0)
       console.info(
-        `masternodes are in process\n${allInProcessMasternodes.map(
-          (node) => `${node.id} ${node.state} ${node.owner}\n`,
+        `Masternodes in process: \n${allInProcessMasternodes.map(
+          (node) => `${node.owner} (${node.id}): ${node.state} \n`,
         )}`,
       );
     await this.handleMasternodesWithState(allInProcessMasternodes, MasternodeState.ENABLING);
@@ -178,7 +178,7 @@ export class LiquidityManagementService {
       filteredMasternodes = await this.masternodeService.filterByBlockchainState(filteredMasternodes, blockchainState);
     }
     if (filteredMasternodes.length > 0)
-      console.info(`${filteredMasternodes.length} ${state} masternodes will be processed now`);
+      console.info(`${filteredMasternodes.length} masternodes in state ${state} will be processed now`);
 
     const process = this.getProcessFunctionsFor(state);
 
@@ -260,7 +260,7 @@ export class LiquidityManagementService {
             });
           },
           updateFunc: (masternode: Masternode, txId: string) => {
-            console.info(`Sending collateral to masternode\n\towner: ${masternode.owner}\n\twith tx: ${txId}`);
+            console.info(`Sending collateral to masternode \n\towner: ${masternode.owner} \n\twith tx: ${txId}`);
             return this.masternodeService.enabling(
               masternode.id,
               masternode.owner,
@@ -280,7 +280,7 @@ export class LiquidityManagementService {
             });
           },
           updateFunc: (masternode: Masternode, txId: string) => {
-            console.info(`Creating masternode for\n\towner: ${masternode.owner}\n\twith tx: ${txId}`);
+            console.info(`Creating masternode for \n\towner: ${masternode.owner} \n\twith tx: ${txId}`);
             return this.masternodeService.preEnabled(masternode.id, txId);
           },
         };
@@ -290,7 +290,7 @@ export class LiquidityManagementService {
             return Promise.resolve('');
           },
           updateFunc: (masternode: Masternode) => {
-            console.info(`Masternode got enabled\n\towner: ${masternode.owner}`);
+            console.info(`Masternode got enabled \n\towner: ${masternode.owner}`);
             return this.masternodeService.enabled(masternode.id);
           },
         };
@@ -306,7 +306,7 @@ export class LiquidityManagementService {
             });
           },
           updateFunc: (masternode: Masternode, txId: string) => {
-            console.info(`Sending resign fee to masternode\n\towner: ${masternode.owner}\n\twith tx: ${txId}`);
+            console.info(`Sending resign fee to masternode \n\towner: ${masternode.owner} \n\twith tx: ${txId}`);
             return this.masternodeService.resigning(masternode.id);
           },
         };
@@ -320,7 +320,7 @@ export class LiquidityManagementService {
             });
           },
           updateFunc: (masternode: Masternode, txId: string) => {
-            console.info(`Resigning masternode for\n\towner: ${masternode.owner}\n\twith tx: ${txId}`);
+            console.info(`Resigning masternode for \n\towner: ${masternode.owner} \n\twith tx: ${txId}`);
             return this.masternodeService.preResigned(masternode.id, txId);
           },
         };
@@ -336,7 +336,7 @@ export class LiquidityManagementService {
           },
           updateFunc: (masternode: Masternode, txId: string) => {
             console.info(
-              `Sending collateral back to liquidity manager from\n\towner: ${masternode.owner}\n\twith tx: ${txId}`,
+              `Sending collateral back to liquidity manager from \n\towner: ${masternode.owner} \n\twith tx: ${txId}`,
             );
             return this.masternodeService.movingCollateral(masternode.id);
           },
