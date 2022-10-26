@@ -115,12 +115,8 @@ export class StakingWithdrawalService {
   }
 
   async executeWithdrawal(withdrawalId: number): Promise<void> {
-    // designate
-    const withdrawal = await this.withdrawalRepo.findOne(withdrawalId, { relations: ['staking'] });
-    withdrawal.designateWithdrawal();
-    await this.withdrawalRepo.save(withdrawal);
-
     // payout
+    const withdrawal = await this.withdrawalRepo.findOne(withdrawalId, { relations: ['staking'] });
     const txId = await this.deFiChainService.sendWithdrawal(withdrawal);
 
     // update

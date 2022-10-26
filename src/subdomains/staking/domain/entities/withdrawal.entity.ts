@@ -82,12 +82,6 @@ export class Withdrawal extends IEntity {
     return this;
   }
 
-  designateWithdrawal(): this {
-    this.status = WithdrawalStatus.PAYOUT_DESIGNATED;
-
-    return this;
-  }
-
   payoutWithdrawal(withdrawalTxId: string): this {
     this.status = WithdrawalStatus.PAYING_OUT;
     this.withdrawalTxId = withdrawalTxId;
