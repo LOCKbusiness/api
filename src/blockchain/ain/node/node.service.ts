@@ -217,9 +217,13 @@ export class NodeService {
   // --- MONITORING --- //
   @Interval(60000)
   async checkState(): Promise<void> {
-    const poolStates = await this.getState();
-    await this.handleErrors(poolStates);
-    this.nodeState = poolStates;
+    try {
+      const poolStates = await this.getState();
+      await this.handleErrors(poolStates);
+      this.nodeState = poolStates;
+    } catch (e) {
+      console.error('Exception during node check:', e);
+    }
   }
 
   async getState(): Promise<NodePoolState[]> {

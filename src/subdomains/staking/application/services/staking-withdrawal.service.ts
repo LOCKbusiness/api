@@ -151,16 +151,20 @@ export class StakingWithdrawalService {
 
   @Interval(60000)
   async checkWithdrawalCompletion(): Promise<void> {
-    // not querying Stakings, because eager query is not supported, thus unsafe to fetch entire entity
-    const stakingIdsWithPayingOutWithdrawals = await this.stakingRepo
-      .createQueryBuilder('staking')
-      .leftJoin('staking.withdrawals', 'withdrawals')
-      .where('withdrawals.status = :status', { status: WithdrawalStatus.PAYING_OUT })
-      .getMany()
-      .then((s) => s.map((i) => i.id));
+    try {
+      // not querying Stakings, because eager query is not supported, thus unsafe to fetch entire entity
+      const stakingIdsWithPayingOutWithdrawals = await this.stakingRepo
+        .createQueryBuilder('staking')
+        .leftJoin('staking.withdrawals', 'withdrawals')
+        .where('withdrawals.status = :status', { status: WithdrawalStatus.PAYING_OUT })
+        .getMany()
+        .then((s) => s.map((i) => i.id));
 
-    for (const stakingId of stakingIdsWithPayingOutWithdrawals) {
-      await this.checkPayingOutWithdrawals(stakingId);
+      for (const stakingId of stakingIdsWithPayingOutWithdrawals) {
+        await this.checkPayingOutWithdrawals(stakingId);
+      }
+    } catch (e) {
+      console.error('Exception during withdrawal completion check:', e);
     }
   }
 
