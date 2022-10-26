@@ -71,8 +71,7 @@ export class StakingService {
       where: { depositAddress: { address: address } },
       relations: ['depositAddress'],
     });
-    if (!stakingEntity?.balance && stakingEntity?.balance !== 0)
-      throw new NotFoundException('Deposit-address not found');
+    if (!stakingEntity) throw new NotFoundException('Deposit-address not found');
     return { depositAddress: address, balance: stakingEntity.balance };
   }
 

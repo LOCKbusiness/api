@@ -24,7 +24,7 @@ export class StakingController {
     return this.stakingService.getOrCreateStaking(jwt.userId, jwt.walletId, query);
   }
 
-  @Get('deposit-address')
+  @Get('balance')
   @ApiBearerAuth()
   @ApiResponse({ status: 200, type: DepositAddressBalanceOutputDto })
   async getStakingBalance(@Query('address') depositAddress: string): Promise<DepositAddressBalanceOutputDto> {
