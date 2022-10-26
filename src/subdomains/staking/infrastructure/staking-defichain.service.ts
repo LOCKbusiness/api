@@ -26,9 +26,12 @@ export class StakingDeFiChainService {
   }
 
   //*** PUBLIC API ***//
+  async checkSync(): Promise<void> {
+    await this.inputClient.checkSync();
+  }
 
   async forwardDeposit(sourceAddress: string, amount: number): Promise<string> {
-    return this.forwardUtxo(sourceAddress, Config.staking.liquidity.address, amount);
+    return this.inputClient.sendCompleteUtxo(sourceAddress, Config.staking.liquidity.address, amount);
   }
 
   async sendWithdrawal(withdrawal: Withdrawal): Promise<string> {
@@ -48,11 +51,5 @@ export class StakingDeFiChainService {
     const transaction = await this.whaleClient.getTx(withdrawalTxId);
 
     return transaction && transaction.block.hash != null;
-  }
-
-  //*** HELPER METHODS **//
-
-  private async forwardUtxo(sourceAddress: string, targetAddress: string, amount: number): Promise<string> {
-    return this.inputClient.sendCompleteUtxo(sourceAddress, targetAddress, amount);
   }
 }
