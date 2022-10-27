@@ -19,6 +19,11 @@ export enum UtxoSizePriority {
   SMALL,
 }
 
+export interface UtxoStatistics {
+  quantity: number;
+  biggest: BigNumber | undefined;
+}
+
 @Injectable()
 export class UtxoProviderService {
   private blockHeight = 0;
@@ -31,11 +36,16 @@ export class UtxoProviderService {
     whaleService.getClient().subscribe((client) => (this.whaleClient = client));
   }
 
-  async getCurrentNumberOfUnspent(address: string): Promise<number> {
+  async getStatistics(address: string): Promise<UtxoStatistics> {
     if (!this.unspent.has(address)) {
       await this.retrieveUnspent(address);
     }
-    return this.unspent.get(address)?.length ?? 0;
+    const unspent = this.unspent.get(address);
+    const quantity = unspent?.length ?? 0;
+    const sortedUnspent = unspent?.sort((a, b) => UtxoProviderService.orderDescending(a, b));
+    const biggest = sortedUnspent?.length ?? 0 > 0 ? new BigNumber(sortedUnspent[0].vout.value) : undefined;
+
+    return { quantity, biggest };
   }
 
   async provideExactAmount(address: string, amount: BigNumber): Promise<UtxoInformation> {
