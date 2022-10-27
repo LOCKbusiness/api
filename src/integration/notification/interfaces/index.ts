@@ -24,6 +24,4 @@ export interface MailRequestGenericInput {
   date?: number;
   telegramUrl?: string;
   twitterUrl?: string;
-  linkedinUrl?: string;
-  instagramUrl?: string;
 }

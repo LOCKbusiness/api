@@ -15,8 +15,6 @@ export interface MailParams {
   date?: number;
   telegramUrl?: string;
   twitterUrl?: string;
-  linkedinUrl?: string;
-  instagramUrl?: string;
   options?: NotificationOptions;
   metadata?: NotificationMetadata;
 }
