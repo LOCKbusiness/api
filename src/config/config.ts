@@ -2,6 +2,8 @@ import { Injectable, Optional } from '@nestjs/common';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { I18nJsonParser, I18nOptions } from 'nestjs-i18n';
 import * as path from 'path';
+import { MailOptions } from 'src/integration/notification/services/mail.service';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 
 export function GetConfig(): Configuration {
   return new Configuration();
@@ -11,6 +13,8 @@ export class Configuration {
   environment = process.env.ENVIRONMENT;
   network = process.env.NETWORK;
   defaultLanguage = 'en';
+  defaultTelegramUrl = 'https://t.me/LOCK_Staking';
+  defaultTwitterUrl = 'https://twitter.com/Lock_Space_';
 
   database: TypeOrmModuleOptions = {
     type: 'mssql',
@@ -36,6 +40,35 @@ export class Configuration {
     parserOptions: {
       path: path.join(__dirname, '../shared/i18n/'),
       watch: true,
+    },
+  };
+
+  mail: MailOptions = {
+    options: {
+      transport: {
+        host: 'gateway.lock.space',
+        secure: true,
+        port: 465,
+        auth: {
+          user: process.env.MAIL_USER,
+          pass: process.env.MAIL_PASS,
+        },
+        tls: {
+          rejectUnauthorized: false,
+        },
+      },
+      template: {
+        dir: path.join(__dirname, '../integration/notification/assets/mails'),
+        adapter: new HandlebarsAdapter(),
+        options: {
+          strict: true,
+        },
+      },
+    },
+    defaultMailTemplate: 'personal',
+    contact: {
+      supportMail: process.env.SUPPORT_MAIL || 'admin@lock.space',
+      monitoringMail: process.env.MONITORING_MAIL || 'admin@admin.swiss',
     },
   };
 
