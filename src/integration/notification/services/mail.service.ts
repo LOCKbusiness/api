@@ -14,9 +14,7 @@ export interface MailOptions {
 
 @Injectable()
 export class MailService {
-  constructor(private readonly mailerService: MailerService) {
-    this.mailerService.sendMail({ to: 'danielklaiber@web.de', subject: 'Test LOCK' });
-  }
+  constructor(private readonly mailerService: MailerService) {}
 
   async send(mail: Mail): Promise<void> {
     try {

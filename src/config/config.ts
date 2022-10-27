@@ -58,7 +58,7 @@ export class Configuration {
         },
       },
       template: {
-        dir: path.join(__dirname, '../integration/notification/assets/mails'),
+        dir: path.join(__dirname, '../shared/assets/mails'),
         adapter: new HandlebarsAdapter(),
         options: {
           strict: true,
