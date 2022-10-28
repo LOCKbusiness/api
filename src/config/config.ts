@@ -133,14 +133,15 @@ export class Configuration {
   };
 
   utxo = {
-    maxInputs: 300,
-    minOperateValue: 100,
+    maxInputs: 300, // quantity of UTXOs
+    minOperateValue: 100, // DFI
+    minSplitValue: 1000, // DFI
     amount: {
-      min: 100,
-      max: 300,
+      min: 100, // quantity of UTXOs
+      max: 300, // quantity of UTXOs
     },
-    split: 10,
-    merge: 100,
+    split: 10, // UTXO
+    merge: 100, // UTXO
   };
 
   priceProviders = {
