@@ -65,7 +65,7 @@ export class Configuration {
 
   blockchain = {
     minFeeRate: 0.00001,
-    minFeeBuffer: 0.0001,
+    minFeeBuffer: 1,
     default: {
       user: process.env.NODE_USER,
       password: process.env.NODE_PASSWORD,

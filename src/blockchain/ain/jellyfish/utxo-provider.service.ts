@@ -17,6 +17,7 @@ export interface UtxoInformation {
 export enum UtxoSizePriority {
   BIG,
   SMALL,
+  FITTING,
 }
 
 export interface UtxoStatistics {
@@ -42,7 +43,7 @@ export class UtxoProviderService {
     }
     const unspent = this.unspent.get(address);
     const quantity = unspent?.length ?? 0;
-    const sortedUnspent = unspent?.sort((a, b) => UtxoProviderService.orderDescending(a, b));
+    const sortedUnspent = unspent?.sort(UtxoProviderService.orderDescending);
     const biggest = new BigNumber(sortedUnspent?.[0]?.vout.value);
 
     return { quantity, biggest };
@@ -136,16 +137,14 @@ export class UtxoProviderService {
     sizePriority: UtxoSizePriority,
   ): AddressUnspent[] {
     const amountPlusFeeBuffer = amount.plus(Config.blockchain.minFeeBuffer);
-    let total = new BigNumber(0);
-    const neededUnspent: AddressUnspent[] = [];
-    unspent = unspent.sort((a, b) =>
-      sizePriority === UtxoSizePriority.BIG ? this.orderDescending(a, b) : this.orderAscending(a, b),
-    );
-    unspent.forEach((u) => {
-      if (total.gte(amountPlusFeeBuffer)) return;
-      neededUnspent.push(u);
-      total = total.plus(u ? new BigNumber(u.vout.value) : 0);
-    });
+    let [neededUnspent, total] = UtxoProviderService.tryProvideUntilAmount(unspent, amountPlusFeeBuffer, sizePriority);
+    if (total.lt(amountPlusFeeBuffer) && sizePriority === UtxoSizePriority.FITTING) {
+      [neededUnspent, total] = UtxoProviderService.tryProvideUntilAmount(
+        unspent,
+        amountPlusFeeBuffer,
+        UtxoSizePriority.BIG,
+      );
+    }
     if (total.lt(amountPlusFeeBuffer))
       throw new Error(
         `Not enough available liquidity for requested amount.\nTotal available: ${total}\nRequested amount: ${amountPlusFeeBuffer}`,
@@ -155,14 +154,31 @@ export class UtxoProviderService {
     return neededUnspent;
   }
 
+  private static tryProvideUntilAmount(
+    unspent: AddressUnspent[],
+    amountPlusFeeBuffer: BigNumber,
+    sizePriority: UtxoSizePriority,
+  ): [AddressUnspent[], BigNumber] {
+    const neededUnspent: AddressUnspent[] = [];
+    let total = new BigNumber(0);
+    unspent = unspent.sort(sizePriority === UtxoSizePriority.BIG ? this.orderDescending : this.orderAscending);
+    if (sizePriority === UtxoSizePriority.FITTING) {
+      unspent = unspent.filter((u) => new BigNumber(u.vout.value).gt(amountPlusFeeBuffer));
+    }
+    unspent.forEach((u) => {
+      if (total.gte(amountPlusFeeBuffer)) return;
+      neededUnspent.push(u);
+      total = total.plus(u ? new BigNumber(u.vout.value) : 0);
+    });
+    return [neededUnspent, total];
+  }
+
   private static provideNumber(
     unspent: AddressUnspent[],
     numberOfUtxos: number,
     sizePriority: UtxoSizePriority,
   ): AddressUnspent[] {
-    unspent = unspent.sort((a, b) =>
-      sizePriority === UtxoSizePriority.BIG ? this.orderDescending(a, b) : this.orderAscending(a, b),
-    );
+    unspent = unspent.sort(sizePriority === UtxoSizePriority.BIG ? this.orderDescending : this.orderAscending);
     return unspent.slice(0, numberOfUtxos);
   }
 
