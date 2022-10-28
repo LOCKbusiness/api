@@ -108,24 +108,27 @@ export class LiquidityManagementService {
   }
 
   private async getExcessiveLiquidity(): Promise<BigNumber> {
-    const currentLiquidity = await this.getCurrentLiquidity();
+    const { available, incoming } = await this.getCurrentLiquidity();
 
-    if (currentLiquidity.gt(Config.staking.liquidity.max)) return currentLiquidity.minus(Config.staking.liquidity.max);
-    if (currentLiquidity.lt(Config.staking.liquidity.min)) return currentLiquidity.minus(Config.staking.liquidity.min);
+    const upperBoundExcessLiq = available.minus(Config.staking.liquidity.max);
+    const lowerBoundExcessLiq = available.plus(incoming).minus(Config.staking.liquidity.min);
+
+    if (upperBoundExcessLiq.gt(0)) return upperBoundExcessLiq;
+    if (lowerBoundExcessLiq.lt(0)) return lowerBoundExcessLiq;
 
     return new BigNumber(0);
   }
 
-  private async getCurrentLiquidity(): Promise<BigNumber> {
+  private async getCurrentLiquidity(): Promise<{ available: BigNumber; incoming: BigNumber }> {
     const balance = await this.client.getUTXOBalance(Config.staking.liquidity.address);
 
-    const resigningMasternodes = await this.masternodeService.getAllResigning();
-    const pendingResignAmount = resigningMasternodes.length * Config.masternode.collateral;
-
     const pendingWithdrawals = await this.withdrawalService.getPendingWithdrawals();
-    const pendingWithdrawalAmount = Util.sumObj(pendingWithdrawals, 'amount');
+    const pendingWithdrawalAmount = new BigNumber(Util.sumObj(pendingWithdrawals, 'amount'));
 
-    return balance.plus(pendingResignAmount).minus(pendingWithdrawalAmount);
+    const resigningMasternodes = await this.masternodeService.getAllResigning();
+    const pendingResignAmount = new BigNumber(resigningMasternodes.length * Config.masternode.collateral);
+
+    return { available: balance.minus(pendingWithdrawalAmount), incoming: pendingResignAmount };
   }
 
   // --- MASTERNODES ---- //
