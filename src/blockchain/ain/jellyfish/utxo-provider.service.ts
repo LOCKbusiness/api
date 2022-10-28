@@ -161,14 +161,11 @@ export class UtxoProviderService {
   ): [AddressUnspent[], BigNumber] {
     const neededUnspent: AddressUnspent[] = [];
     let total = new BigNumber(0);
-    let unspentToSearch: AddressUnspent[] = [];
     unspent = unspent.sort(sizePriority === UtxoSizePriority.BIG ? this.orderDescending : this.orderAscending);
     if (sizePriority === UtxoSizePriority.FITTING) {
-      unspentToSearch = unspent.filter((u) => new BigNumber(u.vout.value).gt(amountPlusFeeBuffer));
-    } else {
-      unspentToSearch = unspent;
+      unspent = unspent.filter((u) => new BigNumber(u.vout.value).gt(amountPlusFeeBuffer));
     }
-    unspentToSearch.forEach((u) => {
+    unspent.forEach((u) => {
       if (total.gte(amountPlusFeeBuffer)) return;
       neededUnspent.push(u);
       total = total.plus(u ? new BigNumber(u.vout.value) : 0);
