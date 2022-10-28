@@ -30,6 +30,7 @@ export interface UtxoStatistics {
 
 interface BlockedUtxo {
   unlockAt: Date;
+  unspent: AddressUnspent;
 }
 
 @Injectable()
@@ -60,13 +61,12 @@ export class UtxoProviderService {
     this.lockUtxo.release();
   }
 
-  async unlockSpentBasedOn(prevouts: Prevout[], scriptHex: string, address: string): Promise<void> {
-    const idAndUnspent = prevouts.map((p) => {
-      return { id: UtxoProviderService.idForPrevout(p), unspent: UtxoProviderService.convertToUnspent(p, scriptHex) };
-    });
-    for (const entry of idAndUnspent) {
-      this.spent.delete(entry.id);
+  async unlockSpentBasedOn(prevouts: Prevout[], address: string): Promise<void> {
+    const idsToRemove = prevouts.map(UtxoProviderService.idForPrevout);
+    for (const id of idsToRemove) {
+      const entry = this.spent.get(id);
       this.unspent.set(address, (this.unspent.get(address) ?? []).concat([entry.unspent]));
+      this.spent.delete(id);
     }
   }
 
@@ -115,7 +115,7 @@ export class UtxoProviderService {
   private markUsed(address: string, unspent: AddressUnspent[]): AddressUnspent[] {
     unspent.forEach((u) => {
       const id = UtxoProviderService.idForUnspent(u);
-      this.spent.set(id, { unlockAt: Util.hoursAfter(1) });
+      this.spent.set(id, { unlockAt: Util.hoursAfter(1), unspent: u });
     });
     this.unspent.set(
       address,
@@ -216,30 +216,6 @@ export class UtxoProviderService {
 
   private static idForPrevout(prevout: Prevout): string {
     return `${prevout.txid}|${prevout.vout}`;
-  }
-
-  private static convertToUnspent(prevout: Prevout, scriptHex: string): AddressUnspent {
-    return {
-      id: '',
-      hid: '',
-      sort: '',
-      block: {
-        hash: '',
-        height: 0,
-        time: 0,
-        medianTime: 0,
-      },
-      script: {
-        type: '',
-        hex: scriptHex,
-      },
-      vout: {
-        txid: prevout.txid,
-        n: prevout.vout,
-        value: prevout.value.toString(),
-        tokenId: prevout.tokenId,
-      },
-    };
   }
 
   private static orderAscending(a: AddressUnspent, b: AddressUnspent): number {

@@ -185,11 +185,7 @@ export class JellyfishService {
 
   // --- UTXO MANAGEMENT --- //
   private async executeUnlockUtxos(prevouts: Prevout[], scriptHex: string): Promise<void> {
-    this.utxoProvider.unlockSpentBasedOn(
-      prevouts,
-      scriptHex,
-      RawTxUtil.parseAddressFromScriptHex(scriptHex, this.getNetwork()),
-    );
+    this.utxoProvider.unlockSpentBasedOn(prevouts, RawTxUtil.parseAddressFromScriptHex(scriptHex, this.getNetwork()));
   }
 
   // --- HELPER METHODS --- //
