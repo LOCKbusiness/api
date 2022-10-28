@@ -1,8 +1,6 @@
-import { MainNet, Network, TestNet } from '@defichain/jellyfish-network';
 import { BinaryLike, createHash, createSign, KeyLike } from 'crypto';
 import { XMLValidator, XMLParser } from 'fast-xml-parser';
 import { readFile } from 'fs';
-import { Config } from 'src/config/config';
 
 type KeyType<T, U> = {
   [K in keyof T]: T[K] extends U ? K : never;
