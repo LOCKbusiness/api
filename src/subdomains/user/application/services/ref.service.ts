@@ -11,11 +11,15 @@ export class RefService {
 
   @Interval(3600000)
   async checkRefs(): Promise<void> {
-    // registered refs expire after 3 days
-    const expirationDate = Util.daysBefore(3);
+    try {
+      // registered refs expire after 3 days
+      const expirationDate = Util.daysBefore(3);
 
-    const expiredRefs = await this.refRepo.find({ updated: LessThan(expirationDate), origin: IsNull() });
-    await this.refRepo.remove(expiredRefs);
+      const expiredRefs = await this.refRepo.find({ updated: LessThan(expirationDate), origin: IsNull() });
+      await this.refRepo.remove(expiredRefs);
+    } catch (e) {
+      console.error('Exception during ref check:', e);
+    }
   }
 
   async addOrUpdate(ip: string, ref?: string, origin?: string): Promise<Ref | undefined> {

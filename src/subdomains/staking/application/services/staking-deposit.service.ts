@@ -160,6 +160,8 @@ export class StakingDepositService {
   }
 
   private async forwardDepositsToStaking(): Promise<void> {
+    await this.deFiChainStakingService.checkSync();
+
     // not querying Stakings, because eager query is not supported, thus unsafe to fetch entire entity
     const stakingIdsWithPendingDeposits = await this.repository
       .createQueryBuilder('staking')

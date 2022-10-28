@@ -65,7 +65,7 @@ export class Configuration {
 
   blockchain = {
     minFeeRate: 0.00001,
-    minFeeBuffer: 0.0001,
+    minFeeBuffer: 1,
     default: {
       user: process.env.NODE_USER,
       password: process.env.NODE_PASSWORD,
@@ -123,6 +123,7 @@ export class Configuration {
     liquidity: {
       min: 20000,
       max: 40000,
+      minChangePeriod: 900, // 15 minutes
 
       address: process.env.LIQUIDITY_ADDRESS,
       wallet: process.env.LIQUIDITY_WALLET_NAME,
@@ -132,14 +133,15 @@ export class Configuration {
   };
 
   utxo = {
-    maxInputs: 300,
-    minOperateValue: 100,
+    maxInputs: 300, // quantity of UTXOs
+    minOperateValue: 100, // DFI
+    minSplitValue: 1000, // DFI
     amount: {
-      min: 100,
-      max: 300,
+      min: 100, // quantity of UTXOs
+      max: 300, // quantity of UTXOs
     },
-    split: 10,
-    merge: 100,
+    split: 10, // UTXO
+    merge: 100, // UTXO
   };
 
   priceProviders = {
@@ -152,7 +154,7 @@ export class Configuration {
     collateral: 20000,
     fee: 10,
     creationFee: 0.00000232,
-    resignFee: 0.00000209,
+    resignFee: 0.00000297,
   };
 
   get addressFormat(): RegExp {

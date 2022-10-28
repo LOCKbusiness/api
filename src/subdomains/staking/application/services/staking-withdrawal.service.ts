@@ -115,12 +115,8 @@ export class StakingWithdrawalService {
   }
 
   async executeWithdrawal(withdrawalId: number): Promise<void> {
-    // designate
-    const withdrawal = await this.withdrawalRepo.findOne(withdrawalId, { relations: ['staking'] });
-    withdrawal.designateWithdrawal();
-    await this.withdrawalRepo.save(withdrawal);
-
     // payout
+    const withdrawal = await this.withdrawalRepo.findOne(withdrawalId, { relations: ['staking'] });
     const txId = await this.deFiChainService.sendWithdrawal(withdrawal);
 
     // update
@@ -151,16 +147,20 @@ export class StakingWithdrawalService {
 
   @Interval(60000)
   async checkWithdrawalCompletion(): Promise<void> {
-    // not querying Stakings, because eager query is not supported, thus unsafe to fetch entire entity
-    const stakingIdsWithPayingOutWithdrawals = await this.stakingRepo
-      .createQueryBuilder('staking')
-      .leftJoin('staking.withdrawals', 'withdrawals')
-      .where('withdrawals.status = :status', { status: WithdrawalStatus.PAYING_OUT })
-      .getMany()
-      .then((s) => s.map((i) => i.id));
+    try {
+      // not querying Stakings, because eager query is not supported, thus unsafe to fetch entire entity
+      const stakingIdsWithPayingOutWithdrawals = await this.stakingRepo
+        .createQueryBuilder('staking')
+        .leftJoin('staking.withdrawals', 'withdrawals')
+        .where('withdrawals.status = :status', { status: WithdrawalStatus.PAYING_OUT })
+        .getMany()
+        .then((s) => s.map((i) => i.id));
 
-    for (const stakingId of stakingIdsWithPayingOutWithdrawals) {
-      await this.checkPayingOutWithdrawals(stakingId);
+      for (const stakingId of stakingIdsWithPayingOutWithdrawals) {
+        await this.checkPayingOutWithdrawals(stakingId);
+      }
+    } catch (e) {
+      console.error('Exception during withdrawal completion check:', e);
     }
   }
 

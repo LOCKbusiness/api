@@ -13,6 +13,7 @@ import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
 import { GetOrCreateStakingQuery } from '../dto/input/get-staking.query';
 import { SetStakingFeeDto } from '../dto/input/set-staking-fee.dto';
+import { DepositAddressBalanceOutputDto } from '../dto/output/deposit-address-balance.output.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
 import { FiatPriceProvider, FIAT_PRICE_PROVIDER } from '../interfaces';
@@ -63,6 +64,15 @@ export class StakingService {
     }
 
     return StakingOutputDtoMapper.entityToDto(await this.authorize.authorize(userId, existingStaking.id));
+  }
+
+  async getDepositAddressBalance(address: string): Promise<DepositAddressBalanceOutputDto> {
+    const stakingEntity = await this.repository.findOne({
+      where: { depositAddress: { address: address } },
+      relations: ['depositAddress'],
+    });
+    if (!stakingEntity) throw new NotFoundException('Deposit-address not found');
+    return { depositAddress: address, balance: stakingEntity.balance };
   }
 
   async setStakingFee(stakingId: number, dto: SetStakingFeeDto): Promise<void> {

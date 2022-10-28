@@ -306,11 +306,7 @@ export class Staking extends IEntity {
   }
 
   private getInProgressWithdrawalsAmount(): number {
-    const withdrawals = this.getWithdrawalsByStatus([
-      WithdrawalStatus.PENDING,
-      WithdrawalStatus.PAYOUT_DESIGNATED,
-      WithdrawalStatus.PAYING_OUT,
-    ]);
+    const withdrawals = this.getWithdrawalsByStatus([WithdrawalStatus.PENDING, WithdrawalStatus.PAYING_OUT]);
 
     return Util.sumObj(withdrawals, 'amount');
   }

@@ -7,6 +7,9 @@ import { WhaleClient } from '../whale/whale-client';
 import { WhaleService } from '../whale/whale.service';
 import { Injectable } from '@nestjs/common';
 import { Config } from 'src/config/config';
+import { Util } from 'src/shared/util';
+import { Interval } from '@nestjs/schedule';
+import { Lock } from 'src/shared/lock';
 
 export interface UtxoInformation {
   prevouts: Prevout[];
@@ -17,13 +20,24 @@ export interface UtxoInformation {
 export enum UtxoSizePriority {
   BIG,
   SMALL,
+  FITTING,
+}
+
+export interface UtxoStatistics {
+  quantity: number;
+  biggest: BigNumber;
+}
+
+interface BlockedUtxo {
+  unlockAt: Date;
 }
 
 @Injectable()
 export class UtxoProviderService {
+  private readonly lockUtxo = new Lock(1800);
   private blockHeight = 0;
   private unspent = new Map<string, AddressUnspent[]>();
-  private spent = new Map<string, NodeJS.Timeout>();
+  private spent = new Map<string, BlockedUtxo>();
 
   private whaleClient?: WhaleClient;
 
@@ -31,11 +45,31 @@ export class UtxoProviderService {
     whaleService.getClient().subscribe((client) => (this.whaleClient = client));
   }
 
-  async getCurrentNumberOfUnspent(address: string): Promise<number> {
+  @Interval(60000)
+  async doUnlockChecks() {
+    if (!this.lockUtxo.acquire()) return;
+
+    try {
+      for (const [id, spent] of this.spent) {
+        if (spent.unlockAt < new Date()) this.spent.delete(id);
+      }
+    } catch (e) {
+      console.error('Exception during unlocking utxos cronjob:', e);
+    }
+
+    this.lockUtxo.release();
+  }
+
+  async getStatistics(address: string): Promise<UtxoStatistics> {
     if (!this.unspent.has(address)) {
       await this.retrieveUnspent(address);
     }
-    return this.unspent.get(address)?.length ?? 0;
+    const unspent = this.unspent.get(address);
+    const quantity = unspent?.length ?? 0;
+    const sortedUnspent = unspent?.sort(UtxoProviderService.orderDescending);
+    const biggest = new BigNumber(sortedUnspent?.[0]?.vout.value);
+
+    return { quantity, biggest };
   }
 
   async provideExactAmount(address: string, amount: BigNumber): Promise<UtxoInformation> {
@@ -71,12 +105,7 @@ export class UtxoProviderService {
   private markUsed(address: string, unspent: AddressUnspent[]): AddressUnspent[] {
     unspent.forEach((u) => {
       const id = UtxoProviderService.idForUnspent(u);
-      this.spent.set(
-        id,
-        setTimeout(() => {
-          this.spent.delete(id);
-        }, Config.staking.timeout.utxo),
-      );
+      this.spent.set(id, { unlockAt: Util.hoursAfter(1) });
     });
     this.unspent.set(
       address,
@@ -126,16 +155,14 @@ export class UtxoProviderService {
     sizePriority: UtxoSizePriority,
   ): AddressUnspent[] {
     const amountPlusFeeBuffer = amount.plus(Config.blockchain.minFeeBuffer);
-    let total = new BigNumber(0);
-    const neededUnspent: AddressUnspent[] = [];
-    unspent = unspent.sort((a, b) =>
-      sizePriority === UtxoSizePriority.BIG ? this.orderDescending(a, b) : this.orderAscending(a, b),
-    );
-    unspent.forEach((u) => {
-      if (total.gte(amountPlusFeeBuffer)) return;
-      neededUnspent.push(u);
-      total = total.plus(u ? new BigNumber(u.vout.value) : 0);
-    });
+    let [neededUnspent, total] = UtxoProviderService.tryProvideUntilAmount(unspent, amountPlusFeeBuffer, sizePriority);
+    if (total.lt(amountPlusFeeBuffer) && sizePriority === UtxoSizePriority.FITTING) {
+      [neededUnspent, total] = UtxoProviderService.tryProvideUntilAmount(
+        unspent,
+        amountPlusFeeBuffer,
+        UtxoSizePriority.BIG,
+      );
+    }
     if (total.lt(amountPlusFeeBuffer))
       throw new Error(
         `Not enough available liquidity for requested amount.\nTotal available: ${total}\nRequested amount: ${amountPlusFeeBuffer}`,
@@ -145,14 +172,31 @@ export class UtxoProviderService {
     return neededUnspent;
   }
 
+  private static tryProvideUntilAmount(
+    unspent: AddressUnspent[],
+    amountPlusFeeBuffer: BigNumber,
+    sizePriority: UtxoSizePriority,
+  ): [AddressUnspent[], BigNumber] {
+    const neededUnspent: AddressUnspent[] = [];
+    let total = new BigNumber(0);
+    unspent = unspent.sort(sizePriority === UtxoSizePriority.BIG ? this.orderDescending : this.orderAscending);
+    if (sizePriority === UtxoSizePriority.FITTING) {
+      unspent = unspent.filter((u) => new BigNumber(u.vout.value).gt(amountPlusFeeBuffer));
+    }
+    unspent.forEach((u) => {
+      if (total.gte(amountPlusFeeBuffer)) return;
+      neededUnspent.push(u);
+      total = total.plus(u ? new BigNumber(u.vout.value) : 0);
+    });
+    return [neededUnspent, total];
+  }
+
   private static provideNumber(
     unspent: AddressUnspent[],
     numberOfUtxos: number,
     sizePriority: UtxoSizePriority,
   ): AddressUnspent[] {
-    unspent = unspent.sort((a, b) =>
-      sizePriority === UtxoSizePriority.BIG ? this.orderDescending(a, b) : this.orderAscending(a, b),
-    );
+    unspent = unspent.sort(sizePriority === UtxoSizePriority.BIG ? this.orderDescending : this.orderAscending);
     return unspent.slice(0, numberOfUtxos);
   }
 

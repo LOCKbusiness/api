@@ -4,6 +4,7 @@ import { ApiBearerAuth, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { getConnection } from 'typeorm';
+import { dbQueryDto } from '../../application/dto/db-query.dto';
 
 @Controller('admin')
 export class AdminController {
@@ -13,30 +14,19 @@ export class AdminController {
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async getRawData(
     @Query()
-    {
-      table,
-      min,
-      updatedSince,
-      maxLine,
-      sorting = 'ASC',
-    }: {
-      table: string;
-      min?: string;
-      updatedSince?: string;
-      maxLine?: string;
-      sorting?: 'ASC' | 'DESC';
-    },
+    query: dbQueryDto,
   ): Promise<any> {
-    const id = min ? +min : 1;
-    const maxResult = maxLine ? +maxLine : undefined;
-    const updated = updatedSince ? new Date(updatedSince) : new Date(0);
+    const id = query.min ? +query.min : 1;
+    const maxResult = query.maxLine ? +query.maxLine : undefined;
+    const updated = query.updatedSince ? new Date(query.updatedSince) : new Date(0);
 
     const data = await getConnection()
       .createQueryBuilder()
-      .from(table, table)
+      .select(query.filterCols)
+      .from(query.table, query.table)
       .where('id >= :id', { id })
       .andWhere('updated >= :updated', { updated })
-      .orderBy('id', sorting)
+      .orderBy('id', query.sorting)
       .take(maxResult)
       .getRawMany()
       .catch((e: Error) => {

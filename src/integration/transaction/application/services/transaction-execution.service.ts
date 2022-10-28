@@ -53,7 +53,7 @@ export class TransactionExecutionService {
   }
 
   async sendFromLiqToCustomer(data: SendFromLiqToCustomerData): Promise<string> {
-    const rawTx = await this.jellyfishService.rawTxForSendFromLiq(data.to, data.amount, UtxoSizePriority.BIG);
+    const rawTx = await this.jellyfishService.rawTxForSendFromLiq(data.to, data.amount, UtxoSizePriority.FITTING);
     console.info(`Send from liq to customer tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, { id: data.withdrawalId });
   }
@@ -86,6 +86,7 @@ export class TransactionExecutionService {
   private async signAndBroadcast(rawTx: RawTxDto, payload?: any): Promise<string> {
     const signature = await this.receiveSignatureFor(rawTx);
     const hex = await this.transactionService.sign(rawTx, signature, payload);
+    console.info(`${rawTx.id} broadcasting`);
     return await this.whaleClient.sendRaw(hex);
   }
 

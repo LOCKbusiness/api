@@ -34,7 +34,7 @@ export class PayInDeFiChainService {
   //*** HELPER METHODS ***//
 
   private async getNewTransactionsHistorySince(lastHeight: number): Promise<AccountHistory[]> {
-    const { blocks: currentHeight } = await this.checkNodeInSync();
+    const { blocks: currentHeight } = await this.client.checkSync();
 
     const utxos = await this.client.getUtxo();
 
@@ -42,14 +42,6 @@ export class PayInDeFiChainService {
       .then((a) => this.client.getHistories(a, lastHeight + 1, currentHeight))
       .then((i) => i.filter((h) => [...this.utxoTxTypes].includes(h.type)))
       .then((i) => i.filter((h) => h.blockHeight > lastHeight));
-  }
-
-  private async checkNodeInSync(): Promise<{ headers: number; blocks: number }> {
-    const { blocks, headers } = await this.client.getInfo();
-
-    if (blocks < headers - 1) throw new Error(`Node not in sync by ${headers - blocks} block(s)`);
-
-    return { headers, blocks };
   }
 
   private async getAddressesWithFunds(utxo: UTXO[]): Promise<string[]> {

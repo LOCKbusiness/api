@@ -22,6 +22,11 @@ export class LiquidityManagementService {
 
   private client: WhaleClient;
 
+  private masternodeChange = {
+    count: 0,
+    updated: new Date(),
+  };
+
   constructor(
     private readonly masternodeService: MasternodeService,
     private readonly withdrawalService: StakingWithdrawalService,
@@ -51,21 +56,6 @@ export class LiquidityManagementService {
 
     try {
       await this.checkMasternodesInProcess();
-
-      const updatedList = await this.masternodeService.getAllWithStates([
-        MasternodeState.ENABLING,
-        MasternodeState.MOVING_COLLATERAL,
-      ]);
-
-      const enabling = updatedList.filter((node) => node.state === MasternodeState.ENABLING).length;
-      const movingCollateral = updatedList.filter((node) => node.state === MasternodeState.MOVING_COLLATERAL).length;
-
-      if (enabling > 0 || movingCollateral > 0) {
-        console.info(
-          `Stopping masternode cronjob due to ${enabling} enabling or ${movingCollateral} moving collateral masternodes`,
-        );
-        return;
-      }
       await this.checkLiquidity();
     } catch (e) {
       console.error('Exception during masternodes cronjob:', e);
@@ -94,12 +84,22 @@ export class LiquidityManagementService {
       ? Math.floor(excessiveLiquidity.div(Config.masternode.collateral + Config.masternode.fee).toNumber())
       : Math.floor(excessiveLiquidity.div(Config.masternode.collateral).toNumber());
 
-    if (masternodeChangeCount !== 0) console.info(`Masternode change info ${masternodeChangeCount}`);
+    // only apply masternode change if the required change has been constant for a while
+    if (masternodeChangeCount !== this.masternodeChange.count) {
+      console.info(`Masternode change count changed from ${this.masternodeChange.count} to ${masternodeChangeCount}`);
+      this.masternodeChange.count = masternodeChangeCount;
+      this.masternodeChange.updated = new Date();
+      return;
+    }
+
+    if (Util.secondsDiff(this.masternodeChange.updated, new Date()) < Config.staking.liquidity.minChangePeriod) return;
 
     if (masternodeChangeCount > 0) {
+      console.info(`Building ${masternodeChangeCount} masternodes`);
       await this.startMasternodeEnabling(masternodeChangeCount);
     } else if (masternodeChangeCount < 0) {
-      await this.startMasternodeResigning(Math.abs(masternodeChangeCount));
+      console.info(`Resigning ${-masternodeChangeCount} masternodes`);
+      await this.startMasternodeResigning(-masternodeChangeCount);
     }
   }
 
@@ -135,8 +135,8 @@ export class LiquidityManagementService {
     ]);
     if (allInProcessMasternodes.length > 0)
       console.info(
-        `masternodes are in process\n${allInProcessMasternodes.map(
-          (node) => `${node.id} ${node.state} ${node.owner}\n`,
+        `Masternodes in process: \n${allInProcessMasternodes.map(
+          (node) => `${node.owner} (${node.id}): ${node.state} \n`,
         )}`,
       );
     await this.handleMasternodesWithState(allInProcessMasternodes, MasternodeState.ENABLING);
@@ -178,7 +178,7 @@ export class LiquidityManagementService {
       filteredMasternodes = await this.masternodeService.filterByBlockchainState(filteredMasternodes, blockchainState);
     }
     if (filteredMasternodes.length > 0)
-      console.info(`${filteredMasternodes.length} masternodes are in state ${state} and will be now processed`);
+      console.info(`${filteredMasternodes.length} masternodes in state ${state} will be processed now`);
 
     const process = this.getProcessFunctionsFor(state);
 
@@ -226,13 +226,13 @@ export class LiquidityManagementService {
     const liqBalance = await this.client.getUTXOBalance(Config.staking.liquidity.address);
     if (liqBalance.lt(Config.utxo.minOperateValue)) throw new Error('Too low liquidity to operate');
 
-    const numberOfUnspent = await this.utxoProviderService.getCurrentNumberOfUnspent(Config.staking.liquidity.address);
-    if (numberOfUnspent < Config.utxo.amount.min) {
+    const utxoStatistics = await this.utxoProviderService.getStatistics(Config.staking.liquidity.address);
+    if (utxoStatistics.quantity < Config.utxo.amount.min && utxoStatistics.biggest.gte(Config.utxo.minSplitValue)) {
       await this.transactionCreationService.splitBiggestUtxo({
         address: Config.staking.liquidity.address,
         split: Config.utxo.split,
       });
-    } else if (numberOfUnspent > Config.utxo.amount.max) {
+    } else if (utxoStatistics.quantity > Config.utxo.amount.max) {
       await this.transactionCreationService.mergeSmallestUtxos({
         address: Config.staking.liquidity.address,
         merge: Config.utxo.merge,
@@ -260,7 +260,7 @@ export class LiquidityManagementService {
             });
           },
           updateFunc: (masternode: Masternode, txId: string) => {
-            console.info(`Sending collateral to masternode\n\towner: ${masternode.owner}\n\twith tx: ${txId}`);
+            console.info(`Sending collateral to masternode \n\towner: ${masternode.owner} \n\twith tx: ${txId}`);
             return this.masternodeService.enabling(
               masternode.id,
               masternode.owner,
@@ -280,7 +280,7 @@ export class LiquidityManagementService {
             });
           },
           updateFunc: (masternode: Masternode, txId: string) => {
-            console.info(`Creating masternode for\n\towner: ${masternode.owner}\n\twith tx: ${txId}`);
+            console.info(`Creating masternode for \n\towner: ${masternode.owner} \n\twith tx: ${txId}`);
             return this.masternodeService.preEnabled(masternode.id, txId);
           },
         };
@@ -290,7 +290,7 @@ export class LiquidityManagementService {
             return Promise.resolve('');
           },
           updateFunc: (masternode: Masternode) => {
-            console.info(`Masternode got enabled\n\towner: ${masternode.owner}`);
+            console.info(`Masternode got enabled \n\towner: ${masternode.owner}`);
             return this.masternodeService.enabled(masternode.id);
           },
         };
@@ -306,7 +306,7 @@ export class LiquidityManagementService {
             });
           },
           updateFunc: (masternode: Masternode, txId: string) => {
-            console.info(`Sending resign fee to masternode\n\towner: ${masternode.owner}\n\twith tx: ${txId}`);
+            console.info(`Sending resign fee to masternode \n\towner: ${masternode.owner} \n\twith tx: ${txId}`);
             return this.masternodeService.resigning(masternode.id);
           },
         };
@@ -320,7 +320,7 @@ export class LiquidityManagementService {
             });
           },
           updateFunc: (masternode: Masternode, txId: string) => {
-            console.info(`Resigning masternode for\n\towner: ${masternode.owner}\n\twith tx: ${txId}`);
+            console.info(`Resigning masternode for \n\towner: ${masternode.owner} \n\twith tx: ${txId}`);
             return this.masternodeService.preResigned(masternode.id, txId);
           },
         };
@@ -336,7 +336,7 @@ export class LiquidityManagementService {
           },
           updateFunc: (masternode: Masternode, txId: string) => {
             console.info(
-              `Sending collateral back to liquidity manager from\n\towner: ${masternode.owner}\n\twith tx: ${txId}`,
+              `Sending collateral back to liquidity manager from \n\towner: ${masternode.owner} \n\twith tx: ${txId}`,
             );
             return this.masternodeService.movingCollateral(masternode.id);
           },
