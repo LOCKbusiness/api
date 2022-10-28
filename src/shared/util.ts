@@ -186,8 +186,4 @@ export class Util {
     Object.entries(params).forEach(([key, value]) => (template = template.replace('${' + key + '}', value)));
     return template;
   }
-
-  static getNetwork(): Network {
-    return Config.network == 'testnet' ? TestNet : MainNet;
-  }
 }

@@ -10,7 +10,6 @@ import BigNumber from 'bignumber.js';
 import { Config } from 'src/config/config';
 import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
 import { QueueHandler } from 'src/shared/queue-handler';
-import { Util } from 'src/shared/util';
 import { RawTxDto } from './dto/raw-tx.dto';
 import { RawTxUtil } from './raw-tx-util';
 import { UtxoInformation, UtxoProviderService, UtxoSizePriority } from './utxo-provider.service';
@@ -24,8 +23,8 @@ export class JellyfishService {
 
   public createWallet(seed: string[]): JellyfishWallet<WhaleWalletAccount, WalletHdNode> {
     return new JellyfishWallet(
-      MnemonicHdNodeProvider.fromWords(seed, this.bip32OptionsBasedOn(Util.getNetwork())),
-      new WhaleWalletAccountProvider(undefined, Util.getNetwork()),
+      MnemonicHdNodeProvider.fromWords(seed, this.bip32OptionsBasedOn(JellyfishService.getNetwork())),
+      new WhaleWalletAccountProvider(undefined, JellyfishService.getNetwork()),
       JellyfishWallet.COIN_TYPE_DFI,
       JellyfishWallet.PURPOSE_LIGHT_WALLET,
     );
@@ -72,7 +71,7 @@ export class JellyfishService {
   // --- RAW TX GENERATION --- //
 
   private async generateRawTxForCreate(masternode: Masternode): Promise<RawTxDto> {
-    const network = Util.getNetwork();
+    const network = JellyfishService.getNetwork();
     const [ownerScript, ownerPubKeyHash] = RawTxUtil.parseAddress(masternode.owner, network);
     const [, operatorPubKeyHash] = RawTxUtil.parseOperatorPubKeyHash(masternode.operator, network);
 
@@ -104,7 +103,7 @@ export class JellyfishService {
   }
 
   private async generateRawTxForResign(masternode: Masternode): Promise<RawTxDto> {
-    const network = Util.getNetwork();
+    const network = JellyfishService.getNetwork();
 
     const [, ownerPubKeyHash] = RawTxUtil.parseAddress(masternode.owner, network);
     const [, operatorPubKeyHash] = RawTxUtil.parseOperatorPubKeyHash(masternode.operator, network);
@@ -138,7 +137,7 @@ export class JellyfishService {
     useChangeOutput: boolean,
     sizePriority: UtxoSizePriority = UtxoSizePriority.SMALL,
   ): Promise<RawTxDto> {
-    const network = Util.getNetwork();
+    const network = JellyfishService.getNetwork();
 
     const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from, network);
     const [toScript] = RawTxUtil.parseAddress(to, network);
@@ -164,7 +163,7 @@ export class JellyfishService {
     numberOf: number,
     sizePriority: UtxoSizePriority,
   ): Promise<RawTxDto> {
-    const network = Util.getNetwork();
+    const network = JellyfishService.getNetwork();
 
     const numberOfInputs = sizePriority === UtxoSizePriority.SMALL ? numberOf : 1;
     const numberOfOutputs = sizePriority === UtxoSizePriority.BIG ? numberOf : 1;
@@ -186,7 +185,10 @@ export class JellyfishService {
 
   // --- UTXO MANAGEMENT --- //
   private async executeUnlockUtxos(prevouts: Prevout[], scriptHex: string): Promise<void> {
-    this.utxoProvider.unlockSpentBasedOn(prevouts, RawTxUtil.parseAddressFromScriptHex(scriptHex, Util.getNetwork()));
+    this.utxoProvider.unlockSpentBasedOn(
+      prevouts,
+      RawTxUtil.parseAddressFromScriptHex(scriptHex, JellyfishService.getNetwork()),
+    );
   }
 
   // --- HELPER METHODS --- //
@@ -217,5 +219,9 @@ export class JellyfishService {
 
   private call<T>(call: () => Promise<T>): Promise<T> {
     return this.queue.handle(() => call());
+  }
+
+  static getNetwork(): Network {
+    return Config.network == 'testnet' ? TestNet : MainNet;
   }
 }
