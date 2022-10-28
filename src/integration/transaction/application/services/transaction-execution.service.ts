@@ -18,15 +18,20 @@ import {
   SplitData,
 } from '../types/creation-data';
 import { TransactionService } from './transaction.service';
+import { WIF } from '@defichain/jellyfish-crypto';
+import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
 
 @Injectable()
 export class TransactionExecutionService {
   private nodeClient: DeFiClient;
   private whaleClient: WhaleClient;
 
+  private privKey?: Buffer;
+
   constructor(
     private readonly transactionService: TransactionService,
     private readonly jellyfishService: JellyfishService,
+    private readonly cryptoService: CryptoService,
     whaleService: WhaleService,
     nodeService: NodeService,
   ) {
@@ -84,13 +89,22 @@ export class TransactionExecutionService {
   }
 
   private async signAndBroadcast(rawTx: RawTxDto, payload?: any): Promise<string> {
-    const signature = await this.receiveSignatureFor(rawTx);
-    const hex = await this.transactionService.sign(rawTx, signature, payload);
-    console.info(`${rawTx.id} broadcasting`);
-    return await this.whaleClient.sendRaw(hex);
+    try {
+      const signature = await this.receiveSignatureFor(rawTx);
+      const hex = await this.transactionService.sign(rawTx, signature, payload);
+      console.info(`${rawTx.id} broadcasting`);
+      return await this.whaleClient.sendRaw(hex);
+    } catch (e) {
+      await this.jellyfishService.unlock(rawTx);
+      throw e;
+    }
   }
 
   private async receiveSignatureFor(rawTx: RawTxDto): Promise<string> {
-    return this.nodeClient.signMessage(Config.staking.signature.address, rawTx.hex);
+    if (!this.privKey) {
+      const key = await this.nodeClient.dumpPrivKey(Config.staking.signature.address);
+      this.privKey = await WIF.asEllipticPair(key).privateKey();
+    }
+    return this.cryptoService.signMessage(this.privKey, rawTx.hex);
   }
 }

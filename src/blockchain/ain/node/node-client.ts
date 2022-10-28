@@ -87,6 +87,11 @@ export class NodeClient {
     return this.callNode((c) => c.call('signmessage', [address, message], 'number'), true);
   }
 
+  async dumpPrivKey(address: string): Promise<string> {
+    if (!address) throw new Error('Address is undefined!');
+    return this.callNode((c) => c.call('dumpprivkey', [address], 'number'), true);
+  }
+
   // UTXO
   async getUtxo(): Promise<UTXO[]> {
     return this.callNode((c) => c.wallet.listUnspent());
