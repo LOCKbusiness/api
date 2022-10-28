@@ -62,8 +62,8 @@ export class UtxoProviderService {
   }
 
   async unlockSpentBasedOn(prevouts: Prevout[], address: string): Promise<void> {
-    const idsToRemove = prevouts.map(UtxoProviderService.idForPrevout);
-    for (const id of idsToRemove) {
+    const idsToUnlock = prevouts.map(UtxoProviderService.idForPrevout);
+    for (const id of idsToUnlock) {
       const entry = this.spent.get(id);
       this.unspent.set(address, (this.unspent.get(address) ?? []).concat([entry.unspent]));
       this.spent.delete(id);
