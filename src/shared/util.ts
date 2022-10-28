@@ -1,6 +1,8 @@
+import { MainNet, Network, TestNet } from '@defichain/jellyfish-network';
 import { BinaryLike, createHash, createSign, KeyLike } from 'crypto';
 import { XMLValidator, XMLParser } from 'fast-xml-parser';
 import { readFile } from 'fs';
+import { Config } from 'src/config/config';
 
 type KeyType<T, U> = {
   [K in keyof T]: T[K] extends U ? K : never;
@@ -183,5 +185,9 @@ export class Util {
   static template(template: string, params: { [key: string]: string }): string {
     Object.entries(params).forEach(([key, value]) => (template = template.replace('${' + key + '}', value)));
     return template;
+  }
+
+  static getNetwork(): Network {
+    return Config.network == 'testnet' ? TestNet : MainNet;
   }
 }

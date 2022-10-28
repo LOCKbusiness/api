@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { signAsync } from 'bitcoinjs-message';
 import { RawTxDto } from 'src/blockchain/ain/jellyfish/dto/raw-tx.dto';
 import { JellyfishService } from 'src/blockchain/ain/jellyfish/jellyfish.service';
 import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/utxo-provider.service';
@@ -7,6 +8,7 @@ import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { Config } from 'src/config/config';
+import { Util } from 'src/shared/util';
 import {
   CreateMasternodeData,
   MasternodeBaseData,
@@ -18,11 +20,14 @@ import {
   SplitData,
 } from '../types/creation-data';
 import { TransactionService } from './transaction.service';
+import { WIF } from '@defichain/jellyfish-crypto';
 
 @Injectable()
 export class TransactionExecutionService {
   private nodeClient: DeFiClient;
   private whaleClient: WhaleClient;
+
+  private privKey?: Buffer;
 
   constructor(
     private readonly transactionService: TransactionService,
@@ -96,6 +101,11 @@ export class TransactionExecutionService {
   }
 
   private async receiveSignatureFor(rawTx: RawTxDto): Promise<string> {
-    return this.nodeClient.signMessage(Config.staking.signature.address, rawTx.hex);
+    if (!this.privKey) {
+      const key = await this.nodeClient.dumpPrivKey(Config.staking.signature.address);
+      this.privKey = await WIF.asEllipticPair(key).privateKey();
+    }
+    const signature = await signAsync(rawTx.hex, this.privKey, true, Util.getNetwork().messagePrefix);
+    return signature.toString('base64');
   }
 }
