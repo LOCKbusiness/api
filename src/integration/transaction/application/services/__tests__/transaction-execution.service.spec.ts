@@ -9,6 +9,7 @@ import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { NodeService } from 'src/blockchain/ain/node/node.service';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
+import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
 import { createDefaultMasternode } from 'src/integration/masternode/domain/entities/__mocks__/masternode.entity.mock';
 import { TestUtil } from 'src/shared/__tests__/test-util';
 import { TransactionExecutionService } from '../transaction-execution.service';
@@ -31,6 +32,7 @@ describe('TransactionExecutionService', () => {
 
   let transactionService: TransactionService;
   let jellyfishService: JellyfishService;
+  let cryptoService: CryptoService;
   let whaleService: WhaleService;
   let nodeService: NodeService;
 
@@ -40,6 +42,7 @@ describe('TransactionExecutionService', () => {
   beforeEach(async () => {
     transactionService = createMock<TransactionService>();
     jellyfishService = createMock<JellyfishService>();
+    cryptoService = createMock<CryptoService>();
     whaleService = createMock<WhaleService>();
     nodeService = createMock<NodeService>();
 
@@ -47,7 +50,7 @@ describe('TransactionExecutionService', () => {
     nodeClient = createMock<DeFiClient>();
 
     jest.spyOn(whaleClient, 'sendRaw').mockResolvedValue('tx-id');
-    jest.spyOn(nodeClient, 'signMessage').mockResolvedValue('signed-tx-hex-as-message');
+    jest.spyOn(nodeClient, 'dumpPrivKey').mockResolvedValue('L52sDjGxf8Y5NHy5BjTpQHQUjHDjrqErHyTomskefFXrKPdjf7Di');
     jest.spyOn(transactionService, 'sign').mockResolvedValue('signed-raw-tx-hex');
     jest.spyOn(whaleService, 'getClient').mockImplementation(() => new BehaviorSubject(whaleClient).asObservable());
     jest
@@ -60,6 +63,7 @@ describe('TransactionExecutionService', () => {
         TransactionExecutionService,
         { provide: TransactionService, useValue: transactionService },
         { provide: JellyfishService, useValue: jellyfishService },
+        { provide: CryptoService, useValue: cryptoService },
         { provide: WhaleService, useValue: whaleService },
         { provide: NodeService, useValue: nodeService },
         TestUtil.provideConfig({ staking: { signature: { address: 'some-test-address' } } }),
@@ -97,7 +101,7 @@ describe('TransactionExecutionService', () => {
 
     expect(txId).toStrictEqual('tx-id');
     expect(jellyfishService.rawTxForCreate).toBeCalledWith(masternode);
-    expect(nodeClient.signMessage).toBeCalledWith('some-test-address', 'create-masternode');
+    expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
     expect(transactionService.sign).toBeCalledWith(rawTxCreateMasternode, 'signed-tx-hex-as-message', {
       ownerWallet: 'cold-wallet-a',
       accountIndex: 1,
@@ -116,7 +120,7 @@ describe('TransactionExecutionService', () => {
 
     expect(txId).toStrictEqual('tx-id');
     expect(jellyfishService.rawTxForResign).toBeCalledWith(masternode);
-    expect(nodeClient.signMessage).toBeCalledWith('some-test-address', 'resign-masternode');
+    expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
     expect(transactionService.sign).toBeCalledWith(rawTxResignMasternode, 'signed-tx-hex-as-message', {
       ownerWallet: 'cold-wallet-a',
       accountIndex: 1,
@@ -141,7 +145,7 @@ describe('TransactionExecutionService', () => {
       new BigNumber(42),
       UtxoSizePriority.BIG,
     );
-    expect(nodeClient.signMessage).toBeCalledWith('some-test-address', 'send-from-liq');
+    expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
     expect(transactionService.sign).toBeCalledWith(rawTxSendFromLiq, 'signed-tx-hex-as-message', {
       ownerWallet: 'cold-wallet-a',
       accountIndex: 1,
@@ -161,7 +165,7 @@ describe('TransactionExecutionService', () => {
 
     expect(txId).toStrictEqual('tx-id');
     expect(jellyfishService.rawTxForSendToLiq).toBeCalledWith('owner-address', new BigNumber(42));
-    expect(nodeClient.signMessage).toBeCalledWith('some-test-address', 'send-to-liq');
+    expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
     expect(transactionService.sign).toBeCalledWith(rawTxSendToLiq, 'signed-tx-hex-as-message', {
       ownerWallet: 'cold-wallet-a',
       accountIndex: 1,
