@@ -1,12 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { verify, sign } from 'bitcoinjs-message';
-import { MainNet, TestNet } from '@defichain/jellyfish-network';
+import { MainNet } from '@defichain/jellyfish-network';
 import { isEthereumAddress } from 'class-validator';
 import { verifyMessage } from 'ethers/lib/utils';
-import { Network } from '@defichain/jellyfish-network';
-import { Config } from 'src/config/config';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { Util } from 'src/shared/util';
+import { JellyfishService } from 'src/blockchain/ain/jellyfish/jellyfish.service';
 
 @Injectable()
 export class CryptoService {
@@ -88,6 +86,6 @@ export class CryptoService {
   // --- SIGNATURE CREATION --- //
 
   public async signMessage(privKey: Buffer, message: string): Promise<string> {
-    return sign(message, privKey, true, Util.getNetwork().messagePrefix).toString('base64');
+    return sign(message, privKey, true, JellyfishService.getNetwork().messagePrefix).toString('base64');
   }
 }
