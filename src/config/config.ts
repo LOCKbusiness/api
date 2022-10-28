@@ -154,7 +154,7 @@ export class Configuration {
     collateral: 20000,
     fee: 10,
     creationFee: 0.00000232,
-    resignFee: 0.00000209,
+    resignFee: 0.00000297,
   };
 
   get addressFormat(): RegExp {

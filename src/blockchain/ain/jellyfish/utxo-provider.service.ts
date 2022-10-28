@@ -7,6 +7,9 @@ import { WhaleClient } from '../whale/whale-client';
 import { WhaleService } from '../whale/whale.service';
 import { Injectable } from '@nestjs/common';
 import { Config } from 'src/config/config';
+import { Util } from 'src/shared/util';
+import { Interval } from '@nestjs/schedule';
+import { Lock } from 'src/shared/lock';
 
 export interface UtxoInformation {
   prevouts: Prevout[];
@@ -25,16 +28,36 @@ export interface UtxoStatistics {
   biggest: BigNumber;
 }
 
+interface BlockedUtxo {
+  unlockAt: Date;
+}
+
 @Injectable()
 export class UtxoProviderService {
+  private readonly lockUtxo = new Lock(1800);
   private blockHeight = 0;
   private unspent = new Map<string, AddressUnspent[]>();
-  private spent = new Map<string, NodeJS.Timeout>();
+  private spent = new Map<string, BlockedUtxo>();
 
   private whaleClient?: WhaleClient;
 
   constructor(whaleService: WhaleService) {
     whaleService.getClient().subscribe((client) => (this.whaleClient = client));
+  }
+
+  @Interval(60000)
+  async doUnlockChecks() {
+    if (!this.lockUtxo.acquire()) return;
+
+    try {
+      for (const [id, spent] of this.spent) {
+        if (spent.unlockAt < new Date()) this.spent.delete(id);
+      }
+    } catch (e) {
+      console.error('Exception during unlocking utxos cronjob:', e);
+    }
+
+    this.lockUtxo.release();
   }
 
   async getStatistics(address: string): Promise<UtxoStatistics> {
@@ -82,12 +105,7 @@ export class UtxoProviderService {
   private markUsed(address: string, unspent: AddressUnspent[]): AddressUnspent[] {
     unspent.forEach((u) => {
       const id = UtxoProviderService.idForUnspent(u);
-      this.spent.set(
-        id,
-        setTimeout(() => {
-          this.spent.delete(id);
-        }, Config.staking.timeout.utxo),
-      );
+      this.spent.set(id, { unlockAt: Util.hoursAfter(1) });
     });
     this.unspent.set(
       address,
