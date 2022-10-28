@@ -71,10 +71,7 @@ export class UtxoProviderService {
   }
 
   async getStatistics(address: string): Promise<UtxoStatistics> {
-    if (!this.unspent.has(address)) {
-      await this.retrieveUnspent(address);
-    }
-    const unspent = this.unspent.get(address);
+    const unspent = await this.retrieveUnspent(address);
     const quantity = unspent?.length ?? 0;
     const sortedUnspent = unspent?.sort(UtxoProviderService.orderDescending);
     const biggest = new BigNumber(sortedUnspent?.[0]?.vout.value);
