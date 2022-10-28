@@ -21,7 +21,7 @@ export enum UtxoSizePriority {
 
 export interface UtxoStatistics {
   quantity: number;
-  biggest: BigNumber | undefined;
+  biggest: BigNumber;
 }
 
 @Injectable()
@@ -43,7 +43,7 @@ export class UtxoProviderService {
     const unspent = this.unspent.get(address);
     const quantity = unspent?.length ?? 0;
     const sortedUnspent = unspent?.sort((a, b) => UtxoProviderService.orderDescending(a, b));
-    const biggest = sortedUnspent?.length ?? 0 > 0 ? new BigNumber(sortedUnspent[0].vout.value) : undefined;
+    const biggest = new BigNumber(sortedUnspent?.[0]?.vout.value);
 
     return { quantity, biggest };
   }
