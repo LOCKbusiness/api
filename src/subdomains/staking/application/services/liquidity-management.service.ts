@@ -94,6 +94,10 @@ export class LiquidityManagementService {
 
     if (Util.secondsDiff(this.masternodeChange.updated, new Date()) < Config.staking.liquidity.minChangePeriod) return;
 
+    // reset
+    this.masternodeChange.count = 0;
+    this.masternodeChange.updated = new Date();
+
     if (masternodeChangeCount > 0) {
       console.info(`Building ${masternodeChangeCount} masternodes`);
       await this.startMasternodeEnabling(masternodeChangeCount);
