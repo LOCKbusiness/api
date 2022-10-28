@@ -20,8 +20,6 @@ export class TransactionService {
   constructor(private readonly repository: TransactionRepository, whaleService: WhaleService) {
     whaleService.getClient().subscribe((c) => (this.client = c));
     this.transactions = new Map<string, Transaction>();
-
-    this.doTransactionChecks();
   }
 
   @Interval(600000)
@@ -86,7 +84,10 @@ export class TransactionService {
 
     await this.repository.save(TransactionEntity.create(id, rawTx, payload, signature));
     console.info(`Added ${id} for signing`);
+    return this.waitForResponse(id);
+  }
 
+  private async waitForResponse(id: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       this.transactions.set(id, { signed: resolve, invalidated: reject });
 

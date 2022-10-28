@@ -84,10 +84,15 @@ export class TransactionExecutionService {
   }
 
   private async signAndBroadcast(rawTx: RawTxDto, payload?: any): Promise<string> {
-    const signature = await this.receiveSignatureFor(rawTx);
-    const hex = await this.transactionService.sign(rawTx, signature, payload);
-    console.info(`${rawTx.id} broadcasting`);
-    return await this.whaleClient.sendRaw(hex);
+    try {
+      const signature = await this.receiveSignatureFor(rawTx);
+      const hex = await this.transactionService.sign(rawTx, signature, payload);
+      console.info(`${rawTx.id} broadcasting`);
+      return await this.whaleClient.sendRaw(hex);
+    } catch (e) {
+      await this.jellyfishService.unlock(rawTx);
+      throw e;
+    }
   }
 
   private async receiveSignatureFor(rawTx: RawTxDto): Promise<string> {

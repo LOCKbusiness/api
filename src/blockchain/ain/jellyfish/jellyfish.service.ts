@@ -1,6 +1,6 @@
 import { MainNet, Network, TestNet } from '@defichain/jellyfish-network';
 import { CTransactionSegWit, Vin, Vout, Witness, Script } from '@defichain/jellyfish-transaction';
-import { calculateFeeP2WPKH } from '@defichain/jellyfish-transaction-builder';
+import { calculateFeeP2WPKH, Prevout } from '@defichain/jellyfish-transaction-builder';
 import { JellyfishWallet, WalletHdNode } from '@defichain/jellyfish-wallet';
 import { Bip32Options, MnemonicHdNodeProvider } from '@defichain/jellyfish-wallet-mnemonic';
 import { WhaleWalletAccount, WhaleWalletAccountProvider } from '@defichain/whale-api-wallet';
@@ -62,6 +62,10 @@ export class JellyfishService {
 
   async rawTxForMergeUtxos(address: string, merge: number): Promise<RawTxDto> {
     return this.call(() => this.generateRawTxForUtxoManagement(address, merge, UtxoSizePriority.SMALL));
+  }
+
+  async unlock(rawTx: RawTxDto): Promise<void> {
+    return this.call(() => this.executeUnlockUtxos(rawTx.prevouts, rawTx.scriptHex));
   }
 
   // --- RAW TX GENERATION --- //
@@ -177,6 +181,15 @@ export class JellyfishService {
     const witnesses = new Array(vins.length).fill(witness);
 
     return this.createTxAndCalcFee(utxo, vins, vouts, witnesses);
+  }
+
+  // --- UTXO MANAGEMENT --- //
+  private async executeUnlockUtxos(prevouts: Prevout[], scriptHex: string): Promise<void> {
+    this.utxoProvider.unlockSpentBasedOn(
+      prevouts,
+      scriptHex,
+      RawTxUtil.parseAddressFromScriptHex(scriptHex, this.getNetwork()),
+    );
   }
 
   // --- HELPER METHODS --- //

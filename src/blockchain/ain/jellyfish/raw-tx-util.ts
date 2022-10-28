@@ -10,7 +10,7 @@ import {
   Vin,
   Vout,
 } from '@defichain/jellyfish-transaction';
-import { fromAddress } from '@defichain/jellyfish-address';
+import { fromAddress, fromScriptHex } from '@defichain/jellyfish-address';
 import { Prevout } from '@defichain/jellyfish-transaction-builder';
 import BigNumber from 'bignumber.js';
 import { Config } from 'src/config/config';
@@ -36,6 +36,12 @@ export class RawTxUtil {
     const pushData: OpPushData = decodedAddress?.script.stack[2] as any;
     if (!decodedAddress?.script || !pushData?.hex) throw new Error('Could not parse operator address');
     return [decodedAddress.script, pushData.hex];
+  }
+
+  static parseAddressFromScriptHex(scriptHex: string, network: Network): string {
+    const decodedAddress = fromScriptHex(scriptHex, network.name);
+    if (!decodedAddress?.address) throw new Error('Could not parse address of scriptHex');
+    return decodedAddress.address;
   }
 
   // --- VIN CREATION --- //

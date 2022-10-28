@@ -60,6 +60,16 @@ export class UtxoProviderService {
     this.lockUtxo.release();
   }
 
+  async unlockSpentBasedOn(prevouts: Prevout[], scriptHex: string, address: string): Promise<void> {
+    const idAndUnspent = prevouts.map((p) => {
+      return { id: UtxoProviderService.idForPrevout(p), unspent: UtxoProviderService.convertToUnspent(p, scriptHex) };
+    });
+    for (const entry of idAndUnspent) {
+      this.spent.delete(entry.id);
+      this.unspent.set(address, (this.unspent.get(address) ?? []).concat([entry.unspent]));
+    }
+  }
+
   async getStatistics(address: string): Promise<UtxoStatistics> {
     if (!this.unspent.has(address)) {
       await this.retrieveUnspent(address);
@@ -181,7 +191,7 @@ export class UtxoProviderService {
     let total = new BigNumber(0);
     unspent = unspent.sort(sizePriority === UtxoSizePriority.BIG ? this.orderDescending : this.orderAscending);
     if (sizePriority === UtxoSizePriority.FITTING) {
-      unspent = unspent.filter((u) => new BigNumber(u.vout.value).gt(amountPlusFeeBuffer));
+      unspent = unspent.filter((u) => new BigNumber(u.vout.value).gte(amountPlusFeeBuffer));
     }
     unspent.forEach((u) => {
       if (total.gte(amountPlusFeeBuffer)) return;
@@ -202,6 +212,34 @@ export class UtxoProviderService {
 
   private static idForUnspent(unspent: AddressUnspent): string {
     return `${unspent.vout.txid}|${unspent.vout.n}`;
+  }
+
+  private static idForPrevout(prevout: Prevout): string {
+    return `${prevout.txid}|${prevout.vout}`;
+  }
+
+  private static convertToUnspent(prevout: Prevout, scriptHex: string): AddressUnspent {
+    return {
+      id: '',
+      hid: '',
+      sort: '',
+      block: {
+        hash: '',
+        height: 0,
+        time: 0,
+        medianTime: 0,
+      },
+      script: {
+        type: '',
+        hex: scriptHex,
+      },
+      vout: {
+        txid: prevout.txid,
+        n: prevout.vout,
+        value: prevout.value.toString(),
+        tokenId: prevout.tokenId,
+      },
+    };
   }
 
   private static orderAscending(a: AddressUnspent, b: AddressUnspent): number {
