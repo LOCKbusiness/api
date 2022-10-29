@@ -1,10 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { StakingStatus } from 'src/subdomains/staking/domain/enums';
+import { Asset } from 'src/shared/models/asset/asset.entity';
 
 export class DepositAddressBalanceOutputDto {
   @ApiProperty()
-  depositAddress: string;
+  address: string;
 
   @ApiProperty()
   balance: number;
+
+  @ApiProperty()
+  asset: Asset;
 }
