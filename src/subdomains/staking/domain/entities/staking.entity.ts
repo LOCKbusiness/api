@@ -150,14 +150,6 @@ export class Staking extends IEntity {
     return this;
   }
 
-  payoutWithdrawal(withdrawalId: number, txId: string): this {
-    const withdrawal = this.getWithdrawal(withdrawalId);
-
-    withdrawal.payoutWithdrawal(txId);
-
-    return this;
-  }
-
   confirmWithdrawal(withdrawalId: number): this {
     const withdrawal = this.getWithdrawal(withdrawalId);
 
