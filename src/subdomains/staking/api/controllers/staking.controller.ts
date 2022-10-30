@@ -24,17 +24,14 @@ export class StakingController {
     return this.stakingService.getOrCreateStaking(jwt.userId, jwt.walletId, query);
   }
 
-  @Get('balance/depositAddress')
-  @ApiBearerAuth()
-  @ApiResponse({ status: 200, type: DepositAddressBalanceOutputDto })
-  async getStakingDepositBalance(@Query('address') depositAddress: string): Promise<DepositAddressBalanceOutputDto> {
-    return this.stakingService.getDepositAddressBalance(depositAddress);
-  }
-
-  @Get('balance/userAddress')
+  @Get('balance')
   @ApiBearerAuth()
   @ApiResponse({ status: 200, type: DepositAddressBalanceOutputDto, isArray: true })
-  async getStakingUserBalance(@Query('address') userAddress: string): Promise<DepositAddressBalanceOutputDto[]> {
+  async getStakingUserBalance(
+    @Query('userAddress') userAddress: string,
+    @Query('depositAddress') depositAddress: string,
+  ): Promise<DepositAddressBalanceOutputDto[]> {
+    if (depositAddress) return this.stakingService.getDepositAddressBalance(depositAddress);
     return this.stakingService.getUserAddressBalance(userAddress);
   }
 

@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Asset } from 'src/shared/models/asset/asset.entity';
 
 export class DepositAddressBalanceOutputDto {
   @ApiProperty()
@@ -9,5 +8,8 @@ export class DepositAddressBalanceOutputDto {
   balance: number;
 
   @ApiProperty()
-  asset: Asset;
+  asset: string;
+
+  @ApiProperty()
+  blockchain: string;
 }

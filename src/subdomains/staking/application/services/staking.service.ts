@@ -66,19 +66,19 @@ export class StakingService {
     return StakingOutputDtoMapper.entityToDto(await this.authorize.authorize(userId, existingStaking.id));
   }
 
-  async getDepositAddressBalance(address: string): Promise<BalanceOutputDto> {
-    const stakingEntity = await this.repository.findOne({
+  async getDepositAddressBalance(address: string): Promise<BalanceOutputDto[]> {
+    const stakingEntity = await this.repository.find({
       where: { depositAddress: { address: address } },
       relations: ['depositAddress'],
     });
     if (!stakingEntity) throw new NotFoundException('Deposit-address not found');
-    return { address: address, balance: stakingEntity.balance, asset: stakingEntity.asset };
+    return this.toDtoList(address, stakingEntity);
   }
 
   async getUserAddressBalance(address: string): Promise<BalanceOutputDto[]> {
+    const user = await this.userService.getUserByAddress(address);
     const stakingEntity = await this.repository.find({
-      where: { withdrawalAddress: { address: address } },
-      relations: ['withdrawalAddress'],
+      where: { userId: user.id },
     });
     if (!stakingEntity) throw new NotFoundException('User-address not found');
 
@@ -90,7 +90,7 @@ export class StakingService {
   }
 
   private async toDto(address: string, staking: Staking): Promise<BalanceOutputDto> {
-    return { address: address, asset: staking.asset, balance: staking.balance };
+    return { address: address, asset: staking.asset.name, balance: staking.balance, blockchain: staking.asset.blockchain };
   }
 
   async setStakingFee(stakingId: number, dto: SetStakingFeeDto): Promise<void> {
