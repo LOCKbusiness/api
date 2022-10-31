@@ -34,9 +34,8 @@ export class KycService {
     const accessToken = await this.signUp(user.kycId, signature);
     const kycUser = await this.getUser(accessToken);
 
-    await this.userService.updateUser(user.id, { kycHash: kycUser.kycHash });
-
-    return this.toDto(user);
+    const updatedUser = await this.userService.updateUser(user.id, { kycHash: kycUser.kycHash });
+    return this.toDto(updatedUser);
   }
 
   // --- HELPER METHODS --- //
@@ -84,7 +83,7 @@ export class KycService {
       mail: user.mail,
       language: user.language,
       kycStatus: user.kycStatus,
-      kycLink: `${Config.kyc.frontendUrl}/kyc?code=${user.kycHash}`,
+      kycLink: `${Config.kyc.frontendUrl}?code=${user.kycHash}`,
     };
   }
 }

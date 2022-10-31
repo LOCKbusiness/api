@@ -75,7 +75,7 @@
       "value": "https://api.dfx.swiss/v1"
     },
     "kycFrontendUrl": {
-      "value": "https://payment.dfx.swiss"
+      "value": "https://kyc.lock.space"
     }
   }
 }
