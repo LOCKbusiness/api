@@ -131,11 +131,11 @@ export class MasternodeService {
   }
 
   async getAllResigning(): Promise<Masternode[]> {
-    return this.masternodeRepo.find({
-      where: {
-        state: In([MasternodeState.RESIGNING, MasternodeState.PRE_RESIGNED, MasternodeState.MOVING_COLLATERAL]),
-      },
-    });
+    return this.getAllWithStates([
+      MasternodeState.RESIGNING,
+      MasternodeState.PRE_RESIGNED,
+      MasternodeState.MOVING_COLLATERAL,
+    ]);
   }
 
   async getOrderedByTms(): Promise<Masternode[]> {

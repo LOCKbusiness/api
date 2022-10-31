@@ -116,13 +116,13 @@ export class StakingWithdrawalService {
 
   async executeWithdrawal(withdrawalId: number): Promise<void> {
     // payout
-    const withdrawal = await this.withdrawalRepo.findOne(withdrawalId, { relations: ['staking'] });
+    let withdrawal = await this.withdrawalRepo.findOne(withdrawalId, { relations: ['staking'] });
     const txId = await this.deFiChainService.sendWithdrawal(withdrawal);
 
     // update
-    const staking = await this.stakingRepo.findOne(withdrawal.staking.id);
-    staking.payoutWithdrawal(withdrawalId, txId);
-    await this.stakingRepo.save(staking);
+    withdrawal = await this.withdrawalRepo.findOne(withdrawalId);
+    withdrawal.payoutWithdrawal(txId);
+    await this.withdrawalRepo.save(withdrawal);
   }
 
   async getDraftWithdrawals(userId: number, walletId: number, stakingId: number): Promise<WithdrawalDraftOutputDto[]> {
