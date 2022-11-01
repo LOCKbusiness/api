@@ -30,11 +30,11 @@ export class NotificationService {
   //*** HELPER METHODS ***//
 
   private async verify(newNotification: Notification): Promise<void> {
-    const { correlationId, context } = newNotification;
+    const { correlationId } = newNotification;
 
     const existingNotification = await this.notificationRepo.findOne({
       order: { id: 'DESC' },
-      where: { correlationId, context },
+      where: { correlationId },
     });
 
     if (existingNotification) newNotification.shouldAbortGiven(existingNotification);
@@ -50,7 +50,7 @@ export class NotificationService {
 
   private handleNotificationError(e: Error, metadata: NotificationMetadata): void {
     if (e instanceof NotificationSuppressedException) {
-      console.info(`Suppressed mail request. Context: ${metadata?.context}. CorrelationId: ${metadata?.correlationId}`);
+      console.info(`Suppressed mail request. CorrelationId: ${metadata?.correlationId}`);
       return;
     }
 

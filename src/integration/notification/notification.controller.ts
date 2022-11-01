@@ -16,8 +16,6 @@ export class NotificationController {
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async sendMail(@Body() dto: MailRequest): Promise<void> {
-    if (process.env.ENVIRONMENT === 'test') {
-      return this.notificationService.sendMail(dto);
-    }
+    return this.notificationService.sendMail(dto);
   }
 }
