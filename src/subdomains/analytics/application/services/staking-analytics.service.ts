@@ -11,7 +11,9 @@ export class StakingAnalyticsService {
   constructor(
     private readonly repository: StakingAnalyticsRepository,
     private readonly stakingService: StakingService,
-  ) {}
+  ) {
+    this.updateStakingAnalytics().then();
+  }
 
   //*** PUBLIC API ***//
 
@@ -25,7 +27,7 @@ export class StakingAnalyticsService {
 
   //*** JOBS ***//
 
-  @Cron(CronExpression.EVERY_DAY_AT_3AM)
+  @Cron(CronExpression.EVERY_HOUR)
   async updateStakingAnalytics(): Promise<void> {
     const { dateFrom, dateTo } = StakingAnalytics.getAPRPeriod();
 
