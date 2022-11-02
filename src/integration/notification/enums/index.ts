@@ -8,3 +8,7 @@ export enum MailType {
   ERROR_MONITORING = 'ErrorMonitoring',
   USER = 'User',
 }
+
+export enum MailContext {
+  STAKING = 'Staking',
+}

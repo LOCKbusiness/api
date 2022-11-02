@@ -30,11 +30,11 @@ export class NotificationService {
   //*** HELPER METHODS ***//
 
   private async verify(newNotification: Notification): Promise<void> {
-    const { correlationId } = newNotification;
+    const { correlationId, context } = newNotification;
 
     const existingNotification = await this.notificationRepo.findOne({
       order: { id: 'DESC' },
-      where: { correlationId },
+      where: { correlationId, context },
     });
 
     if (existingNotification) newNotification.shouldAbortGiven(existingNotification);

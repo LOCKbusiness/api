@@ -1,9 +1,10 @@
 import { IEntity } from 'src/shared/models/entity';
 import { Entity, Column } from 'typeorm';
-import { NotificationType } from '../enums';
+import { MailContext, NotificationType } from '../enums';
 import { NotificationSuppressedException } from '../exceptions/notification-suppressed.exception';
 
 export interface NotificationMetadata {
+  context: MailContext;
   correlationId: string;
 }
 
@@ -14,10 +15,13 @@ export interface NotificationOptions {
 
 @Entity()
 export class Notification extends IEntity {
-  @Column({ length: 256, nullable: false })
+  @Column({ nullable: false })
   type: NotificationType;
 
-  @Column({ length: 'MAX', nullable: false })
+  @Column({ nullable: false })
+  context: MailContext;
+
+  @Column({ nullable: false })
   correlationId: string;
 
   @Column({ type: 'datetime2', nullable: false })
@@ -32,6 +36,8 @@ export class Notification extends IEntity {
   protected create(type: NotificationType, metadata?: NotificationMetadata, options?: NotificationOptions) {
     this.sendDate = new Date();
     this.type = type;
+
+    this.context = metadata?.context;
     this.correlationId = metadata?.correlationId;
 
     this.suppressRecurring = options?.suppressRecurring;
@@ -59,7 +65,7 @@ export class Notification extends IEntity {
   //*** HELPER METHODS ***//
 
   private isSameNotification(existingNotification: Notification): boolean {
-    return existingNotification.correlationId === this.correlationId;
+    return existingNotification.correlationId === this.correlationId && existingNotification.context === this.context;
   }
 
   private isDebounced(existingNotification: Notification): boolean {
@@ -67,6 +73,6 @@ export class Notification extends IEntity {
   }
 
   private hasMandatoryParams(): boolean {
-    return !!(this.type && this.correlationId);
+    return !!(this.type && this.context && this.correlationId);
   }
 }
