@@ -111,6 +111,7 @@ export class Configuration {
         active: process.env.NODE_REW_URL_ACTIVE,
         passive: process.env.NODE_REW_URL_PASSIVE,
       },
+      maxPrice: 1000000,
     },
   };
 
@@ -188,6 +189,10 @@ export class Configuration {
     fee: 10,
     creationFee: 0.00000232,
     resignFee: 0.00000297,
+  };
+
+  vault = {
+    fee: 2,
   };
 
   get addressFormat(): RegExp {

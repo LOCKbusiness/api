@@ -7,14 +7,19 @@ import {
   WitnessScript,
   Script,
   OP_CODES,
+  OP_DEFI_TX,
   Vin,
   Vout,
+  TokenBalanceUInt32,
+  PoolSwap,
 } from '@defichain/jellyfish-transaction';
 import { fromAddress, fromScriptHex } from '@defichain/jellyfish-address';
 import { Prevout } from '@defichain/jellyfish-transaction-builder';
 import BigNumber from 'bignumber.js';
 import { Config } from 'src/config/config';
 import { MasternodeTimeLock } from 'src/subdomains/staking/domain/enums';
+import { DefiTxHelper } from './defi-tx-helper';
+import { JellyfishService } from './jellyfish.service';
 
 interface OpPushData {
   type: string;
@@ -24,21 +29,24 @@ interface OpPushData {
 export class RawTxUtil {
   // --- PARSING --- //
 
-  static parseAddress(owner: string, network: Network): [Script, string] {
+  static parseAddress(owner: string): [Script, string] {
+    const network = JellyfishService.getNetwork();
     const decodedAddress = fromAddress(owner, network.name);
     const pushData: OpPushData = decodedAddress?.script.stack[1] as any;
     if (!decodedAddress?.script || !pushData?.hex) throw new Error('Could not parse owner address');
     return [decodedAddress.script, pushData.hex];
   }
 
-  static parseOperatorPubKeyHash(operator: string, network: Network): [Script, string] {
+  static parseOperatorPubKeyHash(operator: string): [Script, string] {
+    const network = JellyfishService.getNetwork();
     const decodedAddress = fromAddress(operator, network.name);
     const pushData: OpPushData = decodedAddress?.script.stack[2] as any;
     if (!decodedAddress?.script || !pushData?.hex) throw new Error('Could not parse operator address');
     return [decodedAddress.script, pushData.hex];
   }
 
-  static parseAddressFromScriptHex(scriptHex: string, network: Network): string {
+  static parseAddressFromScriptHex(scriptHex: string): string {
+    const network = JellyfishService.getNetwork();
     const decodedAddress = fromScriptHex(scriptHex, network.name);
     if (!decodedAddress?.address) throw new Error('Could not parse address of scriptHex');
     return decodedAddress.address;
@@ -67,34 +75,88 @@ export class RawTxUtil {
     };
   }
 
+  // --- MASTERNODE VOUTS --- //
+
   static createVoutCreateMasternode(operatorPubKeyHash: string, timeLock: MasternodeTimeLock): Vout {
-    return {
-      value: new BigNumber(Config.masternode.fee),
-      script: {
-        stack: [
-          OP_CODES.OP_RETURN,
-          OP_CODES.OP_DEFI_TX_CREATE_MASTER_NODE({
-            operatorType: 1,
-            operatorPubKeyHash: operatorPubKeyHash,
-            timelock: timeLock,
-          }),
-        ],
-      },
-      tokenId: 0x00,
-    };
+    return this.createDefiTxVout(
+      DefiTxHelper.createMasternode(1, operatorPubKeyHash, timeLock),
+      new BigNumber(Config.masternode.fee),
+    );
   }
 
   static createVoutResignMasternode(creationTxId: string): Vout {
-    return {
-      value: new BigNumber(0),
-      script: {
-        stack: [
-          OP_CODES.OP_RETURN,
-          OP_CODES.OP_DEFI_TX_RESIGN_MASTER_NODE({
-            nodeId: creationTxId,
-          }),
-        ],
+    return this.createDefiTxVout(DefiTxHelper.resignMasternode(creationTxId));
+  }
+
+  // --- TOKEN VOUTS --- //
+
+  static createVoutAnyAccountToAccount(from: Script, to: Script, token: number, amount: BigNumber): Vout {
+    const balances: TokenBalanceUInt32[] = [
+      {
+        token,
+        amount,
       },
+    ];
+    return this.createDefiTxVout(DefiTxHelper.anyAccountToAccount(from, to, balances));
+  }
+
+  // --- VAULT VOUTS --- //
+
+  static createVoutCreateVault(owner: Script): Vout {
+    return this.createDefiTxVout(DefiTxHelper.createVault(owner), new BigNumber(Config.vault.fee));
+  }
+
+  static createVoutDepositToVault(vault: string, from: Script, token: number, amount: BigNumber): Vout {
+    return this.createDefiTxVout(DefiTxHelper.depositToVault(vault, from, { token, amount }));
+  }
+
+  static createVoutWithdrawFromVault(vault: string, to: Script, token: number, amount: BigNumber): Vout {
+    return this.createDefiTxVout(DefiTxHelper.withdrawFromVault(vault, to, { token, amount }));
+  }
+
+  static createVoutTakeLoan(vault: string, to: Script, token: number, amount: BigNumber): Vout {
+    return this.createDefiTxVout(DefiTxHelper.takeLoan(vault, to, [{ token, amount }]));
+  }
+
+  static createVoutPaybackLoan(vault: string, from: Script, token: number, amount: BigNumber): Vout {
+    return this.createDefiTxVout(DefiTxHelper.paybackLoan(vault, from, [{ token, amount }]));
+  }
+
+  // --- POOL VOUTS --- //
+
+  static createVoutAddPoolLiquidity(from: Script, balances: TokenBalanceUInt32[]): Vout {
+    return this.createDefiTxVout(DefiTxHelper.addPoolLiquidity([{ script: from, balances }], from));
+  }
+
+  static createVoutRemovePoolLiquidity(from: Script, token: number, amount: BigNumber): Vout {
+    return this.createDefiTxVout(DefiTxHelper.removePoolLiquidity(from, token, amount));
+  }
+
+  // --- SWAP VOUTS --- //
+
+  static createVoutCompositeSwap(
+    script: Script,
+    fromToken: number,
+    fromAmount: BigNumber,
+    toToken: number,
+    maxPrice: BigNumber,
+  ): Vout {
+    const poolSwap: PoolSwap = {
+      fromScript: script,
+      fromTokenId: fromToken,
+      fromAmount,
+      toScript: script,
+      toTokenId: toToken,
+      maxPrice,
+    };
+    return this.createDefiTxVout(DefiTxHelper.compositeSwap(poolSwap, []));
+  }
+
+  // --- VOUTS HELPER --- //
+  private static createDefiTxVout(tx: OP_DEFI_TX, value = new BigNumber(0)): Vout {
+    return {
+      value,
+      script: { stack: [OP_CODES.OP_RETURN, tx] },
       tokenId: 0x00,
     };
   }

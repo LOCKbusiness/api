@@ -41,3 +41,10 @@ export interface MergeData {
   address: string;
   merge: number;
 }
+
+export interface SendAccountData {
+  from: string;
+  to: string;
+  token: number;
+  amount: BigNumber;
+}

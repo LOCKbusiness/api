@@ -12,6 +12,7 @@ import {
   MasternodeBaseData,
   MergeData,
   ResignMasternodeData,
+  SendAccountData,
   SendFromLiqData,
   SendFromLiqToCustomerData,
   SendToLiqData,
@@ -78,6 +79,12 @@ export class TransactionExecutionService {
   async mergeSmallestUtxos(data: MergeData): Promise<string> {
     const rawTx = await this.jellyfishService.rawTxForMergeUtxos(data.address, data.merge);
     console.info(`Merge tx ${rawTx.id}`);
+    return this.signAndBroadcast(rawTx);
+  }
+
+  async sendAccount(data: SendAccountData): Promise<string> {
+    const rawTx = await this.jellyfishService.rawTxForSendAccount(data.from, data.to, data.token, data.amount);
+    console.info(`Send account tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx);
   }
 
