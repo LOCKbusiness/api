@@ -14,8 +14,8 @@ export class StakingAnalytics extends IEntity {
   //*** PUBLIC API ***//
 
   updateAnalytics(averageBalance: number, averageRewards: number): this {
-    this.apr = this.calculateAPR(averageBalance, averageRewards);
-    this.apy = this.calculateAPY(this.apr);
+    this.apr = this.calculateApr(averageBalance, averageRewards);
+    this.apy = this.calculateApy(this.apr);
 
     return this;
   }
@@ -31,7 +31,7 @@ export class StakingAnalytics extends IEntity {
 
   //*** HELPER METHODS ***//
 
-  private calculateAPR(averageBalance: number, averageRewards: number): number {
+  private calculateApr(averageBalance: number, averageRewards: number): number {
     if (averageBalance === 0) return 0;
 
     const apr = this.getApr(averageRewards, averageBalance);
@@ -39,7 +39,7 @@ export class StakingAnalytics extends IEntity {
     return Util.round(apr, 3);
   }
 
-  private calculateAPY(apr: number): number {
+  private calculateApy(apr: number): number {
     const apy = Math.pow(1 + apr / 365, 365) - 1;
 
     return Util.round(apy, 3);
