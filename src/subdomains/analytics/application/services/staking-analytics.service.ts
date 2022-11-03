@@ -24,18 +24,25 @@ export class StakingAnalyticsService {
   }
 
   //*** JOBS ***//
+  onModuleInit() {
+    this.updateStakingAnalytics();
+  }
 
-  @Cron(CronExpression.EVERY_DAY_AT_3AM)
+  @Cron(CronExpression.EVERY_HOUR)
   async updateStakingAnalytics(): Promise<void> {
-    const { dateFrom, dateTo } = StakingAnalytics.getAPRPeriod();
+    try {
+      const { dateFrom, dateTo } = StakingAnalytics.getAPRPeriod();
 
-    const averageBalance = await this.stakingService.getAverageStakingBalance(dateFrom, dateTo);
-    const totalRewards = await this.stakingService.getTotalRewards(dateFrom, dateTo);
+      const averageBalance = await this.stakingService.getAverageStakingBalance(dateFrom, dateTo);
+      const totalRewards = await this.stakingService.getTotalRewards(dateFrom, dateTo);
 
-    const analytics = (await this.repository.findOne()) ?? this.repository.create();
+      const analytics = (await this.repository.findOne()) ?? this.repository.create();
 
-    analytics.updateAnalytics(averageBalance, totalRewards);
+      analytics.updateAnalytics(averageBalance, totalRewards);
 
-    await this.repository.save(analytics);
+      await this.repository.save(analytics);
+    } catch (e) {
+      console.error('Exception during staking analytics update:', e);
+    }
   }
 }

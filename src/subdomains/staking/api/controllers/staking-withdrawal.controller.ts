@@ -1,6 +1,6 @@
 import { Controller, UseGuards, Body, Post, Param, Patch, Get } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiBearerAuth, ApiExcludeEndpoint, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { GetJwt } from 'src/shared/auth/get-jwt.decorator';
