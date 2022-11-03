@@ -25,7 +25,7 @@ export class StakingAnalytics extends IEntity {
     dateTo.setUTCHours(0, 0, 0, 0);
     const dateFrom = Util.daysBefore(GetConfig().staking.aprPeriod, dateTo);
 
-    return { dateFrom, dateTo };
+    return { dateFrom: new Date(Math.max(dateFrom.getTime(), new Date('2022-11-02').getTime())), dateTo }; //change to return { dateFrom, dateTo } after 28 days
   }
 
   //*** HELPER METHODS ***//
