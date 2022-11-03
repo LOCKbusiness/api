@@ -26,6 +26,12 @@
     "dbCapacity": {
       "value": 20
     },
+    "mailUser": {
+      "value": "xxx"
+    },
+    "mailPass": {
+      "value": "xxx"
+    },
     "nodeAllowAllIps": {
       "value": false
     },
