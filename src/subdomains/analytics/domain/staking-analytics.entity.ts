@@ -13,28 +13,28 @@ export class StakingAnalytics extends IEntity {
 
   //*** PUBLIC API ***//
 
-  updateAnalytics(averageBalance: number, totalReward: number): this {
-    this.apr = this.calculateAPR(averageBalance, totalReward);
+  updateAnalytics(averageBalance: number, averageRewards: number): this {
+    this.apr = this.calculateAPR(averageBalance, averageRewards);
     this.apy = this.calculateAPY(this.apr);
 
     return this;
   }
 
-  static getAPRPeriod(): { dateFrom: Date; dateTo: Date } {
+  static getAprPeriod(): { dateFrom: Date; dateTo: Date } {
     const dateTo = new Date();
     dateTo.setUTCHours(0, 0, 0, 0);
     const dateFrom = Util.daysBefore(GetConfig().staking.aprPeriod, dateTo);
 
     // TODO: change to return { dateFrom, dateTo } after 28 days
-    return { dateFrom: new Date(Math.max(dateFrom.getTime(), new Date('2022-11-02').getTime())), dateTo };
+    return { dateFrom: new Date(Math.max(dateFrom.getTime(), new Date('2022-11-03').getTime())), dateTo };
   }
 
   //*** HELPER METHODS ***//
 
-  private calculateAPR(averageBalance: number, totalReward: number): number {
+  private calculateAPR(averageBalance: number, averageRewards: number): number {
     if (averageBalance === 0) return 0;
 
-    const apr = this.getApr(totalReward / GetConfig().staking.aprPeriod, averageBalance);
+    const apr = this.getApr(averageRewards, averageBalance);
 
     return Util.round(apr, 3);
   }
