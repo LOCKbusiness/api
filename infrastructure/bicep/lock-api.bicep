@@ -10,6 +10,10 @@ param dbAdminPassword string
 param dbTier string
 param dbCapacity int
 
+param mailUser string
+@secure()
+param mailPass string
+
 @secure()
 param jwtSecret string = newGuid()
 
@@ -278,6 +282,14 @@ resource apiAppService 'Microsoft.Web/sites@2018-11-01' = if (env != 'loc') {
         {
           name: 'SQL_MIGRATE'
           value: 'true'
+        }
+        {
+          name: 'MAIL_USER'
+          value: mailUser
+        }
+        {
+          name: 'MAIL_PASS'
+          value: mailPass
         }
         {
           name: 'NODE_USER'
