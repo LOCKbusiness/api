@@ -9,6 +9,7 @@ import { SharedModule } from './shared/shared.module';
 import { AnalyticsModule } from './subdomains/analytics/analytics.module';
 import { StakingModule } from './subdomains/staking/staking.module';
 import { UserModule } from './subdomains/user/user.module';
+import { YieldMachineModule } from './subdomains/yield-machine/yield-machine.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { UserModule } from './subdomains/user/user.module';
     SharedModule,
     UserModule,
     StakingModule,
+    YieldMachineModule,
     AnalyticsModule,
     BlockchainModule,
     IntegrationModule,

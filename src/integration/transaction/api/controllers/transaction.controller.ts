@@ -8,20 +8,23 @@ import { SignatureDto } from '../../application/dto/signature.dto';
 import { SignedTransactionDto } from '../../application/dto/signed-transaction.dto';
 import { TransactionInputDto } from '../../application/dto/transaction.input.dto';
 import { TransactionOutputDto } from '../../application/dto/transaction.output.dto';
+import { TransactionCreationService } from '../../application/services/transaction-creation.service';
 import { TransactionService } from '../../application/services/transaction.service';
 
 @ApiTags('Transaction')
 @Controller('transaction')
 export class TransactionController {
-  constructor(private readonly transactionService: TransactionService) {}
+  constructor(
+    private readonly transactionService: TransactionService,
+    private readonly transactionCreationService: TransactionCreationService,
+  ) {}
 
   @Post()
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   createTransaction(@Body() dto: TransactionInputDto): Promise<void> {
-    this.transactionService.getOpen();
-    return;
+    return this.transactionCreationService.create(dto.command, dto.parameters);
   }
 
   @Get('open')
