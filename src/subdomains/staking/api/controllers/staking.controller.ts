@@ -9,7 +9,7 @@ import { JwtPayload } from 'src/shared/auth/jwt-payload.interface';
 import { StakingOutputDto } from '../../application/dto/output/staking.output.dto';
 import { SetStakingFeeDto } from '../../application/dto/input/set-staking-fee.dto';
 import { GetOrCreateStakingQuery } from '../../application/dto/input/get-staking.query';
-import { DepositAddressBalanceOutputDto } from '../../application/dto/output/balance.output.dto';
+import { BalanceOutputDto } from '../../application/dto/output/balance.output.dto';
 
 @ApiTags('Staking')
 @Controller('staking')
@@ -26,11 +26,11 @@ export class StakingController {
 
   @Get('balance')
   @ApiBearerAuth()
-  @ApiResponse({ status: 200, type: DepositAddressBalanceOutputDto, isArray: true })
+  @ApiResponse({ status: 200, type: BalanceOutputDto, isArray: true })
   async getStakingUserBalance(
     @Query('userAddress') userAddress: string,
     @Query('depositAddress') depositAddress: string,
-  ): Promise<DepositAddressBalanceOutputDto[]> {
+  ): Promise<BalanceOutputDto[]> {
     if (depositAddress) return this.stakingService.getDepositAddressBalance(depositAddress);
     return this.stakingService.getUserAddressBalance(userAddress);
   }
