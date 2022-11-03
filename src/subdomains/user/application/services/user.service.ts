@@ -32,13 +32,10 @@ export class UserService {
   async getUserByAddress(address: string): Promise<User> {
     return await getCustomRepository(UserRepository)
       .createQueryBuilder('user')
-      .leftJoin('user.wallets', 'wallets')
-      .leftJoin('wallets.address', 'address')
+      .innerJoin('user.wallets', 'wallets')
+      .innerJoin('wallets.address', 'address')
       .where('address = :address', { address })
-      .getOne()
-      .catch((e: Error) => {
-        throw new BadRequestException(e.message);
-      });
+      .getOne();
   }
 
   async getAllUser(): Promise<User[]> {

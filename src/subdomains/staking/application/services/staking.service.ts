@@ -67,30 +67,35 @@ export class StakingService {
   }
 
   async getDepositAddressBalance(address: string): Promise<BalanceOutputDto[]> {
-    const stakingEntity = await this.repository.find({
+    const stakingEntities = await this.repository.find({
       where: { depositAddress: { address: address } },
       relations: ['depositAddress'],
     });
-    if (!stakingEntity) throw new NotFoundException('Deposit-address not found');
-    return this.toDtoList(address, stakingEntity);
+    if (!stakingEntities) throw new NotFoundException('No staking for deposit address found');
+    return this.toDtoList(address, stakingEntities);
   }
 
   async getUserAddressBalance(address: string): Promise<BalanceOutputDto[]> {
     const user = await this.userService.getUserByAddress(address);
-    const stakingEntity = await this.repository.find({
+    const stakingEntities = await this.repository.find({
       where: { userId: user.id },
     });
-    if (!stakingEntity) throw new NotFoundException('User-address not found');
+    if (!stakingEntities) throw new NotFoundException('No staking for user address found');
 
-    return this.toDtoList(address, stakingEntity);
+    return this.toDtoList(address, stakingEntities);
   }
 
-  private async toDtoList(address: string, staking: Staking[]): Promise<BalanceOutputDto[]> {
-    return Promise.all(staking.map((b) => this.toDto(address, b)));
+  private toDtoList(address: string, staking: Staking[]): BalanceOutputDto[] {
+    return staking.map((b) => this.toDto(address, b));
   }
 
-  private async toDto(address: string, staking: Staking): Promise<BalanceOutputDto> {
-    return { address: address, asset: staking.asset.name, balance: staking.balance, blockchain: staking.asset.blockchain };
+  private toDto(address: string, staking: Staking): BalanceOutputDto {
+    return {
+      address: address,
+      asset: staking.asset.name,
+      balance: staking.balance,
+      blockchain: staking.asset.blockchain,
+    };
   }
 
   async setStakingFee(stakingId: number, dto: SetStakingFeeDto): Promise<void> {
