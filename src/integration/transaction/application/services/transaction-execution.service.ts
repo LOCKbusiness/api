@@ -9,14 +9,16 @@ import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { Config } from 'src/config/config';
 import {
   CreateMasternodeData,
+  CreateVaultData,
   MasternodeBaseData,
   MergeData,
   ResignMasternodeData,
-  SendAccountData,
+  SendTokenData,
   SendFromLiqData,
   SendFromLiqToCustomerData,
   SendToLiqData,
   SplitData,
+  DepositToVaultData,
 } from '../types/creation-data';
 import { TransactionService } from './transaction.service';
 import { WIF } from '@defichain/jellyfish-crypto';
@@ -82,10 +84,22 @@ export class TransactionExecutionService {
     return this.signAndBroadcast(rawTx);
   }
 
-  async sendAccount(data: SendAccountData): Promise<string> {
+  async sentToken(data: SendTokenData): Promise<string> {
     const rawTx = await this.jellyfishService.rawTxForSendAccount(data.from, data.to, data.token, data.amount);
     console.info(`Send account tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx);
+  }
+
+  async createVault(data: CreateVaultData): Promise<string> {
+    const rawTx = await this.jellyfishService.rawTxForCreateVault(data.owner);
+    console.info(`Create vault tx ${rawTx.id}`);
+    return this.signAndBroadcast(rawTx); // TODO: need to send accountIndex for the respective address we want to create a vault on
+  }
+
+  async depositToVault(data: DepositToVaultData): Promise<string> {
+    const rawTx = await this.jellyfishService.rawTxForDepositToVault(data.from, data.vault, data.token, data.amount);
+    console.info(`Deposit to vault tx ${rawTx.id}`);
+    return this.signAndBroadcast(rawTx); // TODO: need to send accountIndex for the respective address we want to access the funds from
   }
 
   private createPayloadFor(data: MasternodeBaseData): any {

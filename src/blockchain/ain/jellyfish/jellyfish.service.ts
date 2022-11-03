@@ -248,13 +248,16 @@ export class JellyfishService {
 
   private async generateRawTxForCreateVault(owner: string): Promise<RawTxDto> {
     const [ownerScript, ownerPubKeyHash] = RawTxUtil.parseAddress(owner);
+    const vaultFee = new BigNumber(Config.vault.fee);
 
-    const utxo = await this.utxoProvider.provideUntilAmount(
-      owner,
-      new BigNumber(Config.vault.fee),
-      UtxoSizePriority.FITTING,
+    const utxo = await this.utxoProvider.provideUntilAmount(owner, vaultFee, UtxoSizePriority.FITTING);
+    return this.generateRawDefiTx(
+      ownerScript,
+      ownerPubKeyHash,
+      utxo,
+      RawTxUtil.createVoutCreateVault(ownerScript),
+      vaultFee,
     );
-    return this.generateRawDefiTx(ownerScript, ownerPubKeyHash, utxo, RawTxUtil.createVoutCreateVault(ownerScript));
   }
 
   private async generateRawVaultTx(
@@ -337,6 +340,7 @@ export class JellyfishService {
     fromPubKeyHash: string,
     utxo: UtxoInformation,
     vout: Vout,
+    additionalValue = new BigNumber(0),
   ): Promise<RawTxDto> {
     const vins = RawTxUtil.createVins(utxo.prevouts);
     const vouts = [vout, RawTxUtil.createVoutReturn(fromScript, utxo.total)];
@@ -344,14 +348,20 @@ export class JellyfishService {
     const witness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(fromPubKeyHash)]);
     const witnesses = new Array(vins.length).fill(witness);
 
-    return this.createTxAndCalcFee(utxo, vins, vouts, witnesses);
+    return this.createTxAndCalcFee(utxo, vins, vouts, witnesses, additionalValue);
   }
 
-  private createTxAndCalcFee(utxo: UtxoInformation, vins: Vin[], vouts: Vout[], witnesses: Witness[]): RawTxDto {
+  private createTxAndCalcFee(
+    utxo: UtxoInformation,
+    vins: Vin[],
+    vouts: Vout[],
+    witnesses: Witness[],
+    additionalValue = new BigNumber(0),
+  ): RawTxDto {
     const tx = RawTxUtil.createTxSegWit(vins, vouts, witnesses);
     const fee = calculateFeeP2WPKH(new BigNumber(Config.blockchain.minFeeRate), tx);
     const lastElement = vouts[vouts.length - 1];
-    lastElement.value = lastElement.value.minus(fee);
+    lastElement.value = lastElement.value.minus(fee).minus(additionalValue);
 
     const txObj = new CTransactionSegWit(tx);
     return {

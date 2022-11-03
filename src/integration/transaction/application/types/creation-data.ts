@@ -42,9 +42,25 @@ export interface MergeData {
   merge: number;
 }
 
-export interface SendAccountData {
+export interface SendTokenData {
   from: string;
   to: string;
   token: number;
   amount: BigNumber;
+}
+
+export interface CreateVaultData {
+  owner: string;
+  accountIndex: number;
+}
+
+interface VaultData {
+  vault: string;
+  token: number;
+  amount: BigNumber;
+  accountIndex: number;
+}
+
+export interface DepositToVaultData extends VaultData {
+  from: string;
 }
