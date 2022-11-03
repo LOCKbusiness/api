@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Config } from 'src/config/config';
 import { WalletBlockchainAddress } from '../../domain/entities/wallet-blockchain-address.entity';
 import { User } from '../../domain/entities/user.entity';

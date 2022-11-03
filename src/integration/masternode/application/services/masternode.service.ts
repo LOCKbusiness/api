@@ -38,24 +38,28 @@ export class MasternodeService {
   // --- MASTERNODE SYNC --- //
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
   async syncMasternodes(): Promise<void> {
-    if (!Config.mydefichain.username) return;
+    try {
+      if (!Config.mydefichain.username) return;
 
-    const masternodeOperators = await this.masternodeRepo.find({
-      select: ['operator'],
-    });
+      const masternodeOperators = await this.masternodeRepo.find({
+        select: ['operator'],
+      });
 
-    const masternodeServerList = await this.settingService.get('masternodeServerList');
+      const masternodeServerList = await this.settingService.get('masternodeServerList');
 
-    for (const server of masternodeServerList.split(',')) {
-      const operators = await this.callApi<string[]>(`http://${server}.mydefichain.com/api/operatoraddresses`, 'GET');
-      const missingOperators = operators.filter(
-        (item) => masternodeOperators.map((masternode) => masternode.operator).indexOf(item) < 0,
-      );
+      for (const server of masternodeServerList.split(',')) {
+        const operators = await this.callApi<string[]>(`http://${server}.mydefichain.com/api/operatoraddresses`, 'GET');
+        const missingOperators = operators.filter(
+          (item) => masternodeOperators.map((masternode) => masternode.operator).indexOf(item) < 0,
+        );
 
-      for (const operator of missingOperators) {
-        const newOperator = this.masternodeRepo.create({ operator, server });
-        await this.masternodeRepo.save(newOperator);
+        for (const operator of missingOperators) {
+          const newOperator = this.masternodeRepo.create({ operator, server });
+          await this.masternodeRepo.save(newOperator);
+        }
       }
+    } catch (e) {
+      console.error('Exception during masternode sync:', e);
     }
   }
 

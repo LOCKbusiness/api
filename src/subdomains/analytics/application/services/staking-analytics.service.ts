@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Cron, CronExpression, Timeout } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { StakingService } from 'src/subdomains/staking/application/services/staking.service';
 import { StakingAnalytics } from '../../domain/staking-analytics.entity';
 import { StakingAnalyticsOutputDto } from '../dto/output/staking-analytics.output.dto';
@@ -24,19 +24,25 @@ export class StakingAnalyticsService {
   }
 
   //*** JOBS ***//
+  onModuleInit() {
+    this.updateStakingAnalytics();
+  }
 
-  @Timeout(0)
   @Cron(CronExpression.EVERY_HOUR)
   async updateStakingAnalytics(): Promise<void> {
-    const { dateFrom, dateTo } = StakingAnalytics.getAPRPeriod();
+    try {
+      const { dateFrom, dateTo } = StakingAnalytics.getAPRPeriod();
 
-    const averageBalance = await this.stakingService.getAverageStakingBalance(dateFrom, dateTo);
-    const totalRewards = await this.stakingService.getTotalRewards(dateFrom, dateTo);
+      const averageBalance = await this.stakingService.getAverageStakingBalance(dateFrom, dateTo);
+      const totalRewards = await this.stakingService.getTotalRewards(dateFrom, dateTo);
 
-    const analytics = (await this.repository.findOne()) ?? this.repository.create();
+      const analytics = (await this.repository.findOne()) ?? this.repository.create();
 
-    analytics.updateAnalytics(averageBalance, totalRewards);
+      analytics.updateAnalytics(averageBalance, totalRewards);
 
-    await this.repository.save(analytics);
+      await this.repository.save(analytics);
+    } catch (e) {
+      console.error('Exception during staking analytics update:', e);
+    }
   }
 }
