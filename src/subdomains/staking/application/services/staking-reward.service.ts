@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateRewardDto } from '../dto/input/create-reward.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
@@ -12,7 +12,8 @@ export class StakingRewardService {
   //*** PUBLIC API ***//
 
   async createReward(stakingId: number, dto: CreateRewardDto): Promise<StakingOutputDto> {
-    const staking = await this.repository.findOne(stakingId);
+    const staking = await this.repository.findOne(stakingId, { relations: ['rewards'] });
+    if (!staking) throw new NotFoundException('Staking not found');
 
     const reward = this.factory.createReward(staking, dto);
 
