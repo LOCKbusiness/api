@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Timeout } from '@nestjs/schedule';
+import { Cron, CronExpression, Timeout } from '@nestjs/schedule';
 import { StakingService } from 'src/subdomains/staking/application/services/staking.service';
 import { StakingAnalytics } from '../../domain/staking-analytics.entity';
 import { StakingAnalyticsOutputDto } from '../dto/output/staking-analytics.output.dto';
@@ -25,7 +25,8 @@ export class StakingAnalyticsService {
 
   //*** JOBS ***//
 
-  @Timeout(36000000)
+  @Timeout(0)
+  @Cron(CronExpression.EVERY_HOUR)
   async updateStakingAnalytics(): Promise<void> {
     const { dateFrom, dateTo } = StakingAnalytics.getAPRPeriod();
 
