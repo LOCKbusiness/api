@@ -72,7 +72,7 @@ export class StakingService {
       relations: ['depositAddress'],
     });
     if (!stakingEntities) throw new NotFoundException('No staking for deposit address found');
-    return this.toDtoList(address, stakingEntities);
+    return this.toDtoList(stakingEntities);
   }
 
   async getUserAddressBalance(address: string): Promise<BalanceOutputDto[]> {
@@ -82,16 +82,15 @@ export class StakingService {
     });
     if (!stakingEntities) throw new NotFoundException('No staking for user address found');
 
-    return this.toDtoList(address, stakingEntities);
+    return this.toDtoList(stakingEntities);
   }
 
-  private toDtoList(address: string, staking: Staking[]): BalanceOutputDto[] {
-    return staking.map((b) => this.toDto(address, b));
+  private toDtoList(staking: Staking[]): BalanceOutputDto[] {
+    return staking.map((b) => this.toDto(b));
   }
 
-  private toDto(address: string, staking: Staking): BalanceOutputDto {
+  private toDto(staking: Staking): BalanceOutputDto {
     return {
-      address: address,
       asset: staking.asset.name,
       balance: staking.balance,
       blockchain: staking.asset.blockchain,
