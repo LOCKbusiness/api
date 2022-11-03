@@ -1,12 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
 
-export class DepositAddressBalanceOutputDto {
+export class BalanceOutputDto {
   @ApiProperty()
   balance: number;
 
   @ApiProperty()
   asset: string;
 
-  @ApiProperty()
-  blockchain: string;
+  @ApiProperty({ enum: Blockchain })
+  blockchain: Blockchain;
 }

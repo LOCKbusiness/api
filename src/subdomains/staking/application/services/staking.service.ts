@@ -13,7 +13,7 @@ import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
 import { GetOrCreateStakingQuery } from '../dto/input/get-staking.query';
 import { SetStakingFeeDto } from '../dto/input/set-staking-fee.dto';
-import { DepositAddressBalanceOutputDto as BalanceOutputDto } from '../dto/output/balance.output.dto';
+import { BalanceOutputDto } from '../dto/output/balance.output.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
 import { FiatPriceProvider, FIAT_PRICE_PROVIDER } from '../interfaces';
@@ -71,7 +71,7 @@ export class StakingService {
       where: { depositAddress: { address: address } },
       relations: ['depositAddress'],
     });
-    if (!stakingEntities) throw new NotFoundException('No staking for deposit address found');
+    if (stakingEntities.length == 0) throw new NotFoundException('No staking for deposit address found');
     return this.toDtoList(stakingEntities);
   }
 
@@ -80,7 +80,7 @@ export class StakingService {
     const stakingEntities = await this.repository.find({
       where: { userId: user.id },
     });
-    if (!stakingEntities) throw new NotFoundException('No staking for user address found');
+    if (stakingEntities.length == 0) throw new NotFoundException('No staking for user address found');
 
     return this.toDtoList(stakingEntities);
   }
