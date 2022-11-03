@@ -1,7 +1,7 @@
 import { StakingAnalytics } from '../staking-analytics.entity';
 
 describe('StakingAnalytics', () => {
-  describe('#getAPRPeriod(...)', () => {
+  describe('#getAprPeriod(...)', () => {
     it('returns object with two dates', () => {
       const dates = StakingAnalytics.getAprPeriod();
 
