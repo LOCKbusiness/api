@@ -122,7 +122,7 @@ export class StakingService {
   }
 
   // assuming DFI is the only staking asset
-  async getTotalRewards(dateFrom: Date, dateTo: Date): Promise<number> {
+  async getAverageRewards(dateFrom: Date, dateTo: Date): Promise<number> {
     const { rewardVolume } = await this.repository
       .createQueryBuilder('staking')
       .leftJoin('staking.rewards', 'rewards')
@@ -132,7 +132,7 @@ export class StakingService {
       .where('rewards.created BETWEEN :dateFrom AND :dateTo', { dateFrom, dateTo })
       .getRawOne<{ rewardVolume: number }>();
 
-    return rewardVolume;
+    return rewardVolume / Util.daysDiff(dateFrom, dateTo);
   }
 
   //*** JOBS ***//

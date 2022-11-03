@@ -31,14 +31,14 @@ export class StakingAnalyticsService {
   @Cron(CronExpression.EVERY_HOUR)
   async updateStakingAnalytics(): Promise<void> {
     try {
-      const { dateFrom, dateTo } = StakingAnalytics.getAPRPeriod();
+      const { dateFrom, dateTo } = StakingAnalytics.getAprPeriod();
 
       const averageBalance = await this.stakingService.getAverageStakingBalance(dateFrom, dateTo);
-      const totalRewards = await this.stakingService.getTotalRewards(dateFrom, dateTo);
+      const averageRewards = await this.stakingService.getAverageRewards(dateFrom, dateTo);
 
       const analytics = (await this.repository.findOne()) ?? this.repository.create();
 
-      analytics.updateAnalytics(averageBalance, totalRewards);
+      analytics.updateAnalytics(averageBalance, averageRewards);
 
       await this.repository.save(analytics);
     } catch (e) {
