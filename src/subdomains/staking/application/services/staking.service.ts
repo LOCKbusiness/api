@@ -13,7 +13,7 @@ import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
 import { GetOrCreateStakingQuery } from '../dto/input/get-staking.query';
 import { SetStakingFeeDto } from '../dto/input/set-staking-fee.dto';
-import { DepositAddressBalanceOutputDto } from '../dto/output/deposit-address-balance.output.dto';
+import { BalanceOutputDto } from '../dto/output/balance.output.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
 import { FiatPriceProvider, FIAT_PRICE_PROVIDER } from '../interfaces';
@@ -66,13 +66,35 @@ export class StakingService {
     return StakingOutputDtoMapper.entityToDto(await this.authorize.authorize(userId, existingStaking.id));
   }
 
-  async getDepositAddressBalance(address: string): Promise<DepositAddressBalanceOutputDto> {
-    const stakingEntity = await this.repository.findOne({
+  async getDepositAddressBalance(address: string): Promise<BalanceOutputDto[]> {
+    const stakingEntities = await this.repository.find({
       where: { depositAddress: { address: address } },
       relations: ['depositAddress'],
     });
-    if (!stakingEntity) throw new NotFoundException('Deposit-address not found');
-    return { depositAddress: address, balance: stakingEntity.balance };
+    if (stakingEntities.length == 0) throw new NotFoundException('No staking for deposit address found');
+    return this.toDtoList(stakingEntities);
+  }
+
+  async getUserAddressBalance(address: string): Promise<BalanceOutputDto[]> {
+    const user = await this.userService.getUserByAddress(address);
+    const stakingEntities = await this.repository.find({
+      where: { userId: user.id },
+    });
+    if (stakingEntities.length == 0) throw new NotFoundException('No staking for user address found');
+
+    return this.toDtoList(stakingEntities);
+  }
+
+  private toDtoList(staking: Staking[]): BalanceOutputDto[] {
+    return staking.map((b) => this.toDto(b));
+  }
+
+  private toDto(staking: Staking): BalanceOutputDto {
+    return {
+      asset: staking.asset.name,
+      balance: staking.balance,
+      blockchain: staking.asset.blockchain,
+    };
   }
 
   async setStakingFee(stakingId: number, dto: SetStakingFeeDto): Promise<void> {

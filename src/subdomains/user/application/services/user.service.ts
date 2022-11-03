@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Config } from 'src/config/config';
 import { WalletBlockchainAddress } from '../../domain/entities/wallet-blockchain-address.entity';
 import { User } from '../../domain/entities/user.entity';
 import { KycStatus } from '../../domain/enums';
 import { UserRepository } from '../repositories/user.repository';
+import { getCustomRepository } from 'typeorm';
 
 @Injectable()
 export class UserService {
@@ -26,6 +27,15 @@ export class UserService {
 
   async getUserByKycId(kycId: string): Promise<User> {
     return this.userRepo.findOne({ where: { kycId } });
+  }
+
+  async getUserByAddress(address: string): Promise<User> {
+    return await getCustomRepository(UserRepository)
+      .createQueryBuilder('user')
+      .innerJoin('user.wallets', 'wallets')
+      .innerJoin('wallets.address', 'address')
+      .where('address = :address', { address })
+      .getOne();
   }
 
   async getAllUser(): Promise<User[]> {
