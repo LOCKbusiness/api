@@ -80,12 +80,12 @@ export class JellyfishService {
     return this.call(() => this.generateRawVaultTx(from, vault, token, amount, RawTxUtil.createVoutDepositToVault));
   }
 
-  async rawTxForWithdrawFromVault(from: string, vault: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.call(() => this.generateRawVaultTx(from, vault, token, amount, RawTxUtil.createVoutWithdrawFromVault));
+  async rawTxForWithdrawFromVault(to: string, vault: string, token: number, amount: BigNumber): Promise<RawTxDto> {
+    return this.call(() => this.generateRawVaultTx(to, vault, token, amount, RawTxUtil.createVoutWithdrawFromVault));
   }
 
-  async rawTxForTakeLoan(from: string, vault: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.call(() => this.generateRawVaultTx(from, vault, token, amount, RawTxUtil.createVoutTakeLoan));
+  async rawTxForTakeLoan(to: string, vault: string, token: number, amount: BigNumber): Promise<RawTxDto> {
+    return this.call(() => this.generateRawVaultTx(to, vault, token, amount, RawTxUtil.createVoutTakeLoan));
   }
 
   async rawTxForPaybackLoan(from: string, vault: string, token: number, amount: BigNumber): Promise<RawTxDto> {
@@ -269,7 +269,7 @@ export class JellyfishService {
   ): Promise<RawTxDto> {
     const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
 
-    const utxo = await this.utxoProvider.provideNumber(from, 1, UtxoSizePriority.SMALL);
+    const utxo = await this.utxoProvider.provideForDefiTx(from);
     return this.generateRawDefiTx(fromScript, fromPubKeyHash, utxo, createVout(vault, fromScript, token, amount));
   }
 
@@ -285,7 +285,7 @@ export class JellyfishService {
     const tokenBalanceA: TokenBalanceUInt32 = { token: tokenA, amount: amountA };
     const tokenBalanceB: TokenBalanceUInt32 = { token: tokenB, amount: amountB };
 
-    const utxo = await this.utxoProvider.provideNumber(from, 1, UtxoSizePriority.SMALL);
+    const utxo = await this.utxoProvider.provideForDefiTx(from);
     return this.generateRawDefiTx(
       fromScript,
       fromPubKeyHash,
@@ -297,7 +297,7 @@ export class JellyfishService {
   private async generateRawTxForRemovePoolLiquidity(from: string, token: number, amount: BigNumber): Promise<RawTxDto> {
     const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
 
-    const utxo = await this.utxoProvider.provideNumber(from, 1, UtxoSizePriority.SMALL);
+    const utxo = await this.utxoProvider.provideForDefiTx(from);
     return this.generateRawDefiTx(
       fromScript,
       fromPubKeyHash,
@@ -314,7 +314,7 @@ export class JellyfishService {
   ): Promise<RawTxDto> {
     const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
 
-    const utxo = await this.utxoProvider.provideNumber(from, 1, UtxoSizePriority.SMALL);
+    const utxo = await this.utxoProvider.provideForDefiTx(from);
     return this.generateRawDefiTx(
       fromScript,
       fromPubKeyHash,

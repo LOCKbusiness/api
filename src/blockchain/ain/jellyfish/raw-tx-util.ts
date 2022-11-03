@@ -1,4 +1,3 @@
-import { Network } from '@defichain/jellyfish-network';
 import {
   DeFiTransactionConstants,
   Transaction,
@@ -78,14 +77,14 @@ export class RawTxUtil {
   // --- MASTERNODE VOUTS --- //
 
   static createVoutCreateMasternode(operatorPubKeyHash: string, timeLock: MasternodeTimeLock): Vout {
-    return this.createDefiTxVout(
+    return RawTxUtil.createDefiTxVout(
       DefiTxHelper.createMasternode(1, operatorPubKeyHash, timeLock),
       new BigNumber(Config.masternode.fee),
     );
   }
 
   static createVoutResignMasternode(creationTxId: string): Vout {
-    return this.createDefiTxVout(DefiTxHelper.resignMasternode(creationTxId));
+    return RawTxUtil.createDefiTxVout(DefiTxHelper.resignMasternode(creationTxId));
   }
 
   // --- TOKEN VOUTS --- //
@@ -97,39 +96,39 @@ export class RawTxUtil {
         amount,
       },
     ];
-    return this.createDefiTxVout(DefiTxHelper.anyAccountToAccount(from, to, balances));
+    return RawTxUtil.createDefiTxVout(DefiTxHelper.anyAccountToAccount(from, to, balances));
   }
 
   // --- VAULT VOUTS --- //
 
   static createVoutCreateVault(owner: Script): Vout {
-    return this.createDefiTxVout(DefiTxHelper.createVault(owner), new BigNumber(Config.vault.fee));
+    return RawTxUtil.createDefiTxVout(DefiTxHelper.createVault(owner), new BigNumber(Config.vault.fee));
   }
 
   static createVoutDepositToVault(vault: string, from: Script, token: number, amount: BigNumber): Vout {
-    return this.createDefiTxVout(DefiTxHelper.depositToVault(vault, from, { token, amount }));
+    return RawTxUtil.createDefiTxVout(DefiTxHelper.depositToVault(vault, from, { token, amount }));
   }
 
   static createVoutWithdrawFromVault(vault: string, to: Script, token: number, amount: BigNumber): Vout {
-    return this.createDefiTxVout(DefiTxHelper.withdrawFromVault(vault, to, { token, amount }));
+    return RawTxUtil.createDefiTxVout(DefiTxHelper.withdrawFromVault(vault, to, { token, amount }));
   }
 
   static createVoutTakeLoan(vault: string, to: Script, token: number, amount: BigNumber): Vout {
-    return this.createDefiTxVout(DefiTxHelper.takeLoan(vault, to, [{ token, amount }]));
+    return RawTxUtil.createDefiTxVout(DefiTxHelper.takeLoan(vault, to, [{ token, amount }]));
   }
 
   static createVoutPaybackLoan(vault: string, from: Script, token: number, amount: BigNumber): Vout {
-    return this.createDefiTxVout(DefiTxHelper.paybackLoan(vault, from, [{ token, amount }]));
+    return RawTxUtil.createDefiTxVout(DefiTxHelper.paybackLoan(vault, from, [{ token, amount }]));
   }
 
   // --- POOL VOUTS --- //
 
   static createVoutAddPoolLiquidity(from: Script, balances: TokenBalanceUInt32[]): Vout {
-    return this.createDefiTxVout(DefiTxHelper.addPoolLiquidity([{ script: from, balances }], from));
+    return RawTxUtil.createDefiTxVout(DefiTxHelper.addPoolLiquidity([{ script: from, balances }], from));
   }
 
   static createVoutRemovePoolLiquidity(from: Script, token: number, amount: BigNumber): Vout {
-    return this.createDefiTxVout(DefiTxHelper.removePoolLiquidity(from, token, amount));
+    return RawTxUtil.createDefiTxVout(DefiTxHelper.removePoolLiquidity(from, token, amount));
   }
 
   // --- SWAP VOUTS --- //
@@ -149,7 +148,7 @@ export class RawTxUtil {
       toTokenId: toToken,
       maxPrice,
     };
-    return this.createDefiTxVout(DefiTxHelper.compositeSwap(poolSwap, []));
+    return RawTxUtil.createDefiTxVout(DefiTxHelper.compositeSwap(poolSwap, []));
   }
 
   // --- VOUTS HELPER --- //
