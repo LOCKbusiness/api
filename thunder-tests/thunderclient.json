@@ -225,5 +225,19 @@
       "form": []
     },
     "tests": []
+  },
+  {
+    "_id": "b2951fce-211b-47ae-829a-635644890b47",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "07615eb4-0086-4fbb-a851-801bd706c8ff",
+    "name": "Get",
+    "url": "{{url}}/v1/user",
+    "method": "GET",
+    "sortNum": 180000,
+    "created": "2022-11-04T16:58:28.700Z",
+    "modified": "2022-11-04T16:58:58.922Z",
+    "headers": [],
+    "params": [],
+    "tests": []
   }
 ]

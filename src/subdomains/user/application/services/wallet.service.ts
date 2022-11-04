@@ -102,7 +102,7 @@ export class WalletService {
       phone: wallet.user?.phone,
       language: wallet.user?.language,
       kycStatus: wallet.user?.kycStatus,
-      kycLink: `${Config.kyc.frontendUrl}/kyc?code=${wallet.user?.kycHash}`,
+      kycLink: Config.kyc.frontendUrl(wallet.user?.kycHash),
     };
   }
 }
