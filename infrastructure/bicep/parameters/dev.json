@@ -82,9 +82,6 @@
     },
     "kycFrontendUrl": {
       "value": "https://dev.kyc.lock.space"
-    },
-    "vaultFee": {
-      "value": "1"
     }
   }
 }

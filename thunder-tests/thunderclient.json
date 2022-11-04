@@ -208,15 +208,15 @@
     "tests": []
   },
   {
-    "_id": "5ed35ea9-1ef4-4f1f-ba88-eed756bc1fb3",
+    "_id": "05c1d66c-94d7-4a4a-9802-fd4d1db4ac47",
     "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
-    "containerId": "731f1cc7-0880-423b-9bd4-6c9fa8edb82c",
-    "name": "create",
-    "url": "{{url}}/v1/transaction",
+    "containerId": "471a4574-a59a-48ec-8397-8643551fcf44",
+    "name": "create tx",
+    "url": "{{url}}/v1/yield-machine/transaction",
     "method": "POST",
-    "sortNum": 50000,
-    "created": "2022-11-03T21:06:41.070Z",
-    "modified": "2022-11-04T10:28:16.804Z",
+    "sortNum": 170000,
+    "created": "2022-11-04T11:38:16.712Z",
+    "modified": "2022-11-04T11:49:15.086Z",
     "headers": [],
     "params": [],
     "body": {

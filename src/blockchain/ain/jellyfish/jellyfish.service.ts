@@ -248,14 +248,14 @@ export class JellyfishService {
 
   private async generateRawTxForCreateVault(owner: string): Promise<RawTxDto> {
     const [ownerScript, ownerPubKeyHash] = RawTxUtil.parseAddress(owner);
-    const vaultFee = new BigNumber(Config.vault.fee);
+    const vaultFee = this.vaultFee();
 
     const utxo = await this.utxoProvider.provideUntilAmount(owner, vaultFee, UtxoSizePriority.FITTING);
     return this.generateRawDefiTx(
       ownerScript,
       ownerPubKeyHash,
       utxo,
-      RawTxUtil.createVoutCreateVault(ownerScript),
+      RawTxUtil.createVoutCreateVault(ownerScript, vaultFee),
       vaultFee,
     );
   }
@@ -384,6 +384,10 @@ export class JellyfishService {
 
   private call<T>(call: () => Promise<T>): Promise<T> {
     return this.queue.handle(() => call());
+  }
+
+  private vaultFee(): BigNumber {
+    return new BigNumber(JellyfishService.getNetwork() === TestNet ? 1 : 2);
   }
 
   static getNetwork(): Network {

@@ -101,8 +101,8 @@ export class RawTxUtil {
 
   // --- VAULT VOUTS --- //
 
-  static createVoutCreateVault(owner: Script): Vout {
-    return RawTxUtil.createDefiTxVout(DefiTxHelper.createVault(owner), new BigNumber(Config.vault.fee));
+  static createVoutCreateVault(owner: Script, vaultFee: BigNumber): Vout {
+    return RawTxUtil.createDefiTxVout(DefiTxHelper.createVault(owner), vaultFee);
   }
 
   static createVoutDepositToVault(vault: string, from: Script, token: number, amount: BigNumber): Vout {

@@ -45,8 +45,6 @@ param liquidityAddress string
 param liquidityWalletName string
 param liquidityAccountIndex string
 
-param vaultFee string
-
 // --- VARIABLES --- //
 var compName = 'lock'
 var apiName = 'api'
@@ -364,10 +362,6 @@ resource apiAppService 'Microsoft.Web/sites@2018-11-01' = if (env != 'loc') {
         {
           name: 'LIQUIDITY_ACCOUNT_INDEX'
           value: liquidityAccountIndex
-        }
-        {
-          name: 'VAULT_FEE'
-          value: vaultFee
         }
       ]
     }

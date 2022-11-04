@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import BigNumber from 'bignumber.js';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
+import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
 import { VaultService } from 'src/subdomains/yield-machine/application/services/vault.service';
 import { Vault } from 'src/subdomains/yield-machine/domain/entities/vault.entity';
 import { TransactionCommand } from '../../domain/enums';
@@ -16,10 +17,9 @@ import {
   TakeLoanParameters,
   WithdrawFromVaultParameters,
 } from '../dto/transaction.input.dto';
-import { TransactionExecutionService } from './transaction-execution.service';
 
 @Injectable()
-export class TransactionCreationService {
+export class YieldMachineService {
   private client: WhaleClient;
   constructor(
     private readonly transactionExecutionService: TransactionExecutionService,

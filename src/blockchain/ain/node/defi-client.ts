@@ -28,7 +28,7 @@ export class DeFiClient extends NodeClient {
 
   // UTXO
   get utxoFee(): number {
-    return this.chain === 'mainnet' ? 0.00000132 : 0.00000192;
+    return this.chain === 'testnet' ? 0.00000192 : 0.00000132;
   }
 
   async sendUtxo(addressFrom: string, addressTo: string, amount: number): Promise<string> {
