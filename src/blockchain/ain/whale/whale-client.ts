@@ -1,5 +1,6 @@
 import { ApiPagedResponse, WhaleApiClient } from '@defichain/whale-api-client';
 import { AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
+import { TokenData } from '@defichain/whale-api-client/dist/api/tokens';
 import { Transaction, TransactionVin } from '@defichain/whale-api-client/dist/api/transactions';
 import BigNumber from 'bignumber.js';
 import { GetConfig } from 'src/config/config';
@@ -26,6 +27,10 @@ export class WhaleClient {
 
   async getAllUnspent(address: string): Promise<AddressUnspent[]> {
     return await this.getAll(() => this.client.address.listTransactionUnspent(address, 200));
+  }
+
+  async getAllTokens(): Promise<TokenData[]> {
+    return await this.getAll(() => this.client.tokens.list(200));
   }
 
   async sendRaw(hex: string): Promise<string> {

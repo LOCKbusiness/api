@@ -206,5 +206,38 @@
       "form": []
     },
     "tests": []
+  },
+  {
+    "_id": "05c1d66c-94d7-4a4a-9802-fd4d1db4ac47",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "471a4574-a59a-48ec-8397-8643551fcf44",
+    "name": "create tx",
+    "url": "{{url}}/v1/yield-machine/transaction",
+    "method": "POST",
+    "sortNum": 170000,
+    "created": "2022-11-04T11:38:16.712Z",
+    "modified": "2022-11-04T11:49:15.086Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"command\": \"COMPOSITE_SWAP\",\n  \"parameters\": {\n    \"address\": \"tf1qyva5z5e7s5pzr0yhc3kk9ksn70lhhx6yxyuv2e\",\n    \"fromToken\": \"GOOGL\",\n    \"amount\": 0.06,\n    \"toToken\": \"DUSD\"\n  }\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "b2951fce-211b-47ae-829a-635644890b47",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "07615eb4-0086-4fbb-a851-801bd706c8ff",
+    "name": "Get",
+    "url": "{{url}}/v1/user",
+    "method": "GET",
+    "sortNum": 180000,
+    "created": "2022-11-04T16:58:28.700Z",
+    "modified": "2022-11-04T16:58:58.922Z",
+    "headers": [],
+    "params": [],
+    "tests": []
   }
 ]

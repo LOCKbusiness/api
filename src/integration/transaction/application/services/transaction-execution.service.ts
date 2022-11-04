@@ -9,13 +9,22 @@ import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { Config } from 'src/config/config';
 import {
   CreateMasternodeData,
-  MasternodeBaseData,
+  CreateVaultData,
+  WalletBaseData,
   MergeData,
   ResignMasternodeData,
+  SendTokenData,
   SendFromLiqData,
   SendFromLiqToCustomerData,
   SendToLiqData,
   SplitData,
+  DepositToVaultData,
+  WithdrawFromVaultData,
+  TakeLoanData,
+  PaybackLoanData,
+  AddPoolLiquidityData,
+  RemovePoolLiquidityData,
+  CompositeSwapData,
 } from '../types/creation-data';
 import { TransactionService } from './transaction.service';
 import { WIF } from '@defichain/jellyfish-crypto';
@@ -81,7 +90,77 @@ export class TransactionExecutionService {
     return this.signAndBroadcast(rawTx);
   }
 
-  private createPayloadFor(data: MasternodeBaseData): any {
+  async sendToken(data: SendTokenData): Promise<string> {
+    const rawTx = await this.jellyfishService.rawTxForSendAccount(
+      data.from,
+      data.to,
+      data.balance.token,
+      data.balance.amount,
+    );
+    console.info(`Send account tx ${rawTx.id}`);
+    return this.signAndBroadcast(rawTx);
+  }
+
+  async createVault(data: CreateVaultData): Promise<string> {
+    const rawTx = await this.jellyfishService.rawTxForCreateVault(data.owner);
+    console.info(`Create vault tx ${rawTx.id}`);
+    return this.signAndBroadcast(rawTx, this.createPayloadFor(data));
+  }
+
+  async depositToVault(data: DepositToVaultData): Promise<string> {
+    const rawTx = await this.jellyfishService.rawTxForDepositToVault(data.from, data.vault, data.token, data.amount);
+    console.info(`Deposit to vault tx ${rawTx.id}`);
+    return this.signAndBroadcast(rawTx, this.createPayloadFor(data));
+  }
+
+  async withdrawFromVault(data: WithdrawFromVaultData): Promise<string> {
+    const rawTx = await this.jellyfishService.rawTxForWithdrawFromVault(data.to, data.vault, data.token, data.amount);
+    console.info(`Withdraw from vault tx ${rawTx.id}`);
+    return this.signAndBroadcast(rawTx, this.createPayloadFor(data));
+  }
+
+  async takeLoan(data: TakeLoanData): Promise<string> {
+    const rawTx = await this.jellyfishService.rawTxForTakeLoan(data.to, data.vault, data.token, data.amount);
+    console.info(`Take loan tx ${rawTx.id}`);
+    return this.signAndBroadcast(rawTx, this.createPayloadFor(data));
+  }
+
+  async paybackLoan(data: PaybackLoanData): Promise<string> {
+    const rawTx = await this.jellyfishService.rawTxForPaybackLoan(data.from, data.vault, data.token, data.amount);
+    console.info(`Payback loan tx ${rawTx.id}`);
+    return this.signAndBroadcast(rawTx, this.createPayloadFor(data));
+  }
+
+  async addPoolLiquidity(data: AddPoolLiquidityData): Promise<string> {
+    const rawTx = await this.jellyfishService.rawTxForAddPoolLiquidity(
+      data.from,
+      data.partA.token,
+      data.partA.amount,
+      data.partB.token,
+      data.partB.amount,
+    );
+    console.info(`Add pool liquidity tx ${rawTx.id}`);
+    return this.signAndBroadcast(rawTx, this.createPayloadFor(data));
+  }
+
+  async removePoolLiquidity(data: RemovePoolLiquidityData): Promise<string> {
+    const rawTx = await this.jellyfishService.rawTxForRemovePoolLiquidity(data.from, data.token, data.amount);
+    console.info(`Remove pool liquidity tx ${rawTx.id}`);
+    return this.signAndBroadcast(rawTx, this.createPayloadFor(data));
+  }
+
+  async compositeSwap(data: CompositeSwapData): Promise<string> {
+    const rawTx = await this.jellyfishService.rawTxForCompositeSwap(
+      data.source.from,
+      data.source.token,
+      data.source.amount,
+      data.destination.token,
+    );
+    console.info(`Composite swap tx ${rawTx.id}`);
+    return this.signAndBroadcast(rawTx, this.createPayloadFor(data));
+  }
+
+  private createPayloadFor(data: WalletBaseData): any {
     return {
       ownerWallet: data.ownerWallet,
       accountIndex: data.accountIndex,

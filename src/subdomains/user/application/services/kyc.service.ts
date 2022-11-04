@@ -83,7 +83,7 @@ export class KycService {
       mail: user.mail,
       language: user.language,
       kycStatus: user.kycStatus,
-      kycLink: `${Config.kyc.frontendUrl}?code=${user.kycHash}`,
+      kycLink: Config.kyc.frontendUrl(user.kycHash),
     };
   }
 }

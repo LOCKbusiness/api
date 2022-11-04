@@ -30,7 +30,7 @@ export class LiquidityManagementService {
   constructor(
     private readonly masternodeService: MasternodeService,
     private readonly withdrawalService: StakingWithdrawalService,
-    private readonly transactionCreationService: TransactionExecutionService,
+    private readonly transactionExecutionService: TransactionExecutionService,
     private readonly utxoProviderService: UtxoProviderService,
     whaleService: WhaleService,
   ) {
@@ -235,12 +235,12 @@ export class LiquidityManagementService {
 
     const utxoStatistics = await this.utxoProviderService.getStatistics(Config.staking.liquidity.address);
     if (utxoStatistics.quantity < Config.utxo.amount.min && utxoStatistics.biggest.gte(Config.utxo.minSplitValue)) {
-      await this.transactionCreationService.splitBiggestUtxo({
+      await this.transactionExecutionService.splitBiggestUtxo({
         address: Config.staking.liquidity.address,
         split: Config.utxo.split,
       });
     } else if (utxoStatistics.quantity > Config.utxo.amount.max) {
-      await this.transactionCreationService.mergeSmallestUtxos({
+      await this.transactionExecutionService.mergeSmallestUtxos({
         address: Config.staking.liquidity.address,
         merge: Config.utxo.merge,
       });
@@ -256,7 +256,7 @@ export class LiquidityManagementService {
       case MasternodeState.IDLE:
         return {
           txFunc: (masternode: Masternode) => {
-            return this.transactionCreationService.sendFromLiq({
+            return this.transactionExecutionService.sendFromLiq({
               to: masternode.owner,
               amount: new BigNumber(
                 Config.masternode.collateral + Config.masternode.fee + Config.masternode.creationFee,
@@ -280,7 +280,7 @@ export class LiquidityManagementService {
       case MasternodeState.ENABLING:
         return {
           txFunc: (masternode: Masternode) => {
-            return this.transactionCreationService.createMasternode({
+            return this.transactionExecutionService.createMasternode({
               masternode,
               ownerWallet: masternode.ownerWallet,
               accountIndex: masternode.accountIndex,
@@ -304,7 +304,7 @@ export class LiquidityManagementService {
       case MasternodeState.ENABLED:
         return {
           txFunc: (masternode: Masternode) => {
-            return this.transactionCreationService.sendFromLiq({
+            return this.transactionExecutionService.sendFromLiq({
               to: masternode.owner,
               amount: new BigNumber(Config.masternode.resignFee),
               ownerWallet: Config.staking.liquidity.wallet,
@@ -320,7 +320,7 @@ export class LiquidityManagementService {
       case MasternodeState.RESIGNING:
         return {
           txFunc: (masternode: Masternode) => {
-            return this.transactionCreationService.resignMasternode({
+            return this.transactionExecutionService.resignMasternode({
               masternode,
               ownerWallet: masternode.ownerWallet,
               accountIndex: masternode.accountIndex,
@@ -334,7 +334,7 @@ export class LiquidityManagementService {
       case MasternodeState.PRE_RESIGNED:
         return {
           txFunc: (masternode: Masternode) => {
-            return this.transactionCreationService.sendToLiq({
+            return this.transactionExecutionService.sendToLiq({
               from: masternode.owner,
               amount: new BigNumber(Config.masternode.collateral),
               ownerWallet: masternode.ownerWallet,
