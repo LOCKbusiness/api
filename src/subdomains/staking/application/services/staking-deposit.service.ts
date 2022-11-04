@@ -121,8 +121,7 @@ export class StakingDepositService {
         await this.repository.save(staking);
         await this.payInService.acknowledgePayIn(payIn, PayInPurpose.CRYPTO_STAKING);
       } catch (e) {
-        const message = `Failed to process deposit input: ${payIn.id}. Error:`;
-        console.error(message, e);
+        console.error(`Failed to process deposit input ${payIn.id}:`, e);
       }
     }
   }
@@ -167,10 +166,14 @@ export class StakingDepositService {
     const deposits = staking.getPendingDeposits();
 
     for (const deposit of deposits) {
-      const txId = await this.forwardDepositToStaking(deposit, staking.depositAddress);
-      staking.confirmDeposit(deposit.id.toString(), txId);
+      try {
+        const txId = await this.forwardDepositToStaking(deposit, staking.depositAddress);
+        staking.confirmDeposit(deposit.id.toString(), txId);
 
-      await this.repository.save(staking);
+        await this.repository.save(staking);
+      } catch (e) {
+        console.error(`Failed to forward deposit ${deposit.id}:`, e);
+      }
     }
   }
 
