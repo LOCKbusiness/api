@@ -192,7 +192,7 @@ export class Configuration {
   };
 
   vault = {
-    fee: 2,
+    fee: +(process.env.VAULT_FEE ?? '2'),
   };
 
   get addressFormat(): RegExp {
