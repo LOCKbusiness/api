@@ -3,8 +3,19 @@ import BigNumber from 'bignumber.js';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { VaultService } from 'src/subdomains/yield-machine/application/services/vault.service';
+import { Vault } from 'src/subdomains/yield-machine/domain/entities/vault.entity';
 import { TransactionCommand } from '../../domain/enums';
-import { TakeLoanInputDto } from '../dto/transaction.input.dto';
+import {
+  AddPoolLiquidityParameters,
+  CompositeSwapParameters,
+  CreateVaultParameters,
+  DepositToVaultParameters,
+  PaybackLoanParameters,
+  RemovePoolLiquidityParameters,
+  SendTokenParameters,
+  TakeLoanParameters,
+  WithdrawFromVaultParameters,
+} from '../dto/transaction.input.dto';
 import { TransactionExecutionService } from './transaction-execution.service';
 
 @Injectable()
@@ -18,31 +29,173 @@ export class TransactionCreationService {
     whaleService.getClient().subscribe((client) => (this.client = client));
   }
 
-  async create(command: TransactionCommand, parameters: any): Promise<void> {
-    if (!this.areParameters(command, parameters))
-      throw new BadRequestException(`Parameters are incomplete for ${command}`);
+  async create(command: TransactionCommand, parameters: any): Promise<string> {
+    const [parametersAreComplete, shouldRetrieveVaultInformation] = this.checkParameters(command, parameters);
+    if (!parametersAreComplete) throw new BadRequestException(`Parameters are incomplete for ${command}`);
 
-    const vault = await this.vaultService.get(parameters.address, parameters.vault);
-    if (!vault) throw new NotFoundException('Vault not found');
+    const vault =
+      'vault' in parameters
+        ? await this.vaultService.getByAddressAndVault(parameters.address, parameters.vault)
+        : await this.vaultService.getByAddress(parameters.address);
+    if (shouldRetrieveVaultInformation && !vault) throw new NotFoundException('Vault or address not found');
+
+    if ('amount' in parameters && (parameters.amount as number) <= 0)
+      throw new BadRequestException('Amount is less than or equal 0');
 
     switch (command) {
+      case TransactionCommand.ACCOUNT_TO_ACCOUNT:
+        throw new BadRequestException('Not yet implemented');
+        return this.sendToken(parameters as SendTokenParameters, 0); // TODO (Krysh) retrieve real token id for wanted token
+      case TransactionCommand.CREATE_VAULT:
+        return this.createVault(parameters as CreateVaultParameters, vault.wallet, vault.accountIndex);
+      case TransactionCommand.DEPOSIT_TO_VAULT:
+        return this.depositToVault(vault, parameters as DepositToVaultParameters);
+      case TransactionCommand.WITHDRAW_FROM_VAULT:
+        return this.withdrawFromVault(vault, parameters as WithdrawFromVaultParameters);
       case TransactionCommand.TAKE_LOAN:
-        const takeLoan = parameters as TakeLoanInputDto;
-        this.transactionExecutionService.takeLoan({
-          to: takeLoan.address,
-          vault: takeLoan.vault,
-          token: vault.blockchainPairTokenAId,
-          amount: new BigNumber(takeLoan.amount),
-          ownerWallet: vault.wallet,
-          accountIndex: vault.accountIndex,
-        });
+        return this.takeLoan(vault, parameters as TakeLoanParameters);
+      case TransactionCommand.PAYBACK_LOAN:
+        return this.paybackLoan(vault, parameters as PaybackLoanParameters);
+      case TransactionCommand.POOL_ADD_LIQUIDITY:
+        return this.addPoolLiquidity(vault, parameters as AddPoolLiquidityParameters);
+      case TransactionCommand.POOL_REMOVE_LIQUIDITY:
+        return this.removePoolLiquidity(vault, parameters as RemovePoolLiquidityParameters);
+      case TransactionCommand.COMPOSITE_SWAP:
+        throw new BadRequestException('Not yet implemented');
+        return this.compositeSwap(parameters as CompositeSwapParameters, 0, 0, vault.wallet, vault.accountIndex); // TODO (Krysh) retrieve real token id for wanted tokens
     }
   }
 
-  private areParameters(command: TransactionCommand, parameters: any): boolean {
+  private sendToken(parameters: SendTokenParameters, tokenId: number): Promise<string> {
+    return this.transactionExecutionService.sendToken({
+      from: parameters.from,
+      to: parameters.to,
+      balance: {
+        token: tokenId,
+        amount: new BigNumber(parameters.amount),
+      },
+    });
+  }
+
+  private createVault(parameters: CreateVaultParameters, ownerWallet: string, accountIndex: number): Promise<string> {
+    return this.transactionExecutionService.createVault({
+      owner: parameters.address,
+      ownerWallet,
+      accountIndex,
+    });
+  }
+
+  private depositToVault(vault: Vault, parameters: DepositToVaultParameters): Promise<string> {
+    return this.transactionExecutionService.depositToVault({
+      from: vault.address,
+      vault: vault.vault,
+      token: vault.blockchainPairTokenBId,
+      amount: new BigNumber(parameters.amount),
+      ownerWallet: vault.wallet,
+      accountIndex: vault.accountIndex,
+    });
+  }
+
+  private withdrawFromVault(vault: Vault, parameters: WithdrawFromVaultParameters): Promise<string> {
+    return this.transactionExecutionService.withdrawFromVault({
+      to: vault.address,
+      vault: vault.vault,
+      token: vault.blockchainPairTokenBId,
+      amount: new BigNumber(parameters.amount),
+      ownerWallet: vault.wallet,
+      accountIndex: vault.accountIndex,
+    });
+  }
+
+  private takeLoan(vault: Vault, parameters: TakeLoanParameters): Promise<string> {
+    return this.transactionExecutionService.takeLoan({
+      to: vault.address,
+      vault: vault.vault,
+      token: vault.blockchainPairTokenAId,
+      amount: new BigNumber(parameters.amount),
+      ownerWallet: vault.wallet,
+      accountIndex: vault.accountIndex,
+    });
+  }
+
+  private paybackLoan(vault: Vault, parameters: PaybackLoanParameters): Promise<string> {
+    return this.transactionExecutionService.paybackLoan({
+      from: parameters.address,
+      vault: parameters.vault,
+      token: vault.blockchainPairTokenAId,
+      amount: new BigNumber(parameters.amount),
+      ownerWallet: vault.wallet,
+      accountIndex: vault.accountIndex,
+    });
+  }
+
+  private addPoolLiquidity(vault: Vault, parameters: AddPoolLiquidityParameters): Promise<string> {
+    return this.transactionExecutionService.addPoolLiquidity({
+      from: vault.address,
+      partA: {
+        token: vault.blockchainPairTokenAId,
+        amount: new BigNumber(parameters.partAAmount),
+      },
+      partB: {
+        token: vault.blockchainPairTokenBId,
+        amount: new BigNumber(parameters.partBAmount),
+      },
+      ownerWallet: vault.wallet,
+      accountIndex: vault.accountIndex,
+    });
+  }
+
+  private removePoolLiquidity(vault: Vault, parameters: RemovePoolLiquidityParameters): Promise<string> {
+    return this.transactionExecutionService.removePoolLiquidity({
+      from: vault.address,
+      token: vault.blockchainPairId,
+      amount: new BigNumber(parameters.amount),
+      ownerWallet: vault.wallet,
+      accountIndex: vault.accountIndex,
+    });
+  }
+
+  private compositeSwap(
+    parameters: CompositeSwapParameters,
+    fromTokenId: number,
+    toTokenId: number,
+    ownerWallet: string,
+    accountIndex: number,
+  ): Promise<string> {
+    return this.transactionExecutionService.compositeSwap({
+      source: {
+        from: parameters.address,
+        token: fromTokenId,
+        amount: new BigNumber(parameters.amount),
+      },
+      destination: {
+        token: toTokenId,
+      },
+      ownerWallet,
+      accountIndex,
+    });
+  }
+
+  private checkParameters(command: TransactionCommand, parameters: any): [boolean, boolean] {
     switch (command) {
+      case TransactionCommand.ACCOUNT_TO_ACCOUNT:
+        return [this.isParameterComplete(parameters, ['from', 'to', 'token', 'amount']), false];
+      case TransactionCommand.CREATE_VAULT:
+        return [this.isParameterComplete(parameters, ['address']), true];
+      case TransactionCommand.DEPOSIT_TO_VAULT:
+        return [this.isParameterComplete(parameters, ['address', 'vault', 'amount']), true];
+      case TransactionCommand.WITHDRAW_FROM_VAULT:
+        return [this.isParameterComplete(parameters, ['address', 'vault', 'amount']), true];
       case TransactionCommand.TAKE_LOAN:
-        return this.isParameterComplete(parameters, ['address', 'vault', 'amount']);
+        return [this.isParameterComplete(parameters, ['address', 'vault', 'amount']), true];
+      case TransactionCommand.PAYBACK_LOAN:
+        return [this.isParameterComplete(parameters, ['address', 'vault', 'amount']), true];
+      case TransactionCommand.POOL_ADD_LIQUIDITY:
+        return [this.isParameterComplete(parameters, ['address', 'partAAmount', 'partBAmount']), true];
+      case TransactionCommand.POOL_REMOVE_LIQUIDITY:
+        return [this.isParameterComplete(parameters, ['address', 'amount']), true];
+      case TransactionCommand.COMPOSITE_SWAP:
+        return [this.isParameterComplete(parameters, ['address', 'fromToken', 'amount', 'toToken']), true];
     }
   }
 

@@ -1,4 +1,3 @@
-import BigNumber from 'bignumber.js';
 import { IsEnum, IsNotEmpty, IsNotEmptyObject, IsObject } from 'class-validator';
 import { TransactionCommand } from '../../domain/enums';
 
@@ -29,12 +28,10 @@ export interface VaultParameters {
 }
 
 export interface DepositToVaultParameters extends VaultParameters {
-  token: string;
   amount: number;
 }
 
 export interface WithdrawFromVaultParameters extends VaultParameters {
-  token: string;
   amount: number;
 }
 
@@ -46,20 +43,14 @@ export interface PaybackLoanParameters extends VaultParameters {
   amount: number;
 }
 
-export interface TokenBalanceParameters {
-  token: string;
-  amount: number;
-}
-
 export interface AddPoolLiquidityParameters {
   address: string;
-  partA: TokenBalanceParameters;
-  partB: TokenBalanceParameters;
+  partAAmount: number;
+  partBAmount: number;
 }
 
 export interface RemovePoolLiquidityParameters {
   address: string;
-  poolPair: string;
   amount: number;
 }
 

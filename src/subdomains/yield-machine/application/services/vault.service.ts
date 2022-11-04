@@ -6,7 +6,11 @@ import { VaultRepository } from '../repositories/vault.repository';
 export class VaultService {
   constructor(private readonly repository: VaultRepository) {}
 
-  async get(address: string, vault: string): Promise<Vault> {
+  async getByAddress(address: string): Promise<Vault> {
+    return this.repository.findOne({ where: { address } });
+  }
+
+  async getByAddressAndVault(address: string, vault: string): Promise<Vault> {
     return this.repository.findOne({ where: { address, vault } });
   }
 }

@@ -206,5 +206,24 @@
       "form": []
     },
     "tests": []
+  },
+  {
+    "_id": "5ed35ea9-1ef4-4f1f-ba88-eed756bc1fb3",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "731f1cc7-0880-423b-9bd4-6c9fa8edb82c",
+    "name": "create",
+    "url": "{{url}}/v1/transaction",
+    "method": "POST",
+    "sortNum": 50000,
+    "created": "2022-11-03T21:06:41.070Z",
+    "modified": "2022-11-04T10:28:16.804Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"command\": \"COMPOSITE_SWAP\",\n  \"parameters\": {\n    \"address\": \"tf1qyva5z5e7s5pzr0yhc3kk9ksn70lhhx6yxyuv2e\",\n    \"fromToken\": \"GOOGL\",\n    \"amount\": 0.06,\n    \"toToken\": \"DUSD\"\n  }\n}",
+      "form": []
+    },
+    "tests": []
   }
 ]

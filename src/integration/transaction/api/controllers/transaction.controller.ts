@@ -23,7 +23,7 @@ export class TransactionController {
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
-  createTransaction(@Body() dto: TransactionInputDto): Promise<void> {
+  createTransaction(@Body() dto: TransactionInputDto): Promise<string> {
     return this.transactionCreationService.create(dto.command, dto.parameters);
   }
 
