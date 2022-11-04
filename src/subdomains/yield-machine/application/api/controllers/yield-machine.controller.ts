@@ -6,7 +6,7 @@ import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { TransactionInputDto } from '../../dto/transaction.input.dto';
 import { YieldMachineService } from '../../services/yield-machine.service';
 
-@ApiTags('YieldMachine')
+@ApiTags('Yield Machine')
 @Controller('yield-machine')
 export class YieldMachineController {
   constructor(private readonly yieldMachineService: YieldMachineService) {}

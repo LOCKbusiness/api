@@ -16,7 +16,7 @@ import {
   SendTokenParameters,
   TakeLoanParameters,
   WithdrawFromVaultParameters,
-} from '../dto/transaction.input.dto';
+} from '../dto/transaction-parameters.dto';
 
 @Injectable()
 export class YieldMachineService {
@@ -30,17 +30,13 @@ export class YieldMachineService {
   }
 
   async create(command: TransactionCommand, parameters: any): Promise<string> {
-    const [parametersAreComplete, shouldRetrieveVaultInformation] = this.checkParameters(command, parameters);
-    if (!parametersAreComplete) throw new BadRequestException(`Parameters are incomplete for ${command}`);
+    const shouldRetrieveVaultInformation = this.shouldRetrieveVaultInfo(command);
 
     const vault =
       'vault' in parameters
         ? await this.vaultService.getByAddressAndVault(parameters.address, parameters.vault)
         : await this.vaultService.getByAddress(parameters.address);
     if (shouldRetrieveVaultInformation && !vault) throw new NotFoundException('Vault or address not found');
-
-    if ('amount' in parameters && (parameters.amount as number) <= 0)
-      throw new BadRequestException('Amount is less than or equal 0');
 
     switch (command) {
       case TransactionCommand.ACCOUNT_TO_ACCOUNT:
@@ -176,30 +172,7 @@ export class YieldMachineService {
     });
   }
 
-  private checkParameters(command: TransactionCommand, parameters: any): [boolean, boolean] {
-    switch (command) {
-      case TransactionCommand.ACCOUNT_TO_ACCOUNT:
-        return [this.isParameterComplete(parameters, ['from', 'to', 'token', 'amount']), false];
-      case TransactionCommand.CREATE_VAULT:
-        return [this.isParameterComplete(parameters, ['address']), true];
-      case TransactionCommand.DEPOSIT_TO_VAULT:
-        return [this.isParameterComplete(parameters, ['address', 'vault', 'amount']), true];
-      case TransactionCommand.WITHDRAW_FROM_VAULT:
-        return [this.isParameterComplete(parameters, ['address', 'vault', 'amount']), true];
-      case TransactionCommand.TAKE_LOAN:
-        return [this.isParameterComplete(parameters, ['address', 'vault', 'amount']), true];
-      case TransactionCommand.PAYBACK_LOAN:
-        return [this.isParameterComplete(parameters, ['address', 'vault', 'amount']), true];
-      case TransactionCommand.POOL_ADD_LIQUIDITY:
-        return [this.isParameterComplete(parameters, ['address', 'partAAmount', 'partBAmount']), true];
-      case TransactionCommand.POOL_REMOVE_LIQUIDITY:
-        return [this.isParameterComplete(parameters, ['address', 'amount']), true];
-      case TransactionCommand.COMPOSITE_SWAP:
-        return [this.isParameterComplete(parameters, ['address', 'fromToken', 'amount', 'toToken']), true];
-    }
-  }
-
-  private isParameterComplete(parameters: any, neededParameters: string[]): boolean {
-    return neededParameters.every((p) => p in parameters);
+  private shouldRetrieveVaultInfo(command: TransactionCommand): boolean {
+    return TransactionCommand.ACCOUNT_TO_ACCOUNT !== command;
   }
 }

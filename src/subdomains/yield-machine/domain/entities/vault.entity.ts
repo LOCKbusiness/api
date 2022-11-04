@@ -6,7 +6,7 @@ export class Vault extends IEntity {
   @Column({ nullable: false })
   wallet: string;
 
-  @Column({ nullable: false })
+  @Column({ type: 'integer', nullable: false })
   accountIndex: number;
 
   @Column({ nullable: false })
@@ -15,18 +15,18 @@ export class Vault extends IEntity {
   @Column({ nullable: false })
   vault: string;
 
-  @Column({ nullable: false })
+  @Column({ type: 'integer', nullable: false })
   blockchainPairId: number;
 
-  @Column({ nullable: false })
+  @Column({ type: 'integer', nullable: false })
   blockchainPairTokenAId: number;
 
-  @Column({ nullable: false })
+  @Column({ type: 'integer', nullable: false })
   blockchainPairTokenBId: number;
 
-  @Column({ nullable: false })
+  @Column({ type: 'integer', nullable: false })
   minCollateralRatio: number;
 
-  @Column({ nullable: false })
+  @Column({ type: 'integer', nullable: false })
   maxCollateralRatio: number;
 }
