@@ -232,7 +232,7 @@ export class JellyfishService {
     const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
     const [toScript] = RawTxUtil.parseAddress(to);
 
-    const utxo = await this.utxoProvider.provideNumber(from, 1, UtxoSizePriority.BIG);
+    const utxo = await this.utxoProvider.provideForDefiTx(from);
 
     const vins = RawTxUtil.createVins(utxo.prevouts);
     const vouts = [
@@ -340,7 +340,7 @@ export class JellyfishService {
     fromPubKeyHash: string,
     utxo: UtxoInformation,
     vout: Vout,
-    additionalValue = new BigNumber(0),
+    operationFee = new BigNumber(0),
   ): Promise<RawTxDto> {
     const vins = RawTxUtil.createVins(utxo.prevouts);
     const vouts = [vout, RawTxUtil.createVoutReturn(fromScript, utxo.total)];
@@ -348,7 +348,7 @@ export class JellyfishService {
     const witness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(fromPubKeyHash)]);
     const witnesses = new Array(vins.length).fill(witness);
 
-    return this.createTxAndCalcFee(utxo, vins, vouts, witnesses, additionalValue);
+    return this.createTxAndCalcFee(utxo, vins, vouts, witnesses, operationFee);
   }
 
   private createTxAndCalcFee(
@@ -356,12 +356,12 @@ export class JellyfishService {
     vins: Vin[],
     vouts: Vout[],
     witnesses: Witness[],
-    additionalValue = new BigNumber(0),
+    operationFee = new BigNumber(0),
   ): RawTxDto {
     const tx = RawTxUtil.createTxSegWit(vins, vouts, witnesses);
     const fee = calculateFeeP2WPKH(new BigNumber(Config.blockchain.minFeeRate), tx);
     const lastElement = vouts[vouts.length - 1];
-    lastElement.value = lastElement.value.minus(fee).minus(additionalValue);
+    lastElement.value = lastElement.value.minus(fee).minus(operationFee);
 
     const txObj = new CTransactionSegWit(tx);
     return {
