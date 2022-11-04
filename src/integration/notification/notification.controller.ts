@@ -6,7 +6,7 @@ import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { MailRequest } from './interfaces';
 import { NotificationService } from './services/notification.service';
 
-@ApiTags('notification')
+@ApiTags('Notification')
 @Controller('notification')
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
