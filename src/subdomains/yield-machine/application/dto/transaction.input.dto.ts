@@ -18,6 +18,7 @@ export class TransactionInputDto {
   @IsEnum(TransactionCommand)
   command: TransactionCommand;
 
+  @IsNotEmpty()
   @ValidateNested()
   @Type(({ object }) => {
     switch ((object as TransactionInputDto).command) {
