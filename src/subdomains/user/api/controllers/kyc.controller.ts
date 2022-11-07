@@ -12,7 +12,7 @@ import { JwtPayload } from 'src/shared/auth/jwt-payload.interface';
 import { KycService } from '../../application/services/kyc.service';
 import { KycDto } from '../../application/dto/kyc.dto';
 import { UserService } from '../../application/services/user.service';
-import { KycResult } from '../../domain/enums';
+import { KycResult, KycStatus } from '../../domain/enums';
 import { NotificationService } from 'src/integration/notification/services/notification.service';
 import { MailType } from 'src/integration/notification/enums';
 
@@ -57,6 +57,16 @@ export class KycController {
         const user = await this.userService.getUserByKycId(dto.id);
         if (!user) throw new NotFoundException('User not found');
 
+        if (user.kycStatus == KycStatus.LIGHT) {
+          if (user.mail) {
+            await this.notificationService.sendMail({
+              type: MailType.USER,
+              input: { translationKey: 'mail.kyc.success', translationParams: { name: user.firstName }, user },
+            });
+          } else {
+            console.error(`Failed to send KYC completion mail for user data ${user.id}: user has no email`);
+          }
+        }
         this.userService.updateUser(user.id, dto.data);
         break;
       case KycResult.FAILED:

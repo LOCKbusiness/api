@@ -65,7 +65,7 @@ export class Configuration {
         },
       },
     },
-    defaultMailTemplate: 'personal',
+    defaultMailTemplate: 'default',
     contact: {
       supportMail: process.env.SUPPORT_MAIL || 'admin@lock.space',
       monitoringMail: process.env.MONITORING_MAIL || 'admin@admin.swiss',
