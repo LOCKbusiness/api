@@ -12,7 +12,7 @@ export class Vault extends IEntity {
   @Column({ nullable: false })
   address: string;
 
-  @Column({ nullable: false })
+  @Column({ nullable: true })
   vault: string;
 
   @Column({ type: 'integer', nullable: false })
