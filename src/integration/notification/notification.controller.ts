@@ -14,7 +14,10 @@ export class NotificationController {
   @Post('send-mail')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
+  @UseGuards(
+    AuthGuard(),
+    new RoleGuard([WalletRole.ADMIN, WalletRole.TRANSACTION_CHECKER, WalletRole.TRANSACTION_SIGNER]),
+  )
   async sendMail(@Body() dto: MailRequest): Promise<void> {
     return this.notificationService.sendMail(dto);
   }
