@@ -166,6 +166,14 @@ export class Configuration {
     aprPeriod: 28, // days
   };
 
+  yieldMachine = {
+    liquidity: {
+      address: process.env.YIELD_MACHINE_LIQUIDITY_ADDRESS,
+      wallet: process.env.YIELD_MACHINE_LIQUIDITY_WALLET_NAME,
+      account: process.env.YIELD_MACHINE_LIQUIDITY_ACCOUNT_INDEX,
+    },
+  };
+
   utxo = {
     maxInputs: 300, // quantity of UTXOs
     minOperateValue: 100, // DFI
