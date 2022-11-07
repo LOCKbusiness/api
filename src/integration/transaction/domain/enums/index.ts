@@ -1,25 +1,25 @@
 export enum TransactionType {
   // staking
-  CREATE_MASTERNODE = 'CREATE_MASTERNODE',
-  RESIGN_MASTERNODE = 'RESIGN_MASTERNODE',
-  SEND_FROM_LIQ = 'SEND_FROM_LIQ',
-  SEND_TO_LIQ = 'SEND_TO_LIQ',
-  WITHDRAWAL = 'WITHDRAWAL',
+  CREATE_MASTERNODE = 'CreateMasternode',
+  RESIGN_MASTERNODE = 'ResignMasternode',
+  SEND_FROM_LIQ = 'SendFromLiq',
+  SEND_TO_LIQ = 'SendToLiq',
+  WITHDRAWAL = 'Withdrawal',
 
   // utxo management
-  UTXO_MERGE = 'UTXO_MERGE',
-  UTXO_SPLIT = 'UTXO_SPLIT',
+  UTXO_MERGE = 'UtxoMerge',
+  UTXO_SPLIT = 'UtxoSplit',
 
   // yield machine
-  CREATE_VAULT = 'CREATE_VAULT',
-  DEPOSIT_TO_VAULT = 'DEPOSIT_TO_VAULT',
-  TAKE_LOAN = 'TAKE_LOAN',
-  POOL_ADD_LIQUIDITY = 'POOL_ADD_LIQUIDITY',
-  PAYBACK_LOAN = 'PAYBACK_LOAN',
-  WITHDRAW_FROM_VAULT = 'WITHDRAW_FROM_VAULT',
-  POOL_REMOVE_LIQUIDITY = 'POOL_REMOVE_LIQUIDITY',
+  CREATE_VAULT = 'CreateVault',
+  DEPOSIT_TO_VAULT = 'DepositToVault',
+  TAKE_LOAN = 'TakeLoan',
+  POOL_ADD_LIQUIDITY = 'PoolAddLiquidity',
+  PAYBACK_LOAN = 'PaybackLoan',
+  WITHDRAW_FROM_VAULT = 'WithdrawFromVault',
+  POOL_REMOVE_LIQUIDITY = 'PoolRemoveLiquidity',
 
   // general
-  ACCOUNT_TO_ACCOUNT = 'ACCOUNT_TO_ACCOUNT',
-  COMPOSITE_SWAP = 'COMPOSITE_SWAP',
+  ACCOUNT_TO_ACCOUNT = 'AccountToAccount',
+  COMPOSITE_SWAP = 'CompositeSwap',
 }
