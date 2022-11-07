@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { MasternodeOwnerDto } from '../dto/masternode-owner.dto';
 import * as LocOwners from '../repositories/owner-loc.json';
 import * as DevOwners from '../repositories/owner-dev.json';
+import * as StgOwners from '../repositories/owner-stg.json';
 import * as PrdOwners from '../repositories/owner-prd.json';
 import { Config } from 'src/config/config';
 
@@ -18,6 +19,8 @@ export class MasternodeOwnerService {
         return LocOwners as MasternodeOwnerDto[];
       case 'dev':
         return DevOwners as MasternodeOwnerDto[];
+      case 'stg':
+        return StgOwners as MasternodeOwnerDto[];
       case 'prd':
         return PrdOwners as MasternodeOwnerDto[];
     }
