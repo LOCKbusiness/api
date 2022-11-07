@@ -13,6 +13,8 @@ import { KycService } from '../../application/services/kyc.service';
 import { KycDto } from '../../application/dto/kyc.dto';
 import { UserService } from '../../application/services/user.service';
 import { KycResult } from '../../domain/enums';
+import { NotificationService } from 'src/integration/notification/services/notification.service';
+import { MailType } from 'src/integration/notification/enums';
 
 @ApiTags('KYC')
 @Controller('kyc')
@@ -21,6 +23,7 @@ export class KycController {
     private readonly walletService: WalletService,
     private readonly kycService: KycService,
     private readonly userService: UserService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   // --- KYC USER --- //
@@ -57,6 +60,8 @@ export class KycController {
         this.userService.updateUser(user.id, dto.data);
         break;
       case KycResult.FAILED:
+        // notify support
+        await this.notificationService.sendMail({ type: MailType.KYC_SUPPORT, input: { user } });
         console.error(`Received KYC failed webhook for user with KYC ID ${dto.id}`);
         break;
       default:
