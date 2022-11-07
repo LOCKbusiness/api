@@ -1,0 +1,18 @@
+version: '3.7'
+
+services:
+  testnet-node:
+    image: defi/defichain:2.11.1
+    restart: always
+    ports:
+      - '8000:8554'
+    volumes:
+      - node-data:/data
+    command: >
+      defid
+      -rpcallowip=0.0.0.0/0
+      -rpcbind=0.0.0.0
+      -rpcauth=lock-api:03d57342592d5143b91bc72e86ea839b$2636d5dc10fe98677d2450e4c95b3475237469eb5288cacf122789f125f91a76
+      -wallet=lock-api
+      -addresstype=bech32
+      -spv=0
