@@ -6,7 +6,7 @@ import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { MonitoringService } from '../application/services/monitoring.service';
 import { SystemState, SubsystemState, Metric } from '../domain/entities/system-state-snapshot.entity';
 
-@ApiTags('monitoring')
+@ApiTags('Monitoring')
 @Controller('monitoring')
 export class MonitoringController {
   constructor(private monitoringService: MonitoringService) {}

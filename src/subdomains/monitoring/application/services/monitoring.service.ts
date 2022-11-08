@@ -23,9 +23,7 @@ export class MonitoringService {
   constructor(
     private systemStateSnapshotRepo: SystemStateSnapshotRepository,
     readonly notificationService: NotificationService,
-  ) {
-    this.initState();
-  }
+  ) {}
 
   // *** PUBLIC API *** //
 
@@ -91,7 +89,7 @@ export class MonitoringService {
 
   // *** HELPER METHODS *** /
 
-  private async initState() {
+  async onModuleInit() {
     const state = await this.loadState();
     state && this.#$state.next(state);
 
