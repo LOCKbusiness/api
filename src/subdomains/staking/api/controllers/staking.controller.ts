@@ -33,8 +33,8 @@ export class StakingController {
     @Query('userAddress') userAddress: string,
     @Query('depositAddress') depositAddress: string,
   ): Promise<BalanceOutputDto[]> {
-    if (depositAddress) return this.stakingService.getDepositAddressBalance(depositAddress);
-    return this.stakingService.getUserAddressBalance(userAddress);
+    if (depositAddress) return this.stakingService.getDepositAddressBalances(depositAddress);
+    return this.stakingService.getUserAddressBalances(userAddress);
   }
 
   @Patch(':id/staking-fee')
