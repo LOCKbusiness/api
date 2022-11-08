@@ -20,6 +20,7 @@ import { WalletService } from './application/services/wallet.service';
 import { AdminController } from './api/controllers/admin.controller';
 import { BlockchainModule } from 'src/blockchain/blockchain.module';
 import { NotificationModule } from 'src/integration/notification/notification.module';
+import { StakingRepository } from '../staking/application/repositories/staking.repository';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { NotificationModule } from 'src/integration/notification/notification.mo
       RefRepository,
       WalletProviderRepository,
       WalletRepository,
+      StakingRepository,
     ]),
     SharedModule,
     BlockchainModule,

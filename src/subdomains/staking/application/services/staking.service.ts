@@ -85,16 +85,8 @@ export class StakingService {
     return this.toDtoList(stakingEntities);
   }
 
-  private toDtoList(staking: Staking[]): BalanceOutputDto[] {
-    return staking.map((b) => this.toDto(b));
-  }
-
-  private toDto(staking: Staking): BalanceOutputDto {
-    return {
-      asset: staking.asset.name,
-      balance: staking.balance,
-      blockchain: staking.asset.blockchain,
-    };
+  async getStakingsByUserId(userId: number): Promise<Staking[]> {
+    return await this.repository.find({ where: { userId }, relations: ['deposits', 'withdrawals', 'rewards'] });
   }
 
   async setStakingFee(stakingId: number, dto: SetStakingFeeDto): Promise<void> {
@@ -153,6 +145,18 @@ export class StakingService {
   }
 
   //*** HELPER METHODS ***//
+
+  private toDtoList(staking: Staking[]): BalanceOutputDto[] {
+    return staking.map((b) => this.toDto(b));
+  }
+
+  private toDto(staking: Staking): BalanceOutputDto {
+    return {
+      asset: staking.asset.name,
+      balance: staking.balance,
+      blockchain: staking.asset.blockchain,
+    };
+  }
 
   private async createStaking(userId: number, walletId: number, dto: GetOrCreateStakingQuery): Promise<Staking> {
     const depositAddress = await this.addressService.getAvailableAddress();
