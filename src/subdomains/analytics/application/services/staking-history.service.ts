@@ -8,6 +8,7 @@ import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
 import { CoinTrackingCsvHistoryDto } from '../dto/output/coin-tracking-history.dto';
 import { DepositStatus, RewardStatus, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
 import { Staking } from 'src/subdomains/staking/domain/entities/staking.entity';
+import { Asset, AssetCategory } from 'src/shared/models/asset/asset.entity';
 
 type HistoryDto<T> = T extends ExportType.COMPACT ? CompactHistoryDto : CoinTrackingCsvHistoryDto;
 
@@ -36,11 +37,15 @@ export class StakingHistoryService {
     const withdrawals = stakingEntities.reduce((prev, curr) => prev.concat(curr.withdrawals), [] as Withdrawal[]);
     const rewards = stakingEntities.reduce((prev, curr) => prev.concat(curr.rewards), [] as Reward[]);
 
-    return (
+    const transactions = (
       exportFormat === ExportType.CT
         ? this.getHistoryCT(deposits, withdrawals, rewards)
         : this.getHistoryCompact(deposits, withdrawals, rewards)
-    ) as HistoryDto<T>[];
+    ) as HistoryDto<T>[][];
+
+    return transactions
+      .reduce((prev, curr) => prev.concat(curr), [])
+      .sort((tx1, tx2) => (tx1.date.getTime() > tx2.date.getTime() ? -1 : 1)) as HistoryDto<T>[];
   }
 
   // --- HELPER METHODS --- //
@@ -50,28 +55,28 @@ export class StakingHistoryService {
       : await this.stakingService.getStakingsByDepositAddress(depositAddress);
   }
 
-  private getHistoryCT(deposits: Deposit[], withdrawals: Withdrawal[], rewards: Reward[]): CoinTrackingCsvHistoryDto[] {
+  private getHistoryCT(
+    deposits: Deposit[],
+    withdrawals: Withdrawal[],
+    rewards: Reward[],
+  ): CoinTrackingCsvHistoryDto[][] {
     const transactions: CoinTrackingCsvHistoryDto[][] = [
       this.getStakingDepositHistoryCT(deposits),
       this.getStakingWithdrawalHistoryCT(withdrawals),
       this.getStakingRewardHistoryCT(rewards),
     ];
 
-    return transactions
-      .reduce((prev, curr) => prev.concat(curr), [])
-      .sort((tx1, tx2) => (tx1.date.getTime() > tx2.date.getTime() ? -1 : 1));
+    return transactions;
   }
 
-  private getHistoryCompact(deposits: Deposit[], withdrawals: Withdrawal[], rewards: Reward[]): CompactHistoryDto[] {
+  private getHistoryCompact(deposits: Deposit[], withdrawals: Withdrawal[], rewards: Reward[]): CompactHistoryDto[][] {
     const transactions: CompactHistoryDto[][] = [
       this.getStakingDepositHistoryCompact(deposits),
       this.getStakingWithdrawalHistoryCompact(withdrawals),
       this.getStakingRewardHistoryCompact(rewards),
     ];
 
-    return transactions
-      .reduce((prev, curr) => prev.concat(curr), [])
-      .sort((tx1, tx2) => (tx1.date.getTime() > tx2.date.getTime() ? -1 : 1));
+    return transactions;
   }
 
   // --- TO DTO --- //
@@ -126,7 +131,7 @@ export class StakingHistoryService {
       .map((c) => ({
         type: 'Deposit',
         buyAmount: c.amount,
-        buyAsset: this.getAssetSymbol(c.asset.name),
+        buyAsset: this.getAssetSymbolCT(c.asset),
         sellAmount: null,
         sellAsset: null,
         fee: null,
@@ -150,7 +155,7 @@ export class StakingHistoryService {
         buyAmount: null,
         buyAsset: null,
         sellAmount: c.amount,
-        sellAsset: this.getAssetSymbol(c.asset.name),
+        sellAsset: this.getAssetSymbolCT(c.asset),
         fee: null,
         feeAsset: null,
         exchange: 'LOCK.space Staking',
@@ -170,7 +175,7 @@ export class StakingHistoryService {
       .map((c) => ({
         type: 'Staking',
         buyAmount: c.amount,
-        buyAsset: this.getAssetSymbol(c.asset.name),
+        buyAsset: this.getAssetSymbolCT(c.asset),
         sellAmount: null,
         sellAsset: null,
         fee: null,
@@ -196,12 +201,7 @@ export class StakingHistoryService {
     return [headers].concat(values).join('\n');
   }
 
-  private getAssetSymbol(assetName: string): string {
-    // TODO: use col from asset table to differentiate stocks and crypto token?
-    return assetName === 'DUSD'
-      ? 'DUSD4'
-      : ['DFI', 'BTC', 'ETH', 'BCH', 'DOGE', 'LTC', 'USDC', 'USDT'].includes(assetName)
-      ? assetName
-      : `d${assetName}`;
+  private getAssetSymbolCT(asset: Asset): string {
+    return asset.name === 'DUSD' ? 'DUSD4' : asset.category === AssetCategory.CRYPTO ? asset.name : `d${asset.name}`;
   }
 }
