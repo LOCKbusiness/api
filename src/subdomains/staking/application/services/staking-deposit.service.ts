@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Interval } from '@nestjs/schedule';
+import { Cron, CronExpression, Interval } from '@nestjs/schedule';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { Lock } from 'src/shared/lock';
@@ -76,7 +76,7 @@ export class StakingDepositService {
     }
   }
 
-  @Interval(3600000)
+  @Cron(CronExpression.EVERY_HOUR)
   async cleanUpPendingDeposits(): Promise<void> {
     try {
       const pendingDeposits = await this.depositRepository.find({
