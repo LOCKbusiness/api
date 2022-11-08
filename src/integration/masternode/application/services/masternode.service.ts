@@ -63,6 +63,22 @@ export class MasternodeService {
     }
   }
 
+  // --- MASTERNODE BLOCK CHECK --- //
+  @Cron(CronExpression.EVERY_HOUR)
+  async masternodeBlockCheck(): Promise<void> {
+    const masternodeWithoutBlocks = await this.masternodeRepo.find({ where: { firstBlockFound: IsNull() } });
+
+    for (const masternode of masternodeWithoutBlocks) {
+      try {
+        const masternodeInfo = await this.client.getMasternodeInfo(masternode.creationHash);
+        if (masternodeInfo.mintedBlocks > 0)
+          await this.masternodeRepo.update(masternode.id, { firstBlockFound: new Date() });
+      } catch (e) {
+        console.error(`Exception during masternode block check with masternode id: ${masternode.id}. Error:`, e);
+      }
+    }
+  }
+
   async getIdleMasternodes(count: number): Promise<Masternode[]> {
     const masternodes = await this.masternodeRepo.find({
       where: { state: MasternodeState.IDLE },
