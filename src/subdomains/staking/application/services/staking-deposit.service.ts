@@ -207,7 +207,7 @@ export class StakingDepositService {
     return this.deFiChainStakingService.forwardDeposit(depositAddress.address, deposit.amount);
   }
 
-  // Analyticsw
+  // Analytics
 
   async getDeposits(dateFrom: Date = new Date(0), dateTo: Date = new Date()): Promise<TransactionDto[]> {
     const deposits = await this.depositRepository.find({
