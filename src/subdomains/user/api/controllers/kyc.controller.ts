@@ -57,14 +57,14 @@ export class KycController {
         const user = await this.userService.getUserByKycId(dto.id);
         if (!user) throw new NotFoundException('User not found');
 
-        if (user.kycStatus == KycStatus.LIGHT) {
+        if (user.kycStatus == KycStatus.NA && dto.data.kycStatus == KycStatus.LIGHT) {
           if (user.mail) {
             await this.notificationService.sendMail({
               type: MailType.USER,
               input: { translationKey: 'mail.kyc.success', translationParams: { name: user.firstName }, user },
             });
           } else {
-            console.error(`Failed to send KYC completion mail for user data ${user.id}: user has no email`);
+            console.error(`Failed to send KYC completion mail for user ${user.id}: user has no email`);
           }
         }
         this.userService.updateUser(user.id, dto.data);
