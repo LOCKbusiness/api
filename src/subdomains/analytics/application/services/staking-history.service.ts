@@ -81,48 +81,42 @@ export class StakingHistoryService {
 
   // --- TO DTO --- //
   private getStakingDepositHistoryCompact(deposits: Deposit[]): CompactHistoryDto[] {
-    return deposits
-      .map((c) => ({
-        type: HistoryTransactionType.DEPOSIT,
-        inputAmount: c.amount,
-        inputAsset: c.asset.name,
-        outputAmount: null,
-        outputAsset: null,
-        txId: c.payInTxId,
-        date: c.created,
-        status: c.status,
-      }))
-      .filter((e) => e != null);
+    return deposits.map((c) => ({
+      type: HistoryTransactionType.DEPOSIT,
+      inputAmount: c.amount,
+      inputAsset: c.asset.name,
+      outputAmount: null,
+      outputAsset: null,
+      txId: c.payInTxId,
+      date: c.created,
+      status: c.status,
+    }));
   }
 
   private getStakingWithdrawalHistoryCompact(withdrawals: Withdrawal[]): CompactHistoryDto[] {
-    return withdrawals
-      .map((c) => ({
-        type: HistoryTransactionType.WITHDRAWAL,
-        inputAmount: null,
-        inputAsset: null,
-        outputAmount: c.amount,
-        outputAsset: c.asset.name,
-        txId: c.withdrawalTxId,
-        date: c.outputDate,
-        status: c.status,
-      }))
-      .filter((e) => e != null);
+    return withdrawals.map((c) => ({
+      type: HistoryTransactionType.WITHDRAWAL,
+      inputAmount: null,
+      inputAsset: null,
+      outputAmount: c.amount,
+      outputAsset: c.asset.name,
+      txId: c.withdrawalTxId,
+      date: c.outputDate,
+      status: c.status,
+    }));
   }
 
   private getStakingRewardHistoryCompact(rewards: Reward[]): CompactHistoryDto[] {
-    return rewards
-      .map((c) => ({
-        type: HistoryTransactionType.REWARD,
-        inputAmount: c.amount,
-        inputAsset: c.asset.name,
-        outputAmount: null,
-        outputAsset: null,
-        txId: c.reinvestTxId,
-        date: c.reinvestOutputDate,
-        status: c.status,
-      }))
-      .filter((e) => e != null);
+    return rewards.map((c) => ({
+      type: HistoryTransactionType.REWARD,
+      inputAmount: c.amount,
+      inputAsset: c.asset.name,
+      outputAmount: null,
+      outputAsset: null,
+      txId: c.reinvestTxId,
+      date: c.reinvestOutputDate,
+      status: c.status,
+    }));
   }
 
   private getStakingDepositHistoryCT(deposits: Deposit[]): CoinTrackingCsvHistoryDto[] {
@@ -143,8 +137,7 @@ export class StakingHistoryService {
         date: c.created,
         buyValueInEur: c.amountEur,
         sellValueInEur: null,
-      }))
-      .filter((e) => e != null);
+      }));
   }
 
   private getStakingWithdrawalHistoryCT(withdrawals: Withdrawal[]): CoinTrackingCsvHistoryDto[] {
@@ -165,8 +158,7 @@ export class StakingHistoryService {
         date: c.outputDate,
         buyValueInEur: null,
         sellValueInEur: c.amountEur,
-      }))
-      .filter((e) => e != null);
+      }));
   }
 
   private getStakingRewardHistoryCT(rewards: Reward[]): CoinTrackingCsvHistoryDto[] {
@@ -187,8 +179,7 @@ export class StakingHistoryService {
         date: c.reinvestOutputDate,
         buyValueInEur: c.amountEur,
         sellValueInEur: null,
-      }))
-      .filter((e) => e != null);
+      }));
   }
 
   private toCsv(list: any[], separator = ','): string {
