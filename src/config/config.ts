@@ -15,6 +15,7 @@ export class Configuration {
   defaultLanguage = 'en';
   defaultTelegramUrl = 'https://t.me/LOCK_Staking';
   defaultTwitterUrl = 'https://twitter.com/Lock_Space_';
+  defaultVolumeDecimal = 2;
 
   database: TypeOrmModuleOptions = {
     type: 'mssql',
@@ -65,10 +66,10 @@ export class Configuration {
         },
       },
     },
-    defaultMailTemplate: 'personal',
+    defaultMailTemplate: 'default',
     contact: {
       supportMail: process.env.SUPPORT_MAIL || 'admin@lock.space',
-      monitoringMail: process.env.MONITORING_MAIL || 'admin@admin.swiss',
+      monitoringMail: process.env.MONITORING_MAIL || 'admin@lock.space',
     },
   };
 
@@ -164,6 +165,14 @@ export class Configuration {
       account: process.env.LIQUIDITY_ACCOUNT_INDEX,
     },
     aprPeriod: 28, // days
+  };
+
+  yieldMachine = {
+    liquidity: {
+      address: process.env.YIELD_MACHINE_LIQUIDITY_ADDRESS,
+      wallet: process.env.YIELD_MACHINE_LIQUIDITY_WALLET_NAME,
+      account: process.env.YIELD_MACHINE_LIQUIDITY_ACCOUNT_INDEX,
+    },
   };
 
   utxo = {

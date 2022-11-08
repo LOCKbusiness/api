@@ -1,0 +1,36 @@
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
+import { RoleGuard } from 'src/shared/auth/role.guard';
+import { WalletRole } from 'src/shared/auth/wallet-role.enum';
+import { MonitoringService } from '../application/services/monitoring.service';
+import { SystemState, SubsystemState, Metric } from '../domain/entities/system-state-snapshot.entity';
+
+@ApiTags('Monitoring')
+@Controller('monitoring')
+export class MonitoringController {
+  constructor(private monitoringService: MonitoringService) {}
+
+  @Get('data')
+  @ApiBearerAuth()
+  @ApiExcludeEndpoint()
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
+  async getSystemState(
+    @Query('subsystem') subsystem: string,
+    @Query('metric') metric: string,
+  ): Promise<SystemState | SubsystemState | Metric> {
+    return await this.monitoringService.getState(subsystem, metric);
+  }
+
+  @Post('data')
+  @ApiBearerAuth()
+  @ApiExcludeEndpoint()
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
+  async onWebhook(
+    @Query('subsystem') subsystem: string,
+    @Query('metric') metric: string,
+    @Body() data: unknown,
+  ): Promise<void> {
+    return await this.monitoringService.onWebhook(subsystem, metric, data);
+  }
+}

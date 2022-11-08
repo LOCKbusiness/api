@@ -8,7 +8,7 @@ export interface KycSupportMailInput {
 }
 
 export interface KycSupportMailParams {
-  userDataId: number;
+  userId: number;
   kycStatus: string;
   metadata?: NotificationMetadata;
   options?: NotificationOptions;
@@ -19,8 +19,11 @@ export class KycSupportMail extends Mail {
     const _params = {
       to: GetConfig().mail.contact.supportMail,
       subject: 'KYC failed or expired',
-      salutation: 'Hi LOCK Support',
-      body: KycSupportMail.createBody(params),
+      templateParams: {
+        salutation: 'Hi LOCK Support',
+        body: KycSupportMail.createBody(params),
+        date: new Date().getFullYear(),
+      },
       metadata: params.metadata,
       options: params.options,
     };
@@ -29,14 +32,14 @@ export class KycSupportMail extends Mail {
   }
 
   static createBody(params: KycSupportMailParams): string {
-    const { userDataId, kycStatus } = params;
+    const { userId, kycStatus } = params;
 
     return `
     <p>a customer has failed or expired during progress ${kycStatus}.</p>
       <table>
           <tr>
               <td>Reference:</td>
-              <td>${userDataId}</td>
+              <td>${userId}</td>
           </tr>
       </table>
     `;

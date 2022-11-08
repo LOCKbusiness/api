@@ -4,12 +4,13 @@ import { JellyfishService } from './jellyfish/jellyfish.service';
 import { UtxoProviderService } from './jellyfish/utxo-provider.service';
 import { NodeController } from './node/node.controller';
 import { NodeService } from './node/node.service';
+import { TokenProviderService } from './whale/token-provider.service';
 import { WhaleService } from './whale/whale.service';
 
 @Module({
   imports: [SharedModule],
-  providers: [NodeService, WhaleService, JellyfishService, UtxoProviderService],
-  exports: [NodeService, WhaleService, JellyfishService, UtxoProviderService],
+  providers: [NodeService, WhaleService, JellyfishService, UtxoProviderService, TokenProviderService],
+  exports: [NodeService, WhaleService, JellyfishService, UtxoProviderService, TokenProviderService],
   controllers: [NodeController],
 })
 export class AinModule {}

@@ -19,6 +19,7 @@ import { WalletProviderService } from './application/services/wallet-provider.se
 import { WalletService } from './application/services/wallet.service';
 import { AdminController } from './api/controllers/admin.controller';
 import { BlockchainModule } from 'src/blockchain/blockchain.module';
+import { NotificationModule } from 'src/integration/notification/notification.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { BlockchainModule } from 'src/blockchain/blockchain.module';
     ]),
     SharedModule,
     BlockchainModule,
+    NotificationModule,
   ],
   controllers: [UserController, KycController, AuthController, AdminController],
   providers: [

@@ -45,6 +45,10 @@ param liquidityAddress string
 param liquidityWalletName string
 param liquidityAccountIndex string
 
+param yieldMachineLiquidityAddress string
+param yieldMachineLiquidityWalletName string
+param yieldMachineLiquidityAccountIndex string
+
 // --- VARIABLES --- //
 var compName = 'lock'
 var apiName = 'api'
@@ -362,6 +366,18 @@ resource apiAppService 'Microsoft.Web/sites@2018-11-01' = if (env != 'loc') {
         {
           name: 'LIQUIDITY_ACCOUNT_INDEX'
           value: liquidityAccountIndex
+        }
+        {
+          name: 'YIELD_MACHINE_LIQUIDITY_ADDRESS'
+          value: yieldMachineLiquidityAddress
+        }
+        {
+          name: 'YIELD_MACHINE_LIQUIDITY_WALLET_NAME'
+          value: yieldMachineLiquidityWalletName
+        }
+        {
+          name: 'YIELD_MACHINE_LIQUIDITY_ACCOUNT_INDEX'
+          value: yieldMachineLiquidityAccountIndex
         }
       ]
     }

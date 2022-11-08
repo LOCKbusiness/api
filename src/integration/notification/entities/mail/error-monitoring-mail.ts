@@ -18,8 +18,11 @@ export class ErrorMonitoringMail extends Mail {
     const _params = {
       to: to,
       subject: `${params.subject} (${GetConfig().environment.toUpperCase()})`,
-      salutation: 'Hi LOCK Tech Support',
-      body: ErrorMonitoringMail.createBody(params.errors),
+      templateParams: {
+        salutation: 'Hi LOCK Tech Support',
+        body: ErrorMonitoringMail.createBody(params.errors),
+        date: new Date().getFullYear(),
+      },
       metadata: params.metadata,
       options: params.options,
     };

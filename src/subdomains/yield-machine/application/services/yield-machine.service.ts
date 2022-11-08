@@ -1,7 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import BigNumber from 'bignumber.js';
-import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
-import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
+import { TokenProviderService } from 'src/blockchain/ain/whale/token-provider.service';
 import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
 import { VaultService } from 'src/subdomains/yield-machine/application/services/vault.service';
 import { Vault } from 'src/subdomains/yield-machine/domain/entities/vault.entity';
@@ -20,28 +19,21 @@ import {
 
 @Injectable()
 export class YieldMachineService {
-  private client: WhaleClient;
   constructor(
     private readonly transactionExecutionService: TransactionExecutionService,
     private readonly vaultService: VaultService,
-    whaleService: WhaleService,
-  ) {
-    whaleService.getClient().subscribe((client) => (this.client = client));
-  }
+    private readonly tokenProviderService: TokenProviderService,
+  ) {}
 
   async create(command: TransactionCommand, parameters: any): Promise<string> {
-    const shouldRetrieveVaultInformation = this.shouldRetrieveVaultInfo(command);
-
-    const vault =
-      'vault' in parameters
-        ? await this.vaultService.getByAddressAndVault(parameters.address, parameters.vault)
-        : await this.vaultService.getByAddress(parameters.address);
-    if (shouldRetrieveVaultInformation && !vault) throw new NotFoundException('Vault or address not found');
+    const vault = await this.retrieveVault(parameters);
+    if (!vault) throw new NotFoundException('Vault or address not found');
 
     switch (command) {
       case TransactionCommand.ACCOUNT_TO_ACCOUNT:
-        throw new BadRequestException('Not yet implemented');
-        return this.sendToken(parameters as SendTokenParameters, 0); // TODO (Krysh) retrieve real token id for wanted token
+        const sendTokenParameters = parameters as SendTokenParameters;
+        const token = await this.tokenProviderService.get(sendTokenParameters.token);
+        return this.sendToken(sendTokenParameters, +token.id, vault.wallet, vault.accountIndex);
       case TransactionCommand.CREATE_VAULT:
         return this.createVault(parameters as CreateVaultParameters, vault.wallet, vault.accountIndex);
       case TransactionCommand.DEPOSIT_TO_VAULT:
@@ -57,12 +49,25 @@ export class YieldMachineService {
       case TransactionCommand.POOL_REMOVE_LIQUIDITY:
         return this.removePoolLiquidity(vault, parameters as RemovePoolLiquidityParameters);
       case TransactionCommand.COMPOSITE_SWAP:
-        throw new BadRequestException('Not yet implemented');
-        return this.compositeSwap(parameters as CompositeSwapParameters, 0, 0, vault.wallet, vault.accountIndex); // TODO (Krysh) retrieve real token id for wanted tokens
+        const compositeSwapParameters = parameters as CompositeSwapParameters;
+        const fromToken = await this.tokenProviderService.get(compositeSwapParameters.fromToken);
+        const toToken = await this.tokenProviderService.get(compositeSwapParameters.toToken);
+        return this.compositeSwap(
+          compositeSwapParameters,
+          +fromToken.id,
+          +toToken.id,
+          vault.wallet,
+          vault.accountIndex,
+        );
     }
   }
 
-  private sendToken(parameters: SendTokenParameters, tokenId: number): Promise<string> {
+  private sendToken(
+    parameters: SendTokenParameters,
+    tokenId: number,
+    ownerWallet: string,
+    accountIndex: number,
+  ): Promise<string> {
     return this.transactionExecutionService.sendToken({
       from: parameters.from,
       to: parameters.to,
@@ -70,6 +75,8 @@ export class YieldMachineService {
         token: tokenId,
         amount: new BigNumber(parameters.amount),
       },
+      ownerWallet,
+      accountIndex,
     });
   }
 
@@ -172,7 +179,9 @@ export class YieldMachineService {
     });
   }
 
-  private shouldRetrieveVaultInfo(command: TransactionCommand): boolean {
-    return TransactionCommand.ACCOUNT_TO_ACCOUNT !== command;
+  private async retrieveVault(parameters: any): Promise<Vault> {
+    if ('vault' in parameters) return this.vaultService.getByAddressAndVault(parameters.address, parameters.vault);
+    if ('from' in parameters) return this.vaultService.getByAddress(parameters.from);
+    return this.vaultService.getByAddress(parameters.address);
   }
 }

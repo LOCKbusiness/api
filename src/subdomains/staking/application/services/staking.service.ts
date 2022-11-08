@@ -50,7 +50,7 @@ export class StakingService {
   ): Promise<StakingOutputDto> {
     await this.kycCheck.check(userId, walletId);
 
-    const { assetName, blockchain } = query;
+    const { asset: assetName, blockchain } = query;
 
     const asset = await this.assetService.getAssetByQuery({ name: assetName, blockchain });
     const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
@@ -66,23 +66,32 @@ export class StakingService {
     return StakingOutputDtoMapper.entityToDto(await this.authorize.authorize(userId, existingStaking.id));
   }
 
-  async getDepositAddressBalance(address: string): Promise<BalanceOutputDto[]> {
-    const stakingEntities = await this.repository.find({
-      where: { depositAddress: { address: address } },
-      relations: ['depositAddress'],
-    });
+  async getDepositAddressBalances(address: string): Promise<BalanceOutputDto[]> {
+    const stakingEntities = await this.getStakingsByDepositAddress(address);
     if (stakingEntities.length == 0) throw new NotFoundException('No staking for deposit address found');
     return this.toDtoList(stakingEntities);
   }
 
-  async getUserAddressBalance(address: string): Promise<BalanceOutputDto[]> {
-    const user = await this.userService.getUserByAddress(address);
-    const stakingEntities = await this.repository.find({
-      where: { userId: user.id },
-    });
+  async getUserAddressBalances(address: string): Promise<BalanceOutputDto[]> {
+    const stakingEntities = await this.getStakingsByUserAddress(address);
     if (stakingEntities.length == 0) throw new NotFoundException('No staking for user address found');
 
     return this.toDtoList(stakingEntities);
+  }
+
+  async getStakingsByUserAddress(address: string): Promise<Staking[]> {
+    const user = await this.userService.getUserByAddress(address);
+    return await this.repository.find({
+      where: { userId: user.id },
+      relations: ['rewards', 'withdrawals', 'deposits'],
+    });
+  }
+
+  async getStakingsByDepositAddress(address: string): Promise<Staking[]> {
+    return await this.repository.find({
+      where: { depositAddress: { address: address } },
+      relations: ['depositAddress', 'rewards', 'withdrawals', 'deposits'],
+    });
   }
 
   private toDtoList(staking: Staking[]): BalanceOutputDto[] {

@@ -239,5 +239,30 @@
     "headers": [],
     "params": [],
     "tests": []
+  },
+  {
+    "_id": "f2ff1ea3-8fea-4574-a444-2c6ff712961b",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "4ec0284a-321f-44e4-a413-b147e4f23d55",
+    "name": "Get",
+    "url": "{{url}}/v1/staking?asset=DFI&blockchain=DeFiChain",
+    "method": "GET",
+    "sortNum": 190000,
+    "created": "2022-11-07T20:23:44.549Z",
+    "modified": "2022-11-07T20:29:41.597Z",
+    "headers": [],
+    "params": [
+      {
+        "name": "asset",
+        "value": "DFI",
+        "isPath": false
+      },
+      {
+        "name": "blockchain",
+        "value": "DeFiChain",
+        "isPath": false
+      }
+    ],
+    "tests": []
   }
 ]
