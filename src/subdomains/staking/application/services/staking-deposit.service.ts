@@ -6,7 +6,7 @@ import { Lock } from 'src/shared/lock';
 import { Util } from 'src/shared/util';
 import { PayInService } from 'src/subdomains/payin/application/services/payin.service';
 import { PayIn, PayInPurpose } from 'src/subdomains/payin/domain/entities/payin.entity';
-import { LessThan } from 'typeorm';
+import { Between, LessThan } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { StakingBlockchainAddress } from '../../domain/entities/staking-blockchain-address.entity';
 import { Staking } from '../../domain/entities/staking.entity';
@@ -204,5 +204,22 @@ export class StakingDepositService {
 
   private async forwardDepositToStaking(deposit: Deposit, depositAddress: StakingBlockchainAddress): Promise<string> {
     return this.deFiChainStakingService.forwardDeposit(depositAddress.address, deposit.amount);
+  }
+
+  async getDeposits(
+    dateFrom: Date = new Date(0),
+    dateTo: Date = new Date(),
+  ): Promise<{ date: Date; amount: number; currency: string }[]> {
+    const deposits = await this.depositRepository.find({
+      relations: ['asset'],
+      where: { created: Between(dateFrom, dateTo), status: DepositStatus.CONFIRMED },
+    });
+
+    return deposits.map((v) => ({
+      id: v.id,
+      date: v.updated,
+      amount: v.amount,
+      currency: v.asset.name,
+    }));
   }
 }

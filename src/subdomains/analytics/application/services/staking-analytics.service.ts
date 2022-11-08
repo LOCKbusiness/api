@@ -45,4 +45,6 @@ export class StakingAnalyticsService {
       console.error('Exception during staking analytics update:', e);
     }
   }
+
+  
 }

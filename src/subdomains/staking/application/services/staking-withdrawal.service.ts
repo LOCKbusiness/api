@@ -18,6 +18,7 @@ import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wal
 import { WithdrawalRepository } from '../repositories/withdrawal.repository';
 import { WithdrawalOutputDto } from '../dto/output/withdrawal.output.dto';
 import { WithdrawalOutputDtoMapper } from '../mappers/withdrawal-output-dto.mapper';
+import { Between } from 'typeorm';
 
 @Injectable()
 export class StakingWithdrawalService {
@@ -191,5 +192,24 @@ export class StakingWithdrawalService {
 
   private async isWithdrawalComplete(withdrawal: Withdrawal): Promise<boolean> {
     return this.deFiChainService.isWithdrawalTxComplete(withdrawal.withdrawalTxId);
+  }
+
+  // Analytics
+
+  async getWithdrawals(
+    dateFrom: Date = new Date(0),
+    dateTo: Date = new Date(),
+  ): Promise<{ date: Date; amount: number; currency: string }[]> {
+    const withdrawals = await this.withdrawalRepo.find({
+      relations: ['asset'],
+      where: { created: Between(dateFrom, dateTo), status: WithdrawalStatus.CONFIRMED },
+    });
+
+    return withdrawals.map((v) => ({
+      id: v.id,
+      date: v.updated,
+      amount: v.amount,
+      currency: v.asset.name,
+    }));
   }
 }
