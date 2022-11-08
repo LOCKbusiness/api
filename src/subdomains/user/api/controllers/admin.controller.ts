@@ -1,17 +1,31 @@
-import { Controller, UseGuards, Get, Query, BadRequestException } from '@nestjs/common';
+import { Controller, UseGuards, Get, Query, BadRequestException, Post, Body } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiExcludeEndpoint } from '@nestjs/swagger';
+import { MailType } from 'src/integration/notification/enums';
+import { NotificationService } from 'src/integration/notification/services/notification.service';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { getConnection } from 'typeorm';
 import { dbQueryDto } from '../../application/dto/db-query.dto';
+import { SendMailDto } from '../../application/dto/send-mail.dto';
 
 @Controller('admin')
 export class AdminController {
-  @Get('db')
+  constructor(private readonly notificationService: NotificationService) {}
+
+  @Post('mail')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
+  async sendMail(@Body() dtoList: SendMailDto[]): Promise<void> {
+    for (const dto of dtoList) {
+      await this.notificationService.sendMail({ type: MailType.GENERIC, input: dto });
+    }
+  }
+
+  @Get('db')
+  @ApiBearerAuth()
+  @ApiExcludeEndpoint()
   async getRawData(
     @Query()
     query: dbQueryDto,
