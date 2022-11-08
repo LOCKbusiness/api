@@ -164,7 +164,7 @@ export class MasternodeService {
     const unpaidMasternodeFee = await this.masternodeRepo.count({
       where: { creationHash: Not(IsNull()), creationFeePaid: false },
     });
-    return unpaidMasternodeFee * 10;
+    return unpaidMasternodeFee * Config.masternode.fee;
   }
 
   // add masternode creationFee

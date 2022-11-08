@@ -9,7 +9,7 @@ import { MetricObserver } from '../metric.observer';
 interface NodeBalanceData {
   balance: {
     defichain: {
-      input: {
+      inp: {
         utxo: BigNumber;
         token: number;
       };
@@ -29,8 +29,8 @@ export class NodeBalanceObserver extends MetricObserver<NodeBalanceData> {
   constructor(monitoringService: MonitoringService, readonly nodeService: NodeService) {
     super(monitoringService, 'node', 'balance');
 
-    nodeService.getConnectedNode<NodeType.INPUT>(NodeType.INPUT).subscribe((client) => (this.inpClient = client));
-    nodeService.getConnectedNode<NodeType.REW>(NodeType.REW).subscribe((client) => (this.rewClient = client));
+    nodeService.getConnectedNode(NodeType.INPUT).subscribe((client) => (this.inpClient = client));
+    nodeService.getConnectedNode(NodeType.REW).subscribe((client) => (this.rewClient = client));
   }
 
   @Interval(900000)
@@ -47,7 +47,7 @@ export class NodeBalanceObserver extends MetricObserver<NodeBalanceData> {
     return {
       balance: {
         defichain: {
-          input: await this.inpClient.getNodeBalance(),
+          inp: await this.inpClient.getNodeBalance(),
           rew: await this.rewClient.getNodeBalance(),
         },
       },
