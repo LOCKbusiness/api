@@ -24,10 +24,7 @@ export class HistoryController {
   ): Promise<CompactHistoryDto[] | StreamableFile> {
     switch (type) {
       case ExportDataType.CSV:
-        const csvFile = new StreamableFile(
-          await this.historyService.getHistoryCsv(userAddress, depositAddress, ExportType.COMPACT),
-        );
-
+        const csvFile = await this.historyService.getHistoryCsv(userAddress, depositAddress, ExportType.COMPACT);
         res.set({
           'Content-Type': 'text/csv',
           'Content-Disposition': `attachment; filename="LOCK_history_${this.formatDate()}.csv"`,
@@ -46,10 +43,7 @@ export class HistoryController {
     @Query('depositAddress') depositAddress: string,
     @Response({ passthrough: true }) res,
   ): Promise<StreamableFile> {
-    const csvFile = new StreamableFile(
-      await this.historyService.getHistoryCsv(userAddress, depositAddress, ExportType.CT),
-    );
-
+    const csvFile = await this.historyService.getHistoryCsv(userAddress, depositAddress, ExportType.CT);
     res.set({
       'Content-Type': 'text/csv',
       'Content-Disposition': `attachment; filename="LOCK_CT_history_${this.formatDate()}.csv"`,

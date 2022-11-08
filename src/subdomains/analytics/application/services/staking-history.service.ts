@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, StreamableFile } from '@nestjs/common';
 import { Readable } from 'stream';
 import { StakingService } from 'src/subdomains/staking/application/services/staking.service';
 import { HistoryTransactionType, CompactHistoryDto } from '../dto/output/history.dto';
@@ -20,10 +20,10 @@ export enum ExportType {
 export class StakingHistoryService {
   constructor(private readonly stakingService: StakingService) {}
 
-  async getHistoryCsv(userAddress: string, depositAddress: string, exportType: ExportType): Promise<Readable> {
+  async getHistoryCsv(userAddress: string, depositAddress: string, exportType: ExportType): Promise<StreamableFile> {
     const tx = await this.getHistory(userAddress, depositAddress, exportType);
     if (tx.length === 0) throw new NotFoundException('No transactions found');
-    return Readable.from([this.toCsv(tx)]);
+    return new StreamableFile(Readable.from([this.toCsv(tx)]));
   }
 
   async getHistory<T extends ExportType>(
