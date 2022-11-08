@@ -15,6 +15,7 @@ export class Configuration {
   defaultLanguage = 'en';
   defaultTelegramUrl = 'https://t.me/LOCK_Staking';
   defaultTwitterUrl = 'https://twitter.com/Lock_Space_';
+  defaultVolumeDecimal = 2;
 
   database: TypeOrmModuleOptions = {
     type: 'mssql',

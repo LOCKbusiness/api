@@ -1,4 +1,5 @@
-import { AccountHistory, UTXO as SpendUTXO } from '@defichain/jellyfish-api-core/dist/category/account';
+import { BigNumber } from '@defichain/jellyfish-api-core';
+import { AccountHistory, AccountResult, UTXO as SpendUTXO } from '@defichain/jellyfish-api-core/dist/category/account';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { HttpService } from 'src/shared/services/http.service';
 import { NodeClient, NodeCommand, NodeMode } from './node-client';
@@ -24,6 +25,14 @@ export class DeFiClient extends NodeClient {
         maxBlockHeight: toBlock,
       }),
     );
+  }
+
+  async getBalance(): Promise<BigNumber> {
+    return this.callNode((c) => c.wallet.getBalance());
+  }
+
+  async getNodeBalance(): Promise<{ utxo: BigNumber; token: number }> {
+    return { utxo: await this.getBalance(), token: await this.getToken().then((t) => t.length) };
   }
 
   // UTXO
@@ -55,5 +64,10 @@ export class DeFiClient extends NodeClient {
       (c) => c.account.accountToUtxos(addressFrom, { [addressTo]: `${this.roundAmount(amount)}@DFI` }, { utxos }),
       true,
     );
+  }
+
+  // token
+  async getToken(): Promise<AccountResult<string, string>[]> {
+    return this.callNode((c) => c.account.listAccounts({}, false, { indexedAmounts: false, isMineOnly: true }));
   }
 }
