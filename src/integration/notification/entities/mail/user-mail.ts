@@ -14,6 +14,7 @@ export interface UserMailParams {
   subject: string;
   salutation: string;
   body: string;
+  date?: number;
   telegramUrl?: string;
   twitterUrl?: string;
   metadata?: NotificationMetadata;
@@ -25,6 +26,7 @@ export class UserMail extends Mail {
     const defaultParams: Partial<UserMailParams> = {
       twitterUrl: Config.defaultTwitterUrl,
       telegramUrl: Config.defaultTelegramUrl,
+      date: new Date().getFullYear(),
     };
 
     super({ ...params, template: 'default', templateParams: { ...defaultParams, ...params } });
