@@ -17,6 +17,10 @@ export class WhaleClient {
     return new WhaleApiClient(GetConfig().whale);
   }
 
+  async getBalance(address: string): Promise<string> {
+    return await this.client.address.getBalance(address);
+  }
+
   async getUTXOBalance(address: string): Promise<BigNumber> {
     return this.client.address.getBalance(address).then(BigNumber);
   }
