@@ -31,6 +31,6 @@ export class CompactHistoryDto extends HistoryBaseDto {
   @ApiProperty({ enum: HistoryTransactionType })
   type: HistoryTransactionType;
 
-  @ApiProperty()
+  @ApiProperty({ enum: { ...WithdrawalStatus, ...DepositStatus, ...RewardStatus } })
   status: WithdrawalStatus | DepositStatus | RewardStatus;
 }
