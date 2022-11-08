@@ -84,10 +84,7 @@ export class StakingDepositService {
       });
       for (const deposit of pendingDeposits) {
         const txId = await this.whaleClient.getTx(deposit.payInTxId).catch(() => null);
-        if (!txId) {
-          deposit.status = DepositStatus.FAILED;
-          await this.depositRepository.save(deposit);
-        }
+        if (!txId) await this.depositRepository.update(deposit.id, { status: DepositStatus.FAILED });
       }
     } catch (e) {
       console.error('Exception during cleanup deposit:', e);
