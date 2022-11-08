@@ -144,6 +144,11 @@ export class UtxoProviderService {
   private async checkBlockAndInvalidate(address: string) {
     const forceNew = this.unspent.get(address) === undefined;
     const currentBlockHeight = await this.whaleClient.getBlockHeight();
+    console.log(
+      `checkBlockAndInvalidate force? ${forceNew ? 'yes' : 'no'} stored block ${
+        this.blockHeight
+      } blockchain block ${currentBlockHeight}`,
+    );
     if (!forceNew && this.blockHeight === currentBlockHeight) return;
 
     this.blockHeight = currentBlockHeight;
@@ -153,6 +158,7 @@ export class UtxoProviderService {
       address,
       currentUnspent.filter((u) => !this.spent.has(UtxoProviderService.idForUnspent(u))),
     );
+    console.log(Array.from(this.unspent.get(address)).map((u) => `${u.vout.txid}:${u.vout.n} ${u.vout.value}`));
   }
 
   private static provideExactAmount(
