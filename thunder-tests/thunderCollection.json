@@ -53,6 +53,13 @@
         "containerId": "",
         "created": "2022-11-04T16:58:22.592Z",
         "sortNum": 90000
+      },
+      {
+        "_id": "4ec0284a-321f-44e4-a413-b147e4f23d55",
+        "name": "Staking",
+        "containerId": "",
+        "created": "2022-11-07T20:23:37.785Z",
+        "sortNum": 100000
       }
     ],
     "settings": {

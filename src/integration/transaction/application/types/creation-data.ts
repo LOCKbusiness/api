@@ -42,7 +42,7 @@ export interface MergeData {
   merge: number;
 }
 
-export interface SendTokenData {
+export interface SendTokenData extends WalletBaseData {
   from: string;
   to: string;
   balance: TokenBalance;

@@ -50,7 +50,7 @@ export class StakingService {
   ): Promise<StakingOutputDto> {
     await this.kycCheck.check(userId, walletId);
 
-    const { assetName, blockchain } = query;
+    const { asset: assetName, blockchain } = query;
 
     const asset = await this.assetService.getAssetByQuery({ name: assetName, blockchain });
     const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
