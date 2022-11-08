@@ -137,6 +137,7 @@ export class UtxoProviderService {
 
   // --- HELPER METHODS --- //
   private markUsed(address: string, unspent: AddressUnspent[]): AddressUnspent[] {
+    console.info(`lock ${address}: locking ${unspent.map(UtxoProviderService.idForUnspent)}`);
     const newSpent = unspent.map((u) => {
       return { unlockAt: Util.hoursAfter(1), unspent: u, address };
     });
