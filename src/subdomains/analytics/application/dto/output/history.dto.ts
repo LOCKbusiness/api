@@ -27,7 +27,7 @@ export class HistoryBaseDto {
   date: Date;
 }
 
-export class TypedHistoryDto extends HistoryBaseDto {
+export class CompactHistoryDto extends HistoryBaseDto {
   @ApiProperty({ enum: HistoryTransactionType })
   type: HistoryTransactionType;
 

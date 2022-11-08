@@ -1,9 +1,10 @@
 import { Controller, Get, StreamableFile, Response, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { TypedHistoryDto } from '../../application/dto/output/history.dto';
-import { StakingHistoryService } from '../../application/services/staking-history.service';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CoinTrackingCsvHistoryDto } from '../../application/dto/output/coin-tracking-history.dto';
+import { CompactHistoryDto } from '../../application/dto/output/history.dto';
+import { ExportType, StakingHistoryService } from '../../application/services/staking-history.service';
 
-export enum ExportType {
+export enum ExportDataType {
   CSV = 'csv',
   JSON = 'json',
 }
@@ -13,17 +14,19 @@ export enum ExportType {
 export class HistoryController {
   constructor(private readonly historyService: StakingHistoryService) {}
 
-  @Get('/raw')
-  @ApiResponse({ status: 200, type: TypedHistoryDto, isArray: true })
-  async getCsv(
+  @Get('compact')
+  @ApiResponse({ status: 200, type: CompactHistoryDto, isArray: true })
+  async getCsvCompact(
     @Query('userAddress') userAddress: string,
     @Query('depositAddress') depositAddress: string,
-    @Query('type') type: ExportType,
+    @Query('type') type: ExportDataType,
     @Response({ passthrough: true }) res,
-  ): Promise<StreamableFile | TypedHistoryDto[]> {
+  ): Promise<CompactHistoryDto[] | StreamableFile> {
     switch (type) {
-      case ExportType.CSV:
-        const csvFile = new StreamableFile(await this.historyService.getHistoryCsv(userAddress, depositAddress));
+      case ExportDataType.CSV:
+        const csvFile = new StreamableFile(
+          await this.historyService.getHistoryCsv(userAddress, depositAddress, ExportType.COMPACT),
+        );
 
         res.set({
           'Content-Type': 'text/csv',
@@ -31,11 +34,27 @@ export class HistoryController {
         });
         return csvFile;
 
-      case ExportType.JSON:
-        return userAddress
-          ? await this.historyService.getUserHistory(userAddress)
-          : await this.historyService.getDepositAddressHistory(depositAddress);
+      case ExportDataType.JSON:
+        return await this.historyService.getHistory(userAddress, depositAddress, ExportType.COMPACT);
     }
+  }
+
+  @Get('CT')
+  @ApiResponse({ status: 200, type: CoinTrackingCsvHistoryDto, isArray: true })
+  async getCsvCT(
+    @Query('userAddress') userAddress: string,
+    @Query('depositAddress') depositAddress: string,
+    @Response({ passthrough: true }) res,
+  ): Promise<StreamableFile> {
+    const csvFile = new StreamableFile(
+      await this.historyService.getHistoryCsv(userAddress, depositAddress, ExportType.CT),
+    );
+
+    res.set({
+      'Content-Type': 'text/csv',
+      'Content-Disposition': `attachment; filename="LOCK_CT_history_${this.formatDate()}.csv"`,
+    });
+    return csvFile;
   }
 
   // --- HELPER METHODS --- //
