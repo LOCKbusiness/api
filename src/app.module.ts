@@ -9,6 +9,7 @@ import { SharedModule } from './shared/shared.module';
 import { AnalyticsModule } from './subdomains/analytics/analytics.module';
 import { MonitoringModule } from './subdomains/monitoring/monitoring.module';
 import { StakingModule } from './subdomains/staking/staking.module';
+import { SupportModule } from './subdomains/support/support.module';
 import { UserModule } from './subdomains/user/user.module';
 import { YieldMachineModule } from './subdomains/yield-machine/yield-machine.module';
 
@@ -23,6 +24,7 @@ import { YieldMachineModule } from './subdomains/yield-machine/yield-machine.mod
     BlockchainModule,
     IntegrationModule,
     MonitoringModule,
+    SupportModule,
   ],
   controllers: [AppController],
   providers: [AppService],
