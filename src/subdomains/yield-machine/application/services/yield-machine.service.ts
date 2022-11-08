@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import BigNumber from 'bignumber.js';
 import { TokenProviderService } from 'src/blockchain/ain/whale/token-provider.service';
 import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
@@ -26,19 +26,14 @@ export class YieldMachineService {
   ) {}
 
   async create(command: TransactionCommand, parameters: any): Promise<string> {
-    const shouldRetrieveVaultInformation = this.shouldRetrieveVaultInfo(command);
-
-    const vault =
-      'vault' in parameters
-        ? await this.vaultService.getByAddressAndVault(parameters.address, parameters.vault)
-        : await this.vaultService.getByAddress(parameters.address);
-    if (shouldRetrieveVaultInformation && !vault) throw new NotFoundException('Vault or address not found');
+    const vault = await this.retrieveVault(parameters);
+    if (!vault) throw new NotFoundException('Vault or address not found');
 
     switch (command) {
       case TransactionCommand.ACCOUNT_TO_ACCOUNT:
         const sendTokenParameters = parameters as SendTokenParameters;
         const token = await this.tokenProviderService.get(sendTokenParameters.token);
-        return this.sendToken(sendTokenParameters, +token.id);
+        return this.sendToken(sendTokenParameters, +token.id, vault.wallet, vault.accountIndex);
       case TransactionCommand.CREATE_VAULT:
         return this.createVault(parameters as CreateVaultParameters, vault.wallet, vault.accountIndex);
       case TransactionCommand.DEPOSIT_TO_VAULT:
@@ -67,7 +62,12 @@ export class YieldMachineService {
     }
   }
 
-  private sendToken(parameters: SendTokenParameters, tokenId: number): Promise<string> {
+  private sendToken(
+    parameters: SendTokenParameters,
+    tokenId: number,
+    ownerWallet: string,
+    accountIndex: number,
+  ): Promise<string> {
     return this.transactionExecutionService.sendToken({
       from: parameters.from,
       to: parameters.to,
@@ -75,6 +75,8 @@ export class YieldMachineService {
         token: tokenId,
         amount: new BigNumber(parameters.amount),
       },
+      ownerWallet,
+      accountIndex,
     });
   }
 
@@ -177,7 +179,9 @@ export class YieldMachineService {
     });
   }
 
-  private shouldRetrieveVaultInfo(command: TransactionCommand): boolean {
-    return TransactionCommand.ACCOUNT_TO_ACCOUNT !== command;
+  private async retrieveVault(parameters: any): Promise<Vault> {
+    if ('vault' in parameters) return this.vaultService.getByAddressAndVault(parameters.address, parameters.vault);
+    if ('from' in parameters) return this.vaultService.getByAddress(parameters.from);
+    return this.vaultService.getByAddress(parameters.address);
   }
 }
