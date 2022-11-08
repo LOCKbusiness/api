@@ -11,7 +11,7 @@ export class AdminController {
   @Get('db')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.SUPPORT))
   async getRawData(
     @Query()
     query: dbQueryDto,
