@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
+import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
+import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { Lock } from 'src/shared/lock';
+import { Util } from 'src/shared/util';
 import { PayInService } from 'src/subdomains/payin/application/services/payin.service';
 import { PayIn, PayInPurpose } from 'src/subdomains/payin/domain/entities/payin.entity';
+import { LessThan } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { StakingBlockchainAddress } from '../../domain/entities/staking-blockchain-address.entity';
 import { Staking } from '../../domain/entities/staking.entity';
@@ -14,11 +18,13 @@ import { CreateDepositDto } from '../dto/input/create-deposit.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
 import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
+import { DepositRepository } from '../repositories/deposit.repository';
 import { StakingRepository } from '../repositories/staking.repository';
 
 @Injectable()
 export class StakingDepositService {
   private readonly lock = new Lock(7200);
+  private whaleClient?: WhaleClient;
 
   constructor(
     private readonly repository: StakingRepository,
@@ -27,7 +33,11 @@ export class StakingDepositService {
     private readonly factory: StakingFactory,
     private readonly deFiChainStakingService: StakingDeFiChainService,
     private readonly payInService: PayInService,
-  ) {}
+    private readonly depositRepository: DepositRepository,
+    whaleService: WhaleService,
+  ) {
+    whaleService.getClient().subscribe((client) => (this.whaleClient = client));
+  }
 
   //*** PUBLIC API ***//
 
@@ -63,6 +73,24 @@ export class StakingDepositService {
       console.error('Exception during staking deposit checks:', e);
     } finally {
       this.lock.release();
+    }
+  }
+
+  @Interval(3600000)
+  async cleanUpPendingDeposits(): Promise<void> {
+    try {
+      const pendingDeposits = await this.depositRepository.find({
+        where: { status: DepositStatus.PENDING, updated: LessThan(Util.daysBefore(1)) },
+      });
+      for (const deposit of pendingDeposits) {
+        const txId = await this.whaleClient.getTx(deposit.payInTxId).catch(() => null);
+        if (!txId) {
+          deposit.status = DepositStatus.FAILED;
+          await this.depositRepository.save(deposit);
+        }
+      }
+    } catch (e) {
+      console.error('Exception during cleanup deposit:', e);
     }
   }
 
