@@ -22,12 +22,12 @@ export class StakingFactory {
     withdrawalAddress: WalletBlockchainAddress,
     query: GetOrCreateStakingQuery,
   ): Promise<Staking> {
-    const { assetName: name, blockchain } = query;
+    const { asset: assetName, blockchain } = query;
     const {
       staking: { minimalStake },
     } = GetConfig();
 
-    const asset = await this.assetService.getAssetByQuery({ name, blockchain });
+    const asset = await this.assetService.getAssetByQuery({ name: assetName, blockchain });
 
     return Staking.create(userId, depositAddress, withdrawalAddress, asset, minimalStake);
   }

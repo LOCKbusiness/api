@@ -8,7 +8,7 @@ export class WithdrawalOutputDtoMapper {
     dto.id = withdrawal.id;
     dto.signMessage = withdrawal.signMessage;
     dto.signature = withdrawal.signature;
-    dto.asset = withdrawal.asset;
+    dto.asset = withdrawal.asset.name;
     dto.amount = withdrawal.amount;
 
     return dto;
