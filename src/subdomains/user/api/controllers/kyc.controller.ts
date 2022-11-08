@@ -52,11 +52,11 @@ export class KycController {
   async handoverKycWebhook(@RealIP() ip: string, @Body() dto: KycWebhookDto) {
     this.checkIp(ip, dto.data);
 
+    const user = await this.userService.getUserByKycId(dto.id);
+    if (!user) throw new NotFoundException('User not found');
+
     switch (dto.result) {
       case KycResult.STATUS_CHANGED:
-        const user = await this.userService.getUserByKycId(dto.id);
-        if (!user) throw new NotFoundException('User not found');
-
         if (user.kycStatus == KycStatus.NA && dto.data.kycStatus == KycStatus.LIGHT) {
           if (user.mail) {
             await this.notificationService.sendMail({
