@@ -4,6 +4,7 @@ import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { Lock } from 'src/shared/lock';
 import { Util } from 'src/shared/util';
+import { TransactionDto } from 'src/subdomains/analytics/application/dto/output/transactions.dto';
 import { PayInService } from 'src/subdomains/payin/application/services/payin.service';
 import { PayIn, PayInPurpose } from 'src/subdomains/payin/domain/entities/payin.entity';
 import { Between, LessThan } from 'typeorm';
@@ -206,10 +207,7 @@ export class StakingDepositService {
     return this.deFiChainStakingService.forwardDeposit(depositAddress.address, deposit.amount);
   }
 
-  async getDeposits(
-    dateFrom: Date = new Date(0),
-    dateTo: Date = new Date(),
-  ): Promise<{ date: Date; amount: number; currency: string }[]> {
+  async getDeposits(dateFrom: Date = new Date(0), dateTo: Date = new Date()): Promise<TransactionDto[]> {
     const deposits = await this.depositRepository.find({
       relations: ['asset'],
       where: { created: Between(dateFrom, dateTo), status: DepositStatus.CONFIRMED },

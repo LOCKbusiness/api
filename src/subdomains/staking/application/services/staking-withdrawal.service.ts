@@ -19,6 +19,7 @@ import { WithdrawalRepository } from '../repositories/withdrawal.repository';
 import { WithdrawalOutputDto } from '../dto/output/withdrawal.output.dto';
 import { WithdrawalOutputDtoMapper } from '../mappers/withdrawal-output-dto.mapper';
 import { Between } from 'typeorm';
+import { TransactionDto } from 'src/subdomains/analytics/application/dto/output/transactions.dto';
 
 @Injectable()
 export class StakingWithdrawalService {
@@ -196,10 +197,7 @@ export class StakingWithdrawalService {
 
   // Analytics
 
-  async getWithdrawals(
-    dateFrom: Date = new Date(0),
-    dateTo: Date = new Date(),
-  ): Promise<{ date: Date; amount: number; currency: string }[]> {
+  async getWithdrawals(dateFrom: Date = new Date(0), dateTo: Date = new Date()): Promise<TransactionDto[]> {
     const withdrawals = await this.withdrawalRepo.find({
       relations: ['asset'],
       where: { created: Between(dateFrom, dateTo), status: WithdrawalStatus.CONFIRMED },
