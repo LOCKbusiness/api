@@ -21,6 +21,8 @@ export class StakingController {
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   @ApiResponse({ status: 200, type: StakingOutputDto })
   async getStaking(@GetJwt() jwt: JwtPayload, @Query() query: GetOrCreateStakingQuery): Promise<StakingOutputDto> {
+    // TODO: remove
+    query.asset ??= query.assetName;
     return this.stakingService.getOrCreateStaking(jwt.userId, jwt.walletId, query);
   }
 
@@ -31,8 +33,8 @@ export class StakingController {
     @Query('userAddress') userAddress: string,
     @Query('depositAddress') depositAddress: string,
   ): Promise<BalanceOutputDto[]> {
-    if (depositAddress) return this.stakingService.getDepositAddressBalance(depositAddress);
-    return this.stakingService.getUserAddressBalance(userAddress);
+    if (depositAddress) return this.stakingService.getDepositAddressBalances(depositAddress);
+    return this.stakingService.getUserAddressBalances(userAddress);
   }
 
   @Patch(':id/staking-fee')

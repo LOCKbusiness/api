@@ -11,6 +11,7 @@ import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
 import { createDefaultMasternode } from 'src/integration/masternode/domain/entities/__mocks__/masternode.entity.mock';
+import { TransactionType } from 'src/integration/transaction/domain/enums';
 import { TestUtil } from 'src/shared/__tests__/test-util';
 import { TransactionExecutionService } from '../transaction-execution.service';
 import { TransactionService } from '../transaction.service';
@@ -105,6 +106,7 @@ describe('TransactionExecutionService', () => {
     expect(transactionService.sign).toBeCalledWith(rawTxCreateMasternode, 'signed-tx-hex-as-message', {
       ownerWallet: 'cold-wallet-a',
       accountIndex: 1,
+      type: TransactionType.CREATE_MASTERNODE,
     });
     expect(whaleClient.sendRaw).toBeCalledWith('signed-raw-tx-hex');
   });
@@ -124,6 +126,7 @@ describe('TransactionExecutionService', () => {
     expect(transactionService.sign).toBeCalledWith(rawTxResignMasternode, 'signed-tx-hex-as-message', {
       ownerWallet: 'cold-wallet-a',
       accountIndex: 1,
+      type: TransactionType.RESIGN_MASTERNODE,
     });
     expect(whaleClient.sendRaw).toBeCalledWith('signed-raw-tx-hex');
   });
@@ -149,6 +152,7 @@ describe('TransactionExecutionService', () => {
     expect(transactionService.sign).toBeCalledWith(rawTxSendFromLiq, 'signed-tx-hex-as-message', {
       ownerWallet: 'cold-wallet-a',
       accountIndex: 1,
+      type: TransactionType.SEND_FROM_LIQ,
     });
     expect(whaleClient.sendRaw).toBeCalledWith('signed-raw-tx-hex');
   });
@@ -169,6 +173,7 @@ describe('TransactionExecutionService', () => {
     expect(transactionService.sign).toBeCalledWith(rawTxSendToLiq, 'signed-tx-hex-as-message', {
       ownerWallet: 'cold-wallet-a',
       accountIndex: 1,
+      type: TransactionType.SEND_TO_LIQ,
     });
     expect(whaleClient.sendRaw).toBeCalledWith('signed-raw-tx-hex');
   });

@@ -26,6 +26,7 @@ import { FIAT_PRICE_PROVIDER } from './application/interfaces';
 import { AssetStakingMetadataRepository } from './application/repositories/asset-staking-metadata.repository';
 import { WithdrawalRepository } from './application/repositories/withdrawal.repository';
 import { WithdrawalController } from './api/controllers/withdrawal.controller';
+import { DepositRepository } from './application/repositories/deposit.repository';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { WithdrawalController } from './api/controllers/withdrawal.controller';
       StakingRepository,
       StakingBlockchainAddressRepository,
       WithdrawalRepository,
+      DepositRepository,
       AssetStakingMetadataRepository,
     ]),
     BlockchainModule,

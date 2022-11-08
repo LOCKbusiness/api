@@ -15,6 +15,7 @@ export class Configuration {
   defaultLanguage = 'en';
   defaultTelegramUrl = 'https://t.me/LOCK_Staking';
   defaultTwitterUrl = 'https://twitter.com/Lock_Space_';
+  defaultVolumeDecimal = 2;
 
   database: TypeOrmModuleOptions = {
     type: 'mssql',
@@ -68,7 +69,7 @@ export class Configuration {
     defaultMailTemplate: 'default',
     contact: {
       supportMail: process.env.SUPPORT_MAIL || 'admin@lock.space',
-      monitoringMail: process.env.MONITORING_MAIL || 'admin@admin.swiss',
+      monitoringMail: process.env.MONITORING_MAIL || 'admin@lock.space',
     },
   };
 
@@ -82,7 +83,7 @@ export class Configuration {
     phrase: process.env.KYC_PHRASE?.split(','),
     allowedWebhookIps: process.env.KYC_WEBHOOK_IPS?.split(','),
     apiUrl: process.env.KYC_API_URL,
-    frontendUrl: process.env.KYC_FRONTEND_URL,
+    frontendUrl: (kycHash: string) => `${process.env.KYC_FRONTEND_URL}?code=${kycHash}`,
   };
 
   auth = {
@@ -111,6 +112,7 @@ export class Configuration {
         active: process.env.NODE_REW_URL_ACTIVE,
         passive: process.env.NODE_REW_URL_PASSIVE,
       },
+      maxPrice: 1000000,
     },
   };
 
@@ -163,6 +165,14 @@ export class Configuration {
       account: process.env.LIQUIDITY_ACCOUNT_INDEX,
     },
     aprPeriod: 28, // days
+  };
+
+  yieldMachine = {
+    liquidity: {
+      address: process.env.YIELD_MACHINE_LIQUIDITY_ADDRESS,
+      wallet: process.env.YIELD_MACHINE_LIQUIDITY_WALLET_NAME,
+      account: process.env.YIELD_MACHINE_LIQUIDITY_ACCOUNT_INDEX,
+    },
   };
 
   utxo = {

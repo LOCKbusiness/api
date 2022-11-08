@@ -12,15 +12,18 @@ import { JwtPayload } from 'src/shared/auth/jwt-payload.interface';
 import { KycService } from '../../application/services/kyc.service';
 import { KycDto } from '../../application/dto/kyc.dto';
 import { UserService } from '../../application/services/user.service';
-import { KycResult } from '../../domain/enums';
+import { KycResult, KycStatus } from '../../domain/enums';
+import { NotificationService } from 'src/integration/notification/services/notification.service';
+import { MailType } from 'src/integration/notification/enums';
 
-@ApiTags('Kyc')
+@ApiTags('KYC')
 @Controller('kyc')
 export class KycController {
   constructor(
     private readonly walletService: WalletService,
     private readonly kycService: KycService,
     private readonly userService: UserService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   // --- KYC USER --- //
@@ -49,14 +52,26 @@ export class KycController {
   async handoverKycWebhook(@RealIP() ip: string, @Body() dto: KycWebhookDto) {
     this.checkIp(ip, dto.data);
 
+    const user = await this.userService.getUserByKycId(dto.id);
+    if (!user) throw new NotFoundException('User not found');
+
     switch (dto.result) {
       case KycResult.STATUS_CHANGED:
-        const user = await this.userService.getUserByKycId(dto.id);
-        if (!user) throw new NotFoundException('User not found');
-
+        if (user.kycStatus == KycStatus.NA && dto.data.kycStatus == KycStatus.LIGHT) {
+          if (user.mail) {
+            await this.notificationService.sendMail({
+              type: MailType.USER,
+              input: { translationKey: 'mail.kyc.success', translationParams: { name: user.firstName }, user },
+            });
+          } else {
+            console.error(`Failed to send KYC completion mail for user ${user.id}: user has no email`);
+          }
+        }
         this.userService.updateUser(user.id, dto.data);
         break;
       case KycResult.FAILED:
+        // notify support
+        await this.notificationService.sendMail({ type: MailType.KYC_SUPPORT, input: { user } });
         console.error(`Received KYC failed webhook for user with KYC ID ${dto.id}`);
         break;
       default:

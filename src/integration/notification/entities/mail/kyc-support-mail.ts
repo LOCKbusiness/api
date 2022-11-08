@@ -8,7 +8,7 @@ export interface KycSupportMailInput {
 }
 
 export interface KycSupportMailParams {
-  userDataId: number;
+  userId: number;
   kycStatus: string;
   metadata?: NotificationMetadata;
   options?: NotificationOptions;
@@ -32,14 +32,14 @@ export class KycSupportMail extends Mail {
   }
 
   static createBody(params: KycSupportMailParams): string {
-    const { userDataId, kycStatus } = params;
+    const { userId, kycStatus } = params;
 
     return `
     <p>a customer has failed or expired during progress ${kycStatus}.</p>
       <table>
           <tr>
               <td>Reference:</td>
-              <td>${userDataId}</td>
+              <td>${userId}</td>
           </tr>
       </table>
     `;

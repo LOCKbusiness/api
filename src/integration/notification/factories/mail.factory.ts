@@ -63,7 +63,7 @@ export class MailFactory {
     const { metadata, options } = request;
 
     return new KycSupportMail({
-      userDataId: user.id,
+      userId: user.id,
       kycStatus: user.kycStatus,
       metadata,
       options,

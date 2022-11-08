@@ -108,6 +108,16 @@ export class UtxoProviderService {
     );
   }
 
+  async provideForDefiTx(address: string): Promise<UtxoInformation> {
+    const unspent = await this.retrieveUnspent(address);
+    return UtxoProviderService.parseUnspent(
+      this.markUsed(
+        address,
+        UtxoProviderService.provideUntilAmount(unspent, new BigNumber(0), UtxoSizePriority.FITTING),
+      ),
+    );
+  }
+
   // --- HELPER METHODS --- //
   private markUsed(address: string, unspent: AddressUnspent[]): AddressUnspent[] {
     unspent.forEach((u) => {

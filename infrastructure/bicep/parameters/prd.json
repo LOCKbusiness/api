@@ -53,6 +53,15 @@
     "liquidityAccountIndex": {
       "value": "xxx"
     },
+    "yieldMachineLiquidityAddress": {
+      "value": "xxx"
+    },
+    "yieldMachineLiquidityWalletName": {
+      "value": "xxx"
+    },
+    "yieldMachineLiquidityAccountIndex": {
+      "value": "xxx"
+    },
     "nodeServicePlanSkuName": {
       "value": "P2v2"
     },

@@ -6,7 +6,7 @@ import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { MailRequest } from './interfaces';
 import { NotificationService } from './services/notification.service';
 
-@ApiTags('notification')
+@ApiTags('Notification')
 @Controller('notification')
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
@@ -14,7 +14,10 @@ export class NotificationController {
   @Post('send-mail')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
+  @UseGuards(
+    AuthGuard(),
+    new RoleGuard([WalletRole.ADMIN, WalletRole.TRANSACTION_CHECKER, WalletRole.TRANSACTION_SIGNER]),
+  )
   async sendMail(@Body() dto: MailRequest): Promise<void> {
     return this.notificationService.sendMail(dto);
   }

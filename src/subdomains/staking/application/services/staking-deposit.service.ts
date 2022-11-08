@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { Interval } from '@nestjs/schedule';
+import { Cron, CronExpression, Interval } from '@nestjs/schedule';
+import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
+import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { Lock } from 'src/shared/lock';
+import { Util } from 'src/shared/util';
 import { PayInService } from 'src/subdomains/payin/application/services/payin.service';
 import { PayIn, PayInPurpose } from 'src/subdomains/payin/domain/entities/payin.entity';
+import { LessThan } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { StakingBlockchainAddress } from '../../domain/entities/staking-blockchain-address.entity';
 import { Staking } from '../../domain/entities/staking.entity';
@@ -14,11 +18,13 @@ import { CreateDepositDto } from '../dto/input/create-deposit.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
 import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
+import { DepositRepository } from '../repositories/deposit.repository';
 import { StakingRepository } from '../repositories/staking.repository';
 
 @Injectable()
 export class StakingDepositService {
   private readonly lock = new Lock(7200);
+  private whaleClient?: WhaleClient;
 
   constructor(
     private readonly repository: StakingRepository,
@@ -27,7 +33,11 @@ export class StakingDepositService {
     private readonly factory: StakingFactory,
     private readonly deFiChainStakingService: StakingDeFiChainService,
     private readonly payInService: PayInService,
-  ) {}
+    private readonly depositRepository: DepositRepository,
+    whaleService: WhaleService,
+  ) {
+    whaleService.getClient().subscribe((client) => (this.whaleClient = client));
+  }
 
   //*** PUBLIC API ***//
 
@@ -63,6 +73,21 @@ export class StakingDepositService {
       console.error('Exception during staking deposit checks:', e);
     } finally {
       this.lock.release();
+    }
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async cleanUpPendingDeposits(): Promise<void> {
+    try {
+      const pendingDeposits = await this.depositRepository.find({
+        where: { status: DepositStatus.PENDING, updated: LessThan(Util.daysBefore(1)) },
+      });
+      for (const deposit of pendingDeposits) {
+        const txId = await this.whaleClient.getTx(deposit.payInTxId).catch(() => null);
+        if (!txId) await this.depositRepository.update(deposit.id, { status: DepositStatus.FAILED });
+      }
+    } catch (e) {
+      console.error('Exception during cleanup deposit:', e);
     }
   }
 
@@ -121,8 +146,7 @@ export class StakingDepositService {
         await this.repository.save(staking);
         await this.payInService.acknowledgePayIn(payIn, PayInPurpose.CRYPTO_STAKING);
       } catch (e) {
-        const message = `Failed to process deposit input: ${payIn.id}. Error:`;
-        console.error(message, e);
+        console.error(`Failed to process deposit input ${payIn.id}:`, e);
       }
     }
   }
@@ -167,10 +191,14 @@ export class StakingDepositService {
     const deposits = staking.getPendingDeposits();
 
     for (const deposit of deposits) {
-      const txId = await this.forwardDepositToStaking(deposit, staking.depositAddress);
-      staking.confirmDeposit(deposit.id.toString(), txId);
+      try {
+        const txId = await this.forwardDepositToStaking(deposit, staking.depositAddress);
+        staking.confirmDeposit(deposit.id.toString(), txId);
 
-      await this.repository.save(staking);
+        await this.repository.save(staking);
+      } catch (e) {
+        console.error(`Failed to forward deposit ${deposit.id}:`, e);
+      }
     }
   }
 
