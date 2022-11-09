@@ -9,7 +9,7 @@ export class CoinTrackingHistoryBase {
   exchange: string;
   tradeGroup: string;
   comment: string;
-  txid: string;
+  txId: string;
   buyValueInEur: number;
   sellValueInEur: number;
 }
