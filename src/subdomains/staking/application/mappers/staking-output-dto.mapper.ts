@@ -10,6 +10,7 @@ export class StakingOutputDtoMapper {
     dto.status = staking.status;
     dto.asset = staking.asset.name;
     dto.depositAddress = staking.depositAddress.address;
+    dto.strategy = staking.strategy;
     dto.minimalStake = Config.staking.minimalStake;
     dto.minimalDeposit = Config.staking.minimalDeposit;
     dto.fee = staking.fee;

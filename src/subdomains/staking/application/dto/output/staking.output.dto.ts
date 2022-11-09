@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { StakingStatus } from 'src/subdomains/staking/domain/enums';
+import { StakingStatus, StakingStrategy } from 'src/subdomains/staking/domain/enums';
 
 export class StakingOutputDto {
   @ApiProperty()
@@ -7,6 +7,9 @@ export class StakingOutputDto {
 
   @ApiProperty({ enum: StakingStatus })
   status: StakingStatus;
+
+  @ApiProperty({ enum: StakingStrategy })
+  strategy: StakingStrategy;
 
   @ApiProperty()
   asset: string;

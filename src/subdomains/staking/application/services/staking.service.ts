@@ -1,4 +1,4 @@
-import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Lock } from 'src/shared/lock';
@@ -19,6 +19,7 @@ import { StakingFactory } from '../factories/staking.factory';
 import { FiatPriceProvider, FIAT_PRICE_PROVIDER } from '../interfaces';
 import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
 import { StakingRepository } from '../repositories/staking.repository';
+import { StakingStrategyValidator } from '../validators/staking-strategy.validator';
 import { StakingBlockchainAddressService } from './staking-blockchain-address.service';
 
 interface StakingReference {
@@ -38,6 +39,7 @@ export class StakingService {
     private readonly factory: StakingFactory,
     private readonly addressService: StakingBlockchainAddressService,
     private readonly assetService: AssetService,
+    private readonly validator: StakingStrategyValidator,
     @Inject(FIAT_PRICE_PROVIDER) private readonly fiatPriceProvider: FiatPriceProvider,
   ) {}
 
@@ -52,10 +54,17 @@ export class StakingService {
 
     const { asset: assetName, blockchain } = query;
 
+    // fallback handling for non adapted apps
+    const strategy = query.strategy ?? StakingStrategy.MASTERNODE;
+    if (!query.strategy) query.strategy = StakingStrategy.MASTERNODE;
+
     const asset = await this.assetService.getAssetByQuery({ name: assetName, blockchain });
     const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
 
     if (!asset || !withdrawalAddress) throw new NotFoundException();
+
+    if (!this.validator.isAllowed(strategy, asset))
+      throw new BadRequestException(`Strategy with ${asset.name} is not allowed`);
 
     const existingStaking = await this.repository.findOne({ userId, asset, withdrawalAddress });
 
@@ -169,16 +178,10 @@ export class StakingService {
     const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
 
     // only one staking per address
-    const existingStaking = await this.repository.findOne({ where: { withdrawalAddress } });
+    const existingStaking = await this.repository.findOne({ where: { withdrawalAddress, strategy: dto.strategy } });
     if (existingStaking) throw new ConflictException();
 
-    const staking = await this.factory.createStaking(
-      userId,
-      dto.strategy ?? StakingStrategy.MASTERNODE,
-      depositAddress,
-      withdrawalAddress,
-      dto,
-    );
+    const staking = await this.factory.createStaking(userId, dto.strategy, depositAddress, withdrawalAddress, dto);
 
     return this.repository.save(staking);
   }
