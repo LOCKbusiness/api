@@ -35,14 +35,15 @@ Before the user can stake he has to proceed a KYC.
     https://api.dfx.swiss/swagger/#/kyc/KycController_transferKycData
 
         b) Get and open the KYC Link which you can get from kyc endpoint after register KYC or from user endpoint ("kycLink"):
-        https://dev.api.lock.space/swagger/#/User/UserController_getUser
+
+    https://dev.api.lock.space/swagger/#/User/UserController_getUser
 
 3.  Check with the user endpoint if KYC is finished (kycStatus = 'Light'):
     https://dev.api.lock.space/swagger/#/User/UserController_getUser
 
 # Staking
 
-Get the staking deposit address, id, information about fee, balance, min deposit, pending deposits, pending withdrawals etc. with the staking endpoint: https://dev.api.lock.space/swagger/#/Staking/StakingController_getStaking
+- Get the staking deposit address, id, information about fee, balance, min deposit, pending deposits, pending withdrawals etc. with the staking endpoint: https://dev.api.lock.space/swagger/#/Staking/StakingController_getStaking
 
 # Deposit
 
@@ -80,4 +81,4 @@ Get the staking deposit address, id, information about fee, balance, min deposit
 
 # Integration Example
 
-LOCK.space is fully integrated in the DFX.swiss wallet: https://github.com/DFXswiss/wallet
+- LOCK.space is fully integrated in the DFX.swiss wallet: https://github.com/DFXswiss/wallet
