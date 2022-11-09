@@ -994,8 +994,5 @@
   { "wallet": "cold-wallet-a", "index": 993, "address": "tf1qt0l6mflfs6u4530starlslkqhgstdayqajfwq8" },
   { "wallet": "cold-wallet-a", "index": 994, "address": "tf1qqsk08sfse49cwypjmquyek5w6js8xc67m90a4k" },
   { "wallet": "cold-wallet-a", "index": 995, "address": "tf1qdd500zkexpx96jsjjpemyqpsyrwt7rhhjfhzgm" },
-  { "wallet": "cold-wallet-a", "index": 996, "address": "tf1qy48rlastk9k7wpddm9pm9pys7w42m060k97p2u" },
-  { "wallet": "cold-wallet-a", "index": 997, "address": "tf1q6r0hmhap2z4ydmecj0nw3f5ypqg880tfhdacqz" },
-  { "wallet": "cold-wallet-a", "index": 998, "address": "tf1q8n5rly23k60eluu85r7yytya563r949nrnkkmf" },
-  { "wallet": "cold-wallet-a", "index": 999, "address": "tf1qwas8k7fuyz4lypyn7lhdjw354p5wmzhy58glht" }
+  { "wallet": "cold-wallet-a", "index": 996, "address": "tf1qy48rlastk9k7wpddm9pm9pys7w42m060k97p2u" }
 ]

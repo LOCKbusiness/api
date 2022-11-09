@@ -5,6 +5,7 @@ import { User } from '../../domain/entities/user.entity';
 import { KycStatus } from '../../domain/enums';
 import { UserRepository } from '../repositories/user.repository';
 import { getCustomRepository } from 'typeorm';
+import { Votes } from 'src/subdomains/voting/application/dto/votes.dto';
 
 @Injectable()
 export class UserService {
@@ -58,6 +59,17 @@ export class UserService {
     const user = await this.userRepo.findOne({ where: { id: userId }, relations: ['wallets', 'wallets.address'] });
 
     return user.wallets.find((w) => w.id === walletId).address;
+  }
+
+  // --- VOTES --- //
+
+  async getVotes(id: number): Promise<Votes> {
+    return this.userRepo.findOne({ id }, { select: ['id', 'votes'] }).then((u) => (u.votes ? JSON.parse(u.votes) : {}));
+  }
+
+  async updateVotes(id: number, votes: Votes): Promise<Votes> {
+    await this.userRepo.update(id, { votes: JSON.stringify(votes) });
+    return votes;
   }
 
   // --- HELPER METHODS --- //

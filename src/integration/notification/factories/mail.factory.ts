@@ -2,10 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
 import { ErrorMonitoringMail, ErrorMonitoringMailInput } from '../entities/mail/error-monitoring-mail';
 import { KycSupportMailInput, KycSupportMail } from '../entities/mail/kyc-support-mail';
-import { Mail } from '../entities/mail/base/mail';
+import { Mail, MailParams } from '../entities/mail/base/mail';
 import { UserMail, UserMailInput } from '../entities/mail/user-mail';
 import { MailType } from '../enums';
 import { MailRequest, MailRequestGenericInput } from '../interfaces';
+import { Config } from 'src/config/config';
 
 @Injectable()
 export class MailFactory {
@@ -41,7 +42,20 @@ export class MailFactory {
     const input = request.input as MailRequestGenericInput;
     const { metadata, options } = request;
 
-    return new Mail({ ...input, metadata, options });
+    const defaultParams: Partial<MailRequestGenericInput> = {
+      twitterUrl: Config.defaultTwitterUrl,
+      telegramUrl: Config.defaultTelegramUrl,
+      date: new Date().getFullYear(),
+    };
+
+    const mailParams: MailParams = {
+      ...input,
+      templateParams: { ...defaultParams, ...input },
+      metadata,
+      options,
+    };
+
+    return new Mail(mailParams);
   }
 
   private createErrorMonitoringMail(request: MailRequest): ErrorMonitoringMail {

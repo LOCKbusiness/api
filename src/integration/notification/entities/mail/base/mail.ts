@@ -5,16 +5,18 @@ import { Notification, NotificationOptions, NotificationMetadata } from '../../n
 export interface MailParams {
   to: string | string[];
   subject: string;
-  salutation: string;
-  body: string;
   from?: string;
   displayName?: string;
   cc?: string;
   bcc?: string;
   template?: string;
-  date?: number;
-  telegramUrl?: string;
-  twitterUrl?: string;
+  templateParams?: {
+    salutation: string;
+    body: string;
+    date?: number;
+    telegramUrl?: string;
+    twitterUrl?: string;
+  };
   options?: NotificationOptions;
   metadata?: NotificationMetadata;
 }
@@ -29,11 +31,7 @@ export class Mail extends Notification {
   readonly #bcc: string;
   readonly #template: string = GetConfig().mail.defaultMailTemplate;
   readonly #subject: string;
-  readonly #salutation: string;
-  readonly #body: string;
-  readonly #date: number = new Date().getFullYear();
-  readonly #telegramUrl: string = GetConfig().defaultTelegramUrl;
-  readonly #twitterUrl: string = GetConfig().defaultTwitterUrl;
+  readonly #templateParams: { [name: string]: any };
 
   constructor(params: MailParams) {
     super();
@@ -41,8 +39,6 @@ export class Mail extends Notification {
 
     this.#to = params.to;
     this.#subject = params.subject;
-    this.#salutation = params.salutation;
-    this.#body = params.body;
     this.#from = {
       name: params.displayName ?? 'LOCK.space',
       address: params.from ?? GetConfig().mail.contact.supportMail,
@@ -50,9 +46,7 @@ export class Mail extends Notification {
     this.#cc = params.cc ?? this.#cc;
     this.#bcc = params.bcc ?? this.#bcc;
     this.#template = params.template ?? this.#template;
-    this.#date = params.date ?? this.#date;
-    this.#telegramUrl = params.telegramUrl ?? this.#telegramUrl;
-    this.#twitterUrl = params.twitterUrl ?? this.#twitterUrl;
+    this.#templateParams = params.templateParams;
   }
 
   get from(): { name: string; address: string } {
@@ -76,27 +70,11 @@ export class Mail extends Notification {
     return this.#template;
   }
 
+  get templateParams(): { [name: string]: any } {
+    return this.#templateParams;
+  }
+
   get subject(): string {
     return this.#subject;
-  }
-
-  get salutation(): string {
-    return this.#salutation;
-  }
-
-  get body(): string {
-    return this.#body;
-  }
-
-  get date(): number {
-    return this.#date;
-  }
-
-  get telegramUrl(): string {
-    return this.#telegramUrl;
-  }
-
-  get twitterUrl(): string {
-    return this.#twitterUrl;
   }
 }

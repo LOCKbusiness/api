@@ -11,6 +11,7 @@ import { MonitoringModule } from './subdomains/monitoring/monitoring.module';
 import { StakingModule } from './subdomains/staking/staking.module';
 import { SupportModule } from './subdomains/support/support.module';
 import { UserModule } from './subdomains/user/user.module';
+import { VotingModule } from './subdomains/voting/voting.module';
 import { YieldMachineModule } from './subdomains/yield-machine/yield-machine.module';
 
 @Module({
@@ -25,6 +26,7 @@ import { YieldMachineModule } from './subdomains/yield-machine/yield-machine.mod
     IntegrationModule,
     MonitoringModule,
     SupportModule,
+    VotingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
