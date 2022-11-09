@@ -106,7 +106,7 @@ export class StakingHistoryService {
       outputAmount: c.amount,
       outputAsset: c.asset.name,
       txId: c.withdrawalTxId,
-      date: (c.outputDate ??= c.updated),
+      date: c.outputDate ?? c.updated,
       status: c.status,
     }));
   }
@@ -119,7 +119,7 @@ export class StakingHistoryService {
       outputAmount: null,
       outputAsset: null,
       txId: c.reinvestTxId,
-      date: (c.reinvestOutputDate ??= c.updated),
+      date: c.reinvestOutputDate ?? c.updated,
       status: c.status,
     }));
   }
@@ -160,7 +160,7 @@ export class StakingHistoryService {
         tradeGroup: null,
         comment: 'LOCK Staking Withdrawal',
         txId: c.withdrawalTxId,
-        date: (c.outputDate ??= c.updated),
+        date: c.outputDate ?? c.updated,
         buyValueInEur: null,
         sellValueInEur: c.amountEur,
       }));
@@ -181,7 +181,7 @@ export class StakingHistoryService {
         tradeGroup: 'Staking',
         comment: 'LOCK Staking Deposit',
         txId: c.reinvestTxId,
-        date: (c.reinvestOutputDate ??= c.updated),
+        date: c.reinvestOutputDate ?? c.updated,
         buyValueInEur: c.amountEur,
         sellValueInEur: null,
       }));
@@ -203,10 +203,10 @@ export class StakingHistoryService {
 
   private filterDuplicateTxCT(transactions: CoinTrackingCsvHistoryDto[]): CoinTrackingCsvHistoryDto[] {
     Array.from(Util.groupBy(transactions, 'txId'))
-      .map(([_, rewards]) => rewards)
+      .map(([_, transactions]) => transactions)
       .filter((r) => r.length > 1)
-      .forEach((rewards) =>
-        rewards.forEach((r, _) => (r.txId = r.type === CoinTrackingTransactionTypes.DEPOSIT ? 'remove' : r.txId)),
+      .forEach((transactions) =>
+        transactions.forEach((r, _) => (r.txId = r.type === CoinTrackingTransactionTypes.DEPOSIT ? 'remove' : r.txId)),
       );
 
     return transactions.filter((r) => r.txId !== 'remove');
@@ -214,10 +214,10 @@ export class StakingHistoryService {
 
   private filterDuplicateTxCompact(transactions: CompactHistoryDto[]): CompactHistoryDto[] {
     Array.from(Util.groupBy(transactions, 'txId'))
-      .map(([_, rewards]) => rewards)
+      .map(([_, transactions]) => transactions)
       .filter((r) => r.length > 1)
-      .forEach((rewards) =>
-        rewards.forEach((r, _) => (r.txId = r.type === HistoryTransactionType.DEPOSIT ? 'remove' : r.txId)),
+      .forEach((transactions) =>
+        transactions.forEach((r, _) => (r.txId = r.type === HistoryTransactionType.DEPOSIT ? 'remove' : r.txId)),
       );
 
     return transactions.filter((r) => r.txId !== 'remove');

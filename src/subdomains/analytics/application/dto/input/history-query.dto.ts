@@ -23,7 +23,6 @@ export class HistoryQueryBase {
 export class HistoryQueryCompact extends HistoryQueryBase {
   @ApiPropertyOptional({ enum: ExportDataType })
   @IsOptional()
-  @IsString()
   @IsEnum(ExportDataType)
   type: ExportDataType = ExportDataType.CSV;
 }
