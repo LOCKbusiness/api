@@ -13,3 +13,11 @@ export class TransactionDto {
   @ApiProperty()
   asset: string;
 }
+
+export class StakingTransactionDto {
+  @ApiProperty({ type: TransactionDto, isArray: true })
+  deposits: TransactionDto[];
+
+  @ApiProperty({ type: TransactionDto, isArray: true })
+  withdrawals: TransactionDto[];
+}
