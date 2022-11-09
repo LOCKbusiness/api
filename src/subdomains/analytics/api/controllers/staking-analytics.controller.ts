@@ -4,7 +4,7 @@ import { StakingDepositService } from 'src/subdomains/staking/application/servic
 import { StakingWithdrawalService } from 'src/subdomains/staking/application/services/staking-withdrawal.service';
 import { StakingAnalyticsOutputDto } from '../../application/dto/output/staking-analytics.output.dto';
 import { TimespanDto } from '../../application/dto/output/timespan.dto';
-import { StakingTransactionDto, TransactionDto } from '../../application/dto/output/transactions.dto';
+import { StakingTransactionDto } from '../../application/dto/output/transactions.dto';
 import { StakingAnalyticsService } from '../../application/services/staking-analytics.service';
 
 @ApiTags('Analytics')
