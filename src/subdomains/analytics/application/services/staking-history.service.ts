@@ -5,7 +5,7 @@ import { HistoryTransactionType, CompactHistoryDto } from '../dto/output/history
 import { Deposit } from 'src/subdomains/staking/domain/entities/deposit.entity';
 import { Withdrawal } from 'src/subdomains/staking/domain/entities/withdrawal.entity';
 import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
-import { CoinTrackingCsvHistoryDto, CoinTrackingHistoryBase } from '../dto/output/coin-tracking-history.dto';
+import { CoinTrackingCsvHistoryDto } from '../dto/output/coin-tracking-history.dto';
 import { DepositStatus, RewardStatus, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
 import { Staking } from 'src/subdomains/staking/domain/entities/staking.entity';
 import { Asset, AssetCategory } from 'src/shared/models/asset/asset.entity';
