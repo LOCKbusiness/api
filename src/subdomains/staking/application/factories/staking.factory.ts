@@ -7,6 +7,7 @@ import { Reward } from '../../domain/entities/reward.entity';
 import { StakingBlockchainAddress } from '../../domain/entities/staking-blockchain-address.entity';
 import { Staking } from '../../domain/entities/staking.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
+import { StakingStrategy } from '../../domain/enums';
 import { CreateDepositDto } from '../dto/input/create-deposit.dto';
 import { CreateRewardDto } from '../dto/input/create-reward.dto';
 import { CreateWithdrawalDraftDto } from '../dto/input/create-withdrawal-draft.dto';
@@ -18,6 +19,7 @@ export class StakingFactory {
 
   async createStaking(
     userId: number,
+    strategy: StakingStrategy,
     depositAddress: StakingBlockchainAddress,
     withdrawalAddress: WalletBlockchainAddress,
     query: GetOrCreateStakingQuery,
@@ -29,7 +31,7 @@ export class StakingFactory {
 
     const asset = await this.assetService.getAssetByQuery({ name: assetName, blockchain });
 
-    return Staking.create(userId, depositAddress, withdrawalAddress, asset, minimalStake);
+    return Staking.create(userId, strategy, depositAddress, withdrawalAddress, asset, minimalStake);
   }
 
   createDeposit(staking: Staking, dto: CreateDepositDto): Deposit {

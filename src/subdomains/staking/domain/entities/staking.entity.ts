@@ -4,7 +4,7 @@ import { Reward } from './reward.entity';
 import { Withdrawal } from './withdrawal.entity';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne } from 'typeorm';
 import { IEntity } from 'src/shared/models/entity';
-import { DepositStatus, RewardStatus, StakingStatus, WithdrawalStatus } from '../enums';
+import { DepositStatus, RewardStatus, StakingStatus, StakingStrategy, WithdrawalStatus } from '../enums';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Util } from 'src/shared/util';
 import { StakingBlockchainAddress } from './staking-blockchain-address.entity';
@@ -19,6 +19,9 @@ export class Staking extends IEntity {
 
   @Column({ nullable: false })
   status: StakingStatus;
+
+  @Column({ nullable: false, default: StakingStrategy.MASTERNODE })
+  strategy: StakingStrategy;
 
   @ManyToOne(() => Asset, { eager: true, nullable: false })
   asset: Asset;
@@ -55,6 +58,7 @@ export class Staking extends IEntity {
 
   static create(
     userId: number,
+    strategy: StakingStrategy,
     depositAddress: StakingBlockchainAddress,
     withdrawalAddress: WalletBlockchainAddress,
     asset: Asset,
@@ -64,6 +68,7 @@ export class Staking extends IEntity {
 
     staking.userId = userId;
     staking.status = StakingStatus.CREATED;
+    staking.strategy = strategy;
     staking.asset = asset;
     staking.balance = 0;
 

@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsEnum, ValidateIf } from 'class-validator';
+import { IsNotEmpty, IsString, IsEnum, ValidateIf, IsOptional } from 'class-validator';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
+import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
 
 export class GetOrCreateStakingQuery {
   // TODO: remove
@@ -19,4 +20,9 @@ export class GetOrCreateStakingQuery {
   @IsNotEmpty()
   @IsEnum(Blockchain)
   blockchain: Blockchain;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsEnum(StakingStrategy)
+  strategy: StakingStrategy;
 }

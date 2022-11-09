@@ -135,15 +135,9 @@ export class Configuration {
 
   payIn = {
     minPayIn: {
-      Fiat: {
-        USD: 1,
-      },
-      Bitcoin: {
-        BTC: 0.0005,
-      },
       DeFiChain: {
         DFI: 0.0001,
-        USD: 1,
+        DUSD: 1,
       },
     },
   };

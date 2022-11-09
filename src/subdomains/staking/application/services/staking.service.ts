@@ -8,7 +8,7 @@ import { Util } from 'src/shared/util';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { Brackets } from 'typeorm';
 import { Staking } from '../../domain/entities/staking.entity';
-import { DepositStatus, WithdrawalStatus } from '../../domain/enums';
+import { DepositStatus, StakingStrategy, WithdrawalStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
 import { GetOrCreateStakingQuery } from '../dto/input/get-staking.query';
@@ -172,7 +172,13 @@ export class StakingService {
     const existingStaking = await this.repository.findOne({ where: { withdrawalAddress } });
     if (existingStaking) throw new ConflictException();
 
-    const staking = await this.factory.createStaking(userId, depositAddress, withdrawalAddress, dto);
+    const staking = await this.factory.createStaking(
+      userId,
+      dto.strategy ?? StakingStrategy.MASTERNODE,
+      depositAddress,
+      withdrawalAddress,
+      dto,
+    );
 
     return this.repository.save(staking);
   }
