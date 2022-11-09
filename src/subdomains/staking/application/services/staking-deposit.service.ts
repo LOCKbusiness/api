@@ -217,7 +217,7 @@ export class StakingDepositService {
 
     return deposits.map((v) => ({
       id: v.id,
-      date: v.updated,
+      date: v.created,
       amount: v.amount,
       asset: v.asset.displayName,
     }));

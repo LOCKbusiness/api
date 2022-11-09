@@ -3,7 +3,7 @@ import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { StakingDepositService } from 'src/subdomains/staking/application/services/staking-deposit.service';
 import { StakingWithdrawalService } from 'src/subdomains/staking/application/services/staking-withdrawal.service';
 import { StakingAnalyticsOutputDto } from '../../application/dto/output/staking-analytics.output.dto';
-import { TimespanDto } from '../../application/dto/output/timespan.dto';
+import { TimeSpanDto } from '../../application/dto/output/time-span.dto';
 import { StakingTransactionDto } from '../../application/dto/output/transactions.dto';
 import { StakingAnalyticsService } from '../../application/services/staking-analytics.service';
 
@@ -24,10 +24,10 @@ export class StakingAnalyticsController {
 
   @Get('transactions')
   @ApiResponse({ status: 200, type: StakingTransactionDto })
-  async getTransactions(@Query() timespanDto: TimespanDto): Promise<StakingTransactionDto> {
+  async getTransactions(@Query() { dateFrom, dateTo }: TimeSpanDto): Promise<StakingTransactionDto> {
     return {
-      deposits: await this.stakingDepositService.getDeposits(timespanDto.dateFrom, timespanDto.dateTo),
-      withdrawals: await this.stakingWithdrawalService.getWithdrawals(timespanDto.dateFrom, timespanDto.dateTo),
+      deposits: await this.stakingDepositService.getDeposits(dateFrom, dateTo),
+      withdrawals: await this.stakingWithdrawalService.getWithdrawals(dateFrom, dateTo),
     };
   }
 }
