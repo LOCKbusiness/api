@@ -16,7 +16,7 @@ API for LOCK.space international staking service
 # Registration
 
 1. Contact [support](support@lock.space) to registrate your wallet name
-2. Create an address on selected blockchain (eg. DeFiChain)
+2. Create an address on selected blockchain (e.g. DeFiChain)
 3. Get and sign message from sign-message endpoint: https://dev.api.lock.space/swagger/#/Authentication/AuthController_getSignMessage
 4. Register the user with the sign-up endpoint: https://dev.api.lock.space/swagger/#/Authentication/AuthController_signUp
 5. Now you can get your access token (with address & signature) with the sign-in endpoint: https://dev.api.lock.space/swagger/#/Authentication/AuthController_signIn
@@ -69,7 +69,7 @@ Before the user can stake he has to proceed a KYC.
 
 - You can get a compact history (json or csv) of transactions (withdrawals, deposits & rewards) with the compact endpoint: https://api.lock.space/swagger/#/Analytics/HistoryController_getCsvCompact
 
-- You can get a cointracking CSVC of transactions (withdrawals, deposits & rewards) with the CT endpoint: https://dev.api.lock.space/swagger/#/Analytics/HistoryController_getCsvCT
+- You can get a cointracking CSV of transactions (withdrawals, deposits & rewards) with the CT endpoint: https://dev.api.lock.space/swagger/#/Analytics/HistoryController_getCsvCT
 
 # Voting
 
