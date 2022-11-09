@@ -81,6 +81,7 @@ export class StakingService {
 
   async getStakingsByUserAddress(address: string): Promise<Staking[]> {
     const user = await this.userService.getUserByAddress(address);
+    if (!user) throw new NotFoundException('User not found');
     return await this.repository.find({
       where: { userId: user.id },
       relations: ['rewards', 'withdrawals', 'deposits'],
