@@ -11,5 +11,5 @@ export class TransactionDto {
   amount: number;
 
   @ApiProperty()
-  currency: string;
+  asset: string;
 }

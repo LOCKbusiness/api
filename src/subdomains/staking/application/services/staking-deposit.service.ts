@@ -219,7 +219,7 @@ export class StakingDepositService {
       id: v.id,
       date: v.updated,
       amount: v.amount,
-      currency: v.asset.name,
+      asset: v.asset.displayName,
     }));
   }
 }
