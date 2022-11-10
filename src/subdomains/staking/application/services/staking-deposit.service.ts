@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { Cron, CronExpression, Interval } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
+import { Config, Process } from 'src/config/config';
 import { Lock } from 'src/shared/lock';
 import { Util } from 'src/shared/util';
+import { TransactionDto } from 'src/subdomains/analytics/application/dto/output/transactions.dto';
 import { PayInService } from 'src/subdomains/payin/application/services/payin.service';
 import { PayIn, PayInPurpose } from 'src/subdomains/payin/domain/entities/payin.entity';
-import { LessThan } from 'typeorm';
+import { Between, LessThan } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { StakingBlockchainAddress } from '../../domain/entities/staking-blockchain-address.entity';
 import { Staking } from '../../domain/entities/staking.entity';
@@ -41,6 +43,20 @@ export class StakingDepositService {
 
   //*** PUBLIC API ***//
 
+  async getDeposits(dateFrom: Date = new Date(0), dateTo: Date = new Date()): Promise<TransactionDto[]> {
+    const deposits = await this.depositRepository.find({
+      relations: ['asset'],
+      where: { created: Between(dateFrom, dateTo), status: DepositStatus.CONFIRMED },
+    });
+
+    return deposits.map((v) => ({
+      id: v.id,
+      date: v.created,
+      amount: v.amount,
+      asset: v.asset.displayName,
+    }));
+  }
+
   async createDeposit(
     userId: number,
     walletId: number,
@@ -62,8 +78,9 @@ export class StakingDepositService {
 
   //*** JOBS ***//
 
-  @Interval(60000)
+  @Cron(CronExpression.EVERY_MINUTE)
   async checkBlockchainDepositInputs(): Promise<void> {
+    if (Config.processDisabled(Process.STAKING_DEPOSIT)) return;
     if (!this.lock.acquire()) return;
 
     try {
@@ -78,6 +95,8 @@ export class StakingDepositService {
 
   @Cron(CronExpression.EVERY_HOUR)
   async cleanUpPendingDeposits(): Promise<void> {
+    if (Config.processDisabled(Process.STAKING_DEPOSIT)) return;
+
     try {
       const pendingDeposits = await this.depositRepository.find({
         where: { status: DepositStatus.PENDING, updated: LessThan(Util.daysBefore(1)) },

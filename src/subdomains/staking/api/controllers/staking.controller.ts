@@ -10,6 +10,7 @@ import { StakingOutputDto } from '../../application/dto/output/staking.output.dt
 import { SetStakingFeeDto } from '../../application/dto/input/set-staking-fee.dto';
 import { GetOrCreateStakingQuery } from '../../application/dto/input/get-staking.query';
 import { BalanceOutputDto } from '../../application/dto/output/balance.output.dto';
+import { BalanceQuery } from '../../application/dto/input/balance-query.dto';
 
 @ApiTags('Staking')
 @Controller('staking')
@@ -29,12 +30,9 @@ export class StakingController {
   @Get('balance')
   @ApiBearerAuth()
   @ApiResponse({ status: 200, type: BalanceOutputDto, isArray: true })
-  async getStakingUserBalance(
-    @Query('userAddress') userAddress: string,
-    @Query('depositAddress') depositAddress: string,
-  ): Promise<BalanceOutputDto[]> {
-    if (depositAddress) return this.stakingService.getDepositAddressBalances(depositAddress);
-    return this.stakingService.getUserAddressBalances(userAddress);
+  async getStakingUserBalance(@Query() query: BalanceQuery): Promise<BalanceOutputDto[]> {
+    if (query.depositAddress) return this.stakingService.getDepositAddressBalances(query.depositAddress);
+    return this.stakingService.getUserAddressBalances(query.userAddress);
   }
 
   @Patch(':id/staking-fee')

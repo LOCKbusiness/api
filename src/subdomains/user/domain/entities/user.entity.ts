@@ -45,6 +45,9 @@ export class User extends IEntity {
   @Column({ nullable: true })
   kycHash: string;
 
+  @Column({ nullable: true, length: 'MAX' })
+  votes: string;
+
   @OneToMany(() => Wallet, (wallet) => wallet.user)
   wallets: Wallet[];
 }

@@ -33,6 +33,9 @@ export class Masternode extends IEntity {
   @Column({ type: 'datetime2', nullable: true })
   resignDate: Date;
 
+  @Column({ type: 'datetime2', nullable: true })
+  firstBlockFound: Date;
+
   @Column({ nullable: true })
   @Index({ unique: true, where: 'resignHash IS NOT NULL' })
   resignHash: string;

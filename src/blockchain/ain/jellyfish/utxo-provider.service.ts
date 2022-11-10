@@ -8,7 +8,7 @@ import { WhaleService } from '../whale/whale.service';
 import { Injectable } from '@nestjs/common';
 import { Config } from 'src/config/config';
 import { Util } from 'src/shared/util';
-import { Interval } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { Lock } from 'src/shared/lock';
 
 export interface UtxoInformation {
@@ -31,6 +31,7 @@ export interface UtxoStatistics {
 interface BlockedUtxo {
   unlockAt: Date;
   unspent: AddressUnspent;
+  address: string;
 }
 
 @Injectable()
@@ -38,7 +39,7 @@ export class UtxoProviderService {
   private readonly lockUtxo = new Lock(1800);
   private blockHeight = 0;
   private unspent = new Map<string, AddressUnspent[]>();
-  private spent = new Map<string, BlockedUtxo>();
+  private spent = new Map<string, BlockedUtxo[]>();
 
   private whaleClient?: WhaleClient;
 
@@ -46,13 +47,16 @@ export class UtxoProviderService {
     whaleService.getClient().subscribe((client) => (this.whaleClient = client));
   }
 
-  @Interval(60000)
+  @Cron(CronExpression.EVERY_MINUTE)
   async doUnlockChecks() {
     if (!this.lockUtxo.acquire()) return;
 
     try {
-      for (const [id, spent] of this.spent) {
-        if (spent.unlockAt < new Date()) this.spent.delete(id);
+      for (const [address, blockedUtxos] of this.spent) {
+        this.spent.set(
+          address,
+          blockedUtxos.filter((b) => b.unlockAt > new Date()),
+        );
       }
     } catch (e) {
       console.error('Exception during unlocking utxos cronjob:', e);
@@ -63,11 +67,24 @@ export class UtxoProviderService {
 
   async unlockSpentBasedOn(prevouts: Prevout[], address: string): Promise<void> {
     const idsToUnlock = prevouts.map(UtxoProviderService.idForPrevout);
-    for (const id of idsToUnlock) {
-      const entry = this.spent.get(id);
-      this.unspent.set(address, (this.unspent.get(address) ?? []).concat([entry.unspent]));
-      this.spent.delete(id);
-    }
+    console.info(`unlock ${address}: to unlock ${idsToUnlock}`);
+    const spentToUnlock = this.spent
+      .get(address)
+      ?.filter((blocked) => idsToUnlock.includes(UtxoProviderService.idForUnspent(blocked.unspent)))
+      .map((blocked) => blocked.unspent);
+    this.unspent.set(address, (this.unspent.get(address) ?? []).concat(spentToUnlock));
+    const newSpent = this.spent
+      .get(address)
+      ?.filter((blocked) => !idsToUnlock.includes(UtxoProviderService.idForUnspent(blocked.unspent)));
+    this.spent.set(address, newSpent);
+    console.info(
+      `unlock ${address}: unspent ${Array.from(this.unspent.get(address)).map(UtxoProviderService.idForUnspent)}`,
+    );
+    console.info(
+      `unlock ${address}: spent ${Array.from(this.spent.get(address) ?? []).map((blocked) =>
+        UtxoProviderService.idForUnspent(blocked.unspent),
+      )}`,
+    );
   }
 
   async getStatistics(address: string): Promise<UtxoStatistics> {
@@ -120,10 +137,11 @@ export class UtxoProviderService {
 
   // --- HELPER METHODS --- //
   private markUsed(address: string, unspent: AddressUnspent[]): AddressUnspent[] {
-    unspent.forEach((u) => {
-      const id = UtxoProviderService.idForUnspent(u);
-      this.spent.set(id, { unlockAt: Util.hoursAfter(1), unspent: u });
+    console.info(`lock ${address}: locking ${unspent.map(UtxoProviderService.idForUnspent)}`);
+    const newSpent = unspent.map((u) => {
+      return { unlockAt: Util.hoursAfter(1), unspent: u, address };
     });
+    this.spent.set(address, (this.spent.get(address) ?? []).concat(newSpent));
     this.unspent.set(
       address,
       this.unspent
@@ -132,6 +150,14 @@ export class UtxoProviderService {
           (u) =>
             !unspent.map((us) => UtxoProviderService.idForUnspent(us)).includes(UtxoProviderService.idForUnspent(u)),
         ),
+    );
+    console.info(
+      `lock ${address}: unspent ${Array.from(this.unspent.get(address)).map(UtxoProviderService.idForUnspent)}`,
+    );
+    console.info(
+      `lock ${address}: spent ${Array.from(this.spent.get(address) ?? []).map((blocked) =>
+        UtxoProviderService.idForUnspent(blocked.unspent),
+      )}`,
     );
     return unspent;
   }
@@ -144,6 +170,11 @@ export class UtxoProviderService {
   private async checkBlockAndInvalidate(address: string) {
     const forceNew = this.unspent.get(address) === undefined;
     const currentBlockHeight = await this.whaleClient.getBlockHeight();
+    console.info(
+      `update ${address}: force? ${forceNew ? 'yes' : 'no'} stored block ${
+        this.blockHeight
+      } blockchain block ${currentBlockHeight}`,
+    );
     if (!forceNew && this.blockHeight === currentBlockHeight) return;
 
     this.blockHeight = currentBlockHeight;
@@ -151,7 +182,20 @@ export class UtxoProviderService {
     const currentUnspent = await this.whaleClient.getAllUnspent(address);
     this.unspent.set(
       address,
-      currentUnspent.filter((u) => !this.spent.has(UtxoProviderService.idForUnspent(u))),
+      currentUnspent.filter(
+        (u) =>
+          !(this.spent.get(address) ?? [])
+            .map((blocked) => UtxoProviderService.idForUnspent(blocked.unspent))
+            .includes(UtxoProviderService.idForUnspent(u)),
+      ),
+    );
+    console.info(
+      `update ${address}: unspent ${Array.from(this.unspent.get(address)).map(UtxoProviderService.idForUnspent)}`,
+    );
+    console.info(
+      `update ${address}: spent ${Array.from(this.spent.get(address) ?? []).map((blocked) =>
+        UtxoProviderService.idForUnspent(blocked.unspent),
+      )}`,
     );
   }
 

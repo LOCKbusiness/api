@@ -5,6 +5,17 @@ import * as path from 'path';
 import { MailOptions } from 'src/integration/notification/services/mail.service';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 
+export enum Process {
+  PAY_IN = 'PayIn',
+  STAKING_DEPOSIT = 'StakingDeposit',
+  STAKING_WITHDRAWAL = 'StakingWithdrawal',
+  STAKING_LIQUIDITY_MANAGEMENT = 'StakingLiquidityManagement',
+  MASTERNODE = 'Masternode',
+  TRANSACTION = 'Transaction',
+  ANALYTICS = 'Analytics',
+  MONITORING = 'Monitoring',
+}
+
 export function GetConfig(): Configuration {
   return new Configuration();
 }
@@ -209,6 +220,8 @@ export class Configuration {
   get signatureFormat(): RegExp {
     return /^(.{87}=|[a-f0-9]{130}|[a-f0-9x]{132})$/;
   }
+
+  processDisabled = (processName: Process) => (process.env.DISABLED_PROCESSES?.split(',') ?? []).includes(processName);
 }
 
 @Injectable()

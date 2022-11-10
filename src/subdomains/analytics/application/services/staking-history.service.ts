@@ -9,12 +9,19 @@ import { CoinTrackingCsvHistoryDto } from '../dto/output/coin-tracking-history.d
 import { DepositStatus, RewardStatus, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
 import { Staking } from 'src/subdomains/staking/domain/entities/staking.entity';
 import { Asset, AssetCategory } from 'src/shared/models/asset/asset.entity';
+import { Util } from 'src/shared/util';
 
 type HistoryDto<T> = T extends ExportType.COMPACT ? CompactHistoryDto : CoinTrackingCsvHistoryDto;
 
 export enum ExportType {
   COMPACT = 'compact',
   CT = 'CT',
+}
+
+export enum CoinTrackingTransactionTypes {
+  DEPOSIT = 'Deposit',
+  WITHDRAWAL = 'Withdrawal',
+  STAKING = 'Staking',
 }
 
 @Injectable()
@@ -41,11 +48,9 @@ export class StakingHistoryService {
       exportFormat === ExportType.CT
         ? this.getHistoryCT(deposits, withdrawals, rewards)
         : this.getHistoryCompact(deposits, withdrawals, rewards)
-    ) as HistoryDto<T>[][];
+    ) as HistoryDto<T>[];
 
-    return transactions
-      .reduce((prev, curr) => prev.concat(curr), [])
-      .sort((tx1, tx2) => (tx1.date.getTime() > tx2.date.getTime() ? -1 : 1)) as HistoryDto<T>[];
+    return transactions;
   }
 
   // --- HELPER METHODS --- //
@@ -55,28 +60,28 @@ export class StakingHistoryService {
       : await this.stakingService.getStakingsByDepositAddress(depositAddress);
   }
 
-  private getHistoryCT(
-    deposits: Deposit[],
-    withdrawals: Withdrawal[],
-    rewards: Reward[],
-  ): CoinTrackingCsvHistoryDto[][] {
-    const transactions: CoinTrackingCsvHistoryDto[][] = [
+  private getHistoryCT(deposits: Deposit[], withdrawals: Withdrawal[], rewards: Reward[]): CoinTrackingCsvHistoryDto[] {
+    const transactions: CoinTrackingCsvHistoryDto[] = [
       this.getStakingDepositHistoryCT(deposits),
       this.getStakingWithdrawalHistoryCT(withdrawals),
       this.getStakingRewardHistoryCT(rewards),
-    ];
+    ]
+      .reduce((prev, curr) => prev.concat(curr), [])
+      .sort((tx1, tx2) => (tx1.date.getTime() > tx2.date.getTime() ? -1 : 1));
 
-    return transactions;
+    return this.filterDuplicateTxCT(transactions);
   }
 
-  private getHistoryCompact(deposits: Deposit[], withdrawals: Withdrawal[], rewards: Reward[]): CompactHistoryDto[][] {
-    const transactions: CompactHistoryDto[][] = [
+  private getHistoryCompact(deposits: Deposit[], withdrawals: Withdrawal[], rewards: Reward[]): CompactHistoryDto[] {
+    const transactions: CompactHistoryDto[] = [
       this.getStakingDepositHistoryCompact(deposits),
       this.getStakingWithdrawalHistoryCompact(withdrawals),
       this.getStakingRewardHistoryCompact(rewards),
-    ];
+    ]
+      .reduce((prev, curr) => prev.concat(curr), [])
+      .sort((tx1, tx2) => (tx1.date.getTime() > tx2.date.getTime() ? -1 : 1));
 
-    return transactions;
+    return this.filterDuplicateTxCompact(transactions);
   }
 
   // --- TO DTO --- //
@@ -101,7 +106,7 @@ export class StakingHistoryService {
       outputAmount: c.amount,
       outputAsset: c.asset.name,
       txId: c.withdrawalTxId,
-      date: c.outputDate,
+      date: c.outputDate ?? c.updated,
       status: c.status,
     }));
   }
@@ -114,7 +119,7 @@ export class StakingHistoryService {
       outputAmount: null,
       outputAsset: null,
       txId: c.reinvestTxId,
-      date: c.reinvestOutputDate,
+      date: c.reinvestOutputDate ?? c.updated,
       status: c.status,
     }));
   }
@@ -123,7 +128,7 @@ export class StakingHistoryService {
     return deposits
       .filter((c) => c.status === DepositStatus.CONFIRMED)
       .map((c) => ({
-        type: 'Deposit',
+        type: CoinTrackingTransactionTypes.DEPOSIT,
         buyAmount: c.amount,
         buyAsset: this.getAssetSymbolCT(c.asset),
         sellAmount: null,
@@ -133,7 +138,7 @@ export class StakingHistoryService {
         exchange: 'LOCK.space Staking',
         tradeGroup: 'Staking',
         comment: 'LOCK Staking Deposit',
-        txid: c.payInTxId,
+        txId: c.payInTxId,
         date: c.created,
         buyValueInEur: c.amountEur,
         sellValueInEur: null,
@@ -144,7 +149,7 @@ export class StakingHistoryService {
     return withdrawals
       .filter((c) => c.status === WithdrawalStatus.CONFIRMED)
       .map((c) => ({
-        type: 'Withdrawal',
+        type: CoinTrackingTransactionTypes.WITHDRAWAL,
         buyAmount: null,
         buyAsset: null,
         sellAmount: c.amount,
@@ -154,8 +159,8 @@ export class StakingHistoryService {
         exchange: 'LOCK.space Staking',
         tradeGroup: null,
         comment: 'LOCK Staking Withdrawal',
-        txid: c.withdrawalTxId,
-        date: c.outputDate,
+        txId: c.withdrawalTxId,
+        date: c.outputDate ?? c.updated,
         buyValueInEur: null,
         sellValueInEur: c.amountEur,
       }));
@@ -165,7 +170,7 @@ export class StakingHistoryService {
     return rewards
       .filter((c) => c.status === RewardStatus.CONFIRMED)
       .map((c) => ({
-        type: 'Staking',
+        type: CoinTrackingTransactionTypes.STAKING,
         buyAmount: c.amount,
         buyAsset: this.getAssetSymbolCT(c.asset),
         sellAmount: null,
@@ -175,8 +180,8 @@ export class StakingHistoryService {
         exchange: 'LOCK.space Staking',
         tradeGroup: 'Staking',
         comment: 'LOCK Staking Deposit',
-        txid: c.reinvestTxId,
-        date: c.reinvestOutputDate,
+        txId: c.reinvestTxId,
+        date: c.reinvestOutputDate ?? c.updated,
         buyValueInEur: c.amountEur,
         sellValueInEur: null,
       }));
@@ -194,5 +199,27 @@ export class StakingHistoryService {
 
   private getAssetSymbolCT(asset: Asset): string {
     return asset.name === 'DUSD' ? 'DUSD4' : asset.category === AssetCategory.CRYPTO ? asset.name : `d${asset.name}`;
+  }
+
+  private filterDuplicateTxCT(transactions: CoinTrackingCsvHistoryDto[]): CoinTrackingCsvHistoryDto[] {
+    Array.from(Util.groupBy(transactions, 'txId'))
+      .map(([_, transactions]) => transactions)
+      .filter((r) => r.length > 1)
+      .forEach((transactions) =>
+        transactions.forEach((r, _) => (r.txId = r.type === CoinTrackingTransactionTypes.DEPOSIT ? 'remove' : r.txId)),
+      );
+
+    return transactions.filter((r) => r.txId !== 'remove');
+  }
+
+  private filterDuplicateTxCompact(transactions: CompactHistoryDto[]): CompactHistoryDto[] {
+    Array.from(Util.groupBy(transactions, 'txId'))
+      .map(([_, transactions]) => transactions)
+      .filter((r) => r.length > 1)
+      .forEach((transactions) =>
+        transactions.forEach((r, _) => (r.txId = r.type === HistoryTransactionType.DEPOSIT ? 'remove' : r.txId)),
+      );
+
+    return transactions.filter((r) => r.txId !== 'remove');
   }
 }

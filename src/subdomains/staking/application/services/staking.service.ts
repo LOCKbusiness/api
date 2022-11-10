@@ -1,5 +1,5 @@
 import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { Interval } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Lock } from 'src/shared/lock';
 import { AssetService } from 'src/shared/models/asset/asset.service';
@@ -81,6 +81,7 @@ export class StakingService {
 
   async getStakingsByUserAddress(address: string): Promise<Staking[]> {
     const user = await this.userService.getUserByAddress(address);
+    if (!user) throw new NotFoundException('User not found');
     return await this.repository.find({
       where: { userId: user.id },
       relations: ['rewards', 'withdrawals', 'deposits'],
@@ -146,7 +147,7 @@ export class StakingService {
 
   //*** JOBS ***//
 
-  @Interval(60000)
+  @Cron(CronExpression.EVERY_MINUTE)
   async calculateFiatReferenceAmounts(): Promise<void> {
     if (!this.lock.acquire()) return;
 

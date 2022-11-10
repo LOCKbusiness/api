@@ -66,6 +66,6 @@ import { DepositRepository } from './application/repositories/deposit.repository
     StakingKycCheckService,
     LiquidityManagementService,
   ],
-  exports: [StakingService],
+  exports: [StakingService, StakingDepositService, StakingWithdrawalService],
 })
 export class StakingModule {}
