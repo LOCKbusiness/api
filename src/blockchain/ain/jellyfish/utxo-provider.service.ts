@@ -8,7 +8,7 @@ import { WhaleService } from '../whale/whale.service';
 import { Injectable } from '@nestjs/common';
 import { Config } from 'src/config/config';
 import { Util } from 'src/shared/util';
-import { Interval } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { Lock } from 'src/shared/lock';
 
 export interface UtxoInformation {
@@ -47,7 +47,7 @@ export class UtxoProviderService {
     whaleService.getClient().subscribe((client) => (this.whaleClient = client));
   }
 
-  @Interval(60000)
+  @Cron(CronExpression.EVERY_MINUTE)
   async doUnlockChecks() {
     if (!this.lockUtxo.acquire()) return;
 

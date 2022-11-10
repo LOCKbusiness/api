@@ -1,6 +1,6 @@
 import { Lock } from 'src/shared/lock';
 import { Injectable } from '@nestjs/common';
-import { Interval } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { Config, Process } from 'src/config/config';
 import { Util } from 'src/shared/util';
 import { MasternodeService } from 'src/integration/masternode/application/services/masternode.service';
@@ -37,7 +37,7 @@ export class LiquidityManagementService {
     whaleService.getClient().subscribe((c) => (this.client = c));
   }
 
-  @Interval(60000)
+  @Cron(CronExpression.EVERY_MINUTE)
   async doWithdrawalsTasks() {
     if (Config.processDisabled(Process.STAKING_LIQUIDITY_MANAGEMENT)) return;
     if (!this.lockWithdrawals.acquire()) return;
@@ -51,7 +51,7 @@ export class LiquidityManagementService {
     this.lockWithdrawals.release();
   }
 
-  @Interval(60000)
+  @Cron(CronExpression.EVERY_MINUTE)
   async doMasternodesTasks() {
     if (Config.processDisabled(Process.STAKING_LIQUIDITY_MANAGEMENT)) return;
     if (!this.lockMasternodes.acquire()) return;
@@ -66,7 +66,7 @@ export class LiquidityManagementService {
     this.lockMasternodes.release();
   }
 
-  @Interval(60000)
+  @Cron(CronExpression.EVERY_MINUTE)
   async doUtxoManagement() {
     if (Config.processDisabled(Process.STAKING_LIQUIDITY_MANAGEMENT)) return;
     if (!this.lockUtxoManagement.acquire()) return;

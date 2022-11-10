@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { Interval } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { WithdrawalStatus } from '../../domain/enums';
@@ -148,7 +148,7 @@ export class StakingWithdrawalService {
 
   //*** JOBS ***//
 
-  @Interval(60000)
+  @Cron(CronExpression.EVERY_MINUTE)
   async checkWithdrawalCompletion(): Promise<void> {
     if (Config.processDisabled(Process.STAKING_WITHDRAWAL)) return;
 

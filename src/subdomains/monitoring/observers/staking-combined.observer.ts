@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Interval } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { Config, Process } from 'src/config/config';
@@ -31,7 +31,7 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
     whaleService.getClient().subscribe((c) => (this.client = c));
   }
 
-  @Interval(900000)
+  @Cron(CronExpression.EVERY_10_MINUTES)
   async fetch(): Promise<StakingData> {
     if (Config.processDisabled(Process.MONITORING)) return;
 
