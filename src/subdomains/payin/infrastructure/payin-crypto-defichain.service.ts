@@ -65,11 +65,11 @@ export class PayInDeFiChainService {
   }
 
   private isDFI(history: AccountHistory): boolean {
-    return Math.abs(history.amount) >= Config.payIn.minPayIn.DeFiChain.DFI;
+    return Math.abs(history.amount) >= Config.payIn.min.DeFiChain.DFI;
   }
 
   private isDUSD(history: AccountHistory): boolean {
-    return history.asset === 'DUSD' && history.amount >= Config.payIn.minPayIn.DeFiChain.DUSD;
+    return history.asset === 'DUSD' && history.amount >= Config.payIn.min.DeFiChain.DUSD;
   }
 
   private mapHistoriesToTransactions(histories: AccountHistory[]): PayInTransaction[] {

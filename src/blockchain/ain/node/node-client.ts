@@ -92,6 +92,16 @@ export class NodeClient {
     return this.callNode((c) => c.call('dumpprivkey', [address], 'number'), true);
   }
 
+  async signTx(hex: string): Promise<{ hex: string; completed: boolean }> {
+    if (!hex) throw new Error('Hex is undefined!');
+    return this.callNode((c) => c.call('signrawtransactionwithwallet', [hex], 'number'), true);
+  }
+
+  async sendRawTx(hex: string): Promise<string> {
+    if (!hex) throw new Error('Hex is undefined!');
+    return this.callNode((c) => c.call('sendrawtransaction', [hex], 'number'), true);
+  }
+
   // UTXO
   async getUtxo(): Promise<UTXO[]> {
     return this.callNode((c) => c.wallet.listUnspent());

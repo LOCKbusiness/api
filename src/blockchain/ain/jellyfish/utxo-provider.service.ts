@@ -107,10 +107,11 @@ export class UtxoProviderService {
     address: string,
     amount: BigNumber,
     sizePriority: UtxoSizePriority,
+    useFeeBuffer: boolean,
   ): Promise<UtxoInformation> {
     const unspent = await this.retrieveUnspent(address);
     return UtxoProviderService.parseUnspent(
-      this.markUsed(address, UtxoProviderService.provideUntilAmount(unspent, amount, sizePriority)),
+      this.markUsed(address, UtxoProviderService.provideUntilAmount(unspent, amount, sizePriority, useFeeBuffer)),
     );
   }
 
@@ -130,7 +131,7 @@ export class UtxoProviderService {
     return UtxoProviderService.parseUnspent(
       this.markUsed(
         address,
-        UtxoProviderService.provideUntilAmount(unspent, new BigNumber(0), UtxoSizePriority.FITTING),
+        UtxoProviderService.provideUntilAmount(unspent, new BigNumber(0), UtxoSizePriority.FITTING, true),
       ),
     );
   }
@@ -214,17 +215,15 @@ export class UtxoProviderService {
     unspent: AddressUnspent[],
     amount: BigNumber,
     sizePriority: UtxoSizePriority,
+    useFeeBuffer: boolean,
   ): AddressUnspent[] {
     const amountPlusFeeBuffer = amount.plus(Config.blockchain.minFeeBuffer);
-    let [neededUnspent, total] = UtxoProviderService.tryProvideUntilAmount(unspent, amountPlusFeeBuffer, sizePriority);
+    const wantedAmount = useFeeBuffer ? amountPlusFeeBuffer : amount;
+    let [neededUnspent, total] = UtxoProviderService.tryProvideUntilAmount(unspent, wantedAmount, sizePriority);
     if (total.lt(amountPlusFeeBuffer) && sizePriority === UtxoSizePriority.FITTING) {
-      [neededUnspent, total] = UtxoProviderService.tryProvideUntilAmount(
-        unspent,
-        amountPlusFeeBuffer,
-        UtxoSizePriority.BIG,
-      );
+      [neededUnspent, total] = UtxoProviderService.tryProvideUntilAmount(unspent, wantedAmount, UtxoSizePriority.BIG);
     }
-    if (total.lt(amountPlusFeeBuffer))
+    if (total.lt(wantedAmount))
       throw new Error(
         `Not enough available liquidity for requested amount.\nTotal available: ${total}\nRequested amount: ${amountPlusFeeBuffer}`,
       );

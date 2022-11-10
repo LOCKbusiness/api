@@ -110,7 +110,7 @@ export class Configuration {
 
   blockchain = {
     minFeeRate: 0.00001,
-    minFeeBuffer: 1,
+    minFeeBuffer: 0.1,
     default: {
       user: process.env.NODE_USER,
       password: process.env.NODE_PASSWORD,
@@ -134,11 +134,16 @@ export class Configuration {
   };
 
   payIn = {
-    minPayIn: {
+    min: {
       DeFiChain: {
         DFI: 0.0001,
         DUSD: 1,
       },
+    },
+    forward: {
+      phrase: process.env.FORWARD_PHRASE?.split(','),
+      accountToAccountFee: 0.00000297,
+      timeout: 300000, // 5 minutes
     },
   };
 
