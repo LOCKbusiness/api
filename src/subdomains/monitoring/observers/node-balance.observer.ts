@@ -3,6 +3,7 @@ import { Interval } from '@nestjs/schedule';
 import BigNumber from 'bignumber.js';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
+import { Config, Process } from 'src/config/config';
 import { MonitoringService } from '../application/services/monitoring.service';
 import { MetricObserver } from '../metric.observer';
 
@@ -35,6 +36,8 @@ export class NodeBalanceObserver extends MetricObserver<NodeBalanceData> {
 
   @Interval(900000)
   async fetch(): Promise<NodeBalanceData> {
+    if (Config.processDisabled(Process.MONITORING)) return;
+
     const data = await this.getNode();
 
     this.emit(data);

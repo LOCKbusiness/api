@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
+import { Config, Process } from 'src/config/config';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { Lock } from 'src/shared/lock';
 import { AssetService } from 'src/shared/models/asset/asset.service';
@@ -40,6 +41,7 @@ export class PayInService {
 
   @Interval(30000)
   async checkPayInTransactions(): Promise<void> {
+    if (Config.processDisabled(Process.PAY_IN)) return;
     if (!this.lock.acquire()) return;
 
     try {

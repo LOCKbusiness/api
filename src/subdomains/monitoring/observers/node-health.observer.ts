@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { NodeMode } from 'src/blockchain/ain/node/node-client';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
+import { Config, Process } from 'src/config/config';
 import { MailType } from 'src/integration/notification/enums';
 import { NotificationService } from 'src/integration/notification/services/notification.service';
 import { MonitoringService } from '../application/services/monitoring.service';
@@ -34,6 +35,8 @@ export class NodeHealthObserver extends MetricObserver<NodePoolState[]> {
 
   @Interval(60000)
   async fetch(): Promise<NodePoolState[]> {
+    if (Config.processDisabled(Process.MONITORING)) return;
+
     const poolStates = await this.getState();
     await this.handleErrors(poolStates);
 

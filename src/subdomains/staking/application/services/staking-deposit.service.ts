@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression, Interval } from '@nestjs/schedule';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
+import { Config, Process } from 'src/config/config';
 import { Lock } from 'src/shared/lock';
 import { Util } from 'src/shared/util';
 import { TransactionDto } from 'src/subdomains/analytics/application/dto/output/transactions.dto';
@@ -65,6 +66,7 @@ export class StakingDepositService {
 
   @Interval(60000)
   async checkBlockchainDepositInputs(): Promise<void> {
+    if (Config.processDisabled(Process.STAKING_DEPOSIT)) return;
     if (!this.lock.acquire()) return;
 
     try {
@@ -79,6 +81,8 @@ export class StakingDepositService {
 
   @Cron(CronExpression.EVERY_HOUR)
   async cleanUpPendingDeposits(): Promise<void> {
+    if (Config.processDisabled(Process.STAKING_DEPOSIT)) return;
+
     try {
       const pendingDeposits = await this.depositRepository.find({
         where: { status: DepositStatus.PENDING, updated: LessThan(Util.daysBefore(1)) },

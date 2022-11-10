@@ -20,6 +20,7 @@ import { WithdrawalOutputDto } from '../dto/output/withdrawal.output.dto';
 import { WithdrawalOutputDtoMapper } from '../mappers/withdrawal-output-dto.mapper';
 import { Between } from 'typeorm';
 import { TransactionDto } from 'src/subdomains/analytics/application/dto/output/transactions.dto';
+import { Config, Process } from 'src/config/config';
 
 @Injectable()
 export class StakingWithdrawalService {
@@ -149,6 +150,8 @@ export class StakingWithdrawalService {
 
   @Interval(60000)
   async checkWithdrawalCompletion(): Promise<void> {
+    if (Config.processDisabled(Process.STAKING_WITHDRAWAL)) return;
+
     try {
       // not querying Stakings, because eager query is not supported, thus unsafe to fetch entire entity
       const stakingIdsWithPayingOutWithdrawals = await this.stakingRepo
