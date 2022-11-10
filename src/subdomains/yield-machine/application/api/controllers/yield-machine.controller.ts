@@ -16,6 +16,6 @@ export class YieldMachineController {
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   createTransaction(@Body() dto: TransactionInputDto): Promise<string> {
-    return this.yieldMachineService.create(dto.command, dto.parameters);
+    return this.yieldMachineService.create(dto);
   }
 }
