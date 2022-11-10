@@ -14,6 +14,7 @@ import {
   RemovePoolLiquidityParameters,
   SendTokenParameters,
   TakeLoanParameters,
+  TransactionInput,
   WithdrawFromVaultParameters,
 } from '../dto/transaction-parameters.dto';
 
@@ -25,40 +26,32 @@ export class YieldMachineService {
     private readonly tokenProviderService: TokenProviderService,
   ) {}
 
-  async create(command: TransactionCommand, parameters: any): Promise<string> {
+  async create({ command, parameters }: TransactionInput): Promise<string> {
     const vault = await this.retrieveVault(parameters);
     if (!vault) throw new NotFoundException('Vault or address not found');
 
     switch (command) {
       case TransactionCommand.ACCOUNT_TO_ACCOUNT:
-        const sendTokenParameters = parameters as SendTokenParameters;
-        const token = await this.tokenProviderService.get(sendTokenParameters.token);
-        return this.sendToken(sendTokenParameters, +token.id, vault.wallet, vault.accountIndex);
+        const token = await this.tokenProviderService.get(parameters.token);
+        return this.sendToken(parameters, +token.id, vault.wallet, vault.accountIndex);
       case TransactionCommand.CREATE_VAULT:
-        return this.createVault(parameters as CreateVaultParameters, vault.wallet, vault.accountIndex);
+        return this.createVault(parameters, vault.wallet, vault.accountIndex);
       case TransactionCommand.DEPOSIT_TO_VAULT:
-        return this.depositToVault(vault, parameters as DepositToVaultParameters);
+        return this.depositToVault(vault, parameters);
       case TransactionCommand.WITHDRAW_FROM_VAULT:
-        return this.withdrawFromVault(vault, parameters as WithdrawFromVaultParameters);
+        return this.withdrawFromVault(vault, parameters);
       case TransactionCommand.TAKE_LOAN:
-        return this.takeLoan(vault, parameters as TakeLoanParameters);
+        return this.takeLoan(vault, parameters);
       case TransactionCommand.PAYBACK_LOAN:
-        return this.paybackLoan(vault, parameters as PaybackLoanParameters);
+        return this.paybackLoan(vault, parameters);
       case TransactionCommand.POOL_ADD_LIQUIDITY:
-        return this.addPoolLiquidity(vault, parameters as AddPoolLiquidityParameters);
+        return this.addPoolLiquidity(vault, parameters);
       case TransactionCommand.POOL_REMOVE_LIQUIDITY:
-        return this.removePoolLiquidity(vault, parameters as RemovePoolLiquidityParameters);
+        return this.removePoolLiquidity(vault, parameters);
       case TransactionCommand.COMPOSITE_SWAP:
-        const compositeSwapParameters = parameters as CompositeSwapParameters;
-        const fromToken = await this.tokenProviderService.get(compositeSwapParameters.fromToken);
-        const toToken = await this.tokenProviderService.get(compositeSwapParameters.toToken);
-        return this.compositeSwap(
-          compositeSwapParameters,
-          +fromToken.id,
-          +toToken.id,
-          vault.wallet,
-          vault.accountIndex,
-        );
+        const fromToken = await this.tokenProviderService.get(parameters.fromToken);
+        const toToken = await this.tokenProviderService.get(parameters.toToken);
+        return this.compositeSwap(parameters, +fromToken.id, +toToken.id, vault.wallet, vault.accountIndex);
     }
   }
 
