@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
-import { Config } from 'src/config/config';
+import { Config, Process } from 'src/config/config';
 import { MasternodeRepository } from 'src/integration/masternode/application/repositories/masternode.repository';
 import { Util } from 'src/shared/util';
 import { DepositRepository } from 'src/subdomains/staking/application/repositories/deposit.repository';
@@ -33,6 +33,8 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
 
   @Interval(900000)
   async fetch(): Promise<StakingData> {
+    if (Config.processDisabled(Process.MONITORING)) return;
+
     let data: StakingData;
     try {
       data = await this.getStaking();

@@ -1,7 +1,7 @@
 import { Lock } from 'src/shared/lock';
 import { Injectable } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
-import { Config } from 'src/config/config';
+import { Config, Process } from 'src/config/config';
 import { Util } from 'src/shared/util';
 import { MasternodeService } from 'src/integration/masternode/application/services/masternode.service';
 import { StakingWithdrawalService } from './staking-withdrawal.service';
@@ -39,6 +39,7 @@ export class LiquidityManagementService {
 
   @Interval(60000)
   async doWithdrawalsTasks() {
+    if (Config.processDisabled(Process.STAKING_LIQUIDITY_MANAGEMENT)) return;
     if (!this.lockWithdrawals.acquire()) return;
 
     try {
@@ -52,6 +53,7 @@ export class LiquidityManagementService {
 
   @Interval(60000)
   async doMasternodesTasks() {
+    if (Config.processDisabled(Process.STAKING_LIQUIDITY_MANAGEMENT)) return;
     if (!this.lockMasternodes.acquire()) return;
 
     try {
@@ -66,6 +68,7 @@ export class LiquidityManagementService {
 
   @Interval(60000)
   async doUtxoManagement() {
+    if (Config.processDisabled(Process.STAKING_LIQUIDITY_MANAGEMENT)) return;
     if (!this.lockUtxoManagement.acquire()) return;
 
     try {
