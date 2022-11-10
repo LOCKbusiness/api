@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Interval } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import BigNumber from 'bignumber.js';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
@@ -34,7 +34,7 @@ export class NodeBalanceObserver extends MetricObserver<NodeBalanceData> {
     nodeService.getConnectedNode(NodeType.REW).subscribe((client) => (this.rewClient = client));
   }
 
-  @Interval(900000)
+  @Cron(CronExpression.EVERY_10_MINUTES)
   async fetch(): Promise<NodeBalanceData> {
     if (Config.processDisabled(Process.MONITORING)) return;
 

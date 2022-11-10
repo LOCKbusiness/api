@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Cron, CronExpression, Interval } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { Config, Process } from 'src/config/config';
@@ -64,7 +64,7 @@ export class StakingDepositService {
 
   //*** JOBS ***//
 
-  @Interval(60000)
+  @Cron(CronExpression.EVERY_MINUTE)
   async checkBlockchainDepositInputs(): Promise<void> {
     if (Config.processDisabled(Process.STAKING_DEPOSIT)) return;
     if (!this.lock.acquire()) return;
