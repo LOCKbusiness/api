@@ -43,6 +43,20 @@ export class StakingDepositService {
 
   //*** PUBLIC API ***//
 
+  async getDeposits(dateFrom: Date = new Date(0), dateTo: Date = new Date()): Promise<TransactionDto[]> {
+    const deposits = await this.depositRepository.find({
+      relations: ['asset'],
+      where: { created: Between(dateFrom, dateTo), status: DepositStatus.CONFIRMED },
+    });
+
+    return deposits.map((v) => ({
+      id: v.id,
+      date: v.created,
+      amount: v.amount,
+      asset: v.asset.displayName,
+    }));
+  }
+
   async createDeposit(
     userId: number,
     walletId: number,
@@ -209,21 +223,5 @@ export class StakingDepositService {
 
   private async forwardDepositToStaking(deposit: Deposit, depositAddress: StakingBlockchainAddress): Promise<string> {
     return this.deFiChainStakingService.forwardDeposit(depositAddress.address, deposit.amount);
-  }
-
-  // Analytics
-
-  async getDeposits(dateFrom: Date = new Date(0), dateTo: Date = new Date()): Promise<TransactionDto[]> {
-    const deposits = await this.depositRepository.find({
-      relations: ['asset'],
-      where: { created: Between(dateFrom, dateTo), status: DepositStatus.CONFIRMED },
-    });
-
-    return deposits.map((v) => ({
-      id: v.id,
-      date: v.created,
-      amount: v.amount,
-      asset: v.asset.displayName,
-    }));
   }
 }
