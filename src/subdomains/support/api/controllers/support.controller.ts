@@ -54,9 +54,11 @@ export class SupportController {
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.SUPPORT))
   async getSupportData(@Query('id') id: string): Promise<{
-    deposits: Deposit[];
-    withdrawals: Withdrawal[];
-    rewards: Reward[];
+    staking: {
+      deposits: Deposit[];
+      withdrawals: Withdrawal[];
+      rewards: Reward[];
+    };
   }> {
     const user = await this.userService.getUser(+id);
     if (!user) throw new NotFoundException('User not found');
@@ -68,9 +70,11 @@ export class SupportController {
     const rewards = stakingEntities.reduce((prev, curr) => prev.concat(curr.rewards), [] as Reward[]);
 
     return {
-      deposits: deposits,
-      withdrawals: withdrawals,
-      rewards: rewards,
+      staking: {
+        deposits,
+        withdrawals,
+        rewards,
+      },
     };
   }
 }

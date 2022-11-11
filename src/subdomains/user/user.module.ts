@@ -19,7 +19,6 @@ import { WalletProviderService } from './application/services/wallet-provider.se
 import { WalletService } from './application/services/wallet.service';
 import { BlockchainModule } from 'src/blockchain/blockchain.module';
 import { NotificationModule } from 'src/integration/notification/notification.module';
-import { StakingRepository } from '../staking/application/repositories/staking.repository';
 
 @Module({
   imports: [
@@ -29,7 +28,6 @@ import { StakingRepository } from '../staking/application/repositories/staking.r
       RefRepository,
       WalletProviderRepository,
       WalletRepository,
-      StakingRepository,
     ]),
     SharedModule,
     BlockchainModule,
