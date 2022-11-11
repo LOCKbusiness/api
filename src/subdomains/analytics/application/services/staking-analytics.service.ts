@@ -1,7 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Config, Process } from 'src/config/config';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
+import { AssetType } from 'src/shared/models/asset/asset.entity';
+import { AssetService } from 'src/shared/models/asset/asset.service';
 import { StakingService } from 'src/subdomains/staking/application/services/staking.service';
+import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
 import { StakingAnalytics } from '../../domain/staking-analytics.entity';
 import { StakingAnalyticsOutputDto } from '../dto/output/staking-analytics.output.dto';
 import { StakingAnalyticsOutputDtoMapper } from '../mappers/staking-analytics-output-dto.mapper';
@@ -12,6 +16,7 @@ export class StakingAnalyticsService {
   constructor(
     private readonly repository: StakingAnalyticsRepository,
     private readonly stakingService: StakingService,
+    private readonly assetService: AssetService,
   ) {}
 
   //*** PUBLIC API ***//
@@ -36,8 +41,15 @@ export class StakingAnalyticsService {
     try {
       const { dateFrom, dateTo } = StakingAnalytics.getAprPeriod();
 
-      const averageBalance = await this.stakingService.getAverageStakingBalance(dateFrom, dateTo);
-      const averageRewards = await this.stakingService.getAverageRewards(dateFrom, dateTo);
+      const asset = await this.assetService.getAssetByQuery({
+        name: 'DFI',
+        blockchain: Blockchain.DEFICHAIN,
+        type: AssetType.COIN,
+      });
+      const strategy = StakingStrategy.MASTERNODE;
+
+      const averageBalance = await this.stakingService.getAverageStakingBalance({ asset, strategy }, dateFrom, dateTo);
+      const averageRewards = await this.stakingService.getAverageRewards({ asset, strategy }, dateFrom, dateTo);
 
       const analytics = (await this.repository.findOne()) ?? this.repository.create();
 

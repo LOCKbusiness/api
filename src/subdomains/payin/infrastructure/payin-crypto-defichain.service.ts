@@ -6,13 +6,14 @@ import { AccountHistory as JellyAccountHistory } from '@defichain/jellyfish-api-
 import { PayInTransaction } from '../application/interfaces';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { PayInBlockchainAddress } from '../domain/entities/payin-blockchain-address.entity';
+import { AssetType } from 'src/shared/models/asset/asset.entity';
 
 interface HistoryAmount {
   amount: number;
   asset: string;
 }
 
-type AccountHistory = Omit<JellyAccountHistory & HistoryAmount, 'amounts'>;
+type AccountHistory = Omit<JellyAccountHistory & HistoryAmount & { assetType: AssetType }, 'amounts'>;
 
 @Injectable()
 export class PayInDeFiChainService {
@@ -48,28 +49,35 @@ export class PayInDeFiChainService {
       .listHistory(lastHeight + 1, currentHeight)
       .then((i) => i.filter((h) => h.blockHeight > lastHeight))
       .then((i) => this.splitHistories(i))
-      .then((i) =>
-        i.filter(
-          (h) =>
-            (this.utxoTxTypes.includes(h.type) && this.isDFI(h)) ||
-            (this.tokenTxTypes.includes(h.type) && this.isDUSD(h)),
-        ),
-      )
+      .then((i) => i.filter((a) => this.isDFI(a) || this.isDUSD(a)))
       .then((i) => i.map((a) => ({ ...a, amount: Math.abs(a.amount) })));
   }
 
   private splitHistories(histories: JellyAccountHistory[]): AccountHistory[] {
     return histories
-      .map((h) => h.amounts.map((a) => ({ ...h, ...this.parseAmount(a) })))
+      .map((h) => h.amounts.map((a) => ({ ...h, ...this.parseAmount(a), assetType: this.getAssetType(h) })))
       .reduce((prev, curr) => prev.concat(curr), []);
   }
 
+  private getAssetType(history: JellyAccountHistory): AssetType | undefined {
+    if (this.utxoTxTypes.includes(history.type)) return AssetType.COIN;
+    if (this.tokenTxTypes.includes(history.type)) return AssetType.TOKEN;
+  }
+
   private isDFI(history: AccountHistory): boolean {
-    return Math.abs(history.amount) >= Config.payIn.min.DeFiChain.DFI;
+    return (
+      history.assetType === AssetType.COIN &&
+      history.asset === 'DFI' &&
+      Math.abs(history.amount) >= Config.payIn.min.DeFiChain.DFI
+    );
   }
 
   private isDUSD(history: AccountHistory): boolean {
-    return history.asset === 'DUSD' && history.amount >= Config.payIn.min.DeFiChain.DUSD;
+    return (
+      history.assetType === AssetType.TOKEN &&
+      history.asset === 'DUSD' &&
+      history.amount >= Config.payIn.min.DeFiChain.DUSD
+    );
   }
 
   private mapHistoriesToTransactions(histories: AccountHistory[]): PayInTransaction[] {
@@ -80,6 +88,7 @@ export class PayInDeFiChainService {
       blockHeight: h.blockHeight,
       amount: h.amount,
       asset: h.asset,
+      assetType: h.assetType,
     }));
   }
 

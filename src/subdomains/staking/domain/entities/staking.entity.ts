@@ -12,6 +12,11 @@ import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wal
 import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Price } from 'src/shared/models/price';
 
+export interface StakingType {
+  asset: Asset;
+  strategy: StakingStrategy;
+}
+
 @Entity()
 export class Staking extends IEntity {
   @Column({ type: 'int', nullable: false })
@@ -58,10 +63,9 @@ export class Staking extends IEntity {
 
   static create(
     userId: number,
-    strategy: StakingStrategy,
+    { asset, strategy }: StakingType,
     depositAddress: StakingBlockchainAddress,
     withdrawalAddress: WalletBlockchainAddress,
-    asset: Asset,
     stakingFee: number,
   ): Staking {
     const staking = new Staking();
