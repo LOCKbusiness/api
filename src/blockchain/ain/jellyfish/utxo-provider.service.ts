@@ -1,4 +1,4 @@
-import { AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
+import { AddressUnspent as JellyfishAddressUnspent } from '@defichain/whale-api-client/dist/api/address';
 import { Prevout } from '@defichain/jellyfish-transaction-builder';
 import BigNumber from 'bignumber.js';
 import { SmartBuffer } from 'smart-buffer';
@@ -26,6 +26,10 @@ export enum UtxoSizePriority {
 export interface UtxoStatistics {
   quantity: number;
   biggest: BigNumber;
+}
+
+interface AddressUnspent extends JellyfishAddressUnspent {
+  id: string;
 }
 
 interface BlockedUtxo {
@@ -70,20 +74,14 @@ export class UtxoProviderService {
     console.info(`unlock ${address}: to unlock ${idsToUnlock}`);
     const spentToUnlock = this.spent
       .get(address)
-      ?.filter((blocked) => idsToUnlock.includes(UtxoProviderService.idForUnspent(blocked.unspent)))
+      ?.filter((blocked) => idsToUnlock.includes(blocked.unspent.id))
       .map((blocked) => blocked.unspent);
     this.unspent.set(address, (this.unspent.get(address) ?? []).concat(spentToUnlock));
-    const newSpent = this.spent
-      .get(address)
-      ?.filter((blocked) => !idsToUnlock.includes(UtxoProviderService.idForUnspent(blocked.unspent)));
+    const newSpent = this.spent.get(address)?.filter((blocked) => !idsToUnlock.includes(blocked.unspent.id));
     this.spent.set(address, newSpent);
+    console.info(`unlock ${address}: unspent ${Array.from(this.unspent.get(address)).map((unspent) => unspent.id)}`);
     console.info(
-      `unlock ${address}: unspent ${Array.from(this.unspent.get(address)).map(UtxoProviderService.idForUnspent)}`,
-    );
-    console.info(
-      `unlock ${address}: spent ${Array.from(this.spent.get(address) ?? []).map((blocked) =>
-        UtxoProviderService.idForUnspent(blocked.unspent),
-      )}`,
+      `unlock ${address}: spent ${Array.from(this.spent.get(address) ?? []).map((blocked) => blocked.unspent.id)}`,
     );
   }
 
@@ -143,27 +141,18 @@ export class UtxoProviderService {
 
   // --- HELPER METHODS --- //
   private markUsed(address: string, unspent: AddressUnspent[]): AddressUnspent[] {
-    console.info(`lock ${address}: locking ${unspent.map(UtxoProviderService.idForUnspent)}`);
+    console.info(`lock ${address}: locking ${unspent.map((unspent) => unspent.id)}`);
     const newSpent = unspent.map((u) => {
       return { unlockAt: Util.hoursAfter(1), unspent: u, address };
     });
     this.spent.set(address, (this.spent.get(address) ?? []).concat(newSpent));
     this.unspent.set(
       address,
-      this.unspent
-        .get(address)
-        ?.filter(
-          (u) =>
-            !unspent.map((us) => UtxoProviderService.idForUnspent(us)).includes(UtxoProviderService.idForUnspent(u)),
-        ),
+      this.unspent.get(address)?.filter((u) => !unspent.map((us) => us.id).includes(u.id)),
     );
+    console.info(`lock ${address}: unspent ${Array.from(this.unspent.get(address)).map((unspent) => unspent.id)}`);
     console.info(
-      `lock ${address}: unspent ${Array.from(this.unspent.get(address)).map(UtxoProviderService.idForUnspent)}`,
-    );
-    console.info(
-      `lock ${address}: spent ${Array.from(this.spent.get(address) ?? []).map((blocked) =>
-        UtxoProviderService.idForUnspent(blocked.unspent),
-      )}`,
+      `lock ${address}: spent ${Array.from(this.spent.get(address) ?? []).map((blocked) => blocked.unspent.id)}`,
     );
     return unspent;
   }
@@ -185,23 +174,18 @@ export class UtxoProviderService {
 
     this.blockHeight = currentBlockHeight;
 
-    const currentUnspent = await this.whaleClient.getAllUnspent(address);
+    const currentUnspent = await this.whaleClient
+      .getAllUnspent(address)
+      .then((unspent) => unspent.map((u) => ({ ...u, id: UtxoProviderService.idForUnspent(u) })));
     this.unspent.set(
       address,
       currentUnspent.filter(
-        (u) =>
-          !(this.spent.get(address) ?? [])
-            .map((blocked) => UtxoProviderService.idForUnspent(blocked.unspent))
-            .includes(UtxoProviderService.idForUnspent(u)),
+        (u) => !(this.spent.get(address) ?? []).map((blocked) => blocked.unspent.id).includes(u.id),
       ),
     );
+    console.info(`update ${address}: unspent ${Array.from(this.unspent.get(address)).map((unspent) => unspent.id)}`);
     console.info(
-      `update ${address}: unspent ${Array.from(this.unspent.get(address)).map(UtxoProviderService.idForUnspent)}`,
-    );
-    console.info(
-      `update ${address}: spent ${Array.from(this.spent.get(address) ?? []).map((blocked) =>
-        UtxoProviderService.idForUnspent(blocked.unspent),
-      )}`,
+      `update ${address}: spent ${Array.from(this.spent.get(address) ?? []).map((blocked) => blocked.unspent.id)}`,
     );
   }
 
