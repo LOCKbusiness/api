@@ -38,7 +38,6 @@ export class StakingDepositService {
     whaleService: WhaleService,
   ) {
     whaleService.getClient().subscribe((client) => (this.whaleClient = client));
-    this.checkBlockchainDepositInputs();
   }
 
   //*** PUBLIC API ***//
@@ -222,21 +221,5 @@ export class StakingDepositService {
     staking.addDeposit(newDeposit);
 
     return newDeposit;
-  }
-
-  // Analytics
-
-  async getDeposits(dateFrom: Date = new Date(0), dateTo: Date = new Date()): Promise<TransactionDto[]> {
-    const deposits = await this.depositRepository.find({
-      relations: ['asset'],
-      where: { created: Between(dateFrom, dateTo), status: DepositStatus.CONFIRMED },
-    });
-
-    return deposits.map((v) => ({
-      id: v.id,
-      date: v.created,
-      amount: v.amount,
-      asset: v.asset.displayName,
-    }));
   }
 }
