@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Method } from 'axios';
-import { Config } from 'src/config/config';
+import { Config, Process } from 'src/config/config';
 import { HttpError, HttpService } from 'src/shared/services/http.service';
 import { SettingService } from 'src/shared/services/setting.service';
 import { In, IsNull, LessThan, MoreThan, Not } from 'typeorm';
@@ -38,6 +38,8 @@ export class MasternodeService {
   // --- MASTERNODE SYNC --- //
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
   async syncMasternodes(): Promise<void> {
+    if (Config.processDisabled(Process.MASTERNODE)) return;
+
     try {
       if (!Config.mydefichain.username) return;
 
@@ -66,6 +68,8 @@ export class MasternodeService {
   // --- MASTERNODE BLOCK CHECK --- //
   @Cron(CronExpression.EVERY_HOUR)
   async masternodeBlockCheck(): Promise<void> {
+    if (Config.processDisabled(Process.MASTERNODE)) return;
+
     const masternodeWithoutBlocks = await this.masternodeRepo.find({ where: { firstBlockFound: IsNull() } });
 
     for (const masternode of masternodeWithoutBlocks) {

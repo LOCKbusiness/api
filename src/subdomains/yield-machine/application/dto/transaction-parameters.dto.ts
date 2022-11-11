@@ -1,4 +1,5 @@
 import { IsNotEmpty, IsPositive, IsString } from 'class-validator';
+import { TransactionCommand } from '../../domain/enums';
 
 export class SendTokenParameters {
   @IsNotEmpty()
@@ -90,3 +91,14 @@ export class CompositeSwapParameters {
   @IsString()
   toToken: string;
 }
+
+export type TransactionInput =
+  | { command: TransactionCommand.ACCOUNT_TO_ACCOUNT; parameters: SendTokenParameters }
+  | { command: TransactionCommand.CREATE_VAULT; parameters: CreateVaultParameters }
+  | { command: TransactionCommand.DEPOSIT_TO_VAULT; parameters: DepositToVaultParameters }
+  | { command: TransactionCommand.WITHDRAW_FROM_VAULT; parameters: WithdrawFromVaultParameters }
+  | { command: TransactionCommand.TAKE_LOAN; parameters: TakeLoanParameters }
+  | { command: TransactionCommand.PAYBACK_LOAN; parameters: PaybackLoanParameters }
+  | { command: TransactionCommand.POOL_ADD_LIQUIDITY; parameters: AddPoolLiquidityParameters }
+  | { command: TransactionCommand.POOL_REMOVE_LIQUIDITY; parameters: RemovePoolLiquidityParameters }
+  | { command: TransactionCommand.COMPOSITE_SWAP; parameters: CompositeSwapParameters };

@@ -6,8 +6,8 @@ import { Transaction } from '../types/transaction';
 import { Transaction as TransactionEntity } from '../../domain/entities/transaction.entity';
 import { SmartBuffer } from 'smart-buffer';
 import { TransactionRepository } from '../repositories/transaction.repository';
-import { Config } from 'src/config/config';
-import { Interval } from '@nestjs/schedule';
+import { Config, Process } from 'src/config/config';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 
@@ -22,8 +22,10 @@ export class TransactionService {
     this.transactions = new Map<string, Transaction>();
   }
 
-  @Interval(600000)
+  @Cron(CronExpression.EVERY_10_MINUTES)
   async doTransactionChecks() {
+    if (Config.processDisabled(Process.TRANSACTION)) return;
+
     try {
       const txs = await this.repository.getUndecidedTransactions();
       for (const tx of txs) {

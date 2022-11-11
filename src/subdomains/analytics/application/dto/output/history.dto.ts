@@ -8,10 +8,10 @@ export enum HistoryTransactionType {
 }
 
 export class HistoryBaseDto {
-  @ApiProperty()
+  @ApiPropertyOptional()
   inputAmount: number;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   inputAsset: string;
 
   @ApiPropertyOptional()
@@ -20,7 +20,7 @@ export class HistoryBaseDto {
   @ApiPropertyOptional()
   outputAsset: string;
 
-  @ApiPropertyOptional()
+  @ApiProperty()
   txId: string;
 
   @ApiProperty()

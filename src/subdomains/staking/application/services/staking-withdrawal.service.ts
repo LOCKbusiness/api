@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { Interval } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { WithdrawalStatus } from '../../domain/enums';
@@ -20,6 +20,7 @@ import { WithdrawalOutputDto } from '../dto/output/withdrawal.output.dto';
 import { WithdrawalOutputDtoMapper } from '../mappers/withdrawal-output-dto.mapper';
 import { Between } from 'typeorm';
 import { TransactionDto } from 'src/subdomains/analytics/application/dto/output/transactions.dto';
+import { Config, Process } from 'src/config/config';
 
 @Injectable()
 export class StakingWithdrawalService {
@@ -34,6 +35,20 @@ export class StakingWithdrawalService {
   ) {}
 
   //*** PUBLIC API ***//
+
+  async getWithdrawals(dateFrom: Date = new Date(0), dateTo: Date = new Date()): Promise<TransactionDto[]> {
+    const withdrawals = await this.withdrawalRepo.find({
+      relations: ['asset'],
+      where: { outputDate: Between(dateFrom, dateTo), status: WithdrawalStatus.CONFIRMED },
+    });
+
+    return withdrawals.map((v) => ({
+      id: v.id,
+      date: v.outputDate,
+      amount: v.amount,
+      asset: v.asset.displayName,
+    }));
+  }
 
   async createWithdrawalDraft(
     userId: number,
@@ -147,8 +162,10 @@ export class StakingWithdrawalService {
 
   //*** JOBS ***//
 
-  @Interval(60000)
+  @Cron(CronExpression.EVERY_MINUTE)
   async checkWithdrawalCompletion(): Promise<void> {
+    if (Config.processDisabled(Process.STAKING_WITHDRAWAL)) return;
+
     try {
       // not querying Stakings, because eager query is not supported, thus unsafe to fetch entire entity
       const stakingIdsWithPayingOutWithdrawals = await this.stakingRepo
@@ -193,21 +210,5 @@ export class StakingWithdrawalService {
 
   private async isWithdrawalComplete(withdrawal: Withdrawal): Promise<boolean> {
     return this.deFiChainService.isWithdrawalTxComplete(withdrawal.withdrawalTxId);
-  }
-
-  // Analytics
-
-  async getWithdrawals(dateFrom: Date = new Date(0), dateTo: Date = new Date()): Promise<TransactionDto[]> {
-    const withdrawals = await this.withdrawalRepo.find({
-      relations: ['asset'],
-      where: { outputDate: Between(dateFrom, dateTo), status: WithdrawalStatus.CONFIRMED },
-    });
-
-    return withdrawals.map((v) => ({
-      id: v.id,
-      date: v.outputDate,
-      amount: v.amount,
-      asset: v.asset.displayName,
-    }));
   }
 }
