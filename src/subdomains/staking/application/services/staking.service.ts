@@ -54,8 +54,6 @@ export class StakingService {
     const { asset: assetName, blockchain, strategy } = query;
 
     const assetSpec = StakingStrategyValidator.validate(strategy, assetName, blockchain);
-    if (!assetSpec) throw new BadRequestException(`Strategy ${strategy} with ${assetName} is not allowed`);
-
     const asset = await this.assetService.getAssetByQuery(assetSpec);
     if (!asset) throw new NotFoundException('Asset not found');
 
@@ -135,10 +133,10 @@ export class StakingService {
     const { rewardVolume } = await this.repository
       .createQueryBuilder('staking')
       .leftJoin('staking.rewards', 'rewards')
+      .select('SUM(amount)', 'rewardVolume')
       .where('staking.assetId = :id', { id: asset.id })
       .andWhere('staking.strategy = :strategy', { strategy })
-      .select('SUM(amount)', 'rewardVolume')
-      .where('rewards.created BETWEEN :dateFrom AND :dateTo', { dateFrom, dateTo })
+      .andWhere('rewards.created BETWEEN :dateFrom AND :dateTo', { dateFrom, dateTo })
       .getRawOne<{ rewardVolume: number }>();
 
     return rewardVolume / Util.daysDiff(dateFrom, dateTo);
@@ -182,9 +180,9 @@ export class StakingService {
   private async getCurrentTotalStakingBalance({ asset, strategy }: StakingType): Promise<number> {
     return this.repository
       .createQueryBuilder('staking')
+      .select('SUM(balance)', 'balance')
       .where('staking.assetId = :id', { id: asset.id })
       .andWhere('staking.strategy = :strategy', { strategy })
-      .select('SUM(balance)', 'balance')
       .getRawOne<{ balance: number }>()
       .then((b) => b.balance);
   }
@@ -193,11 +191,11 @@ export class StakingService {
     return this.repository
       .createQueryBuilder('staking')
       .leftJoin('staking.deposits', 'deposits')
+      .select('SUM(amount)', 'amount')
       .where('staking.assetId = :id', { id: asset.id })
       .andWhere('staking.strategy = :strategy', { strategy })
       .andWhere('deposits.status = :status', { status: DepositStatus.CONFIRMED })
       .andWhere('deposits.created >= :date', { date })
-      .select('SUM(amount)', 'amount')
       .getRawOne<{ amount: number }>()
       .then((b) => b.amount);
   }
@@ -206,11 +204,11 @@ export class StakingService {
     return this.repository
       .createQueryBuilder('staking')
       .leftJoin('staking.withdrawals', 'withdrawals')
+      .select('SUM(amount)', 'amount')
       .where('staking.assetId = :id', { id: asset.id })
       .andWhere('staking.strategy = :strategy', { strategy })
       .andWhere('withdrawals.status = :status', { status: WithdrawalStatus.CONFIRMED })
       .andWhere('withdrawals.created >= :date', { date })
-      .select('SUM(amount)', 'amount')
       .getRawOne<{ amount: number }>()
       .then((b) => b.amount);
   }

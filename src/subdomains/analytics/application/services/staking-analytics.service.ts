@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { BadRequestError } from 'passport-headerapikey';
 import { Config, Process } from 'src/config/config';
-import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { AssetType } from 'src/shared/models/asset/asset.entity';
-import { AssetService } from 'src/shared/models/asset/asset.service';
+import { AssetQuery, AssetService } from 'src/shared/models/asset/asset.service';
 import { StakingService } from 'src/subdomains/staking/application/services/staking.service';
+import { StakingStrategyValidator } from 'src/subdomains/staking/application/validators/staking-strategy.validator';
+import { StakingType, StakingTypes } from 'src/subdomains/staking/domain/entities/staking.entity';
 import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
 import { StakingAnalytics } from '../../domain/staking-analytics.entity';
+import { StakingAnalyticsQuery } from '../dto/input/staking-analytics-query.dto';
 import { StakingAnalyticsOutputDto } from '../dto/output/staking-analytics.output.dto';
 import { StakingAnalyticsOutputDtoMapper } from '../mappers/staking-analytics-output-dto.mapper';
 import { StakingAnalyticsRepository } from '../repositories/staking-analytics.repository';
@@ -21,9 +23,15 @@ export class StakingAnalyticsService {
 
   //*** PUBLIC API ***//
 
-  async getStakingAnalyticsCache(): Promise<StakingAnalyticsOutputDto> {
-    const analytics = await this.repository.findOne();
+  async getStakingAnalyticsCache({
+    strategy,
+    asset,
+    blockchain,
+  }: StakingAnalyticsQuery): Promise<StakingAnalyticsOutputDto> {
+    const assetSpec = StakingStrategyValidator.validate(strategy, asset, blockchain);
+    const type = await this.getStakingType(assetSpec, strategy);
 
+    const analytics = await this.repository.findOne(type);
     if (!analytics) throw new NotFoundException();
 
     return StakingAnalyticsOutputDtoMapper.entityToDto(analytics);
@@ -40,24 +48,35 @@ export class StakingAnalyticsService {
 
     try {
       const { dateFrom, dateTo } = StakingAnalytics.getAprPeriod();
+      const stakingTypes = await this.getStakingTypes();
 
-      const asset = await this.assetService.getAssetByQuery({
-        name: 'DFI',
-        blockchain: Blockchain.DEFICHAIN,
-        type: AssetType.COIN,
-      });
-      const strategy = StakingStrategy.MASTERNODE;
+      for (const type of stakingTypes) {
+        const averageBalance = await this.stakingService.getAverageStakingBalance(type, dateFrom, dateTo);
+        const averageRewards = await this.stakingService.getAverageRewards(type, dateFrom, dateTo);
 
-      const averageBalance = await this.stakingService.getAverageStakingBalance({ asset, strategy }, dateFrom, dateTo);
-      const averageRewards = await this.stakingService.getAverageRewards({ asset, strategy }, dateFrom, dateTo);
+        const analytics = (await this.repository.findOne(type)) ?? this.repository.create(type);
 
-      const analytics = (await this.repository.findOne()) ?? this.repository.create();
+        analytics.updateAnalytics(averageBalance, averageRewards);
 
-      analytics.updateAnalytics(averageBalance, averageRewards);
-
-      await this.repository.save(analytics);
+        await this.repository.save(analytics);
+      }
     } catch (e) {
       console.error('Exception during staking analytics update:', e);
     }
+  }
+
+  private async getStakingTypes(): Promise<StakingType[]> {
+    const stakingTypes = Object.entries(StakingTypes) as [StakingStrategy, AssetQuery[]][];
+    const types: StakingType[] = [];
+    for (const [strategy, assetSpecs] of stakingTypes) {
+      for (const assetSpec of assetSpecs) {
+        types.push(await this.getStakingType(assetSpec, strategy));
+      }
+    }
+    return types;
+  }
+
+  private async getStakingType(assetSpec: AssetQuery, strategy: StakingStrategy): Promise<StakingType> {
+    return { asset: await this.assetService.getAssetByQuery(assetSpec), strategy };
   }
 }

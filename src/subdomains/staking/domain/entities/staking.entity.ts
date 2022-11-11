@@ -1,4 +1,4 @@
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { Deposit } from './deposit.entity';
 import { Reward } from './reward.entity';
 import { Withdrawal } from './withdrawal.entity';
@@ -11,11 +11,18 @@ import { StakingBlockchainAddress } from './staking-blockchain-address.entity';
 import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wallet-blockchain-address.entity';
 import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Price } from 'src/shared/models/price';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
+import { AssetQuery } from 'src/shared/models/asset/asset.service';
 
 export interface StakingType {
   asset: Asset;
   strategy: StakingStrategy;
 }
+
+export const StakingTypes: { [key in StakingStrategy]: AssetQuery[] } = {
+  [StakingStrategy.MASTERNODE]: [{ name: 'DFI', blockchain: Blockchain.DEFICHAIN, type: AssetType.COIN }],
+  [StakingStrategy.LIQUIDITY_MINING]: [{ name: 'DUSD', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN }],
+};
 
 @Entity()
 export class Staking extends IEntity {
