@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { UTXO } from '@defichain/jellyfish-api-core/dist/category/wallet';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { Config } from 'src/config/config';
@@ -20,7 +19,13 @@ export class PayInDeFiChainService {
   private client: DeFiClient;
 
   private readonly utxoTxTypes = ['receive', 'AccountToUtxos'];
-  private readonly tokenTxTypes = ['AccountToAccount'];
+  private readonly tokenTxTypes = [
+    'AccountToAccount',
+    'AnyAccountsToAccounts',
+    'WithdrawFromVault',
+    'PoolSwap',
+    'RemovePoolLiquidity',
+  ];
 
   constructor(nodeService: NodeService) {
     nodeService.getConnectedNode(NodeType.INPUT).subscribe((client) => (this.client = client));

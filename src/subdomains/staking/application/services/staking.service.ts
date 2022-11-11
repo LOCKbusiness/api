@@ -8,7 +8,7 @@ import { Util } from 'src/shared/util';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { Brackets } from 'typeorm';
 import { Staking } from '../../domain/entities/staking.entity';
-import { DepositStatus, StakingStrategy, WithdrawalStatus } from '../../domain/enums';
+import { DepositStatus, WithdrawalStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
 import { GetOrCreateStakingQuery } from '../dto/input/get-staking.query';
@@ -39,7 +39,6 @@ export class StakingService {
     private readonly factory: StakingFactory,
     private readonly addressService: StakingBlockchainAddressService,
     private readonly assetService: AssetService,
-    private readonly validator: StakingStrategyValidator,
     @Inject(FIAT_PRICE_PROVIDER) private readonly fiatPriceProvider: FiatPriceProvider,
   ) {}
 
@@ -52,18 +51,14 @@ export class StakingService {
   ): Promise<StakingOutputDto> {
     await this.kycCheck.check(userId, walletId);
 
-    const { asset: assetName, blockchain } = query;
-
-    // fallback handling for non adapted apps
-    const strategy = query.strategy ?? StakingStrategy.MASTERNODE;
-    if (!query.strategy) query.strategy = StakingStrategy.MASTERNODE;
+    const { asset: assetName, blockchain, strategy } = query;
 
     const asset = await this.assetService.getAssetByQuery({ name: assetName, blockchain });
     const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
 
     if (!asset || !withdrawalAddress) throw new NotFoundException();
 
-    if (!this.validator.isAllowed(strategy, asset))
+    if (!StakingStrategyValidator.isAllowed(strategy, asset))
       throw new BadRequestException(`Strategy with ${asset.name} is not allowed`);
 
     const existingStaking = await this.repository.findOne({ userId, asset, withdrawalAddress });
@@ -176,9 +171,12 @@ export class StakingService {
   private async createStaking(userId: number, walletId: number, dto: GetOrCreateStakingQuery): Promise<Staking> {
     const depositAddress = await this.addressService.getAvailableAddress();
     const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
+    const asset = await this.assetService.getAssetByQuery({ name: dto.asset, blockchain: dto.blockchain });
 
     // only one staking per address
-    const existingStaking = await this.repository.findOne({ where: { withdrawalAddress, strategy: dto.strategy } });
+    const existingStaking = await this.repository.findOne({
+      where: { withdrawalAddress, strategy: dto.strategy, asset },
+    });
     if (existingStaking) throw new ConflictException();
 
     const staking = await this.factory.createStaking(userId, dto.strategy, depositAddress, withdrawalAddress, dto);

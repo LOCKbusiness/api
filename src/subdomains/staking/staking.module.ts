@@ -27,7 +27,6 @@ import { AssetStakingMetadataRepository } from './application/repositories/asset
 import { WithdrawalRepository } from './application/repositories/withdrawal.repository';
 import { WithdrawalController } from './api/controllers/withdrawal.controller';
 import { DepositRepository } from './application/repositories/deposit.repository';
-import { StakingStrategyValidator } from './application/validators/staking-strategy.validator';
 
 @Module({
   imports: [
@@ -65,7 +64,6 @@ import { StakingStrategyValidator } from './application/validators/staking-strat
     StakingBlockchainAddressService,
     StakingAuthorizeService,
     StakingKycCheckService,
-    StakingStrategyValidator,
     LiquidityManagementService,
   ],
   exports: [StakingService, StakingDepositService, StakingWithdrawalService],
