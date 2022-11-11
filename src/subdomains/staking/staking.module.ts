@@ -57,7 +57,6 @@ import { DepositRepository } from './application/repositories/deposit.repository
     },
     StakingService,
     StakingDepositService,
-    StakingDepositForwardService,
     StakingDeFiChainService,
     StakingRewardService,
     StakingWithdrawalService,

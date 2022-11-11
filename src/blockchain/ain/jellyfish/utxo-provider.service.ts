@@ -96,6 +96,11 @@ export class UtxoProviderService {
     return { quantity, biggest };
   }
 
+  async addressHasUtxoExactAmount(address: string, amount: BigNumber): Promise<boolean> {
+    const unspent = await this.retrieveUnspent(address);
+    return unspent.map((u) => new BigNumber(u.vout.value)).filter((a) => a.isEqualTo(amount)).length > 0;
+  }
+
   async provideExactAmount(address: string, amount: BigNumber): Promise<UtxoInformation> {
     const unspent = await this.retrieveUnspent(address);
     return UtxoProviderService.parseUnspent(

@@ -21,7 +21,6 @@ import { StakingFactory } from '../factories/staking.factory';
 import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
 import { DepositRepository } from '../repositories/deposit.repository';
 import { StakingRepository } from '../repositories/staking.repository';
-import { StakingDepositForwardService } from './staking-deposit-forward-service';
 
 @Injectable()
 export class StakingDepositService {
@@ -35,7 +34,6 @@ export class StakingDepositService {
     private readonly factory: StakingFactory,
     private readonly deFiChainStakingService: StakingDeFiChainService,
     private readonly payInService: PayInService,
-    private readonly forwarder: StakingDepositForwardService,
     private readonly depositRepository: DepositRepository,
     whaleService: WhaleService,
   ) {
@@ -87,7 +85,7 @@ export class StakingDepositService {
 
     try {
       await this.recordDepositTransactions();
-      await this.forwarder.forwardDepositsToStaking();
+      await this.forwardDepositsToStaking();
     } catch (e) {
       console.error('Exception during staking deposit checks:', e);
     } finally {
@@ -113,6 +111,41 @@ export class StakingDepositService {
   }
 
   //*** HELPER METHODS ***//
+
+  private async forwardDepositsToStaking(): Promise<void> {
+    await this.deFiChainStakingService.checkSync();
+
+    // not querying Stakings, because eager query is not supported, thus unsafe to fetch entire entity
+    const stakingIdsWithPendingDeposits = await this.repository
+      .createQueryBuilder('staking')
+      .leftJoin('staking.deposits', 'deposits')
+      .where('deposits.status = :status', { status: DepositStatus.PENDING })
+      .getMany()
+      .then((s) => s.map((i) => i.id));
+
+    await Promise.all(stakingIdsWithPendingDeposits.map((id) => this.processPendingDepositsForStaking(id)));
+  }
+
+  private async processPendingDepositsForStaking(stakingId: number): Promise<void> {
+    const staking = await this.repository.findOne(stakingId);
+    const deposits = staking.getPendingDeposits();
+
+    for (const deposit of deposits) {
+      try {
+        const txId = await this.deFiChainStakingService.forwardDeposit(
+          staking.depositAddress.address,
+          deposit.amount,
+          deposit.asset,
+          staking.strategy,
+        );
+        staking.confirmDeposit(deposit.id.toString(), txId);
+
+        await this.repository.save(staking);
+      } catch (e) {
+        console.error(`Failed to forward deposit ${deposit.id}:`, e);
+      }
+    }
+  }
 
   private async recordDepositTransactions(): Promise<void> {
     const newPayInTransactions = await this.payInService.getNewPayInTransactions();
