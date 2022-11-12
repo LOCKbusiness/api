@@ -6,7 +6,7 @@ import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { Deposit } from 'src/subdomains/staking/domain/entities/deposit.entity';
 import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
 import { Withdrawal } from 'src/subdomains/staking/domain/entities/withdrawal.entity';
-import { dbQueryDto } from 'src/subdomains/user/application/dto/db-query.dto';
+import { DbQueryDto } from 'src/subdomains/support/application/dto/db-query.dto';
 import { SupportService } from '../../application/services/support.service';
 
 @Controller('support')
@@ -14,12 +14,12 @@ export class SupportController {
   constructor(private readonly supportService: SupportService) {}
 
   @Get('db')
-  //@ApiBearerAuth()
+  @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  //@UseGuards(AuthGuard(), new RoleGuard(WalletRole.SUPPORT))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.SUPPORT))
   async getRawData(
     @Query()
-    query: dbQueryDto,
+    query: DbQueryDto,
   ): Promise<{ keys: any; values: any }> {
     return await this.supportService.getRawData(query);
   }

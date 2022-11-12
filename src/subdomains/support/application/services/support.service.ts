@@ -3,7 +3,7 @@ import { StakingService } from 'src/subdomains/staking/application/services/stak
 import { Deposit } from 'src/subdomains/staking/domain/entities/deposit.entity';
 import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
 import { Withdrawal } from 'src/subdomains/staking/domain/entities/withdrawal.entity';
-import { dbQueryDto } from 'src/subdomains/user/application/dto/db-query.dto';
+import { DbQueryDto } from 'src/subdomains/support/application/dto/db-query.dto';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { getConnection } from 'typeorm';
 
@@ -11,7 +11,7 @@ import { getConnection } from 'typeorm';
 export class SupportService {
   constructor(private readonly userService: UserService, private readonly stakingService: StakingService) {}
 
-  async getRawData(query: dbQueryDto): Promise<{ keys: any; values: any }> {
+  async getRawData(query: DbQueryDto): Promise<{ keys: any; values: any }> {
     const id = query.min ? +query.min : 1;
     const maxResult = query.maxLine ? +query.maxLine : undefined;
     const updated = query.updatedSince ? new Date(query.updatedSince) : new Date(0);
