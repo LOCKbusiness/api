@@ -98,7 +98,7 @@ export class StakingDepositService {
 
     try {
       const pendingDeposits = await this.depositRepository.find({
-        where: { status: DepositStatus.PENDING, updated: LessThan(Util.daysBefore(1)) },
+        where: { status: DepositStatus.OPEN, updated: LessThan(Util.daysBefore(1)) },
       });
       for (const deposit of pendingDeposits) {
         const txId = await this.whaleClient.getTx(deposit.payInTxId).catch(() => null);
