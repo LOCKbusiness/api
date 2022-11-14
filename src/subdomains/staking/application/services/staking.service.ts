@@ -17,6 +17,7 @@ import { BalanceOutputDto } from '../dto/output/balance.output.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
 import { FiatPriceProvider, FIAT_PRICE_PROVIDER } from '../interfaces';
+import { StakingBalanceDtoMapper } from '../mappers/staking-balance-dto.mapper';
 import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
 import { StakingRepository } from '../repositories/staking.repository';
 import { StakingStrategyValidator } from '../validators/staking-strategy.validator';
@@ -67,14 +68,14 @@ export class StakingService {
   async getDepositAddressBalances(address: string): Promise<BalanceOutputDto[]> {
     const stakingEntities = await this.getStakingsByDepositAddress(address);
     if (stakingEntities.length == 0) throw new NotFoundException('No staking for deposit address found');
-    return this.toDtoList(stakingEntities);
+    return stakingEntities.map(StakingBalanceDtoMapper.entityToDto);
   }
 
   async getUserAddressBalances(address: string): Promise<BalanceOutputDto[]> {
     const stakingEntities = await this.getStakingsByUserAddress(address);
     if (stakingEntities.length == 0) throw new NotFoundException('No staking for user address found');
 
-    return this.toDtoList(stakingEntities);
+    return stakingEntities.map(StakingBalanceDtoMapper.entityToDto);
   }
 
   async getStakingsByUserAddress(address: string): Promise<Staking[]> {
@@ -93,16 +94,8 @@ export class StakingService {
     });
   }
 
-  private toDtoList(staking: Staking[]): BalanceOutputDto[] {
-    return staking.map((b) => this.toDto(b));
-  }
-
-  private toDto(staking: Staking): BalanceOutputDto {
-    return {
-      asset: staking.asset.name,
-      balance: staking.balance,
-      blockchain: staking.asset.blockchain,
-    };
+  async getStakingsByUserId(userId: number): Promise<Staking[]> {
+    return await this.repository.find({ where: { userId }, relations: ['deposits', 'withdrawals', 'rewards'] });
   }
 
   async setStakingFee(stakingId: number, dto: SetStakingFeeDto): Promise<void> {
@@ -160,7 +153,6 @@ export class StakingService {
   }
 
   //*** HELPER METHODS ***//
-
   private async createStaking(userId: number, walletId: number, type: StakingType): Promise<Staking> {
     const depositAddress = await this.addressService.getAvailableAddress();
     const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
