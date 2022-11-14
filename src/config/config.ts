@@ -180,7 +180,7 @@ export class Configuration {
     liquidity: {
       address: process.env.YIELD_MACHINE_LIQUIDITY_ADDRESS,
       wallet: process.env.YIELD_MACHINE_LIQUIDITY_WALLET_NAME,
-      account: process.env.YIELD_MACHINE_LIQUIDITY_ACCOUNT_INDEX,
+      account: +process.env.YIELD_MACHINE_LIQUIDITY_ACCOUNT_INDEX,
     },
   };
 
