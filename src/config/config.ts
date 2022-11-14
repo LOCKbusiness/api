@@ -91,8 +91,8 @@ export class Configuration {
 
   kyc = {
     secret: process.env.KYC_SECRET,
-    phrase: process.env.KYC_PHRASE?.split(','),
-    allowedWebhookIps: process.env.KYC_WEBHOOK_IPS?.split(','),
+    phrase: process.env.KYC_PHRASE?.split(',') ?? [],
+    allowedWebhookIps: process.env.KYC_WEBHOOK_IPS?.split(',') ?? [],
     apiUrl: process.env.KYC_API_URL,
     frontendUrl: (kycHash: string) => `${process.env.KYC_FRONTEND_URL}?code=${kycHash}`,
   };
@@ -141,7 +141,7 @@ export class Configuration {
       },
     },
     forward: {
-      phrase: process.env.FORWARD_PHRASE?.split(','),
+      phrase: process.env.FORWARD_PHRASE?.split(',') ?? [],
       accountToAccountFee: 0.00000297,
       timeout: 300000, // 5 minutes
     },
