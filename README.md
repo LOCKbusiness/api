@@ -33,7 +33,7 @@ Before the user can stake he has to proceed a KYC.
 
     b) If not, the user can do KYC at LOCK. Get and open the KYC Link which you can get from [KYC endpoint](https://api.lock.space/swagger/#/KYC/KycController_startKyc) or [user endpoint](https://api.lock.space/swagger/#/User/UserController_getUser)
 
-3.  Check with the [user endpoint](https://api.lock.space/swagger/#/User/UserController_getUser) if KYC is finished (KYC status `Light` or `Full`):
+3.  Check with the [user endpoint](https://api.lock.space/swagger/#/User/UserController_getUser) if KYC is finished (KYC status `Light` or `Full`)
 
 ## Staking
 
@@ -47,7 +47,7 @@ Before the user can stake he has to proceed a KYC.
 
 ### Withdrawal
 
-1. Create a withdrawal with [withdrawal endpoint](https://api.lock.space/swagger/#/Withdrawal/StakingWithdrawalController_createWithdrawalDraft) to get the id and the signMessage:
+1. Create a withdrawal with [withdrawal endpoint](https://api.lock.space/swagger/#/Withdrawal/StakingWithdrawalController_createWithdrawalDraft) to get the id and the signMessage
 
    You can get all open drafts with the [drafts endpoint](https://api.lock.space/swagger/#/Withdrawal/StakingWithdrawalController_getDraftWithdrawals)
 
