@@ -1,7 +1,12 @@
 import { Injectable, NotFoundException, StreamableFile } from '@nestjs/common';
 import { Readable } from 'stream';
 import { StakingService } from 'src/subdomains/staking/application/services/staking.service';
-import { HistoryTransactionType, CompactHistoryDto } from '../dto/output/history.dto';
+import {
+  HistoryTransactionType,
+  CompactHistoryDto,
+  getCompactStatus,
+  isCompactStatus,
+} from '../dto/output/history.dto';
 import { Deposit } from 'src/subdomains/staking/domain/entities/deposit.entity';
 import { Withdrawal } from 'src/subdomains/staking/domain/entities/withdrawal.entity';
 import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
@@ -86,42 +91,48 @@ export class StakingHistoryService {
 
   // --- TO DTO --- //
   private getStakingDepositHistoryCompact(deposits: Deposit[]): CompactHistoryDto[] {
-    return deposits.map((c) => ({
-      type: HistoryTransactionType.DEPOSIT,
-      inputAmount: c.amount,
-      inputAsset: c.asset.name,
-      outputAmount: null,
-      outputAsset: null,
-      txId: c.payInTxId,
-      date: c.created,
-      status: c.status,
-    }));
+    return deposits
+      .filter((c) => isCompactStatus(c.status, 'Deposit'))
+      .map((c) => ({
+        type: HistoryTransactionType.DEPOSIT,
+        inputAmount: c.amount,
+        inputAsset: c.asset.name,
+        outputAmount: null,
+        outputAsset: null,
+        txId: c.payInTxId,
+        date: c.created,
+        status: getCompactStatus(c.status, 'Deposit'),
+      }));
   }
 
   private getStakingWithdrawalHistoryCompact(withdrawals: Withdrawal[]): CompactHistoryDto[] {
-    return withdrawals.map((c) => ({
-      type: HistoryTransactionType.WITHDRAWAL,
-      inputAmount: null,
-      inputAsset: null,
-      outputAmount: c.amount,
-      outputAsset: c.asset.name,
-      txId: c.withdrawalTxId,
-      date: c.outputDate ?? c.updated,
-      status: c.status,
-    }));
+    return withdrawals
+      .filter((c) => isCompactStatus(c.status, 'Withdrawal'))
+      .map((c) => ({
+        type: HistoryTransactionType.WITHDRAWAL,
+        inputAmount: null,
+        inputAsset: null,
+        outputAmount: c.amount,
+        outputAsset: c.asset.name,
+        txId: c.withdrawalTxId,
+        date: c.outputDate ?? c.updated,
+        status: getCompactStatus(c.status, 'Withdrawal'),
+      }));
   }
 
   private getStakingRewardHistoryCompact(rewards: Reward[]): CompactHistoryDto[] {
-    return rewards.map((c) => ({
-      type: HistoryTransactionType.REWARD,
-      inputAmount: c.amount,
-      inputAsset: c.asset.name,
-      outputAmount: null,
-      outputAsset: null,
-      txId: c.reinvestTxId,
-      date: c.reinvestOutputDate ?? c.updated,
-      status: c.status,
-    }));
+    return rewards
+      .filter((c) => isCompactStatus(c.status, 'Reward'))
+      .map((c) => ({
+        type: HistoryTransactionType.REWARD,
+        inputAmount: c.amount,
+        inputAsset: c.asset.name,
+        outputAmount: null,
+        outputAsset: null,
+        txId: c.reinvestTxId,
+        date: c.reinvestOutputDate ?? c.updated,
+        status: getCompactStatus(c.status, 'Reward'),
+      }));
   }
 
   private getStakingDepositHistoryCT(deposits: Deposit[]): CoinTrackingCsvHistoryDto[] {
