@@ -39,13 +39,13 @@ Before the user can stake he has to proceed a KYC.
 
 - Get the staking deposit address, id, information about fee, balance, min deposit, pending deposits, pending withdrawals etc. with the [staking endpoint](https://api.lock.space/swagger/#/Staking/StakingController_getStaking)
 
-## Deposit
+### Deposit
 
 1. To deposit you have to send the asset to the deposit address
 
 2. Optional you can create a pending Deposit to improve the UX for the user with the [deposit endpoint](https://api.lock.space/swagger/#/Deposit/DepositController_createDeposit)
 
-## Withdrawal
+### Withdrawal
 
 1. Create a withdrawal with [withdrawal endpoint](https://api.lock.space/swagger/#/Withdrawal/StakingWithdrawalController_createWithdrawalDraft) to get the id and the signMessage:
 
