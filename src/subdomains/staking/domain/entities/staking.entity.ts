@@ -63,7 +63,7 @@ export class Staking extends IEntity {
   @Column({ type: 'float', nullable: false, default: 0 })
   rewardsAmount: number;
 
-  @Column({ type: 'float', nullable: false, default: 0.05 })
+  @Column({ type: 'float', nullable: true })
   fee: number;
 
   //*** FACTORY METHODS ***//
@@ -73,7 +73,6 @@ export class Staking extends IEntity {
     { asset, strategy }: StakingType,
     depositAddress: StakingBlockchainAddress,
     withdrawalAddress: WalletBlockchainAddress,
-    stakingFee: number,
   ): Staking {
     const staking = new Staking();
 
@@ -90,8 +89,6 @@ export class Staking extends IEntity {
     staking.deposits = [];
     staking.withdrawals = [];
     staking.rewards = [];
-
-    staking.fee = stakingFee;
 
     return staking;
   }

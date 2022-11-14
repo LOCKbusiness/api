@@ -137,7 +137,7 @@ export class Configuration {
     min: {
       DeFiChain: {
         DFI: 0.0001,
-        DUSD: 1,
+        DUSD: 0.0001,
       },
     },
     forward: {
@@ -149,8 +149,7 @@ export class Configuration {
 
   staking = {
     minimalStake: 1,
-    minimalDeposit: 0.01,
-    stakingFee: 0.05,
+    defaultFee: 0,
     signatureTemplates: {
       signWithdrawalMessage:
         'Withdraw_${amount}_${asset}_from_${address}_staking_id_${stakingId}_withdrawal_id_${withdrawalId}',

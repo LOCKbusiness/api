@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Config } from 'src/config/config';
 import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wallet-blockchain-address.entity';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Reward } from '../../domain/entities/reward.entity';
@@ -18,7 +17,7 @@ export class StakingFactory {
     depositAddress: StakingBlockchainAddress,
     withdrawalAddress: WalletBlockchainAddress,
   ): Staking {
-    return Staking.create(userId, type, depositAddress, withdrawalAddress, Config.staking.minimalStake);
+    return Staking.create(userId, type, depositAddress, withdrawalAddress);
   }
 
   createDeposit(staking: Staking, dto: CreateDepositDto): Deposit {

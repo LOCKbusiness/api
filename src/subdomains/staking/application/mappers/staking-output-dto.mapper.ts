@@ -12,8 +12,8 @@ export class StakingOutputDtoMapper {
     dto.depositAddress = staking.depositAddress.address;
     dto.strategy = staking.strategy;
     dto.minimalStake = Config.staking.minimalStake;
-    dto.minimalDeposit = Config.staking.minimalDeposit;
-    dto.fee = staking.fee;
+    dto.minimalDeposit = Config.payIn.min.DeFiChain[staking.asset.name];
+    dto.fee = staking.fee ?? Config.staking.defaultFee;
     dto.balance = staking.getBalance();
     dto.pendingDeposits = staking.getUnconfirmedDepositsAmount();
     dto.pendingWithdrawals = staking.getPendingWithdrawalsAmount();
