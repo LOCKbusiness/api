@@ -16,12 +16,12 @@ export class GetOrCreateStakingQuery {
   @ValidateIf((o) => !o.assetName || o.asset)
   asset: string;
 
-  @ApiProperty()
+  @ApiProperty({ enum: Blockchain })
   @IsNotEmpty()
   @IsEnum(Blockchain)
   blockchain: Blockchain;
 
-  @ApiProperty()
+  @ApiProperty({ enum: StakingStrategy })
   @IsNotEmpty()
   @IsEnum(StakingStrategy)
   strategy: StakingStrategy = StakingStrategy.MASTERNODE;

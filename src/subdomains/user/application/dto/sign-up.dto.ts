@@ -14,6 +14,7 @@ export class SignUpDto {
 
   @ApiProperty({
     description: 'Blockchain for login',
+    enum: Blockchain,
   })
   @IsNotEmpty()
   @IsEnum(Blockchain)
