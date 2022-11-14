@@ -91,8 +91,8 @@ export class Configuration {
 
   kyc = {
     secret: process.env.KYC_SECRET,
-    phrase: process.env.KYC_PHRASE?.split(','),
-    allowedWebhookIps: process.env.KYC_WEBHOOK_IPS?.split(','),
+    phrase: process.env.KYC_PHRASE?.split(',') ?? [],
+    allowedWebhookIps: process.env.KYC_WEBHOOK_IPS?.split(',') ?? [],
     apiUrl: process.env.KYC_API_URL,
     frontendUrl: (kycHash: string) => `${process.env.KYC_FRONTEND_URL}?code=${kycHash}`,
   };
@@ -110,7 +110,7 @@ export class Configuration {
 
   blockchain = {
     minFeeRate: 0.00001,
-    minFeeBuffer: 1,
+    minFeeBuffer: 0.1,
     default: {
       user: process.env.NODE_USER,
       password: process.env.NODE_PASSWORD,
@@ -134,17 +134,16 @@ export class Configuration {
   };
 
   payIn = {
-    minPayIn: {
-      Fiat: {
-        USD: 1,
-      },
-      Bitcoin: {
-        BTC: 0.0005,
-      },
+    min: {
       DeFiChain: {
         DFI: 0.0001,
-        USD: 1,
+        DUSD: 1,
       },
+    },
+    forward: {
+      phrase: process.env.FORWARD_PHRASE?.split(',') ?? [],
+      accountToAccountFee: 0.00000297,
+      timeout: 300000, // 5 minutes
     },
   };
 

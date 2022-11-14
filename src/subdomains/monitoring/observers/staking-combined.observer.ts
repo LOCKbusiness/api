@@ -82,8 +82,8 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
     const dbBalance = await getCustomRepository(StakingRepository)
       .createQueryBuilder('staking')
       .leftJoin('staking.asset', 'asset')
-      .where('asset.name = :name', { name: 'DFI' })
       .select('SUM(balance)', 'balance')
+      .where('asset.name = :name', { name: 'DFI' })
       .getRawOne<{ balance: number }>()
       .then((b) => b.balance);
 

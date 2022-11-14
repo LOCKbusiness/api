@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { AssetRepository } from 'src/shared/models/asset/asset.repository';
-import { Asset } from './asset.entity';
+import { Asset, AssetType } from './asset.entity';
 
 export interface AssetQuery {
   name: string;
-  blockchain: string;
+  blockchain: Blockchain;
+  type: AssetType;
 }
 
 @Injectable()

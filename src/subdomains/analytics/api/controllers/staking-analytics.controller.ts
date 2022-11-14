@@ -2,6 +2,7 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { StakingDepositService } from 'src/subdomains/staking/application/services/staking-deposit.service';
 import { StakingWithdrawalService } from 'src/subdomains/staking/application/services/staking-withdrawal.service';
+import { StakingAnalyticsQuery } from '../../application/dto/input/staking-analytics-query.dto';
 import { StakingAnalyticsOutputDto } from '../../application/dto/output/staking-analytics.output.dto';
 import { TimeSpanDto } from '../../application/dto/output/time-span.dto';
 import { StakingTransactionDto } from '../../application/dto/output/transactions.dto';
@@ -18,8 +19,8 @@ export class StakingAnalyticsController {
 
   @Get()
   @ApiResponse({ status: 200, type: StakingAnalyticsOutputDto })
-  async getStakingAnalytics(): Promise<StakingAnalyticsOutputDto> {
-    return this.stakingAnalyticsService.getStakingAnalyticsCache();
+  async getStakingAnalytics(@Query() query: StakingAnalyticsQuery): Promise<StakingAnalyticsOutputDto> {
+    return this.stakingAnalyticsService.getStakingAnalyticsCache(query);
   }
 
   @Get('transactions')

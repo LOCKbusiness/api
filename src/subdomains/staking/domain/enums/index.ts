@@ -46,3 +46,8 @@ export enum MasternodeTimeLock {
   FIVE_YEAR_FREEZER = 260,
   TEN_YEAR_FREEZER = 520,
 }
+
+export enum StakingStrategy {
+  MASTERNODE = 'Masternode',
+  LIQUIDITY_MINING = 'LiquidityMining',
+}

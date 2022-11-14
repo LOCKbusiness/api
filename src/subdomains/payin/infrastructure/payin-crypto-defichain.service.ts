@@ -1,23 +1,32 @@
 import { Injectable } from '@nestjs/common';
-import { UTXO } from '@defichain/jellyfish-api-core/dist/category/wallet';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { Config } from 'src/config/config';
-import { AccountHistory } from '@defichain/jellyfish-api-core/dist/category/account';
+import { AccountHistory as JellyAccountHistory } from '@defichain/jellyfish-api-core/dist/category/account';
 import { PayInTransaction } from '../application/interfaces';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { PayInBlockchainAddress } from '../domain/entities/payin-blockchain-address.entity';
+import { AssetType } from 'src/shared/models/asset/asset.entity';
 
 interface HistoryAmount {
   amount: number;
   asset: string;
 }
 
+type AccountHistory = Omit<JellyAccountHistory & HistoryAmount & { assetType: AssetType }, 'amounts'>;
+
 @Injectable()
 export class PayInDeFiChainService {
   private client: DeFiClient;
 
   private readonly utxoTxTypes = ['receive', 'AccountToUtxos'];
+  private readonly tokenTxTypes = [
+    'AccountToAccount',
+    'AnyAccountsToAccounts',
+    'WithdrawFromVault',
+    'PoolSwap',
+    'RemovePoolLiquidity',
+  ];
 
   constructor(nodeService: NodeService) {
     nodeService.getConnectedNode(NodeType.INPUT).subscribe((client) => (this.client = client));
@@ -36,47 +45,51 @@ export class PayInDeFiChainService {
   private async getNewTransactionsHistorySince(lastHeight: number): Promise<AccountHistory[]> {
     const { blocks: currentHeight } = await this.client.checkSync();
 
-    const utxos = await this.client.getUtxo();
-
-    return this.getAddressesWithFunds(utxos)
-      .then((a) => this.client.getHistories(a, lastHeight + 1, currentHeight))
-      .then((i) => i.filter((h) => [...this.utxoTxTypes].includes(h.type)))
-      .then((i) => i.filter((h) => h.blockHeight > lastHeight));
+    return this.client
+      .listHistory(lastHeight + 1, currentHeight)
+      .then((i) => i.filter((h) => h.blockHeight > lastHeight))
+      .then((i) => this.splitHistories(i))
+      .then((i) => i.filter((a) => this.isDFI(a) || this.isDUSD(a)))
+      .then((i) => i.map((a) => ({ ...a, amount: Math.abs(a.amount) })));
   }
 
-  private async getAddressesWithFunds(utxo: UTXO[]): Promise<string[]> {
-    const utxoAddresses = utxo
-      .filter((u) => u.amount.toNumber() >= Config.payIn.minPayIn.DeFiChain.DFI)
-      .map((u) => u.address);
+  private splitHistories(histories: JellyAccountHistory[]): AccountHistory[] {
+    return histories
+      .map((h) => h.amounts.map((a) => ({ ...h, ...this.parseAmount(a), assetType: this.getAssetType(h) })))
+      .reduce((prev, curr) => prev.concat(curr), []);
+  }
 
-    return [...new Set(utxoAddresses)];
+  private getAssetType(history: JellyAccountHistory): AssetType | undefined {
+    if (this.utxoTxTypes.includes(history.type)) return AssetType.COIN;
+    if (this.tokenTxTypes.includes(history.type)) return AssetType.TOKEN;
+  }
+
+  private isDFI(history: AccountHistory): boolean {
+    return (
+      history.assetType === AssetType.COIN &&
+      history.asset === 'DFI' &&
+      Math.abs(history.amount) >= Config.payIn.min.DeFiChain.DFI
+    );
+  }
+
+  private isDUSD(history: AccountHistory): boolean {
+    return (
+      history.assetType === AssetType.TOKEN &&
+      history.asset === 'DUSD' &&
+      history.amount >= Config.payIn.min.DeFiChain.DUSD
+    );
   }
 
   private mapHistoriesToTransactions(histories: AccountHistory[]): PayInTransaction[] {
-    const transactions: PayInTransaction[] = [];
-
-    histories.forEach((h) => {
-      const amounts = this.getHistoryAmounts(h);
-
-      amounts.forEach((a) => {
-        transactions.push({
-          address: PayInBlockchainAddress.create(h.owner, Blockchain.DEFICHAIN),
-          type: h.type,
-          txId: h.txid,
-          blockHeight: h.blockHeight,
-          amount: a.amount,
-          asset: a.asset,
-        });
-      });
-    });
-
-    return transactions;
-  }
-
-  private getHistoryAmounts(history: AccountHistory): HistoryAmount[] {
-    const amounts = history.amounts.map((a) => this.parseAmount(a));
-
-    return amounts.map((a) => ({ ...a, amount: Math.abs(a.amount) }));
+    return histories.map((h) => ({
+      address: PayInBlockchainAddress.create(h.owner, Blockchain.DEFICHAIN),
+      type: h.type,
+      txId: h.txid,
+      blockHeight: h.blockHeight,
+      amount: h.amount,
+      asset: h.asset,
+      assetType: h.assetType,
+    }));
   }
 
   private parseAmount(amount: string): HistoryAmount {

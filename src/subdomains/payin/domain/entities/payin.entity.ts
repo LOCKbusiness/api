@@ -4,7 +4,7 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { PayInBlockchainAddress } from './payin-blockchain-address.entity';
 
 export enum PayInPurpose {
-  CRYPTO_STAKING = 'CryptoStaking',
+  STAKING = 'Staking',
 }
 
 export enum PayInStatus {

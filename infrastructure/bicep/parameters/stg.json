@@ -91,6 +91,9 @@
     },
     "kycFrontendUrl": {
       "value": "https://dev.kyc.lock.space"
+    },
+    "forwardPhrase": {
+      "value": "xxx"
     }
   }
 }

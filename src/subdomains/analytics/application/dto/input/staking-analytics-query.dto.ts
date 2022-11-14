@@ -1,27 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsEnum, ValidateIf } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
 
-export class GetOrCreateStakingQuery {
-  // TODO: remove
-  @IsNotEmpty()
-  @IsString()
-  @ValidateIf((o) => o.assetName)
-  assetName: string;
-
+export class StakingAnalyticsQuery {
+  // eslint-disable-next-line @typescript-eslint/no-inferrable-types
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  @ValidateIf((o) => !o.assetName || o.asset)
-  asset: string;
+  asset: string = 'DFI';
 
-  @ApiProperty()
+  @ApiProperty({ enum: Blockchain })
   @IsNotEmpty()
   @IsEnum(Blockchain)
-  blockchain: Blockchain;
+  blockchain: Blockchain = Blockchain.DEFICHAIN;
 
-  @ApiProperty()
+  @ApiProperty({ enum: StakingStrategy })
   @IsNotEmpty()
   @IsEnum(StakingStrategy)
   strategy: StakingStrategy = StakingStrategy.MASTERNODE;

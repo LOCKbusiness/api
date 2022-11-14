@@ -1,10 +1,18 @@
 import { GetConfig } from 'src/config/config';
+import { Asset } from 'src/shared/models/asset/asset.entity';
 import { IEntity } from 'src/shared/models/entity';
 import { Util } from 'src/shared/util';
-import { Column, Entity } from 'typeorm';
+import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
+import { Column, Entity, ManyToOne } from 'typeorm';
 
 @Entity()
 export class StakingAnalytics extends IEntity {
+  @ManyToOne(() => Asset, { nullable: false, eager: true })
+  asset: Asset;
+
+  @Column({ nullable: false })
+  strategy: StakingStrategy;
+
   @Column({ type: 'float', nullable: true })
   apr: number;
 

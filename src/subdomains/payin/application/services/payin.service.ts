@@ -86,6 +86,7 @@ export class PayInService {
     const assetEntity = await this.assetService.getAssetByQuery({
       name: tx.asset,
       blockchain: Blockchain.DEFICHAIN,
+      type: tx.assetType,
     });
 
     const existingAddress = await this.addressRepository.findOne({
