@@ -64,4 +64,10 @@ export class DeFiClient extends NodeClient {
   async getToken(): Promise<AccountResult<string, string>[]> {
     return this.callNode((c) => c.account.listAccounts({}, false, { indexedAmounts: false, isMineOnly: true }));
   }
+
+  // raw tx
+  async signAndSend(hex: string): Promise<string> {
+    const signedTx = await this.signTx(hex);
+    return this.sendRawTx(signedTx.hex);
+  }
 }

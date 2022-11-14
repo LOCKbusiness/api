@@ -99,7 +99,7 @@ export class NodeClient {
 
   async sendRawTx(hex: string): Promise<string> {
     if (!hex) throw new Error('Hex is undefined!');
-    return this.callNode((c) => c.call('sendrawtransaction', [hex], 'number'), true);
+    return this.callNode((c) => c.call('sendrawtransaction', [hex], 'number'), false);
   }
 
   // UTXO

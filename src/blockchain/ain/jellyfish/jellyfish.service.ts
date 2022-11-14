@@ -1,6 +1,7 @@
 import { MainNet, Network, TestNet } from '@defichain/jellyfish-network';
 import {
   CTransactionSegWit,
+  TransactionSegWit,
   Vin,
   Vout,
   Witness,
@@ -182,13 +183,7 @@ export class JellyfishService {
       ]),
     ];
 
-    const tx = new CTransactionSegWit(RawTxUtil.createTxSegWit(vins, vouts, witnesses));
-    return {
-      id: tx.txId,
-      hex: tx.toHex(),
-      scriptHex: utxo.scriptHex,
-      prevouts: utxo.prevouts,
-    };
+    return this.createTx(utxo, vins, vouts, witnesses);
   }
 
   private async generateRawTxForResign(masternode: Masternode): Promise<RawTxDto> {
@@ -208,13 +203,7 @@ export class JellyfishService {
       ]),
     ];
 
-    const tx = new CTransactionSegWit(RawTxUtil.createTxSegWit(vins, vouts, witnesses));
-    return {
-      id: tx.txId,
-      hex: tx.toHex(),
-      scriptHex: utxo.scriptHex,
-      prevouts: utxo.prevouts,
-    };
+    return this.createTx(utxo, vins, vouts, witnesses);
   }
 
   private async generateRawTxForSend(
@@ -288,17 +277,9 @@ export class JellyfishService {
     const witness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(fromPubKeyHash)]);
     const witnesses = new Array(vins.length).fill(witness);
 
-    if (useFeeExactAmount) {
-      const tx = new CTransactionSegWit(RawTxUtil.createTxSegWit(vins, vouts, witnesses));
-      return {
-        id: tx.txId,
-        hex: tx.toHex(),
-        scriptHex: utxo.scriptHex,
-        prevouts: utxo.prevouts,
-      };
-    } else {
-      return this.createTxAndCalcFee(utxo, vins, vouts, witnesses);
-    }
+    return useFeeExactAmount
+      ? this.createTx(utxo, vins, vouts, witnesses)
+      : this.createTxAndCalcFee(utxo, vins, vouts, witnesses);
   }
 
   private async generateRawTxForCreateVault(owner: string): Promise<RawTxDto> {
@@ -418,6 +399,15 @@ export class JellyfishService {
     const lastElement = vouts[vouts.length - 1];
     lastElement.value = lastElement.value.minus(fee).minus(operationFee);
 
+    return this.toDto(tx, utxo);
+  }
+
+  private createTx(utxo: UtxoInformation, vins: Vin[], vouts: Vout[], witnesses: Witness[]): RawTxDto {
+    const tx = RawTxUtil.createTxSegWit(vins, vouts, witnesses);
+    return this.toDto(tx, utxo);
+  }
+
+  private toDto(tx: TransactionSegWit, utxo: UtxoInformation): RawTxDto {
     const txObj = new CTransactionSegWit(tx);
     return {
       id: txObj.txId,
