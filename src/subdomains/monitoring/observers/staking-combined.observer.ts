@@ -39,6 +39,7 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
     try {
       data = await this.getStaking();
     } catch (e) {
+      console.error('Exception during monitoring staking combined:', e);
       data = this.getDefaultData();
     }
 
@@ -71,7 +72,7 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
     // calculate actual balance
     const activeMasternodes = await getCustomRepository(MasternodeRepository).find({
       where: {
-        status: Not(In([MasternodeState.IDLE, MasternodeState.RESIGNED])),
+        state: Not(In([MasternodeState.IDLE, MasternodeState.RESIGNED])),
       },
     });
     const addresses = [...activeMasternodes.map((m) => m.owner), Config.staking.liquidity.address];
