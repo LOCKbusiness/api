@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { BadRequestError } from 'passport-headerapikey';
 import { Config, Process } from 'src/config/config';
 import { AssetQuery, AssetService } from 'src/shared/models/asset/asset.service';
 import { StakingService } from 'src/subdomains/staking/application/services/staking.service';
