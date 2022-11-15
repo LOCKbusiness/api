@@ -81,10 +81,12 @@ export class TransactionService {
 
   async sign(rawTx: RawTxDto, signature: string, payload?: any): Promise<string> {
     const id = rawTx.id ?? this.receiveIdFor(rawTx);
-    const tx = await this.repository.findOne({ chainId: id });
-    if (tx && tx.signedHex) return Promise.resolve(tx.signedHex);
+    const existingTx = await this.repository.findOne({ chainId: id });
+    if (existingTx && existingTx.signedHex) return Promise.resolve(existingTx.signedHex);
 
-    await this.repository.save(TransactionEntity.create(id, rawTx, payload, signature));
+    const newTx = TransactionEntity.create(id, rawTx, payload, signature);
+    const tx = existingTx ? Object.assign(existingTx, newTx) : newTx;
+    await this.repository.save(tx);
     console.info(`Added ${id} for signing`);
     return this.waitForResponse(id);
   }
