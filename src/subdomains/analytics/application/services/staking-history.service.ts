@@ -62,9 +62,9 @@ export class StakingHistoryService {
 
   private getHistoryCT(deposits: Deposit[], withdrawals: Withdrawal[], rewards: Reward[]): CoinTrackingCsvHistoryDto[] {
     const transactions: CoinTrackingCsvHistoryDto[] = [
-      CoinTrackingHistoryDtoMapper.getStakingDepositHistoryCT(deposits),
-      CoinTrackingHistoryDtoMapper.getStakingWithdrawalHistoryCT(withdrawals),
-      CoinTrackingHistoryDtoMapper.getStakingRewardHistoryCT(rewards),
+      CoinTrackingHistoryDtoMapper.mapStakingDeposits(deposits),
+      CoinTrackingHistoryDtoMapper.mapStakingWithdrawals(withdrawals),
+      CoinTrackingHistoryDtoMapper.mapStakingRewards(rewards),
     ]
       .reduce((prev, curr) => prev.concat(curr), [])
       .sort((tx1, tx2) => (tx1.date.getTime() > tx2.date.getTime() ? -1 : 1));
@@ -74,9 +74,9 @@ export class StakingHistoryService {
 
   private getHistoryCompact(deposits: Deposit[], withdrawals: Withdrawal[], rewards: Reward[]): CompactHistoryDto[] {
     const transactions: CompactHistoryDto[] = [
-      CompactHistoryDtoMapper.getStakingDepositHistoryCompact(deposits),
-      CompactHistoryDtoMapper.getStakingWithdrawalHistoryCompact(withdrawals),
-      CompactHistoryDtoMapper.getStakingRewardHistoryCompact(rewards),
+      CompactHistoryDtoMapper.mapStakingDeposits(deposits),
+      CompactHistoryDtoMapper.mapStakingWithdrawals(withdrawals),
+      CompactHistoryDtoMapper.mapStakingRewards(rewards),
     ]
       .reduce((prev, curr) => prev.concat(curr), [])
       .sort((tx1, tx2) => (tx1.date.getTime() > tx2.date.getTime() ? -1 : 1));

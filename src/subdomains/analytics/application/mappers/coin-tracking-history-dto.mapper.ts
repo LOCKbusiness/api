@@ -7,7 +7,7 @@ import { CoinTrackingCsvHistoryDto } from '../dto/output/coin-tracking-history.d
 import { CoinTrackingTransactionTypes } from '../services/staking-history.service';
 
 export class CoinTrackingHistoryDtoMapper {
-  static getStakingDepositHistoryCT(deposits: Deposit[]): CoinTrackingCsvHistoryDto[] {
+  static mapStakingDeposits(deposits: Deposit[]): CoinTrackingCsvHistoryDto[] {
     return deposits
       .filter((c) => c.status === DepositStatus.CONFIRMED)
       .map((c) => ({
@@ -28,7 +28,7 @@ export class CoinTrackingHistoryDtoMapper {
       }));
   }
 
-  static getStakingWithdrawalHistoryCT(withdrawals: Withdrawal[]): CoinTrackingCsvHistoryDto[] {
+  static mapStakingWithdrawals(withdrawals: Withdrawal[]): CoinTrackingCsvHistoryDto[] {
     return withdrawals
       .filter((c) => c.status === WithdrawalStatus.CONFIRMED)
       .map((c) => ({
@@ -49,7 +49,7 @@ export class CoinTrackingHistoryDtoMapper {
       }));
   }
 
-  static getStakingRewardHistoryCT(rewards: Reward[]): CoinTrackingCsvHistoryDto[] {
+  static mapStakingRewards(rewards: Reward[]): CoinTrackingCsvHistoryDto[] {
     return rewards
       .filter((c) => c.status === RewardStatus.CONFIRMED)
       .map((c) => ({
@@ -70,7 +70,7 @@ export class CoinTrackingHistoryDtoMapper {
       }));
   }
 
-  static getAssetSymbolCT(asset: Asset): string {
+  private static getAssetSymbolCT(asset: Asset): string {
     return asset.name === 'DUSD' ? 'DUSD4' : asset.category === AssetCategory.CRYPTO ? asset.name : `d${asset.name}`;
   }
 }

@@ -5,7 +5,18 @@ import { DepositStatus, RewardStatus, WithdrawalStatus } from 'src/subdomains/st
 import { CompactHistoryDto, CompactHistoryStatus, HistoryTransactionType } from '../dto/output/history.dto';
 
 export class CompactHistoryDtoMapper {
-  static getStakingDepositHistoryCompact(deposits: Deposit[]): CompactHistoryDto[] {
+  private static CompactStatusMapper: {
+    [key in WithdrawalStatus | DepositStatus | RewardStatus]: CompactHistoryStatus | null;
+  } = {
+    [DepositStatus.OPEN]: null,
+    [WithdrawalStatus.DRAFT]: null,
+    [WithdrawalStatus.PENDING]: CompactHistoryStatus.PENDING,
+    [WithdrawalStatus.PAYING_OUT]: CompactHistoryStatus.PENDING,
+    [WithdrawalStatus.CONFIRMED]: CompactHistoryStatus.CONFIRMED,
+    [WithdrawalStatus.FAILED]: CompactHistoryStatus.FAILED,
+  };
+
+  static mapStakingDeposits(deposits: Deposit[]): CompactHistoryDto[] {
     return deposits
       .map((c) => ({
         type: HistoryTransactionType.DEPOSIT,
@@ -18,12 +29,12 @@ export class CompactHistoryDtoMapper {
         amountInUsd: c.amountUsd,
         txId: c.payInTxId,
         date: c.created,
-        status: CompactStatusMapper[c.status],
+        status: this.CompactStatusMapper[c.status],
       }))
       .filter((c) => c.status != null);
   }
 
-  static getStakingWithdrawalHistoryCompact(withdrawals: Withdrawal[]): CompactHistoryDto[] {
+  static mapStakingWithdrawals(withdrawals: Withdrawal[]): CompactHistoryDto[] {
     return withdrawals
       .map((c) => ({
         type: HistoryTransactionType.WITHDRAWAL,
@@ -36,12 +47,12 @@ export class CompactHistoryDtoMapper {
         amountInUsd: c.amountUsd,
         txId: c.withdrawalTxId,
         date: c.outputDate ?? c.updated,
-        status: CompactStatusMapper[c.status],
+        status: this.CompactStatusMapper[c.status],
       }))
       .filter((c) => c.status != null);
   }
 
-  static getStakingRewardHistoryCompact(rewards: Reward[]): CompactHistoryDto[] {
+  static mapStakingRewards(rewards: Reward[]): CompactHistoryDto[] {
     return rewards
       .map((c) => ({
         type: HistoryTransactionType.REWARD,
@@ -54,19 +65,8 @@ export class CompactHistoryDtoMapper {
         amountInUsd: c.amountUsd,
         txId: c.reinvestTxId,
         date: c.reinvestOutputDate ?? c.updated,
-        status: CompactStatusMapper[c.status],
+        status: this.CompactStatusMapper[c.status],
       }))
       .filter((c) => c.status != null);
   }
 }
-
-export const CompactStatusMapper: {
-  [key in WithdrawalStatus | DepositStatus | RewardStatus]: CompactHistoryStatus | null;
-} = {
-  [DepositStatus.OPEN]: null,
-  [WithdrawalStatus.DRAFT]: null,
-  [WithdrawalStatus.PENDING]: CompactHistoryStatus.PENDING,
-  [WithdrawalStatus.PAYING_OUT]: CompactHistoryStatus.PENDING,
-  [WithdrawalStatus.CONFIRMED]: CompactHistoryStatus.CONFIRMED,
-  [WithdrawalStatus.FAILED]: CompactHistoryStatus.FAILED,
-};
