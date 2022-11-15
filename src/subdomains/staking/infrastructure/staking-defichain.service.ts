@@ -76,14 +76,21 @@ export class StakingDeFiChainService {
 
   // FORWARD TOKEN LIQ //
   private async forwardLiquidityMiningDeposit(address: string, amount: number, asset: Asset): Promise<string> {
+    console.info(`forwarding ${amount} of ${asset.name} of ${address}`);
     await this.sendFeeUtxosToDepositIfNeeded(address);
     const token = await this.tokenProviderService.get(asset.name);
+    console.log(`${asset.name} has blockchain id ${token.id}`);
     const forwardToLiq = await this.jellyfishService.rawTxForForwardAccountToLiq(
       address,
       +token.id,
       new BigNumber(amount),
     );
-    return this.inputClient.signAndSend(forwardToLiq.hex);
+    try {
+      return this.inputClient.signAndSend(forwardToLiq.hex);
+    } catch (e) {
+      await this.jellyfishService.unlock(forwardToLiq);
+      throw e;
+    }
   }
 
   private async sendFeeUtxosToDepositIfNeeded(address: string): Promise<void> {
@@ -107,10 +114,15 @@ export class StakingDeFiChainService {
       amount,
       false,
     );
-    const signedSendUtxosHex = await this.jellyfishService.signRawTx(sendUtxosToDeposit, forwardAccount);
-    const txSendUtxosId = await this.whaleClient.sendRaw(signedSendUtxosHex);
-    console.info(`sent ${txSendUtxosId}, now waiting for blockchain...`);
-    await this.whaleClient.waitForTx(txSendUtxosId, Config.payIn.forward.timeout);
-    console.info(`... completed`);
+    try {
+      const signedSendUtxosHex = await this.jellyfishService.signRawTx(sendUtxosToDeposit, forwardAccount);
+      const txSendUtxosId = await this.whaleClient.sendRaw(signedSendUtxosHex);
+      console.info(`sent ${txSendUtxosId}, now waiting for blockchain...`);
+      await this.whaleClient.waitForTx(txSendUtxosId, Config.payIn.forward.timeout);
+      console.info(`... completed`);
+    } catch (e) {
+      await this.jellyfishService.unlock(sendUtxosToDeposit);
+      throw e;
+    }
   }
 }
