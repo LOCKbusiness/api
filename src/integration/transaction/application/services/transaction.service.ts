@@ -30,7 +30,7 @@ export class TransactionService {
       const txs = await this.repository.getUndecidedTransactions();
       for (const tx of txs) {
         try {
-          await this.client.getTx(tx.id);
+          await this.client.getTx(tx.chainId);
           await this.repository.save(tx.foundOnBlockchain());
         } catch {
           await this.repository.save(tx.notFoundOnBlockchain());
@@ -50,38 +50,38 @@ export class TransactionService {
   }
 
   async verified(id: string, signature: string) {
-    const tx = await this.repository.findOne(id);
+    const tx = await this.repository.findOne({ chainId: id });
     if (!tx) throw new NotFoundException('Transaction not found');
-    console.info(`${tx.id} verified`);
+    console.info(`${tx.chainId} verified`);
     await this.repository.save(tx.verified(signature));
   }
 
   async invalidated(id: string, reason?: string) {
-    const tx = await this.repository.findOne(id);
+    const tx = await this.repository.findOne({ chainId: id });
     if (!tx) throw new NotFoundException('Transaction not found');
-    console.info(`${tx.id} invalidated with reason: ${reason}`);
+    console.info(`${tx.chainId} invalidated with reason: ${reason}`);
     await this.repository.save(tx.invalidated(reason));
 
-    const txPromise = this.transactions.get(tx.id);
-    this.transactions.delete(tx.id);
-    txPromise?.invalidated(`${tx.id} ${reason}`);
+    const txPromise = this.transactions.get(tx.chainId);
+    this.transactions.delete(tx.chainId);
+    txPromise?.invalidated(`${tx.chainId} ${reason}`);
   }
 
   async signed(id: string, hex: string) {
-    const tx = await this.repository.findOne(id);
+    const tx = await this.repository.findOne({ chainId: id });
     if (!tx) throw new NotFoundException('Transaction not found');
     if (tx.invalidationReason) throw new BadRequestException('Transaction is invalidated');
-    console.info(`${tx.id} signed`);
+    console.info(`${tx.chainId} signed`);
     await this.repository.save(tx.signed(hex));
 
-    const txPromise = this.transactions.get(tx.id);
-    this.transactions.delete(tx.id);
+    const txPromise = this.transactions.get(tx.chainId);
+    this.transactions.delete(tx.chainId);
     txPromise?.signed(hex);
   }
 
   async sign(rawTx: RawTxDto, signature: string, payload?: any): Promise<string> {
     const id = rawTx.id ?? this.receiveIdFor(rawTx);
-    const tx = await this.repository.findOne(id);
+    const tx = await this.repository.findOne({ chainId: id });
     if (tx && tx.signedHex) return Promise.resolve(tx.signedHex);
 
     await this.repository.save(TransactionEntity.create(id, rawTx, payload, signature));
@@ -104,7 +104,7 @@ export class TransactionService {
   private toDto(transactions: TransactionEntity[]): TransactionOutputDto[] {
     return transactions.map((t) => {
       return {
-        id: t.id,
+        id: t.chainId,
         issuerSignature: t.issuerSignature,
         verifierSignature: t.verifierSignature,
         rawTx: JSON.parse(t.rawTx) as RawTxDto,
