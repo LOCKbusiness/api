@@ -27,6 +27,15 @@ export class HistoryBaseDto {
   @ApiPropertyOptional()
   outputAsset: string;
 
+  @ApiPropertyOptional()
+  amountInEur: number;
+
+  @ApiPropertyOptional()
+  amountInChf: number;
+
+  @ApiPropertyOptional()
+  amountInUsd: number;
+
   @ApiProperty()
   txId: string;
 
