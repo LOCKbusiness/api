@@ -49,7 +49,7 @@ export class StakingDeFiChainService {
   ): Promise<string> {
     switch (strategy) {
       case StakingStrategy.MASTERNODE:
-        return this.inputClient.sendCompleteUtxo(sourceAddress, Config.staking.liquidity.address, amount);
+        return this.forwardMasternodeDeposit(sourceAddress, amount);
       case StakingStrategy.LIQUIDITY_MINING:
         return this.forwardLiquidityMiningDeposit(sourceAddress, amount, asset);
     }
@@ -72,6 +72,12 @@ export class StakingDeFiChainService {
     const transaction = await this.whaleClient.getTx(withdrawalTxId);
 
     return transaction && transaction.block.hash != null;
+  }
+
+  // FORWARD UTXO LIQ //
+  private async forwardMasternodeDeposit(address: string, amount: number): Promise<string> {
+    const forwardToLiq = await this.jellyfishService.rawTxForSendToLiq(address, new BigNumber(amount));
+    return this.inputClient.signAndSend(forwardToLiq.hex);
   }
 
   // FORWARD TOKEN LIQ //
