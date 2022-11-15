@@ -13,9 +13,9 @@ import { Asset } from 'src/shared/models/asset/asset.entity';
 import { StakingStrategy } from '../domain/enums';
 import { JellyfishWallet, WalletHdNode } from '@defichain/jellyfish-wallet';
 import { WhaleWalletAccount } from '@defichain/whale-api-wallet';
-import { JellyfishService } from 'src/blockchain/ain/jellyfish/jellyfish.service';
+import { JellyfishService } from 'src/blockchain/ain/jellyfish/services/jellyfish.service';
 import { TokenProviderService } from 'src/blockchain/ain/whale/token-provider.service';
-import { UtxoProviderService } from 'src/blockchain/ain/jellyfish/utxo-provider.service';
+import { UtxoProviderService } from 'src/blockchain/ain/jellyfish/services/utxo-provider.service';
 
 @Injectable()
 export class StakingDeFiChainService {

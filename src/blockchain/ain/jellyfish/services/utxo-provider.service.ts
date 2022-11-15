@@ -3,30 +3,16 @@ import { Prevout } from '@defichain/jellyfish-transaction-builder';
 import BigNumber from 'bignumber.js';
 import { SmartBuffer } from 'smart-buffer';
 import { toOPCodes } from '@defichain/jellyfish-transaction';
-import { WhaleClient } from '../whale/whale-client';
-import { WhaleService } from '../whale/whale.service';
+import { WhaleClient } from '../../whale/whale-client';
+import { WhaleService } from '../../whale/whale.service';
 import { Injectable } from '@nestjs/common';
 import { Config } from 'src/config/config';
 import { Util } from 'src/shared/util';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Lock } from 'src/shared/lock';
-
-export interface UtxoInformation {
-  prevouts: Prevout[];
-  scriptHex: string;
-  total: BigNumber;
-}
-
-export enum UtxoSizePriority {
-  BIG,
-  SMALL,
-  FITTING,
-}
-
-export interface UtxoStatistics {
-  quantity: number;
-  biggest: BigNumber;
-}
+import { UtxoSizePriority } from '../domain/enums';
+import { UtxoInformation } from '../domain/entities/utxo-information';
+import { UtxoStatistics } from '../domain/entities/utxo-statistics';
 
 interface AddressUnspent extends JellyfishAddressUnspent {
   id: string;

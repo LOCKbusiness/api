@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import BigNumber from 'bignumber.js';
 import { BehaviorSubject } from 'rxjs';
 import { createCustomRawTxDto } from 'src/blockchain/ain/jellyfish/dto/__mocks__/raw-tx.dto.mock';
-import { JellyfishService } from 'src/blockchain/ain/jellyfish/jellyfish.service';
+import { JellyfishService } from 'src/blockchain/ain/jellyfish/services/jellyfish.service';
 import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/utxo-provider.service';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { NodeService } from 'src/blockchain/ain/node/node.service';

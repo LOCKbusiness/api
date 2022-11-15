@@ -2,6 +2,7 @@ import {
   DeFiTransactionConstants,
   Transaction,
   TransactionSegWit,
+  CTransactionSegWit,
   Witness,
   WitnessScript,
   Script,
@@ -13,12 +14,14 @@ import {
   PoolSwap,
 } from '@defichain/jellyfish-transaction';
 import { fromAddress, fromScriptHex } from '@defichain/jellyfish-address';
-import { Prevout } from '@defichain/jellyfish-transaction-builder';
+import { Prevout, calculateFeeP2WPKH } from '@defichain/jellyfish-transaction-builder';
 import BigNumber from 'bignumber.js';
 import { Config } from 'src/config/config';
 import { MasternodeTimeLock } from 'src/subdomains/staking/domain/enums';
 import { DefiTxHelper } from './defi-tx-helper';
-import { JellyfishService } from './jellyfish.service';
+import { JellyfishService } from '../services/jellyfish.service';
+import { UtxoInformation } from '../domain/entities/utxo-information';
+import { RawTxDto } from '../dto/raw-tx.dto';
 
 interface OpPushData {
   type: string;
@@ -192,6 +195,36 @@ export class RawTxUtil {
       vout: vouts,
       witness: witnesses,
       lockTime: 0x00000000,
+    };
+  }
+
+  static generateTx(utxo: UtxoInformation, vins: Vin[], vouts: Vout[], witnesses: Witness[]): RawTxDto {
+    const tx = RawTxUtil.createTxSegWit(vins, vouts, witnesses);
+    return RawTxUtil.toDto(tx, utxo);
+  }
+
+  static generateTxAndCalcFee(
+    utxo: UtxoInformation,
+    vins: Vin[],
+    vouts: Vout[],
+    witnesses: Witness[],
+    operationFee = new BigNumber(0),
+  ): RawTxDto {
+    const tx = RawTxUtil.createTxSegWit(vins, vouts, witnesses);
+    const fee = calculateFeeP2WPKH(new BigNumber(Config.blockchain.minFeeRate), tx);
+    const lastElement = vouts[vouts.length - 1];
+    lastElement.value = lastElement.value.minus(fee).minus(operationFee);
+
+    return RawTxUtil.toDto(tx, utxo);
+  }
+
+  private static toDto(tx: TransactionSegWit, utxo: UtxoInformation): RawTxDto {
+    const txObj = new CTransactionSegWit(tx);
+    return {
+      id: txObj.txId,
+      hex: txObj.toHex(),
+      scriptHex: utxo.scriptHex,
+      prevouts: utxo.prevouts,
     };
   }
 }

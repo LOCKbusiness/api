@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RawTxDto } from 'src/blockchain/ain/jellyfish/dto/raw-tx.dto';
-import { JellyfishService } from 'src/blockchain/ain/jellyfish/jellyfish.service';
-import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/utxo-provider.service';
+import { JellyfishService } from 'src/blockchain/ain/jellyfish/services/jellyfish.service';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
@@ -30,6 +29,7 @@ import { TransactionService } from './transaction.service';
 import { WIF } from '@defichain/jellyfish-crypto';
 import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
 import { TransactionType } from '../../domain/enums';
+import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/domain/enums';
 
 @Injectable()
 export class TransactionExecutionService {
