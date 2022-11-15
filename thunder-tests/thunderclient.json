@@ -145,8 +145,13 @@
     "method": "PUT",
     "sortNum": 130000,
     "created": "2022-10-10T14:42:51.082Z",
-    "modified": "2022-10-10T14:43:17.577Z",
-    "headers": [],
+    "modified": "2022-11-15T19:57:38.828Z",
+    "headers": [
+      {
+        "name": "Device-Id",
+        "value": "my-device-id-468"
+      }
+    ],
     "params": [],
     "body": {
       "type": "json",
