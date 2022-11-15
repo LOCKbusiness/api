@@ -218,6 +218,22 @@ export class RawTxUtil {
     return RawTxUtil.toDto(tx, utxo);
   }
 
+  static generateDefiTx(
+    fromScript: Script,
+    fromPubKeyHash: string,
+    utxo: UtxoInformation,
+    vout: Vout,
+    operationFee = new BigNumber(0),
+  ): RawTxDto {
+    const vins = RawTxUtil.createVins(utxo.prevouts);
+    const vouts = [vout, RawTxUtil.createVoutReturn(fromScript, utxo.total)];
+
+    const witness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(fromPubKeyHash)]);
+    const witnesses = new Array(vins.length).fill(witness);
+
+    return RawTxUtil.generateTxAndCalcFee(utxo, vins, vouts, witnesses, operationFee);
+  }
+
   private static toDto(tx: TransactionSegWit, utxo: UtxoInformation): RawTxDto {
     const txObj = new CTransactionSegWit(tx);
     return {

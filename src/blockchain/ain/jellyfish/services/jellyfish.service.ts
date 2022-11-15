@@ -1,5 +1,5 @@
 import { MainNet, Network, TestNet } from '@defichain/jellyfish-network';
-import { CTransactionSegWit, Vout, Script, TokenBalanceUInt32, toOPCodes } from '@defichain/jellyfish-transaction';
+import { CTransactionSegWit, Vout, toOPCodes } from '@defichain/jellyfish-transaction';
 import { Prevout } from '@defichain/jellyfish-transaction-builder';
 import { JellyfishWallet, WalletAccount, WalletHdNode } from '@defichain/jellyfish-wallet';
 import { Bip32Options, MnemonicHdNodeProvider } from '@defichain/jellyfish-wallet-mnemonic';
@@ -15,8 +15,11 @@ import { RawTxUtil } from '../utils/raw-tx-util';
 import { UtxoProviderService } from './utxo-provider.service';
 import { SmartBuffer } from 'smart-buffer';
 import { UtxoSizePriority } from '../domain/enums';
-import { UtxoInformation } from '../domain/entities/utxo-information';
 import { RawTxMasternode } from '../utils/raw-tx-masternode';
+import { RawTxVault } from '../utils/raw-tx-vault';
+import { RawTxUtxo } from '../utils/raw-tx-utxo';
+import { RawTxAccount } from '../utils/raw-tx-account';
+import { RawTxPool } from '../utils/raw-tx-pool';
 
 @Injectable()
 export class JellyfishService {
@@ -69,25 +72,23 @@ export class JellyfishService {
   }
 
   async rawTxForSendFromTo(from: string, to: string, amount: BigNumber, useFeeBuffer: boolean): Promise<RawTxDto> {
-    return this.call(() => this.generateRawTxForSend(from, to, amount, true, useFeeBuffer, UtxoSizePriority.SMALL));
+    return this.call(() => RawTxUtxo.sendFromTo(from, to, amount, useFeeBuffer, this.utxoProvider));
   }
 
   async rawTxForSendFromLiq(to: string, amount: BigNumber, sizePriority: UtxoSizePriority): Promise<RawTxDto> {
-    return this.call(() =>
-      this.generateRawTxForSend(Config.staking.liquidity.address, to, amount, true, true, sizePriority),
-    );
+    return this.call(() => RawTxUtxo.sendFromLiq(to, amount, sizePriority, this.utxoProvider));
   }
 
   async rawTxForSendToLiq(from: string, amount: BigNumber): Promise<RawTxDto> {
-    return this.call(() => this.generateRawTxForSend(from, Config.staking.liquidity.address, amount, false, false));
+    return this.call(() => RawTxUtxo.sendToLiq(from, amount, this.utxoProvider));
   }
 
   async rawTxForSplitUtxo(address: string, split: number): Promise<RawTxDto> {
-    return this.call(() => this.generateRawTxForUtxoManagement(address, split, UtxoSizePriority.BIG));
+    return this.call(() => RawTxUtxo.split(address, split, this.utxoProvider));
   }
 
   async rawTxForMergeUtxos(address: string, merge: number): Promise<RawTxDto> {
-    return this.call(() => this.generateRawTxForUtxoManagement(address, merge, UtxoSizePriority.SMALL));
+    return this.call(() => RawTxUtxo.merge(address, merge, this.utxoProvider));
   }
 
   async unlock(rawTx: RawTxDto): Promise<void> {
@@ -95,39 +96,31 @@ export class JellyfishService {
   }
 
   async rawTxForForwardAccountToLiq(from: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.call(() =>
-      this.generateRawTxForSendAccount(
-        from,
-        Config.yieldMachine.liquidity.address,
-        token,
-        amount,
-        new BigNumber(Config.payIn.forward.accountToAccountFee),
-      ),
-    );
+    return this.call(() => RawTxAccount.sendToLiq(from, token, amount, this.utxoProvider));
   }
 
   async rawTxForSendAccount(from: string, to: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.call(() => this.generateRawTxForSendAccount(from, to, token, amount));
+    return this.call(() => RawTxAccount.sendFromTo(from, to, token, amount, this.utxoProvider));
   }
 
   async rawTxForCreateVault(owner: string): Promise<RawTxDto> {
-    return this.call(() => this.generateRawTxForCreateVault(owner));
+    return this.call(() => RawTxVault.create(owner, this.utxoProvider));
   }
 
   async rawTxForDepositToVault(from: string, vault: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.call(() => this.generateRawVaultTx(from, vault, token, amount, RawTxUtil.createVoutDepositToVault));
+    return this.call(() => RawTxVault.deposit(from, vault, token, amount, this.utxoProvider));
   }
 
   async rawTxForWithdrawFromVault(to: string, vault: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.call(() => this.generateRawVaultTx(to, vault, token, amount, RawTxUtil.createVoutWithdrawFromVault));
+    return this.call(() => RawTxVault.withdraw(to, vault, token, amount, this.utxoProvider));
   }
 
   async rawTxForTakeLoan(to: string, vault: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.call(() => this.generateRawVaultTx(to, vault, token, amount, RawTxUtil.createVoutTakeLoan));
+    return this.call(() => RawTxVault.takeLoan(to, vault, token, amount, this.utxoProvider));
   }
 
   async rawTxForPaybackLoan(from: string, vault: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.call(() => this.generateRawVaultTx(from, vault, token, amount, RawTxUtil.createVoutPaybackLoan));
+    return this.call(() => RawTxVault.paybackLoan(from, vault, token, amount, this.utxoProvider));
   }
 
   async rawTxForAddPoolLiquidity(
@@ -137,11 +130,11 @@ export class JellyfishService {
     tokenB: number,
     amountB: BigNumber,
   ): Promise<RawTxDto> {
-    return this.call(() => this.generateRawTxForAddPoolLiquidity(from, tokenA, amountA, tokenB, amountB));
+    return this.call(() => RawTxPool.add(from, tokenA, amountA, tokenB, amountB, this.utxoProvider));
   }
 
   async rawTxForRemovePoolLiquidity(from: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.call(() => this.generateRawTxForRemovePoolLiquidity(from, token, amount));
+    return this.call(() => RawTxPool.remove(from, token, amount, this.utxoProvider));
   }
 
   async rawTxForCompositeSwap(
@@ -150,208 +143,17 @@ export class JellyfishService {
     fromAmount: BigNumber,
     toToken: number,
   ): Promise<RawTxDto> {
-    return this.call(() => this.generateRawTxForCompositeSwap(from, fromToken, fromAmount, toToken));
+    return this.call(() => RawTxAccount.swap(from, fromToken, fromAmount, toToken, this.utxoProvider));
   }
 
-  // --- RAW TX GENERATION --- //
-
-  private async generateRawTxForSend(
-    from: string,
-    to: string,
-    amount: BigNumber,
-    useChangeOutput: boolean,
-    useFeeBuffer: boolean,
-    sizePriority: UtxoSizePriority = UtxoSizePriority.SMALL,
-  ): Promise<RawTxDto> {
-    const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
-    const [toScript] = RawTxUtil.parseAddress(to);
-
-    const utxo = useChangeOutput
-      ? await this.utxoProvider.provideUntilAmount(from, amount, sizePriority, useFeeBuffer)
-      : await this.utxoProvider.provideExactAmount(from, amount);
-
-    const vins = RawTxUtil.createVins(utxo.prevouts);
-    const vouts = [RawTxUtil.createVoutReturn(toScript, amount)];
-    if (useChangeOutput) {
-      const change = RawTxUtil.createVoutReturn(fromScript, utxo.total?.minus(amount));
-      vouts.push(change);
-    }
-    const fromWitness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(fromPubKeyHash)]);
-    const witnesses = new Array(vins.length).fill(fromWitness);
-
-    return RawTxUtil.generateTxAndCalcFee(utxo, vins, vouts, witnesses);
-  }
-
-  private async generateRawTxForUtxoManagement(
-    address: string,
-    numberOf: number,
-    sizePriority: UtxoSizePriority,
-  ): Promise<RawTxDto> {
-    const numberOfInputs = sizePriority === UtxoSizePriority.SMALL ? numberOf : 1;
-    const numberOfOutputs = sizePriority === UtxoSizePriority.BIG ? numberOf : 1;
-
-    const [script, pubKeyHash] = RawTxUtil.parseAddress(address);
-
-    const utxo = await this.utxoProvider.provideNumber(address, numberOfInputs, sizePriority);
-
-    const vins = RawTxUtil.createVins(utxo.prevouts);
-    const vouts =
-      numberOfOutputs > 1
-        ? this.calculateSplittedOutputs(utxo.total, numberOfOutputs, script)
-        : [RawTxUtil.createVoutReturn(script, utxo.total)];
-    const witness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(pubKeyHash)]);
-    const witnesses = new Array(vins.length).fill(witness);
-
-    return RawTxUtil.generateTxAndCalcFee(utxo, vins, vouts, witnesses);
-  }
-
-  private async generateRawTxForSendAccount(
-    from: string,
-    to: string,
-    token: number,
-    amount: BigNumber,
-    useFeeExactAmount?: BigNumber,
-  ): Promise<RawTxDto> {
-    const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
-    const [toScript] = RawTxUtil.parseAddress(to);
-
-    const utxo = useFeeExactAmount
-      ? await this.utxoProvider.provideExactAmount(from, useFeeExactAmount)
-      : await this.utxoProvider.provideForDefiTx(from);
-
-    const vins = RawTxUtil.createVins(utxo.prevouts);
-    const vouts = [RawTxUtil.createVoutAnyAccountToAccount(fromScript, toScript, token, amount)];
-    if (!useFeeExactAmount) vouts.push(RawTxUtil.createVoutReturn(fromScript, utxo.total));
-
-    const witness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(fromPubKeyHash)]);
-    const witnesses = new Array(vins.length).fill(witness);
-
-    return useFeeExactAmount
-      ? RawTxUtil.generateTx(utxo, vins, vouts, witnesses)
-      : RawTxUtil.generateTxAndCalcFee(utxo, vins, vouts, witnesses);
-  }
-
-  private async generateRawTxForCreateVault(owner: string): Promise<RawTxDto> {
-    const [ownerScript, ownerPubKeyHash] = RawTxUtil.parseAddress(owner);
-    const vaultFee = this.vaultFee();
-
-    const utxo = await this.utxoProvider.provideUntilAmount(owner, vaultFee, UtxoSizePriority.FITTING, true);
-    return this.generateRawDefiTx(
-      ownerScript,
-      ownerPubKeyHash,
-      utxo,
-      RawTxUtil.createVoutCreateVault(ownerScript, vaultFee),
-      vaultFee,
-    );
-  }
-
-  private async generateRawVaultTx(
-    from: string,
-    vault: string,
-    token: number,
-    amount: BigNumber,
-    createVout: (vault: string, script: Script, token: number, amount: BigNumber) => Vout,
-  ): Promise<RawTxDto> {
-    const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
-
-    const utxo = await this.utxoProvider.provideForDefiTx(from);
-    return this.generateRawDefiTx(fromScript, fromPubKeyHash, utxo, createVout(vault, fromScript, token, amount));
-  }
-
-  private async generateRawTxForAddPoolLiquidity(
-    from: string,
-    tokenA: number,
-    amountA: BigNumber,
-    tokenB: number,
-    amountB: BigNumber,
-  ): Promise<RawTxDto> {
-    const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
-
-    const tokenBalanceA: TokenBalanceUInt32 = { token: tokenA, amount: amountA };
-    const tokenBalanceB: TokenBalanceUInt32 = { token: tokenB, amount: amountB };
-
-    const utxo = await this.utxoProvider.provideForDefiTx(from);
-    return this.generateRawDefiTx(
-      fromScript,
-      fromPubKeyHash,
-      utxo,
-      RawTxUtil.createVoutAddPoolLiquidity(fromScript, [tokenBalanceA, tokenBalanceB]),
-    );
-  }
-
-  private async generateRawTxForRemovePoolLiquidity(from: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
-
-    const utxo = await this.utxoProvider.provideForDefiTx(from);
-    return this.generateRawDefiTx(
-      fromScript,
-      fromPubKeyHash,
-      utxo,
-      RawTxUtil.createVoutRemovePoolLiquidity(fromScript, token, amount),
-    );
-  }
-
-  private async generateRawTxForCompositeSwap(
-    from: string,
-    fromToken: number,
-    fromAmount: BigNumber,
-    toToken: number,
-  ): Promise<RawTxDto> {
-    const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
-
-    const utxo = await this.utxoProvider.provideForDefiTx(from);
-    return this.generateRawDefiTx(
-      fromScript,
-      fromPubKeyHash,
-      utxo,
-      RawTxUtil.createVoutCompositeSwap(
-        fromScript,
-        fromToken,
-        fromAmount,
-        toToken,
-        new BigNumber(Config.blockchain.default.maxPrice),
-      ),
-    );
-  }
-
-  // --- UTXO MANAGEMENT --- //
   private async executeUnlockUtxos(prevouts: Prevout[], scriptHex: string): Promise<void> {
     this.utxoProvider.unlockSpentBasedOn(prevouts, RawTxUtil.parseAddressFromScriptHex(scriptHex));
   }
 
   // --- HELPER METHODS --- //
-  private async generateRawDefiTx(
-    fromScript: Script,
-    fromPubKeyHash: string,
-    utxo: UtxoInformation,
-    vout: Vout,
-    operationFee = new BigNumber(0),
-  ): Promise<RawTxDto> {
-    const vins = RawTxUtil.createVins(utxo.prevouts);
-    const vouts = [vout, RawTxUtil.createVoutReturn(fromScript, utxo.total)];
-
-    const witness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(fromPubKeyHash)]);
-    const witnesses = new Array(vins.length).fill(witness);
-
-    return RawTxUtil.generateTxAndCalcFee(utxo, vins, vouts, witnesses, operationFee);
-  }
-
-  private calculateSplittedOutputs(total: BigNumber, numberOfOutputs: number, script: Script): Vout[] {
-    // dividedToIntegerBy does a floor based on description
-    const amountPerOutput = total.dividedToIntegerBy(numberOfOutputs);
-    const numberOfSameSizedOutputs = numberOfOutputs - 1;
-    const totalSameSizedOutputs = amountPerOutput.multipliedBy(numberOfSameSizedOutputs);
-    return new Array(numberOfSameSizedOutputs)
-      .fill(RawTxUtil.createVoutReturn(script, amountPerOutput))
-      .concat([RawTxUtil.createVoutReturn(script, total.minus(totalSameSizedOutputs))]);
-  }
 
   private call<T>(call: () => Promise<T>): Promise<T> {
     return this.queue.handle(() => call());
-  }
-
-  private vaultFee(): BigNumber {
-    return new BigNumber(JellyfishService.getNetwork() === TestNet ? 1 : 2);
   }
 
   static getNetwork(): Network {
