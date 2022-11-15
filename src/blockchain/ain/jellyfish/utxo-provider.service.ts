@@ -209,12 +209,12 @@ export class UtxoProviderService {
     const amountPlusFeeBuffer = amount.plus(Config.blockchain.minFeeBuffer);
     const wantedAmount = useFeeBuffer ? amountPlusFeeBuffer : amount;
     let [neededUnspent, total] = UtxoProviderService.tryProvideUntilAmount(unspent, wantedAmount, sizePriority);
-    if (total.lt(amountPlusFeeBuffer) && sizePriority === UtxoSizePriority.FITTING) {
+    if (total.lt(wantedAmount) && sizePriority === UtxoSizePriority.FITTING) {
       [neededUnspent, total] = UtxoProviderService.tryProvideUntilAmount(unspent, wantedAmount, UtxoSizePriority.BIG);
     }
     if (total.lt(wantedAmount))
       throw new Error(
-        `Not enough available liquidity for requested amount.\nTotal available: ${total}\nRequested amount: ${amountPlusFeeBuffer}`,
+        `Not enough available liquidity for requested amount.\nTotal available: ${total}\nRequested amount: ${wantedAmount}`,
       );
     if (neededUnspent.length > Config.utxo.maxInputs)
       throw new Error(`Exceeding amount of max allowed inputs of ${Config.utxo.maxInputs}`);
