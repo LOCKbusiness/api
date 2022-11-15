@@ -39,8 +39,8 @@ export class TransactionController {
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.TRANSACTION_CHECKER))
   async verifyTransaction(@Param('id') id: string, @Body() dto: SignatureDto, @Headers('Device-Id') deviceId: string) {
-    await this.transactionService.verified(id, dto.signature);
     await this.onPing('tc-' + deviceId);
+    await this.transactionService.verified(id, dto.signature);
   }
 
   @Put(':id/invalidated')
@@ -52,8 +52,8 @@ export class TransactionController {
     @Body() dto: InvalidateDto,
     @Headers('Device-Id') deviceId: string,
   ) {
-    await this.transactionService.invalidated(id, dto.reason);
     await this.onPing('tc-' + deviceId);
+    await this.transactionService.invalidated(id, dto.reason);
   }
 
   @Put(':id/signed')
@@ -65,8 +65,8 @@ export class TransactionController {
     @Body() dto: SignedTransactionDto,
     @Headers('Device-Id') deviceId: string,
   ) {
-    await this.transactionService.signed(id, dto.hex);
     await this.onPing('cw-' + deviceId);
+    await this.transactionService.signed(id, dto.hex);
   }
 
   private onPing(device: string): Promise<void> {
