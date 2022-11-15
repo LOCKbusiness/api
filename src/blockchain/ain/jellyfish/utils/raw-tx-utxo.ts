@@ -3,57 +3,39 @@ import BigNumber from 'bignumber.js';
 import { Config } from 'src/config/config';
 import { UtxoSizePriority } from '../domain/enums';
 import { RawTxDto } from '../dto/raw-tx.dto';
-import { UtxoProviderService } from '../services/utxo-provider.service';
+import { RawTxBase } from './raw-tx-base';
 import { RawTxUtil } from './raw-tx-util';
 
-export class RawTxUtxo {
+export class RawTxUtxo extends RawTxBase {
   // SEND UTXOS //
-  static async sendFromTo(
-    from: string,
-    to: string,
-    amount: BigNumber,
-    useFeeBuffer: boolean,
-    utxoProvider: UtxoProviderService,
-  ): Promise<RawTxDto> {
-    return RawTxUtxo.send(from, to, amount, true, useFeeBuffer, UtxoSizePriority.SMALL, utxoProvider);
+  async sendFromTo(from: string, to: string, amount: BigNumber, useFeeBuffer: boolean): Promise<RawTxDto> {
+    return this.handle(() => this.send(from, to, amount, true, useFeeBuffer, UtxoSizePriority.SMALL));
   }
 
-  static async sendFromLiq(
-    to: string,
-    amount: BigNumber,
-    sizePriority: UtxoSizePriority,
-    utxoProvider: UtxoProviderService,
-  ): Promise<RawTxDto> {
-    return RawTxUtxo.send(Config.staking.liquidity.address, to, amount, true, true, sizePriority, utxoProvider);
+  async sendFromLiq(to: string, amount: BigNumber, sizePriority: UtxoSizePriority): Promise<RawTxDto> {
+    return this.handle(() => this.send(Config.staking.liquidity.address, to, amount, true, true, sizePriority));
   }
 
-  static async sendToLiq(from: string, amount: BigNumber, utxoProvider: UtxoProviderService): Promise<RawTxDto> {
-    return RawTxUtxo.send(
-      from,
-      Config.staking.liquidity.address,
-      amount,
-      false,
-      false,
-      UtxoSizePriority.SMALL,
-      utxoProvider,
+  async sendToLiq(from: string, amount: BigNumber): Promise<RawTxDto> {
+    return this.handle(() =>
+      this.send(from, Config.staking.liquidity.address, amount, false, false, UtxoSizePriority.SMALL),
     );
   }
 
-  private static async send(
+  private async send(
     from: string,
     to: string,
     amount: BigNumber,
     useChangeOutput: boolean,
     useFeeBuffer: boolean,
     sizePriority: UtxoSizePriority,
-    utxoProvider: UtxoProviderService,
   ): Promise<RawTxDto> {
     const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
     const [toScript] = RawTxUtil.parseAddress(to);
 
     const utxo = useChangeOutput
-      ? await utxoProvider.provideUntilAmount(from, amount, sizePriority, useFeeBuffer)
-      : await utxoProvider.provideExactAmount(from, amount);
+      ? await this.utxoProvider.provideUntilAmount(from, amount, sizePriority, useFeeBuffer)
+      : await this.utxoProvider.provideExactAmount(from, amount);
 
     const vins = RawTxUtil.createVins(utxo.prevouts);
     const vouts = [RawTxUtil.createVoutReturn(toScript, amount)];
@@ -68,26 +50,21 @@ export class RawTxUtxo {
   }
 
   // MANAGE UTXOS //
-  static async split(address: string, split: number, utxoProvider: UtxoProviderService): Promise<RawTxDto> {
-    return RawTxUtxo.management(address, split, UtxoSizePriority.BIG, utxoProvider);
+  async split(address: string, split: number): Promise<RawTxDto> {
+    return this.handle(() => this.management(address, split, UtxoSizePriority.BIG));
   }
 
-  static async merge(address: string, merge: number, utxoProvider: UtxoProviderService): Promise<RawTxDto> {
-    return RawTxUtxo.management(address, merge, UtxoSizePriority.SMALL, utxoProvider);
+  async merge(address: string, merge: number): Promise<RawTxDto> {
+    return this.handle(() => this.management(address, merge, UtxoSizePriority.SMALL));
   }
 
-  private static async management(
-    address: string,
-    numberOf: number,
-    sizePriority: UtxoSizePriority,
-    utxoProvider: UtxoProviderService,
-  ): Promise<RawTxDto> {
+  private async management(address: string, numberOf: number, sizePriority: UtxoSizePriority): Promise<RawTxDto> {
     const numberOfInputs = sizePriority === UtxoSizePriority.SMALL ? numberOf : 1;
     const numberOfOutputs = sizePriority === UtxoSizePriority.BIG ? numberOf : 1;
 
     const [script, pubKeyHash] = RawTxUtil.parseAddress(address);
 
-    const utxo = await utxoProvider.provideNumber(address, numberOfInputs, sizePriority);
+    const utxo = await this.utxoProvider.provideNumber(address, numberOfInputs, sizePriority);
 
     const vins = RawTxUtil.createVins(utxo.prevouts);
     const vouts =

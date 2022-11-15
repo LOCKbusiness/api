@@ -50,49 +50,49 @@ export class TransactionExecutionService {
   }
 
   async createMasternode(data: CreateMasternodeData): Promise<string> {
-    const rawTx = await this.jellyfishService.rawTxForCreate(data.masternode);
+    const rawTx = await this.jellyfishService.Masternode.create(data.masternode);
     console.info(`Create masternode tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.CREATE_MASTERNODE));
   }
 
   async resignMasternode(data: ResignMasternodeData): Promise<string> {
-    const rawTx = await this.jellyfishService.rawTxForResign(data.masternode);
+    const rawTx = await this.jellyfishService.Masternode.resign(data.masternode);
     console.info(`Resign masternode tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.RESIGN_MASTERNODE));
   }
 
   async sendFromLiq(data: SendFromLiqData): Promise<string> {
-    const rawTx = await this.jellyfishService.rawTxForSendFromLiq(data.to, data.amount, data.sizePriority);
+    const rawTx = await this.jellyfishService.Utxo.sendFromLiq(data.to, data.amount, data.sizePriority);
     console.info(`Send from liq tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.SEND_FROM_LIQ));
   }
 
   async sendFromLiqToCustomer(data: SendFromLiqToCustomerData): Promise<string> {
-    const rawTx = await this.jellyfishService.rawTxForSendFromLiq(data.to, data.amount, UtxoSizePriority.FITTING);
+    const rawTx = await this.jellyfishService.Utxo.sendFromLiq(data.to, data.amount, UtxoSizePriority.FITTING);
     console.info(`Send from liq to customer tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, { id: data.withdrawalId, type: TransactionType.WITHDRAWAL });
   }
 
   async sendToLiq(data: SendToLiqData): Promise<string> {
-    const rawTx = await this.jellyfishService.rawTxForSendToLiq(data.from, data.amount);
+    const rawTx = await this.jellyfishService.Utxo.sendToLiq(data.from, data.amount);
     console.info(`Send to liq tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.SEND_TO_LIQ));
   }
 
   async splitBiggestUtxo(data: SplitData): Promise<string> {
-    const rawTx = await this.jellyfishService.rawTxForSplitUtxo(data.address, data.split);
+    const rawTx = await this.jellyfishService.Utxo.split(data.address, data.split);
     console.info(`Split tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, { type: TransactionType.UTXO_SPLIT });
   }
 
   async mergeSmallestUtxos(data: MergeData): Promise<string> {
-    const rawTx = await this.jellyfishService.rawTxForMergeUtxos(data.address, data.merge);
+    const rawTx = await this.jellyfishService.Utxo.merge(data.address, data.merge);
     console.info(`Merge tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, { type: TransactionType.UTXO_MERGE });
   }
 
   async sendToken(data: SendTokenData): Promise<string> {
-    const rawTx = await this.jellyfishService.rawTxForSendAccount(
+    const rawTx = await this.jellyfishService.Account.sendFromTo(
       data.from,
       data.to,
       data.balance.token,
@@ -103,37 +103,37 @@ export class TransactionExecutionService {
   }
 
   async createVault(data: CreateVaultData): Promise<string> {
-    const rawTx = await this.jellyfishService.rawTxForCreateVault(data.owner);
+    const rawTx = await this.jellyfishService.Vault.create(data.owner);
     console.info(`Create vault tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.CREATE_VAULT));
   }
 
   async depositToVault(data: DepositToVaultData): Promise<string> {
-    const rawTx = await this.jellyfishService.rawTxForDepositToVault(data.from, data.vault, data.token, data.amount);
+    const rawTx = await this.jellyfishService.Vault.deposit(data.from, data.vault, data.token, data.amount);
     console.info(`Deposit to vault tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.DEPOSIT_TO_VAULT));
   }
 
   async withdrawFromVault(data: WithdrawFromVaultData): Promise<string> {
-    const rawTx = await this.jellyfishService.rawTxForWithdrawFromVault(data.to, data.vault, data.token, data.amount);
+    const rawTx = await this.jellyfishService.Vault.withdraw(data.to, data.vault, data.token, data.amount);
     console.info(`Withdraw from vault tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.WITHDRAW_FROM_VAULT));
   }
 
   async takeLoan(data: TakeLoanData): Promise<string> {
-    const rawTx = await this.jellyfishService.rawTxForTakeLoan(data.to, data.vault, data.token, data.amount);
+    const rawTx = await this.jellyfishService.Vault.takeLoan(data.to, data.vault, data.token, data.amount);
     console.info(`Take loan tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.TAKE_LOAN));
   }
 
   async paybackLoan(data: PaybackLoanData): Promise<string> {
-    const rawTx = await this.jellyfishService.rawTxForPaybackLoan(data.from, data.vault, data.token, data.amount);
+    const rawTx = await this.jellyfishService.Vault.paybackLoan(data.from, data.vault, data.token, data.amount);
     console.info(`Payback loan tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.PAYBACK_LOAN));
   }
 
   async addPoolLiquidity(data: AddPoolLiquidityData): Promise<string> {
-    const rawTx = await this.jellyfishService.rawTxForAddPoolLiquidity(
+    const rawTx = await this.jellyfishService.Pool.add(
       data.from,
       data.partA.token,
       data.partA.amount,
@@ -145,13 +145,13 @@ export class TransactionExecutionService {
   }
 
   async removePoolLiquidity(data: RemovePoolLiquidityData): Promise<string> {
-    const rawTx = await this.jellyfishService.rawTxForRemovePoolLiquidity(data.from, data.token, data.amount);
+    const rawTx = await this.jellyfishService.Pool.remove(data.from, data.token, data.amount);
     console.info(`Remove pool liquidity tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.POOL_REMOVE_LIQUIDITY));
   }
 
   async compositeSwap(data: CompositeSwapData): Promise<string> {
-    const rawTx = await this.jellyfishService.rawTxForCompositeSwap(
+    const rawTx = await this.jellyfishService.Account.swap(
       data.source.from,
       data.source.token,
       data.source.amount,

@@ -75,7 +75,7 @@ export class StakingDeFiChainService {
   }
 
   private async forwardMasternodeDeposit(address: string, amount: number): Promise<string> {
-    const forwardToLiq = await this.jellyfishService.rawTxForSendToLiq(address, new BigNumber(amount));
+    const forwardToLiq = await this.jellyfishService.Utxo.sendToLiq(address, new BigNumber(amount));
     return this.inputClient.signAndSend(forwardToLiq.hex);
   }
 
@@ -112,7 +112,7 @@ export class StakingDeFiChainService {
     depositAddress: string,
     amount: BigNumber,
   ): Promise<void> {
-    const sendUtxosToDeposit = await this.jellyfishService.rawTxForSendFromTo(
+    const sendUtxosToDeposit = await this.jellyfishService.Utxo.sendFromTo(
       await forwardAccount.getAddress(),
       depositAddress,
       amount,

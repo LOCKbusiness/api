@@ -8,13 +8,11 @@ import { Injectable } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import BigNumber from 'bignumber.js';
 import { Config } from 'src/config/config';
-import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
 import { QueueHandler } from 'src/shared/queue-handler';
 import { RawTxDto } from '../dto/raw-tx.dto';
 import { RawTxUtil } from '../utils/raw-tx-util';
 import { UtxoProviderService } from './utxo-provider.service';
 import { SmartBuffer } from 'smart-buffer';
-import { UtxoSizePriority } from '../domain/enums';
 import { RawTxMasternode } from '../utils/raw-tx-masternode';
 import { RawTxVault } from '../utils/raw-tx-vault';
 import { RawTxUtxo } from '../utils/raw-tx-utxo';
@@ -24,8 +22,21 @@ import { RawTxPool } from '../utils/raw-tx-pool';
 @Injectable()
 export class JellyfishService {
   private readonly queue: QueueHandler;
+
+  public Account: RawTxAccount;
+  public Masternode: RawTxMasternode;
+  public Pool: RawTxPool;
+  public Utxo: RawTxUtxo;
+  public Vault: RawTxVault;
+
   constructor(private readonly utxoProvider: UtxoProviderService, scheduler: SchedulerRegistry) {
     this.queue = new QueueHandler(scheduler, 65000);
+
+    this.Account = new RawTxAccount(this.call, utxoProvider);
+    this.Masternode = new RawTxMasternode(this.call, utxoProvider);
+    this.Pool = new RawTxPool(this.call, utxoProvider);
+    this.Utxo = new RawTxUtxo(this.call, utxoProvider);
+    this.Vault = new RawTxVault(this.call, utxoProvider);
   }
 
   public createWallet(seed: string[]): JellyfishWallet<WhaleWalletAccount, WalletHdNode> {
@@ -63,87 +74,8 @@ export class JellyfishService {
     };
   }
 
-  async rawTxForCreate(masternode: Masternode): Promise<RawTxDto> {
-    return this.call(() => RawTxMasternode.create(masternode, this.utxoProvider));
-  }
-
-  async rawTxForResign(masternode: Masternode): Promise<RawTxDto> {
-    return this.call(() => RawTxMasternode.resign(masternode, this.utxoProvider));
-  }
-
-  async rawTxForSendFromTo(from: string, to: string, amount: BigNumber, useFeeBuffer: boolean): Promise<RawTxDto> {
-    return this.call(() => RawTxUtxo.sendFromTo(from, to, amount, useFeeBuffer, this.utxoProvider));
-  }
-
-  async rawTxForSendFromLiq(to: string, amount: BigNumber, sizePriority: UtxoSizePriority): Promise<RawTxDto> {
-    return this.call(() => RawTxUtxo.sendFromLiq(to, amount, sizePriority, this.utxoProvider));
-  }
-
-  async rawTxForSendToLiq(from: string, amount: BigNumber): Promise<RawTxDto> {
-    return this.call(() => RawTxUtxo.sendToLiq(from, amount, this.utxoProvider));
-  }
-
-  async rawTxForSplitUtxo(address: string, split: number): Promise<RawTxDto> {
-    return this.call(() => RawTxUtxo.split(address, split, this.utxoProvider));
-  }
-
-  async rawTxForMergeUtxos(address: string, merge: number): Promise<RawTxDto> {
-    return this.call(() => RawTxUtxo.merge(address, merge, this.utxoProvider));
-  }
-
   async unlock(rawTx: RawTxDto): Promise<void> {
     return this.call(() => this.executeUnlockUtxos(rawTx.prevouts, rawTx.scriptHex));
-  }
-
-  async rawTxForForwardAccountToLiq(from: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.call(() => RawTxAccount.sendToLiq(from, token, amount, this.utxoProvider));
-  }
-
-  async rawTxForSendAccount(from: string, to: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.call(() => RawTxAccount.sendFromTo(from, to, token, amount, this.utxoProvider));
-  }
-
-  async rawTxForCreateVault(owner: string): Promise<RawTxDto> {
-    return this.call(() => RawTxVault.create(owner, this.utxoProvider));
-  }
-
-  async rawTxForDepositToVault(from: string, vault: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.call(() => RawTxVault.deposit(from, vault, token, amount, this.utxoProvider));
-  }
-
-  async rawTxForWithdrawFromVault(to: string, vault: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.call(() => RawTxVault.withdraw(to, vault, token, amount, this.utxoProvider));
-  }
-
-  async rawTxForTakeLoan(to: string, vault: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.call(() => RawTxVault.takeLoan(to, vault, token, amount, this.utxoProvider));
-  }
-
-  async rawTxForPaybackLoan(from: string, vault: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.call(() => RawTxVault.paybackLoan(from, vault, token, amount, this.utxoProvider));
-  }
-
-  async rawTxForAddPoolLiquidity(
-    from: string,
-    tokenA: number,
-    amountA: BigNumber,
-    tokenB: number,
-    amountB: BigNumber,
-  ): Promise<RawTxDto> {
-    return this.call(() => RawTxPool.add(from, tokenA, amountA, tokenB, amountB, this.utxoProvider));
-  }
-
-  async rawTxForRemovePoolLiquidity(from: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.call(() => RawTxPool.remove(from, token, amount, this.utxoProvider));
-  }
-
-  async rawTxForCompositeSwap(
-    from: string,
-    fromToken: number,
-    fromAmount: BigNumber,
-    toToken: number,
-  ): Promise<RawTxDto> {
-    return this.call(() => RawTxAccount.swap(from, fromToken, fromAmount, toToken, this.utxoProvider));
   }
 
   private async executeUnlockUtxos(prevouts: Prevout[], scriptHex: string): Promise<void> {
