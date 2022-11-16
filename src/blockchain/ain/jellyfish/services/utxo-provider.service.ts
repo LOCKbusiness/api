@@ -28,7 +28,7 @@ interface BlockedUtxo {
 @Injectable()
 export class UtxoProviderService {
   private readonly lockUtxo = new Lock(1800);
-  private blockHeight = 0;
+  private addressToBlockHeight = new Map<string, number>();
   private unspent = new Map<string, AddressUnspent[]>();
   private spent = new Map<string, BlockedUtxo[]>();
 
@@ -145,16 +145,12 @@ export class UtxoProviderService {
   }
 
   private async checkBlockAndInvalidate(address: string) {
-    const forceNew = this.unspent.get(address) === undefined;
+    const storedBlockHeight = this.addressToBlockHeight.get(address);
     const currentBlockHeight = await this.whaleClient.getBlockHeight();
-    console.info(
-      `update ${address}: force? ${forceNew ? 'yes' : 'no'} stored block ${
-        this.blockHeight
-      } blockchain block ${currentBlockHeight}`,
-    );
-    if (!forceNew && this.blockHeight === currentBlockHeight) return;
+    console.info(`update ${address}: stored block ${storedBlockHeight} blockchain block ${currentBlockHeight}`);
+    if (storedBlockHeight === currentBlockHeight) return;
 
-    this.blockHeight = currentBlockHeight;
+    this.addressToBlockHeight.set(address, currentBlockHeight);
 
     const currentUnspent = await this.whaleClient
       .getAllUnspent(address)
