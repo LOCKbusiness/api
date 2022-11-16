@@ -265,7 +265,7 @@ export class LiquidityManagementService {
                 Config.masternode.collateral + Config.masternode.fee + Config.masternode.creationFee,
               ),
               ownerWallet: Config.staking.liquidity.wallet,
-              accountIndex: +Config.staking.liquidity.account,
+              accountIndex: Config.staking.liquidity.account,
               sizePriority: UtxoSizePriority.BIG,
             });
           },
@@ -311,7 +311,7 @@ export class LiquidityManagementService {
               to: masternode.owner,
               amount: new BigNumber(Config.masternode.resignFee),
               ownerWallet: Config.staking.liquidity.wallet,
-              accountIndex: +Config.staking.liquidity.account,
+              accountIndex: Config.staking.liquidity.account,
               sizePriority: UtxoSizePriority.SMALL,
             });
           },
