@@ -40,7 +40,7 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
       data = await this.getStaking();
     } catch (e) {
       console.error('Exception during monitoring staking combined:', e);
-      data = this.getDefaultData();
+      return;
     }
 
     this.emit(data);
@@ -102,13 +102,5 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
     return { actual, should, difference };
   }
 
-  private getDefaultData(): StakingData {
-    return {
-      balance: { actual: 0, should: 0, difference: 0 },
-      freeOperators: 0,
-      freeDepositAddresses: 0,
-      openDeposits: 0,
-      openWithdrawals: 0,
-    };
-  }
+
 }

@@ -97,10 +97,10 @@ export class StakingDepositService {
     if (Config.processDisabled(Process.STAKING_DEPOSIT)) return;
 
     try {
-      const pendingDeposits = await this.depositRepository.find({
+      const openDeposits = await this.depositRepository.find({
         where: { status: DepositStatus.OPEN, updated: LessThan(Util.daysBefore(1)) },
       });
-      for (const deposit of pendingDeposits) {
+      for (const deposit of openDeposits) {
         const txId = await this.whaleClient.getTx(deposit.payInTxId).catch(() => null);
         if (!txId) await this.depositRepository.update(deposit.id, { status: DepositStatus.FAILED });
       }
