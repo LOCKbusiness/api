@@ -74,13 +74,11 @@ export class StakingDeFiChainService {
     return transaction && transaction.block.hash != null;
   }
 
-  // FORWARD UTXO LIQ //
   private async forwardMasternodeDeposit(address: string, amount: number): Promise<string> {
     const forwardToLiq = await this.jellyfishService.rawTxForSendToLiq(address, new BigNumber(amount));
     return this.inputClient.signAndSend(forwardToLiq.hex);
   }
 
-  // FORWARD TOKEN LIQ //
   private async forwardLiquidityMiningDeposit(address: string, amount: number, asset: Asset): Promise<string> {
     console.info(`forwarding ${amount} of ${asset.name} of ${address}`);
     await this.sendFeeUtxosToDepositIfNeeded(address);
