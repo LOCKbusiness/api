@@ -1,6 +1,7 @@
 import { TestNet } from '@defichain/jellyfish-network';
 import { Vout, Script } from '@defichain/jellyfish-transaction';
 import BigNumber from 'bignumber.js';
+import { Config } from 'src/config/config';
 import { UtxoSizePriority } from '../domain/enums';
 import { RawTxDto } from '../dto/raw-tx.dto';
 import { JellyfishService } from '../services/jellyfish.service';
@@ -35,6 +36,7 @@ export class RawTxVault extends RawTxBase {
     const utxo = await this.utxoProvider.provideUntilAmount(owner, vaultFee, {
       useFeeBuffer: true,
       sizePriority: UtxoSizePriority.FITTING,
+      customFeeBuffer: Config.blockchain.minDefiTxFeeBuffer,
     });
     return RawTxUtil.generateDefiTx(
       ownerScript,

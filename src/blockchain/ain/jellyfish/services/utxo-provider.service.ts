@@ -115,6 +115,7 @@ export class UtxoProviderService {
         UtxoProviderService.provideUntilAmount(unspent, new BigNumber(0), {
           useFeeBuffer: true,
           sizePriority: UtxoSizePriority.FITTING,
+          customFeeBuffer: Config.blockchain.minDefiTxFeeBuffer,
         }),
       ),
     );
@@ -186,7 +187,9 @@ export class UtxoProviderService {
     amount: BigNumber,
     config: UtxoConfig,
   ): AddressUnspent[] {
-    const amountPlusFeeBuffer = amount.plus(Config.blockchain.minFeeBuffer);
+    const amountPlusFeeBuffer = amount.plus(
+      config.customFeeBuffer ? config.customFeeBuffer : Config.blockchain.minFeeBuffer,
+    );
     const wantedAmount = config.useFeeBuffer ? amountPlusFeeBuffer : amount;
     let [neededUnspent, total] = UtxoProviderService.tryProvideUntilAmount(unspent, wantedAmount, config);
     if (total.lt(wantedAmount) && config.sizePriority === UtxoSizePriority.FITTING) {
