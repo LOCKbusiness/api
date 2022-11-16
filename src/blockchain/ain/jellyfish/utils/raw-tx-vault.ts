@@ -32,7 +32,10 @@ export class RawTxVault extends RawTxBase {
     const [ownerScript, ownerPubKeyHash] = RawTxUtil.parseAddress(owner);
     const vaultFee = this.vaultFee();
 
-    const utxo = await this.utxoProvider.provideUntilAmount(owner, vaultFee, UtxoSizePriority.FITTING, true);
+    const utxo = await this.utxoProvider.provideUntilAmount(owner, vaultFee, {
+      useFeeBuffer: true,
+      sizePriority: UtxoSizePriority.FITTING,
+    });
     return RawTxUtil.generateDefiTx(
       ownerScript,
       ownerPubKeyHash,

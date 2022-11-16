@@ -84,11 +84,7 @@ export class StakingDeFiChainService {
     await this.sendFeeUtxosToDepositIfNeeded(address);
     const token = await this.tokenProviderService.get(asset.name);
     console.log(`${asset.name} has blockchain id ${token.id}`);
-    const forwardToLiq = await this.jellyfishService.rawTxForForwardAccountToLiq(
-      address,
-      +token.id,
-      new BigNumber(amount),
-    );
+    const forwardToLiq = await this.jellyfishService.Account.sendToLiq(address, +token.id, new BigNumber(amount));
     try {
       return this.inputClient.signAndSend(forwardToLiq.hex);
     } catch (e) {
@@ -116,7 +112,6 @@ export class StakingDeFiChainService {
       await forwardAccount.getAddress(),
       depositAddress,
       amount,
-      false,
     );
     try {
       const signedSendUtxosHex = await this.jellyfishService.signRawTx(sendUtxosToDeposit, forwardAccount);

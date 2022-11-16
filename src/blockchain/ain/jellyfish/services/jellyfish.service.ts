@@ -32,11 +32,11 @@ export class JellyfishService {
   constructor(private readonly utxoProvider: UtxoProviderService, scheduler: SchedulerRegistry) {
     this.queue = new QueueHandler(scheduler, 65000);
 
-    this.Account = new RawTxAccount(this.call, utxoProvider);
-    this.Masternode = new RawTxMasternode(this.call, utxoProvider);
-    this.Pool = new RawTxPool(this.call, utxoProvider);
-    this.Utxo = new RawTxUtxo(this.call, utxoProvider);
-    this.Vault = new RawTxVault(this.call, utxoProvider);
+    this.Account = new RawTxAccount((c) => this.call(c), utxoProvider);
+    this.Masternode = new RawTxMasternode((c) => this.call(c), utxoProvider);
+    this.Pool = new RawTxPool((c) => this.call(c), utxoProvider);
+    this.Utxo = new RawTxUtxo((c) => this.call(c), utxoProvider);
+    this.Vault = new RawTxVault((c) => this.call(c), utxoProvider);
   }
 
   public createWallet(seed: string[]): JellyfishWallet<WhaleWalletAccount, WalletHdNode> {

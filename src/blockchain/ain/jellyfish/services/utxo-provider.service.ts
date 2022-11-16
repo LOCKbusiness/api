@@ -13,6 +13,7 @@ import { Lock } from 'src/shared/lock';
 import { UtxoSizePriority } from '../domain/enums';
 import { UtxoInformation } from '../domain/entities/utxo-information';
 import { UtxoStatistics } from '../domain/entities/utxo-statistics';
+import { UtxoConfig } from '../domain/entities/utxo-config';
 
 interface AddressUnspent extends JellyfishAddressUnspent {
   id: string;
@@ -92,26 +93,17 @@ export class UtxoProviderService {
     );
   }
 
-  async provideUntilAmount(
-    address: string,
-    amount: BigNumber,
-    sizePriority: UtxoSizePriority,
-    useFeeBuffer: boolean,
-  ): Promise<UtxoInformation> {
+  async provideUntilAmount(address: string, amount: BigNumber, config: UtxoConfig): Promise<UtxoInformation> {
     const unspent = await this.retrieveUnspent(address);
     return UtxoProviderService.parseUnspent(
-      this.markUsed(address, UtxoProviderService.provideUntilAmount(unspent, amount, sizePriority, useFeeBuffer)),
+      this.markUsed(address, UtxoProviderService.provideUntilAmount(unspent, amount, config)),
     );
   }
 
-  async provideNumber(
-    address: string,
-    numberOfUtxos: number,
-    sizePriority: UtxoSizePriority,
-  ): Promise<UtxoInformation> {
+  async provideNumber(address: string, numberOfUtxos: number, config: UtxoConfig): Promise<UtxoInformation> {
     const unspent = await this.retrieveUnspent(address);
     return UtxoProviderService.parseUnspent(
-      this.markUsed(address, UtxoProviderService.provideNumber(unspent, numberOfUtxos, sizePriority)),
+      this.markUsed(address, UtxoProviderService.provideNumber(unspent, numberOfUtxos, config)),
     );
   }
 
@@ -120,7 +112,10 @@ export class UtxoProviderService {
     return UtxoProviderService.parseUnspent(
       this.markUsed(
         address,
-        UtxoProviderService.provideUntilAmount(unspent, new BigNumber(0), UtxoSizePriority.FITTING, true),
+        UtxoProviderService.provideUntilAmount(unspent, new BigNumber(0), {
+          useFeeBuffer: true,
+          sizePriority: UtxoSizePriority.FITTING,
+        }),
       ),
     );
   }
@@ -189,14 +184,16 @@ export class UtxoProviderService {
   private static provideUntilAmount(
     unspent: AddressUnspent[],
     amount: BigNumber,
-    sizePriority: UtxoSizePriority,
-    useFeeBuffer: boolean,
+    config: UtxoConfig,
   ): AddressUnspent[] {
     const amountPlusFeeBuffer = amount.plus(Config.blockchain.minFeeBuffer);
-    const wantedAmount = useFeeBuffer ? amountPlusFeeBuffer : amount;
-    let [neededUnspent, total] = UtxoProviderService.tryProvideUntilAmount(unspent, wantedAmount, sizePriority);
-    if (total.lt(wantedAmount) && sizePriority === UtxoSizePriority.FITTING) {
-      [neededUnspent, total] = UtxoProviderService.tryProvideUntilAmount(unspent, wantedAmount, UtxoSizePriority.BIG);
+    const wantedAmount = config.useFeeBuffer ? amountPlusFeeBuffer : amount;
+    let [neededUnspent, total] = UtxoProviderService.tryProvideUntilAmount(unspent, wantedAmount, config);
+    if (total.lt(wantedAmount) && config.sizePriority === UtxoSizePriority.FITTING) {
+      [neededUnspent, total] = UtxoProviderService.tryProvideUntilAmount(unspent, wantedAmount, {
+        ...config,
+        sizePriority: UtxoSizePriority.BIG,
+      });
     }
     if (total.lt(wantedAmount))
       throw new Error(
@@ -210,12 +207,12 @@ export class UtxoProviderService {
   private static tryProvideUntilAmount(
     unspent: AddressUnspent[],
     amountPlusFeeBuffer: BigNumber,
-    sizePriority: UtxoSizePriority,
+    config: UtxoConfig,
   ): [AddressUnspent[], BigNumber] {
     const neededUnspent: AddressUnspent[] = [];
     let total = new BigNumber(0);
-    unspent = unspent.sort(sizePriority === UtxoSizePriority.BIG ? this.orderDescending : this.orderAscending);
-    if (sizePriority === UtxoSizePriority.FITTING) {
+    unspent = unspent.sort(config.sizePriority === UtxoSizePriority.BIG ? this.orderDescending : this.orderAscending);
+    if (config.sizePriority === UtxoSizePriority.FITTING) {
       unspent = unspent.filter((u) => new BigNumber(u.vout.value).gte(amountPlusFeeBuffer));
     }
     unspent.forEach((u) => {
@@ -226,12 +223,8 @@ export class UtxoProviderService {
     return [neededUnspent, total];
   }
 
-  private static provideNumber(
-    unspent: AddressUnspent[],
-    numberOfUtxos: number,
-    sizePriority: UtxoSizePriority,
-  ): AddressUnspent[] {
-    unspent = unspent.sort(sizePriority === UtxoSizePriority.BIG ? this.orderDescending : this.orderAscending);
+  private static provideNumber(unspent: AddressUnspent[], numberOfUtxos: number, config: UtxoConfig): AddressUnspent[] {
+    unspent = unspent.sort(config.sizePriority === UtxoSizePriority.BIG ? this.orderDescending : this.orderAscending);
     return unspent.slice(0, numberOfUtxos);
   }
 
