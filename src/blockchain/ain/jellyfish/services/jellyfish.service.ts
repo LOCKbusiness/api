@@ -23,11 +23,11 @@ import { RawTxPool } from '../utils/raw-tx-pool';
 export class JellyfishService {
   private readonly queue: QueueHandler;
 
-  public Account: RawTxAccount;
-  public Masternode: RawTxMasternode;
-  public Pool: RawTxPool;
-  public Utxo: RawTxUtxo;
-  public Vault: RawTxVault;
+  public readonly Account: RawTxAccount;
+  public readonly Masternode: RawTxMasternode;
+  public readonly Pool: RawTxPool;
+  public readonly Utxo: RawTxUtxo;
+  public readonly Vault: RawTxVault;
 
   constructor(private readonly utxoProvider: UtxoProviderService, scheduler: SchedulerRegistry) {
     this.queue = new QueueHandler(scheduler, 65000);

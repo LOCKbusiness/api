@@ -2,9 +2,11 @@ import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import BigNumber from 'bignumber.js';
 import { BehaviorSubject } from 'rxjs';
+import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/domain/enums';
 import { createCustomRawTxDto } from 'src/blockchain/ain/jellyfish/dto/__mocks__/raw-tx.dto.mock';
 import { JellyfishService } from 'src/blockchain/ain/jellyfish/services/jellyfish.service';
-import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/utxo-provider.service';
+import { RawTxMasternode } from 'src/blockchain/ain/jellyfish/utils/raw-tx-masternode';
+import { RawTxUtxo } from 'src/blockchain/ain/jellyfish/utils/raw-tx-utxo';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { NodeService } from 'src/blockchain/ain/node/node.service';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
@@ -40,6 +42,9 @@ describe('TransactionExecutionService', () => {
   let whaleClient: WhaleClient;
   let nodeClient: DeFiClient;
 
+  let rawTxMasternode: RawTxMasternode;
+  let rawTxUtxo: RawTxUtxo;
+
   beforeEach(async () => {
     transactionService = createMock<TransactionService>();
     jellyfishService = createMock<JellyfishService>();
@@ -50,6 +55,9 @@ describe('TransactionExecutionService', () => {
     whaleClient = createMock<WhaleClient>();
     nodeClient = createMock<DeFiClient>();
 
+    rawTxMasternode = createMock<RawTxMasternode>();
+    rawTxUtxo = createMock<RawTxUtxo>();
+
     jest.spyOn(whaleClient, 'sendRaw').mockResolvedValue('tx-id');
     jest.spyOn(nodeClient, 'dumpPrivKey').mockResolvedValue('L52sDjGxf8Y5NHy5BjTpQHQUjHDjrqErHyTomskefFXrKPdjf7Di');
     jest.spyOn(transactionService, 'sign').mockResolvedValue('signed-raw-tx-hex');
@@ -57,6 +65,19 @@ describe('TransactionExecutionService', () => {
     jest
       .spyOn(nodeService, 'getConnectedNode')
       .mockImplementation(() => new BehaviorSubject(nodeClient).asObservable());
+    // Krysh: jest spyOn property is supported since 29.1.0, we are running 27
+    // therefore this workaround
+    // https://github.com/facebook/jest/issues/9675
+    Object.defineProperty(jellyfishService, 'Masternode', {
+      get() {
+        return rawTxMasternode;
+      },
+    });
+    Object.defineProperty(jellyfishService, 'Utxo', {
+      get() {
+        return rawTxUtxo;
+      },
+    });
 
     const module: TestingModule = await Test.createTestingModule({
       imports: [],
@@ -77,16 +98,16 @@ describe('TransactionExecutionService', () => {
   function setup(testSetup: TestSetup) {
     switch (testSetup) {
       case TestSetup.CREATE_MASTERNODE:
-        jest.spyOn(jellyfishService, 'rawTxForCreate').mockResolvedValue(rawTxCreateMasternode);
+        jest.spyOn(rawTxMasternode, 'create').mockResolvedValue(rawTxCreateMasternode);
         break;
       case TestSetup.RESIGN_MASTERNODE:
-        jest.spyOn(jellyfishService, 'rawTxForResign').mockResolvedValue(rawTxResignMasternode);
+        jest.spyOn(rawTxMasternode, 'resign').mockResolvedValue(rawTxResignMasternode);
         break;
       case TestSetup.SEND_FROM_LIQ:
-        jest.spyOn(jellyfishService, 'rawTxForSendFromLiq').mockResolvedValue(rawTxSendFromLiq);
+        jest.spyOn(rawTxUtxo, 'sendFromLiq').mockResolvedValue(rawTxSendFromLiq);
         break;
       case TestSetup.SEND_TO_LIQ:
-        jest.spyOn(jellyfishService, 'rawTxForSendToLiq').mockResolvedValue(rawTxSendToLiq);
+        jest.spyOn(rawTxUtxo, 'sendToLiq').mockResolvedValue(rawTxSendToLiq);
         break;
     }
   }
@@ -101,7 +122,7 @@ describe('TransactionExecutionService', () => {
     });
 
     expect(txId).toStrictEqual('tx-id');
-    expect(jellyfishService.rawTxForCreate).toBeCalledWith(masternode);
+    expect(rawTxMasternode.create).toBeCalledWith(masternode);
     expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
     expect(transactionService.sign).toBeCalledWith(rawTxCreateMasternode, 'signed-tx-hex-as-message', {
       ownerWallet: 'cold-wallet-a',
@@ -121,7 +142,7 @@ describe('TransactionExecutionService', () => {
     });
 
     expect(txId).toStrictEqual('tx-id');
-    expect(jellyfishService.rawTxForResign).toBeCalledWith(masternode);
+    expect(rawTxMasternode.resign).toBeCalledWith(masternode);
     expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
     expect(transactionService.sign).toBeCalledWith(rawTxResignMasternode, 'signed-tx-hex-as-message', {
       ownerWallet: 'cold-wallet-a',
@@ -143,11 +164,7 @@ describe('TransactionExecutionService', () => {
     });
 
     expect(txId).toStrictEqual('tx-id');
-    expect(jellyfishService.rawTxForSendFromLiq).toBeCalledWith(
-      'owner-address',
-      new BigNumber(42),
-      UtxoSizePriority.BIG,
-    );
+    expect(rawTxUtxo.sendFromLiq).toBeCalledWith('owner-address', new BigNumber(42), UtxoSizePriority.BIG);
     expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
     expect(transactionService.sign).toBeCalledWith(rawTxSendFromLiq, 'signed-tx-hex-as-message', {
       ownerWallet: 'cold-wallet-a',
@@ -168,7 +185,7 @@ describe('TransactionExecutionService', () => {
     });
 
     expect(txId).toStrictEqual('tx-id');
-    expect(jellyfishService.rawTxForSendToLiq).toBeCalledWith('owner-address', new BigNumber(42));
+    expect(rawTxUtxo.sendToLiq).toBeCalledWith('owner-address', new BigNumber(42));
     expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
     expect(transactionService.sign).toBeCalledWith(rawTxSendToLiq, 'signed-tx-hex-as-message', {
       ownerWallet: 'cold-wallet-a',
