@@ -94,6 +94,7 @@ export class Configuration {
     phrase: process.env.KYC_PHRASE?.split(',') ?? [],
     allowedWebhookIps: process.env.KYC_WEBHOOK_IPS?.split(',') ?? [],
     apiUrl: process.env.KYC_API_URL,
+    walletId: +process.env.KYC_WALLET_ID,
     frontendUrl: (kycHash: string) => `${process.env.KYC_FRONTEND_URL}?code=${kycHash}`,
   };
 
