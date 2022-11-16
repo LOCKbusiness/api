@@ -99,7 +99,7 @@ export class TransactionExecutionService {
       data.balance.amount,
     );
     console.info(`Send account tx ${rawTx.id}`);
-    return this.signAndBroadcast(rawTx, { type: TransactionType.ACCOUNT_TO_ACCOUNT });
+    return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.ACCOUNT_TO_ACCOUNT));
   }
 
   async createVault(data: CreateVaultData): Promise<string> {
