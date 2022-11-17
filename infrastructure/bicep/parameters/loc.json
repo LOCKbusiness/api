@@ -94,6 +94,9 @@
     },
     "forwardPhrase": {
       "value": "xxx"
+    },
+    "kycWalletId": {
+      "value": 7
     }
   }
 }
