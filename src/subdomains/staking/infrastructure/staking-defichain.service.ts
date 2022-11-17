@@ -77,7 +77,11 @@ export class StakingDeFiChainService {
   }
 
   private async forwardMasternodeDeposit(address: string, amount: number): Promise<string> {
-    const forwardToLiq = await this.rawTxService.Utxo.sendToLiq(address, new BigNumber(amount));
+    const forwardToLiq = await this.rawTxService.Utxo.forward(
+      address,
+      Config.staking.liquidity.address,
+      new BigNumber(amount),
+    );
     return this.inputClient.signAndSend(forwardToLiq.hex);
   }
 

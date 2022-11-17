@@ -88,7 +88,12 @@ describe('TransactionExecutionService', () => {
         { provide: CryptoService, useValue: cryptoService },
         { provide: WhaleService, useValue: whaleService },
         { provide: NodeService, useValue: nodeService },
-        TestUtil.provideConfig({ staking: { signature: { address: 'some-test-address' } } }),
+        TestUtil.provideConfig({
+          staking: {
+            signature: { address: 'some-test-address' },
+            liquidity: { address: 'some-test-liquidity-address' },
+          },
+        }),
       ],
     }).compile();
 
@@ -104,10 +109,10 @@ describe('TransactionExecutionService', () => {
         jest.spyOn(rawTxMasternode, 'resign').mockResolvedValue(rawTxResignMasternode);
         break;
       case TestSetup.SEND_FROM_LIQ:
-        jest.spyOn(rawTxUtxo, 'sendFromLiq').mockResolvedValue(rawTxSendFromLiq);
+        jest.spyOn(rawTxUtxo, 'sendWithChange').mockResolvedValue(rawTxSendFromLiq);
         break;
       case TestSetup.SEND_TO_LIQ:
-        jest.spyOn(rawTxUtxo, 'sendToLiq').mockResolvedValue(rawTxSendToLiq);
+        jest.spyOn(rawTxUtxo, 'forward').mockResolvedValue(rawTxSendToLiq);
         break;
     }
   }
@@ -164,7 +169,12 @@ describe('TransactionExecutionService', () => {
     });
 
     expect(txId).toStrictEqual('tx-id');
-    expect(rawTxUtxo.sendFromLiq).toBeCalledWith('owner-address', new BigNumber(42), UtxoSizePriority.BIG);
+    expect(rawTxUtxo.sendWithChange).toBeCalledWith(
+      'some-test-liquidity-address',
+      'owner-address',
+      new BigNumber(42),
+      UtxoSizePriority.BIG,
+    );
     expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
     expect(transactionService.sign).toBeCalledWith(rawTxSendFromLiq, 'signed-tx-hex-as-message', {
       ownerWallet: 'cold-wallet-a',
@@ -185,7 +195,7 @@ describe('TransactionExecutionService', () => {
     });
 
     expect(txId).toStrictEqual('tx-id');
-    expect(rawTxUtxo.sendToLiq).toBeCalledWith('owner-address', new BigNumber(42));
+    expect(rawTxUtxo.forward).toBeCalledWith('owner-address', 'some-test-liquidity-address', new BigNumber(42));
     expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
     expect(transactionService.sign).toBeCalledWith(rawTxSendToLiq, 'signed-tx-hex-as-message', {
       ownerWallet: 'cold-wallet-a',

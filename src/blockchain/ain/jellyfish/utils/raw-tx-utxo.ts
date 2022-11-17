@@ -1,6 +1,5 @@
 import { Vout, Script } from '@defichain/jellyfish-transaction';
 import BigNumber from 'bignumber.js';
-import { Config } from 'src/config/config';
 import { UtxoConfig } from '../domain/entities/utxo-config';
 import { UtxoSizePriority } from '../domain/enums';
 import { RawTxDto } from '../dto/raw-tx.dto';
@@ -15,17 +14,14 @@ export class RawTxUtxo extends RawTxBase {
     );
   }
 
-  async sendFromLiq(to: string, amount: BigNumber, sizePriority: UtxoSizePriority): Promise<RawTxDto> {
-    return this.handle(() =>
-      this.send(Config.staking.liquidity.address, to, amount, true, { useFeeBuffer: true, sizePriority }),
-    );
+  async sendWithChange(from: string, to: string, amount: BigNumber, sizePriority: UtxoSizePriority): Promise<RawTxDto> {
+    return this.handle(() => this.send(from, to, amount, true, { useFeeBuffer: true, sizePriority }));
   }
 
-  async sendToLiq(from: string, amount: BigNumber): Promise<RawTxDto> {
+  async forward(from: string, to: string, amount: BigNumber): Promise<RawTxDto> {
     return this.handle(() =>
-      this.send(from, Config.staking.liquidity.address, amount, false, {
+      this.send(from, to, amount, false, {
         useFeeBuffer: false,
-        sizePriority: UtxoSizePriority.SMALL,
       }),
     );
   }

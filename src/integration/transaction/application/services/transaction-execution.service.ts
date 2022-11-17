@@ -62,19 +62,29 @@ export class TransactionExecutionService {
   }
 
   async sendFromLiq(data: SendFromLiqData): Promise<string> {
-    const rawTx = await this.rawTxService.Utxo.sendFromLiq(data.to, data.amount, data.sizePriority);
+    const rawTx = await this.rawTxService.Utxo.sendWithChange(
+      Config.staking.liquidity.address,
+      data.to,
+      data.amount,
+      data.sizePriority,
+    );
     console.info(`Send from liq tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.SEND_FROM_LIQ));
   }
 
   async sendFromLiqToCustomer(data: SendFromLiqToCustomerData): Promise<string> {
-    const rawTx = await this.rawTxService.Utxo.sendFromLiq(data.to, data.amount, UtxoSizePriority.FITTING);
+    const rawTx = await this.rawTxService.Utxo.sendWithChange(
+      Config.staking.liquidity.address,
+      data.to,
+      data.amount,
+      UtxoSizePriority.FITTING,
+    );
     console.info(`Send from liq to customer tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, { id: data.withdrawalId, type: TransactionType.WITHDRAWAL });
   }
 
   async sendToLiq(data: SendToLiqData): Promise<string> {
-    const rawTx = await this.rawTxService.Utxo.sendToLiq(data.from, data.amount);
+    const rawTx = await this.rawTxService.Utxo.forward(data.from, Config.staking.liquidity.address, data.amount);
     console.info(`Send to liq tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.SEND_TO_LIQ));
   }
