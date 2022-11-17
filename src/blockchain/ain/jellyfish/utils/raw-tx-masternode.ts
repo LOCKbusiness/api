@@ -16,7 +16,7 @@ export class RawTxMasternode extends RawTxBase {
 
   private async createTx(masternode: Masternode): Promise<RawTxDto> {
     const [ownerScript, ownerPubKeyHash] = RawTxUtil.parseAddress(masternode.owner);
-    const [, operatorPubKeyHash] = RawTxUtil.parseOperatorPubKeyHash(masternode.operator);
+    const [, operatorPubKeyHash] = RawTxUtil.parseLegacyAddress(masternode.operator);
 
     const expectedAmount = new BigNumber(
       Config.masternode.collateral + Config.masternode.creationFee + Config.masternode.fee,
@@ -41,7 +41,7 @@ export class RawTxMasternode extends RawTxBase {
 
   private async resignTx(masternode: Masternode): Promise<RawTxDto> {
     const [, ownerPubKeyHash] = RawTxUtil.parseAddress(masternode.owner);
-    const [, operatorPubKeyHash] = RawTxUtil.parseOperatorPubKeyHash(masternode.operator);
+    const [, operatorPubKeyHash] = RawTxUtil.parseLegacyAddress(masternode.operator);
 
     const expectedAmount = new BigNumber(Config.masternode.resignFee);
     const utxo = await this.utxoProvider.provideExactAmount(masternode.owner, expectedAmount);

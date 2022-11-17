@@ -5,23 +5,17 @@ import { RawTxBase } from './raw-tx-base';
 import { RawTxUtil } from './raw-tx-util';
 
 export class RawTxAccount extends RawTxBase {
-  async sendFromTo(from: string, to: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.handle(() => this.send(from, to, token, amount));
+  async send(
+    from: string,
+    to: string,
+    token: number,
+    amount: BigNumber,
+    useFeeExactAmount?: BigNumber,
+  ): Promise<RawTxDto> {
+    return this.handle(() => this.createSend(from, to, token, amount, useFeeExactAmount));
   }
 
-  async sendToLiq(from: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.handle(() =>
-      this.send(
-        from,
-        Config.yieldMachine.liquidity.address,
-        token,
-        amount,
-        new BigNumber(Config.payIn.forward.accountToAccountFee),
-      ),
-    );
-  }
-
-  private async send(
+  private async createSend(
     from: string,
     to: string,
     token: number,

@@ -1,44 +1,16 @@
 import { MainNet, Network, TestNet } from '@defichain/jellyfish-network';
 import { CTransactionSegWit, Vout, toOPCodes } from '@defichain/jellyfish-transaction';
-import { Prevout } from '@defichain/jellyfish-transaction-builder';
 import { JellyfishWallet, WalletAccount, WalletHdNode } from '@defichain/jellyfish-wallet';
 import { Bip32Options, MnemonicHdNodeProvider } from '@defichain/jellyfish-wallet-mnemonic';
 import { WhaleWalletAccount, WhaleWalletAccountProvider } from '@defichain/whale-api-wallet';
 import { Injectable } from '@nestjs/common';
-import { SchedulerRegistry } from '@nestjs/schedule';
 import BigNumber from 'bignumber.js';
 import { Config } from 'src/config/config';
-import { QueueHandler } from 'src/shared/queue-handler';
 import { RawTxDto } from '../dto/raw-tx.dto';
-import { RawTxUtil } from '../utils/raw-tx-util';
-import { UtxoProviderService } from './utxo-provider.service';
 import { SmartBuffer } from 'smart-buffer';
-import { RawTxMasternode } from '../utils/raw-tx-masternode';
-import { RawTxVault } from '../utils/raw-tx-vault';
-import { RawTxUtxo } from '../utils/raw-tx-utxo';
-import { RawTxAccount } from '../utils/raw-tx-account';
-import { RawTxPool } from '../utils/raw-tx-pool';
 
 @Injectable()
 export class JellyfishService {
-  private readonly queue: QueueHandler;
-
-  public readonly Account: RawTxAccount;
-  public readonly Masternode: RawTxMasternode;
-  public readonly Pool: RawTxPool;
-  public readonly Utxo: RawTxUtxo;
-  public readonly Vault: RawTxVault;
-
-  constructor(private readonly utxoProvider: UtxoProviderService, scheduler: SchedulerRegistry) {
-    this.queue = new QueueHandler(scheduler, 65000);
-
-    this.Account = new RawTxAccount((c) => this.call(c), utxoProvider);
-    this.Masternode = new RawTxMasternode((c) => this.call(c), utxoProvider);
-    this.Pool = new RawTxPool((c) => this.call(c), utxoProvider);
-    this.Utxo = new RawTxUtxo((c) => this.call(c), utxoProvider);
-    this.Vault = new RawTxVault((c) => this.call(c), utxoProvider);
-  }
-
   public createWallet(seed: string[]): JellyfishWallet<WhaleWalletAccount, WalletHdNode> {
     return new JellyfishWallet(
       MnemonicHdNodeProvider.fromWords(seed, this.bip32OptionsBasedOn(JellyfishService.getNetwork())),
@@ -74,19 +46,7 @@ export class JellyfishService {
     };
   }
 
-  async unlock(rawTx: RawTxDto): Promise<void> {
-    return this.call(() => this.executeUnlockUtxos(rawTx.prevouts, rawTx.scriptHex));
-  }
-
-  private async executeUnlockUtxos(prevouts: Prevout[], scriptHex: string): Promise<void> {
-    this.utxoProvider.unlockSpentBasedOn(prevouts, RawTxUtil.parseAddressFromScriptHex(scriptHex));
-  }
-
   // --- HELPER METHODS --- //
-
-  private call<T>(call: () => Promise<T>): Promise<T> {
-    return this.queue.handle(() => call());
-  }
 
   static getNetwork(): Network {
     return Config.network == 'testnet' ? TestNet : MainNet;

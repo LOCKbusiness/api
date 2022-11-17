@@ -4,7 +4,7 @@ import BigNumber from 'bignumber.js';
 import { BehaviorSubject } from 'rxjs';
 import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/domain/enums';
 import { createCustomRawTxDto } from 'src/blockchain/ain/jellyfish/dto/__mocks__/raw-tx.dto.mock';
-import { JellyfishService } from 'src/blockchain/ain/jellyfish/services/jellyfish.service';
+import { RawTxService } from 'src/blockchain/ain/jellyfish/services/raw-tx.service';
 import { RawTxMasternode } from 'src/blockchain/ain/jellyfish/utils/raw-tx-masternode';
 import { RawTxUtxo } from 'src/blockchain/ain/jellyfish/utils/raw-tx-utxo';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
@@ -34,7 +34,7 @@ describe('TransactionExecutionService', () => {
   let service: TransactionExecutionService;
 
   let transactionService: TransactionService;
-  let jellyfishService: JellyfishService;
+  let rawTxService: RawTxService;
   let cryptoService: CryptoService;
   let whaleService: WhaleService;
   let nodeService: NodeService;
@@ -47,7 +47,7 @@ describe('TransactionExecutionService', () => {
 
   beforeEach(async () => {
     transactionService = createMock<TransactionService>();
-    jellyfishService = createMock<JellyfishService>();
+    rawTxService = createMock<RawTxService>();
     cryptoService = createMock<CryptoService>();
     whaleService = createMock<WhaleService>();
     nodeService = createMock<NodeService>();
@@ -68,12 +68,12 @@ describe('TransactionExecutionService', () => {
     // Krysh: jest spyOn property is supported since 29.1.0, we are running 27
     // therefore this workaround
     // https://github.com/facebook/jest/issues/9675
-    Object.defineProperty(jellyfishService, 'Masternode', {
+    Object.defineProperty(rawTxService, 'Masternode', {
       get() {
         return rawTxMasternode;
       },
     });
-    Object.defineProperty(jellyfishService, 'Utxo', {
+    Object.defineProperty(rawTxService, 'Utxo', {
       get() {
         return rawTxUtxo;
       },
@@ -84,7 +84,7 @@ describe('TransactionExecutionService', () => {
       providers: [
         TransactionExecutionService,
         { provide: TransactionService, useValue: transactionService },
-        { provide: JellyfishService, useValue: jellyfishService },
+        { provide: RawTxService, useValue: rawTxService },
         { provide: CryptoService, useValue: cryptoService },
         { provide: WhaleService, useValue: whaleService },
         { provide: NodeService, useValue: nodeService },

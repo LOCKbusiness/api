@@ -183,9 +183,7 @@ export class UtxoProviderService {
     amount: BigNumber,
     config: UtxoConfig,
   ): AddressUnspent[] {
-    const amountPlusFeeBuffer = amount.plus(
-      config.customFeeBuffer ? config.customFeeBuffer : Config.blockchain.minFeeBuffer,
-    );
+    const amountPlusFeeBuffer = amount.plus(config.customFeeBuffer ?? Config.blockchain.minFeeBuffer);
     const wantedAmount = config.useFeeBuffer ? amountPlusFeeBuffer : amount;
     let [neededUnspent, total] = UtxoProviderService.tryProvideUntilAmount(unspent, wantedAmount, config);
     if (total.lt(wantedAmount) && config.sizePriority === UtxoSizePriority.FITTING) {
@@ -206,12 +204,12 @@ export class UtxoProviderService {
   private static tryProvideUntilAmount(
     unspent: AddressUnspent[],
     amountPlusFeeBuffer: BigNumber,
-    config: UtxoConfig,
+    { sizePriority }: UtxoConfig,
   ): [AddressUnspent[], BigNumber] {
     const neededUnspent: AddressUnspent[] = [];
     let total = new BigNumber(0);
-    unspent = unspent.sort(config.sizePriority === UtxoSizePriority.BIG ? this.orderDescending : this.orderAscending);
-    if (config.sizePriority === UtxoSizePriority.FITTING) {
+    unspent = unspent.sort(sizePriority === UtxoSizePriority.BIG ? this.orderDescending : this.orderAscending);
+    if (sizePriority === UtxoSizePriority.FITTING) {
       unspent = unspent.filter((u) => new BigNumber(u.vout.value).gte(amountPlusFeeBuffer));
     }
     unspent.forEach((u) => {
@@ -222,8 +220,12 @@ export class UtxoProviderService {
     return [neededUnspent, total];
   }
 
-  private static provideNumber(unspent: AddressUnspent[], numberOfUtxos: number, config: UtxoConfig): AddressUnspent[] {
-    unspent = unspent.sort(config.sizePriority === UtxoSizePriority.BIG ? this.orderDescending : this.orderAscending);
+  private static provideNumber(
+    unspent: AddressUnspent[],
+    numberOfUtxos: number,
+    { sizePriority }: UtxoConfig,
+  ): AddressUnspent[] {
+    unspent = unspent.sort(sizePriority === UtxoSizePriority.BIG ? this.orderDescending : this.orderAscending);
     return unspent.slice(0, numberOfUtxos);
   }
 

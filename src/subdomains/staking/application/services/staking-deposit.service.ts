@@ -187,20 +187,25 @@ export class StakingDepositService {
     for (const [stakingId, payIn] of stakingPairs) {
       try {
         const staking = await this.repository.findOne({ where: { id: stakingId } });
-        const payInValid = staking.getConfirmedDeposits().length > 0 || (await this.isFirstPayInValid(staking, payIn));
-        const hasSameAsset = staking.asset.id === payIn.asset.id;
 
+        // verify asset
+        const hasSameAsset = staking.asset.id === payIn.asset.id;
+        if (!hasSameAsset) {
+          await this.payInService.failedPayIn(payIn, PayInPurpose.STAKING);
+          continue;
+        }
+
+        // verify first pay in
+        const payInValid = staking.getConfirmedDeposits().length > 0 || (await this.isFirstPayInValid(staking, payIn));
         if (payInValid) {
-          if (hasSameAsset) this.createOrUpdateDeposit(staking, payIn);
+          this.createOrUpdateDeposit(staking, payIn);
         } else {
           console.error(`Invalid first pay in, staking ${staking.id} is blocked`);
           staking.block();
         }
 
         await this.repository.save(staking);
-        hasSameAsset
-          ? await this.payInService.acknowledgePayIn(payIn, PayInPurpose.STAKING)
-          : await this.payInService.failedPayIn(payIn, PayInPurpose.STAKING);
+        await this.payInService.acknowledgePayIn(payIn, PayInPurpose.STAKING);
       } catch (e) {
         console.error(`Failed to process deposit input ${payIn.id}:`, e);
       }

@@ -9,7 +9,7 @@ import { RawTxUtil } from './raw-tx-util';
 
 export class RawTxUtxo extends RawTxBase {
   // SEND UTXOS //
-  async sendFromTo(from: string, to: string, amount: BigNumber): Promise<RawTxDto> {
+  async sendFeeUtxo(from: string, to: string, amount: BigNumber): Promise<RawTxDto> {
     return this.handle(() =>
       this.send(from, to, amount, true, { useFeeBuffer: false, sizePriority: UtxoSizePriority.SMALL }),
     );
@@ -58,25 +58,27 @@ export class RawTxUtxo extends RawTxBase {
 
   // MANAGE UTXOS //
   async split(address: string, split: number): Promise<RawTxDto> {
-    return this.handle(() => this.management(address, split, { sizePriority: UtxoSizePriority.BIG }));
+    return this.handle(() => this.management(address, 1, split, { sizePriority: UtxoSizePriority.BIG }));
   }
 
   async merge(address: string, merge: number): Promise<RawTxDto> {
-    return this.handle(() => this.management(address, merge, { sizePriority: UtxoSizePriority.SMALL }));
+    return this.handle(() => this.management(address, merge, 1, { sizePriority: UtxoSizePriority.SMALL }));
   }
 
-  private async management(address: string, numberOf: number, config: UtxoConfig): Promise<RawTxDto> {
-    const numberOfInputs = config.sizePriority === UtxoSizePriority.SMALL ? numberOf : 1;
-    const numberOfOutputs = config.sizePriority === UtxoSizePriority.BIG ? numberOf : 1;
-
+  private async management(
+    address: string,
+    inputCount: number,
+    outputCount: number,
+    config: UtxoConfig,
+  ): Promise<RawTxDto> {
     const [script, pubKeyHash] = RawTxUtil.parseAddress(address);
 
-    const utxo = await this.utxoProvider.provideNumber(address, numberOfInputs, config);
+    const utxo = await this.utxoProvider.provideNumber(address, inputCount, config);
 
     const vins = RawTxUtil.createVins(utxo.prevouts);
     const vouts =
-      numberOfOutputs > 1
-        ? RawTxUtxo.calculateSplittedOutputs(utxo.total, numberOfOutputs, script)
+      outputCount > 1
+        ? RawTxUtxo.calculateSplittedOutputs(utxo.total, outputCount, script)
         : [RawTxUtil.createVoutReturn(script, utxo.total)];
     const witness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(pubKeyHash)]);
     const witnesses = new Array(vins.length).fill(witness);

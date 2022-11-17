@@ -1,6 +1,5 @@
 import {
   DeFiTransactionConstants,
-  Transaction,
   TransactionSegWit,
   CTransactionSegWit,
   Witness,
@@ -31,19 +30,19 @@ interface OpPushData {
 export class RawTxUtil {
   // --- PARSING --- //
 
-  static parseAddress(owner: string): [Script, string] {
-    const network = JellyfishService.getNetwork();
-    const decodedAddress = fromAddress(owner, network.name);
-    const pushData: OpPushData = decodedAddress?.script.stack[1] as any;
-    if (!decodedAddress?.script || !pushData?.hex) throw new Error('Could not parse owner address');
-    return [decodedAddress.script, pushData.hex];
+  static parseAddress(address: string): [Script, string] {
+    return this.parseScriptAndHex(address, 1);
   }
 
-  static parseOperatorPubKeyHash(operator: string): [Script, string] {
+  static parseLegacyAddress(legacy: string): [Script, string] {
+    return this.parseScriptAndHex(legacy, 2);
+  }
+
+  private static parseScriptAndHex(address: string, pushDataIndex: number): [Script, string] {
     const network = JellyfishService.getNetwork();
-    const decodedAddress = fromAddress(operator, network.name);
-    const pushData: OpPushData = decodedAddress?.script.stack[2] as any;
-    if (!decodedAddress?.script || !pushData?.hex) throw new Error('Could not parse operator address');
+    const decodedAddress = fromAddress(address, network.name);
+    const pushData: OpPushData = decodedAddress?.script.stack[pushDataIndex] as any;
+    if (!decodedAddress?.script || !pushData?.hex) throw new Error(`Could not parse ${address}`);
     return [decodedAddress.script, pushData.hex];
   }
 
@@ -176,15 +175,6 @@ export class RawTxUtil {
   }
 
   // --- TX CREATION --- //
-
-  static createTx(vins: Vin[], vouts: Vout[]): Transaction {
-    return {
-      version: DeFiTransactionConstants.Version,
-      vin: vins,
-      vout: vouts,
-      lockTime: 0x00000000,
-    };
-  }
 
   static createTxSegWit(vins: Vin[], vouts: Vout[], witnesses: Witness[]): TransactionSegWit {
     return {
