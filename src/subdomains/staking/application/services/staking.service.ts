@@ -129,7 +129,7 @@ export class StakingService {
       .select('SUM(amount)', 'rewardVolume')
       .where('staking.assetId = :id', { id: asset.id })
       .andWhere('staking.strategy = :strategy', { strategy })
-      .andWhere('rewards.created BETWEEN :dateFrom AND :dateTo', { dateFrom, dateTo })
+      .andWhere('rewards.reinvestOutputDate BETWEEN :dateFrom AND :dateTo', { dateFrom, dateTo })
       .getRawOne<{ rewardVolume: number }>();
 
     return rewardVolume / Util.daysDiff(dateFrom, dateTo);

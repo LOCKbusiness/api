@@ -65,7 +65,7 @@ export class TransactionController {
     @Body() dto: SignedTransactionDto,
     @Headers('Device-Id') deviceId: string,
   ) {
-    await this.onPing('cw-' + deviceId);
+    await this.onPing('ts-' + deviceId);
     await this.transactionService.signed(id, dto.hex);
   }
 
