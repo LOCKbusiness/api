@@ -91,6 +91,12 @@
     },
     "kycFrontendUrl": {
       "value": "https://dev.kyc.lock.space"
+    },
+    "forwardPhrase": {
+      "value": "xxx"
+    },
+    "kycWalletId": {
+      "value": 7
     }
   }
 }

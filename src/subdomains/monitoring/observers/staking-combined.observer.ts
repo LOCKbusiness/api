@@ -39,7 +39,8 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
     try {
       data = await this.getStaking();
     } catch (e) {
-      data = this.getDefaultData();
+      console.error('Exception during monitoring staking combined:', e);
+      return;
     }
 
     this.emit(data);
@@ -71,7 +72,7 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
     // calculate actual balance
     const activeMasternodes = await getCustomRepository(MasternodeRepository).find({
       where: {
-        status: Not(In([MasternodeState.IDLE, MasternodeState.RESIGNED])),
+        state: Not(In([MasternodeState.IDLE, MasternodeState.RESIGNED])),
       },
     });
     const addresses = [...activeMasternodes.map((m) => m.owner), Config.staking.liquidity.address];
@@ -82,8 +83,8 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
     const dbBalance = await getCustomRepository(StakingRepository)
       .createQueryBuilder('staking')
       .leftJoin('staking.asset', 'asset')
-      .where('asset.name = :name', { name: 'DFI' })
       .select('SUM(balance)', 'balance')
+      .where('asset.name = :name', { name: 'DFI' })
       .getRawOne<{ balance: number }>()
       .then((b) => b.balance);
 
@@ -101,13 +102,5 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
     return { actual, should, difference };
   }
 
-  private getDefaultData(): StakingData {
-    return {
-      balance: { actual: 0, should: 0, difference: 0 },
-      freeOperators: 0,
-      freeDepositAddresses: 0,
-      openDeposits: 0,
-      openWithdrawals: 0,
-    };
-  }
+
 }

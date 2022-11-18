@@ -1,16 +1,28 @@
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { Deposit } from './deposit.entity';
 import { Reward } from './reward.entity';
 import { Withdrawal } from './withdrawal.entity';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne } from 'typeorm';
 import { IEntity } from 'src/shared/models/entity';
-import { DepositStatus, RewardStatus, StakingStatus, WithdrawalStatus } from '../enums';
+import { DepositStatus, RewardStatus, StakingStatus, StakingStrategy, WithdrawalStatus } from '../enums';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Util } from 'src/shared/util';
 import { StakingBlockchainAddress } from './staking-blockchain-address.entity';
 import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wallet-blockchain-address.entity';
 import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Price } from 'src/shared/models/price';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
+import { AssetQuery } from 'src/shared/models/asset/asset.service';
+
+export interface StakingType {
+  asset: Asset;
+  strategy: StakingStrategy;
+}
+
+export const StakingTypes: { [key in StakingStrategy]: AssetQuery[] } = {
+  [StakingStrategy.MASTERNODE]: [{ name: 'DFI', blockchain: Blockchain.DEFICHAIN, type: AssetType.COIN }],
+  [StakingStrategy.LIQUIDITY_MINING]: [{ name: 'DUSD', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN }],
+};
 
 @Entity()
 export class Staking extends IEntity {
@@ -19,6 +31,9 @@ export class Staking extends IEntity {
 
   @Column({ nullable: false })
   status: StakingStatus;
+
+  @Column({ nullable: false, default: StakingStrategy.MASTERNODE })
+  strategy: StakingStrategy;
 
   @ManyToOne(() => Asset, { eager: true, nullable: false })
   asset: Asset;
@@ -48,22 +63,22 @@ export class Staking extends IEntity {
   @Column({ type: 'float', nullable: false, default: 0 })
   rewardsAmount: number;
 
-  @Column({ type: 'float', nullable: false, default: 0.05 })
+  @Column({ type: 'float', nullable: true })
   fee: number;
 
   //*** FACTORY METHODS ***//
 
   static create(
     userId: number,
+    { asset, strategy }: StakingType,
     depositAddress: StakingBlockchainAddress,
     withdrawalAddress: WalletBlockchainAddress,
-    asset: Asset,
-    stakingFee: number,
   ): Staking {
     const staking = new Staking();
 
     staking.userId = userId;
     staking.status = StakingStatus.CREATED;
+    staking.strategy = strategy;
     staking.asset = asset;
     staking.balance = 0;
 
@@ -74,8 +89,6 @@ export class Staking extends IEntity {
     staking.deposits = [];
     staking.withdrawals = [];
     staking.rewards = [];
-
-    staking.fee = stakingFee;
 
     return staking;
   }

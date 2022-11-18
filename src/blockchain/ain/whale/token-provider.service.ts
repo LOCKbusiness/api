@@ -21,6 +21,6 @@ export class TokenProviderService {
 
   private async retrieveAll(): Promise<Map<string, TokenData>> {
     const allTokens = await this.client.getAllTokens();
-    return new Map(allTokens.map((tokenData) => [tokenData.symbol, tokenData]));
+    return new Map(allTokens.map((tokenData) => [tokenData.symbolKey, tokenData]));
   }
 }

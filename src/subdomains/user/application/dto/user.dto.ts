@@ -26,6 +26,7 @@ export class UserDto {
 
   @ApiProperty({
     description: 'KycStatus of the user',
+    enum: KycStatus,
   })
   @IsOptional()
   @IsEnum(KycStatus)

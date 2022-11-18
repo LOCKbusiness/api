@@ -37,6 +37,14 @@ export class PayInService {
     await this.payInRepository.save(_payIn);
   }
 
+  async failedPayIn(payIn: PayIn, purpose: PayInPurpose): Promise<void> {
+    const _payIn = await this.payInRepository.findOne(payIn.id);
+
+    _payIn.fail(purpose);
+
+    await this.payInRepository.save(_payIn);
+  }
+
   //*** JOBS ***//
 
   @Cron(CronExpression.EVERY_30_SECONDS)
@@ -86,6 +94,7 @@ export class PayInService {
     const assetEntity = await this.assetService.getAssetByQuery({
       name: tx.asset,
       blockchain: Blockchain.DEFICHAIN,
+      type: tx.assetType,
     });
 
     const existingAddress = await this.addressRepository.findOne({

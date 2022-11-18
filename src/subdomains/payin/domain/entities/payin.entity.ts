@@ -4,12 +4,13 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { PayInBlockchainAddress } from './payin-blockchain-address.entity';
 
 export enum PayInPurpose {
-  CRYPTO_STAKING = 'CryptoStaking',
+  STAKING = 'Staking',
 }
 
 export enum PayInStatus {
   CREATED = 'Created',
   ACKNOWLEDGED = 'Acknowledged',
+  FAILED = 'Failed',
 }
 
 @Entity()
@@ -68,6 +69,13 @@ export class PayIn extends IEntity {
   acknowledge(purpose: PayInPurpose): this {
     this.purpose = purpose;
     this.status = PayInStatus.ACKNOWLEDGED;
+
+    return this;
+  }
+
+  fail(purpose: PayInPurpose): this {
+    this.purpose = purpose;
+    this.status = PayInStatus.FAILED;
 
     return this;
   }

@@ -91,9 +91,10 @@ export class Configuration {
 
   kyc = {
     secret: process.env.KYC_SECRET,
-    phrase: process.env.KYC_PHRASE?.split(','),
-    allowedWebhookIps: process.env.KYC_WEBHOOK_IPS?.split(','),
+    phrase: process.env.KYC_PHRASE?.split(',') ?? [],
+    allowedWebhookIps: process.env.KYC_WEBHOOK_IPS?.split(',') ?? [],
     apiUrl: process.env.KYC_API_URL,
+    walletId: +process.env.KYC_WALLET_ID,
     frontendUrl: (kycHash: string) => `${process.env.KYC_FRONTEND_URL}?code=${kycHash}`,
   };
 
@@ -110,7 +111,8 @@ export class Configuration {
 
   blockchain = {
     minFeeRate: 0.00001,
-    minFeeBuffer: 1,
+    minFeeBuffer: 0.1,
+    minDefiTxFeeBuffer: 0.00001,
     default: {
       user: process.env.NODE_USER,
       password: process.env.NODE_PASSWORD,
@@ -134,24 +136,22 @@ export class Configuration {
   };
 
   payIn = {
-    minPayIn: {
-      Fiat: {
-        USD: 1,
-      },
-      Bitcoin: {
-        BTC: 0.0005,
-      },
+    min: {
       DeFiChain: {
         DFI: 0.0001,
-        USD: 1,
+        DUSD: 0.0001,
       },
+    },
+    forward: {
+      phrase: process.env.FORWARD_PHRASE?.split(',') ?? [],
+      accountToAccountFee: 0.00000297,
+      timeout: 300000, // 5 minutes
     },
   };
 
   staking = {
     minimalStake: 1,
-    minimalDeposit: 0.01,
-    stakingFee: 0.05,
+    defaultFee: 0,
     signatureTemplates: {
       signWithdrawalMessage:
         'Withdraw_${amount}_${asset}_from_${address}_staking_id_${stakingId}_withdrawal_id_${withdrawalId}',
@@ -173,7 +173,7 @@ export class Configuration {
 
       address: process.env.LIQUIDITY_ADDRESS,
       wallet: process.env.LIQUIDITY_WALLET_NAME,
-      account: process.env.LIQUIDITY_ACCOUNT_INDEX,
+      account: +process.env.LIQUIDITY_ACCOUNT_INDEX,
     },
     aprPeriod: 28, // days
   };
@@ -182,7 +182,7 @@ export class Configuration {
     liquidity: {
       address: process.env.YIELD_MACHINE_LIQUIDITY_ADDRESS,
       wallet: process.env.YIELD_MACHINE_LIQUIDITY_WALLET_NAME,
-      account: process.env.YIELD_MACHINE_LIQUIDITY_ACCOUNT_INDEX,
+      account: +process.env.YIELD_MACHINE_LIQUIDITY_ACCOUNT_INDEX,
     },
   };
 

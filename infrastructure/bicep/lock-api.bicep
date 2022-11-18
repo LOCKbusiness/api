@@ -49,6 +49,11 @@ param yieldMachineLiquidityAddress string
 param yieldMachineLiquidityWalletName string
 param yieldMachineLiquidityAccountIndex string
 
+@secure()
+param forwardPhrase string
+
+param kycWalletId int
+
 // --- VARIABLES --- //
 var compName = 'lock'
 var apiName = 'api'
@@ -378,6 +383,14 @@ resource apiAppService 'Microsoft.Web/sites@2018-11-01' = if (env != 'loc') {
         {
           name: 'YIELD_MACHINE_LIQUIDITY_ACCOUNT_INDEX'
           value: yieldMachineLiquidityAccountIndex
+        }
+        {
+          name: 'FORWARD_PHRASE'
+          value: forwardPhrase
+        }
+        {
+          name: 'KYC_WALLET_ID'
+          value: kycWalletId
         }
       ]
     }

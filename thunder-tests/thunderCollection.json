@@ -55,11 +55,18 @@
         "sortNum": 90000
       },
       {
-        "_id": "4ec0284a-321f-44e4-a413-b147e4f23d55",
+        "_id": "e8091201-306b-4cbc-aafa-2215ba675a65",
         "name": "Staking",
         "containerId": "",
-        "created": "2022-11-07T20:23:37.785Z",
+        "created": "2022-11-09T15:22:39.258Z",
         "sortNum": 100000
+      },
+      {
+        "_id": "46522555-23ad-43c0-97db-3bd91a3606c9",
+        "name": "Monitoring",
+        "containerId": "",
+        "created": "2022-11-17T14:35:44.515Z",
+        "sortNum": 110000
       }
     ],
     "settings": {

@@ -1,10 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { DepositStatus, RewardStatus, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
 
 export enum HistoryTransactionType {
   DEPOSIT = 'Deposit',
   WITHDRAWAL = 'Withdrawal',
   REWARD = 'Reward',
+}
+
+export enum CompactHistoryStatus {
+  PENDING = 'Pending',
+  CONFIRMED = 'Confirmed',
+  FAILED = 'Failed',
 }
 
 export class HistoryBaseDto {
@@ -20,6 +25,15 @@ export class HistoryBaseDto {
   @ApiPropertyOptional()
   outputAsset: string;
 
+  @ApiPropertyOptional()
+  amountInEur: number;
+
+  @ApiPropertyOptional()
+  amountInChf: number;
+
+  @ApiPropertyOptional()
+  amountInUsd: number;
+
   @ApiProperty()
   txId: string;
 
@@ -31,6 +45,6 @@ export class CompactHistoryDto extends HistoryBaseDto {
   @ApiProperty({ enum: HistoryTransactionType })
   type: HistoryTransactionType;
 
-  @ApiProperty({ enum: { ...WithdrawalStatus, ...DepositStatus, ...RewardStatus } })
-  status: WithdrawalStatus | DepositStatus | RewardStatus;
+  @ApiProperty({ enum: CompactHistoryStatus })
+  status: CompactHistoryStatus;
 }

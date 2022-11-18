@@ -10,7 +10,6 @@ import { PayInService } from 'src/subdomains/payin/application/services/payin.se
 import { PayIn, PayInPurpose } from 'src/subdomains/payin/domain/entities/payin.entity';
 import { Between, LessThan } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
-import { StakingBlockchainAddress } from '../../domain/entities/staking-blockchain-address.entity';
 import { Staking } from '../../domain/entities/staking.entity';
 import { DepositStatus, StakingStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
@@ -98,10 +97,10 @@ export class StakingDepositService {
     if (Config.processDisabled(Process.STAKING_DEPOSIT)) return;
 
     try {
-      const pendingDeposits = await this.depositRepository.find({
-        where: { status: DepositStatus.PENDING, updated: LessThan(Util.daysBefore(1)) },
+      const openDeposits = await this.depositRepository.find({
+        where: { status: DepositStatus.OPEN, updated: LessThan(Util.daysBefore(1)) },
       });
-      for (const deposit of pendingDeposits) {
+      for (const deposit of openDeposits) {
         const txId = await this.whaleClient.getTx(deposit.payInTxId).catch(() => null);
         if (!txId) await this.depositRepository.update(deposit.id, { status: DepositStatus.FAILED });
       }
@@ -111,6 +110,41 @@ export class StakingDepositService {
   }
 
   //*** HELPER METHODS ***//
+
+  private async forwardDepositsToStaking(): Promise<void> {
+    await this.deFiChainStakingService.checkSync();
+
+    // not querying Stakings, because eager query is not supported, thus unsafe to fetch entire entity
+    const stakingIdsWithPendingDeposits = await this.repository
+      .createQueryBuilder('staking')
+      .leftJoin('staking.deposits', 'deposits')
+      .where('deposits.status = :status', { status: DepositStatus.PENDING })
+      .getMany()
+      .then((s) => s.map((i) => i.id));
+
+    await Promise.all(stakingIdsWithPendingDeposits.map((id) => this.processPendingDepositsForStaking(id)));
+  }
+
+  private async processPendingDepositsForStaking(stakingId: number): Promise<void> {
+    const staking = await this.repository.findOne(stakingId);
+    const deposits = staking.getPendingDeposits();
+
+    for (const deposit of deposits) {
+      try {
+        const txId = await this.deFiChainStakingService.forwardDeposit(
+          staking.depositAddress.address,
+          deposit.amount,
+          deposit.asset,
+          staking.strategy,
+        );
+        staking.confirmDeposit(deposit.id.toString(), txId);
+
+        await this.repository.save(staking);
+      } catch (e) {
+        console.error(`Failed to forward deposit ${deposit.id}:`, e);
+      }
+    }
+  }
 
   private async recordDepositTransactions(): Promise<void> {
     const newPayInTransactions = await this.payInService.getNewPayInTransactions();
@@ -153,8 +187,16 @@ export class StakingDepositService {
     for (const [stakingId, payIn] of stakingPairs) {
       try {
         const staking = await this.repository.findOne({ where: { id: stakingId } });
-        const payInValid = staking.getConfirmedDeposits().length > 0 || (await this.isFirstPayInValid(staking, payIn));
 
+        // verify asset
+        const hasSameAsset = staking.asset.id === payIn.asset.id;
+        if (!hasSameAsset) {
+          await this.payInService.failedPayIn(payIn, PayInPurpose.STAKING);
+          continue;
+        }
+
+        // verify first pay in
+        const payInValid = staking.getConfirmedDeposits().length > 0 || (await this.isFirstPayInValid(staking, payIn));
         if (payInValid) {
           this.createOrUpdateDeposit(staking, payIn);
         } else {
@@ -163,7 +205,7 @@ export class StakingDepositService {
         }
 
         await this.repository.save(staking);
-        await this.payInService.acknowledgePayIn(payIn, PayInPurpose.CRYPTO_STAKING);
+        await this.payInService.acknowledgePayIn(payIn, PayInPurpose.STAKING);
       } catch (e) {
         console.error(`Failed to process deposit input ${payIn.id}:`, e);
       }
@@ -187,41 +229,5 @@ export class StakingDepositService {
     staking.addDeposit(newDeposit);
 
     return newDeposit;
-  }
-
-  private async forwardDepositsToStaking(): Promise<void> {
-    await this.deFiChainStakingService.checkSync();
-
-    // not querying Stakings, because eager query is not supported, thus unsafe to fetch entire entity
-    const stakingIdsWithPendingDeposits = await this.repository
-      .createQueryBuilder('staking')
-      .leftJoin('staking.deposits', 'deposits')
-      .where('deposits.status = :status', { status: DepositStatus.PENDING })
-      .getMany()
-      .then((s) => s.map((i) => i.id));
-
-    for (const stakingId of stakingIdsWithPendingDeposits) {
-      await this.processPendingDepositsForStaking(stakingId);
-    }
-  }
-
-  private async processPendingDepositsForStaking(stakingId: number): Promise<void> {
-    const staking = await this.repository.findOne(stakingId);
-    const deposits = staking.getPendingDeposits();
-
-    for (const deposit of deposits) {
-      try {
-        const txId = await this.forwardDepositToStaking(deposit, staking.depositAddress);
-        staking.confirmDeposit(deposit.id.toString(), txId);
-
-        await this.repository.save(staking);
-      } catch (e) {
-        console.error(`Failed to forward deposit ${deposit.id}:`, e);
-      }
-    }
-  }
-
-  private async forwardDepositToStaking(deposit: Deposit, depositAddress: StakingBlockchainAddress): Promise<string> {
-    return this.deFiChainStakingService.forwardDeposit(depositAddress.address, deposit.amount);
   }
 }

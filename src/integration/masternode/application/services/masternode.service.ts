@@ -70,8 +70,9 @@ export class MasternodeService {
   async masternodeBlockCheck(): Promise<void> {
     if (Config.processDisabled(Process.MASTERNODE)) return;
 
-    const masternodeWithoutBlocks = await this.masternodeRepo.find({ where: { firstBlockFound: IsNull() } });
-
+    const masternodeWithoutBlocks = await this.masternodeRepo.find({
+      where: { firstBlockFound: IsNull(), creationHash: Not(IsNull()) },
+    });
     for (const masternode of masternodeWithoutBlocks) {
       try {
         const masternodeInfo = await this.client.getMasternodeInfo(masternode.creationHash);

@@ -17,7 +17,6 @@ import { RefService } from './application/services/ref.service';
 import { UserService } from './application/services/user.service';
 import { WalletProviderService } from './application/services/wallet-provider.service';
 import { WalletService } from './application/services/wallet.service';
-import { AdminController } from './api/controllers/admin.controller';
 import { BlockchainModule } from 'src/blockchain/blockchain.module';
 import { NotificationModule } from 'src/integration/notification/notification.module';
 
@@ -34,7 +33,7 @@ import { NotificationModule } from 'src/integration/notification/notification.mo
     BlockchainModule,
     NotificationModule,
   ],
-  controllers: [UserController, KycController, AuthController, AdminController],
+  controllers: [UserController, KycController, AuthController],
   providers: [
     UserService,
     WalletService,

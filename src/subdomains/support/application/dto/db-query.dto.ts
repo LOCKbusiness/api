@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-export class dbQueryDto {
+export class DbQueryDto {
   @IsNotEmpty()
   @IsString()
   table: string;

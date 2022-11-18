@@ -9,7 +9,7 @@ import {
   TokenBalanceUInt32,
   TokenBalanceVarInt,
 } from '@defichain/jellyfish-transaction';
-import { JellyfishService } from './jellyfish.service';
+import { JellyfishService } from '../services/jellyfish.service';
 import { TestNet } from '@defichain/jellyfish-network';
 import BigNumber from 'bignumber.js';
 
