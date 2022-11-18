@@ -30,6 +30,7 @@ import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
 import { TransactionType } from '../../domain/enums';
 import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/domain/enums';
 import { RawTxService } from 'src/blockchain/ain/jellyfish/services/raw-tx.service';
+import { TransactionCacheService } from './transaction-cache.service';
 
 @Injectable()
 export class TransactionExecutionService {
@@ -40,6 +41,7 @@ export class TransactionExecutionService {
 
   constructor(
     private readonly transactionService: TransactionService,
+    private readonly transactionCache: TransactionCacheService,
     private readonly rawTxService: RawTxService,
     private readonly cryptoService: CryptoService,
     whaleService: WhaleService,
@@ -72,21 +74,23 @@ export class TransactionExecutionService {
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.SEND_FROM_LIQ));
   }
 
-  async sendFromLiqToCustomer(data: SendFromLiqToCustomerData): Promise<string> {
-    const rawTx = await this.rawTxService.Utxo.sendWithChange(
-      Config.staking.liquidity.address,
-      data.to,
-      data.amount,
-      UtxoSizePriority.FITTING,
-    );
-    console.info(`Send from liq to customer tx ${rawTx.id}`);
-    return this.signAndBroadcast(rawTx, { id: data.withdrawalId, type: TransactionType.WITHDRAWAL });
-  }
-
   async sendToLiq(data: SendToLiqData): Promise<string> {
     const rawTx = await this.rawTxService.Utxo.forward(data.from, Config.staking.liquidity.address, data.amount);
     console.info(`Send to liq tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.SEND_TO_LIQ));
+  }
+
+  async sendWithdrawal(data: SendFromLiqToCustomerData): Promise<string> {
+    const rawTx = await this.useCache(TransactionType.WITHDRAWAL, data.withdrawalId.toString(), () =>
+      this.rawTxService.Utxo.sendWithChange(
+        Config.staking.liquidity.address,
+        data.to,
+        data.amount,
+        UtxoSizePriority.FITTING,
+      ),
+    );
+    console.info(`Send from liq to customer tx ${rawTx.id}`);
+    return this.signAndBroadcast(rawTx, { id: data.withdrawalId, type: TransactionType.WITHDRAWAL }, false);
   }
 
   async splitBiggestUtxo(data: SplitData): Promise<string> {
@@ -166,6 +170,18 @@ export class TransactionExecutionService {
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.COMPOSITE_SWAP));
   }
 
+  // --- HELPER METHODS --- //
+  private async useCache(
+    type: TransactionType,
+    correlationId: string,
+    create: () => Promise<RawTxDto>,
+  ): Promise<RawTxDto> {
+    const existingTx = await this.transactionCache.get(type, correlationId);
+    if (existingTx) return existingTx;
+
+    return await this.transactionCache.set(type, correlationId, await create());
+  }
+
   private createPayloadFor(data: WalletBaseData, type: TransactionType): any {
     return {
       type,
@@ -174,14 +190,14 @@ export class TransactionExecutionService {
     };
   }
 
-  private async signAndBroadcast(rawTx: RawTxDto, payload?: any): Promise<string> {
+  private async signAndBroadcast(rawTx: RawTxDto, payload: any, unlockUtxoOnFail = true): Promise<string> {
     try {
       const signature = await this.receiveSignatureFor(rawTx);
       const hex = await this.transactionService.sign(rawTx, signature, payload);
       console.info(`${rawTx.id} broadcasting`);
       return await this.whaleClient.sendRaw(hex);
     } catch (e) {
-      await this.rawTxService.unlockUtxosOf(rawTx);
+      if (unlockUtxoOnFail) await this.rawTxService.unlockUtxosOf(rawTx);
       throw e;
     }
   }
