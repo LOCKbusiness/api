@@ -1,6 +1,6 @@
 import { Controller, UseGuards, Body, Post, Param, Patch, Get } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { GetJwt } from 'src/shared/auth/get-jwt.decorator';
@@ -20,7 +20,7 @@ export class StakingWithdrawalController {
   @Post()
   @ApiBearerAuth()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  @ApiResponse({ status: 201, type: WithdrawalDraftOutputDto })
+  @ApiCreatedResponse({ type: WithdrawalDraftOutputDto })
   async createWithdrawalDraft(
     @GetJwt() jwt: JwtPayload,
     @Param('stakingId') stakingId: string,
@@ -32,7 +32,7 @@ export class StakingWithdrawalController {
   @Get('/drafts')
   @ApiBearerAuth()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  @ApiResponse({ status: 200, type: [WithdrawalDraftOutputDto] })
+  @ApiOkResponse({ type: WithdrawalDraftOutputDto, isArray: true })
   async getDraftWithdrawals(
     @GetJwt() jwt: JwtPayload,
     @Param('stakingId') stakingId: string,
@@ -43,7 +43,7 @@ export class StakingWithdrawalController {
   @Patch(':id/sign')
   @ApiBearerAuth()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  @ApiResponse({ status: 200, type: StakingOutputDto })
+  @ApiOkResponse({ type: StakingOutputDto })
   async signWithdrawal(
     @GetJwt() jwt: JwtPayload,
     @Param('stakingId') stakingId: string,
@@ -56,7 +56,7 @@ export class StakingWithdrawalController {
   @Patch(':id/amount')
   @ApiBearerAuth()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  @ApiResponse({ status: 200, type: WithdrawalDraftOutputDto })
+  @ApiOkResponse({ type: WithdrawalDraftOutputDto })
   async changeAmount(
     @GetJwt() jwt: JwtPayload,
     @Param('stakingId') stakingId: string,

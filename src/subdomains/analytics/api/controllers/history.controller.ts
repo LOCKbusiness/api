@@ -1,5 +1,5 @@
 import { Controller, Get, StreamableFile, Response, Query } from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ExportDataType, HistoryQueryCompact, HistoryQueryCT } from '../../application/dto/input/history-query.dto';
 import { CoinTrackingCsvHistoryDto } from '../../application/dto/output/coin-tracking-history.dto';
 import { CompactHistoryDto } from '../../application/dto/output/history.dto';
@@ -11,7 +11,7 @@ export class HistoryController {
   constructor(private readonly historyService: StakingHistoryService) {}
 
   @Get('compact')
-  @ApiResponse({ status: 200, type: CompactHistoryDto, isArray: true })
+  @ApiOkResponse({ type: CompactHistoryDto, isArray: true })
   async getCsvCompact(
     @Query() query: HistoryQueryCompact,
     @Response({ passthrough: true }) res,
@@ -35,7 +35,7 @@ export class HistoryController {
   }
 
   @Get('CT')
-  @ApiResponse({ status: 200, type: CoinTrackingCsvHistoryDto, isArray: true })
+  @ApiOkResponse({ type: CoinTrackingCsvHistoryDto, isArray: true })
   async getCsvCT(@Query() query: HistoryQueryCT, @Response({ passthrough: true }) res): Promise<StreamableFile> {
     const csvFile = await this.historyService.getHistoryCsv(query.userAddress, query.depositAddress, ExportType.CT);
     res.set({

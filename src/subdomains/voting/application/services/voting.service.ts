@@ -8,7 +8,7 @@ import { Util } from 'src/shared/util';
 import { StakingService } from 'src/subdomains/staking/application/services/staking.service';
 import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
-import { CfpSignInfoDto } from '../dto/cfp-sign-info.dto';
+import { CfpSignMessageDto } from '../dto/cfp-sign-message.dto';
 import { CfpDto, CfpInfo } from '../dto/cfp.dto';
 import { Distribution } from '../dto/distribution.dto';
 import { Vote, Votes } from '../dto/votes.dto';
@@ -22,7 +22,7 @@ export class VotingService {
     private readonly http: HttpService,
   ) {}
 
-  async getVotingSignMessages(): Promise<CfpSignInfoDto[]> {
+  async getVotingSignMessages(): Promise<CfpSignMessageDto[]> {
     const { startDate, cfpList } = await this.getCfpInfos();
     const distribution = await this.getVoteDistribution(cfpList);
     const masternodes = await this.masternodeService.getAllVotersAt(startDate);
