@@ -1,4 +1,12 @@
-export class CfpDto {
+export interface CfpDto {
+  number: number;
+  title: string;
+  type: 'cfp' | 'dfip';
+  startDate: string;
+  endDate: string;
+}
+
+export interface CfpInfo {
+  id: number;
   name: string;
-  votes: { accountIndex: number; address: string; message: string };
 }

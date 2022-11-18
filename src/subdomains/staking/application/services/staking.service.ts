@@ -2,7 +2,7 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Lock } from 'src/shared/lock';
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { Price } from 'src/shared/models/price';
 import { Util } from 'src/shared/util';
@@ -95,17 +95,11 @@ export class StakingService {
     });
   }
 
-  async getStakingsByUserId(
-    userId: number,
-    type: { asset: Asset; stakingStrategy: StakingStrategy },
-  ): Promise<Staking[]> {
-    try {
-      await this.repository.find({ where: { userId, ...type }, relations: ['deposits', 'withdrawals', 'rewards'] });
-    } catch (e) {
-      const a = 0;
-    }
-
-    return {} as Staking[];
+  async getStakingsByUserId(userId: number, type?: StakingType): Promise<Staking[]> {
+    return this.repository.find({
+      where: { userId, ...type },
+      relations: ['asset', 'deposits', 'withdrawals', 'rewards'],
+    });
   }
 
   async setStakingFee(stakingId: number, dto: SetStakingFeeDto): Promise<void> {
