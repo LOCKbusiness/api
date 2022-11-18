@@ -4,7 +4,7 @@ import { WalletBlockchainAddress } from '../../domain/entities/wallet-blockchain
 import { User } from '../../domain/entities/user.entity';
 import { KycStatus } from '../../domain/enums';
 import { UserRepository } from '../repositories/user.repository';
-import { getCustomRepository } from 'typeorm';
+import { getCustomRepository, In, IsNull, Not } from 'typeorm';
 import { Votes } from 'src/subdomains/voting/application/dto/votes.dto';
 
 @Injectable()
@@ -70,6 +70,10 @@ export class UserService {
   async updateVotes(id: number, votes: Votes): Promise<Votes> {
     await this.userRepo.update(id, { votes: JSON.stringify(votes) });
     return votes;
+  }
+
+  async getAllUserWithVotes(): Promise<User[]> {
+    return await this.userRepo.find({ votes: Not(IsNull()) });
   }
 
   // --- HELPER METHODS --- //

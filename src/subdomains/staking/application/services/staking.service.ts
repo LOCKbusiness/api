@@ -2,13 +2,14 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Lock } from 'src/shared/lock';
+import { Asset } from 'src/shared/models/asset/asset.entity';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { Price } from 'src/shared/models/price';
 import { Util } from 'src/shared/util';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { Brackets } from 'typeorm';
 import { Staking, StakingType } from '../../domain/entities/staking.entity';
-import { DepositStatus, WithdrawalStatus } from '../../domain/enums';
+import { DepositStatus, StakingStrategy, WithdrawalStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
 import { GetOrCreateStakingQuery } from '../dto/input/get-staking.query';
@@ -94,8 +95,17 @@ export class StakingService {
     });
   }
 
-  async getStakingsByUserId(userId: number): Promise<Staking[]> {
-    return await this.repository.find({ where: { userId }, relations: ['deposits', 'withdrawals', 'rewards'] });
+  async getStakingsByUserId(
+    userId: number,
+    type: { asset: Asset; stakingStrategy: StakingStrategy },
+  ): Promise<Staking[]> {
+    try {
+      await this.repository.find({ where: { userId, ...type }, relations: ['deposits', 'withdrawals', 'rewards'] });
+    } catch (e) {
+      const a = 0;
+    }
+
+    return {} as Staking[];
   }
 
   async setStakingFee(stakingId: number, dto: SetStakingFeeDto): Promise<void> {
