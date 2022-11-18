@@ -5,6 +5,7 @@ import {
   HistoryQueryCompact,
   HistoryQueryTaxTools,
 } from '../../application/dto/input/history-query.dto';
+import { ChainReportCsvHistoryDto } from '../../application/dto/output/chain-report-history.dto';
 import { CoinTrackingCsvHistoryDto } from '../../application/dto/output/coin-tracking-history.dto';
 import { CompactHistoryDto } from '../../application/dto/output/history.dto';
 import { ExportType, StakingHistoryService } from '../../application/services/staking-history.service';
@@ -50,7 +51,7 @@ export class HistoryController {
   }
 
   @Get('ChainReport')
-  @ApiResponse({ status: 200, type: CoinTrackingCsvHistoryDto, isArray: true })
+  @ApiResponse({ status: 200, type: ChainReportCsvHistoryDto, isArray: true })
   async getCsvChainReport(
     @Query() query: HistoryQueryTaxTools,
     @Response({ passthrough: true }) res,
