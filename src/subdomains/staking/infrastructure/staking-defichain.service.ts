@@ -58,7 +58,7 @@ export class StakingDeFiChainService {
   }
 
   async sendWithdrawal(withdrawal: Withdrawal): Promise<string> {
-    return this.transactionExecutionService.sendFromLiqToCustomer({
+    return this.transactionExecutionService.sendWithdrawal({
       to: withdrawal.staking.withdrawalAddress.address,
       amount: new BigNumber(withdrawal.amount),
       withdrawalId: withdrawal.id,
