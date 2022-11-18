@@ -1,58 +1,78 @@
 import { Injectable } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Config } from 'src/config/config';
+import { MasternodeService } from 'src/integration/masternode/application/services/masternode.service';
+import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
 import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
+import { HttpService } from 'src/shared/services/http.service';
 import { Util } from 'src/shared/util';
 import { StakingService } from 'src/subdomains/staking/application/services/staking.service';
 import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
-import { CfpDto } from '../dto/cfp.dto';
-
-interface Distribution {
-  yes: number;
-  no: number;
-  neutral: number;
-}
+import { CfpSignInfoDto } from '../dto/cfp-sign-info.dto';
+import { CfpDto, CfpInfo } from '../dto/cfp.dto';
+import { Distribution } from '../dto/distribution.dto';
+import { Vote, Votes } from '../dto/votes.dto';
 
 @Injectable()
 export class VotingService {
-  constructor(private userService: UserService, private stakingService: StakingService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly stakingService: StakingService,
+    private readonly masternodeService: MasternodeService,
+    private readonly http: HttpService,
+  ) {}
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
-  async getVotingSignMessages(): Promise<CfpDto[]> {
-    const distribution = await this.getVoteDistribution();
+  async getVotingSignMessages(): Promise<CfpSignInfoDto[]> {
+    const { startDate, cfpList } = await this.getCfpInfos();
+    const distribution = await this.getVoteDistribution(cfpList);
+    const masternodes = await this.masternodeService.getAllVotersAt(startDate);
 
     // get masternode distribution
-    const masternodes = []; // TODO: get all votable masternodes
     const mnCount = masternodes.length;
-    const mnDistribution = distribution.map(({ cfpId, distribution: { yes, no } }) => {
-      const yesMns = Math.round(yes * mnCount);
-      const noMns = Math.round(no * mnCount);
-      const neutralMns = mnCount - yesMns - noMns;
+    return distribution.map(({ cfpId, distribution: { yes, no } }) => {
+      const { name } = cfpList.find((c) => c.id === cfpId);
+      const mnCopy = [...masternodes];
+      const yesMnCount = Math.round(yes * mnCount);
+      const noMnCount = Math.round(no * mnCount);
 
       return {
-        cfpId,
-        mns: { yes: yesMns, no: noMns, neutral: neutralMns },
+        name,
+        votes: [
+          ...this.getSignInfos(mnCopy.splice(0, yesMnCount), name, Vote.YES),
+          ...this.getSignInfos(mnCopy.splice(0, noMnCount), name, Vote.NO),
+          ...this.getSignInfos(mnCopy, name, Vote.NEUTRAL),
+        ],
       };
     });
-
-    // TODO: get the mapping from CFP ID to CFP name and sign message (from DFX?)
-    // TODO: map to CfpDto (maybe directly in upper map?)
-
-    return [] as CfpDto[];
   }
 
-  private async getVoteDistribution(): Promise<{ cfpId: string; distribution: Distribution }[]> {
+  private getSignInfos(
+    masternodes: Masternode[],
+    name: string,
+    vote: Vote,
+  ): { accountIndex: number; address: string; message: string }[] {
+    return masternodes.map((mn) => ({
+      accountIndex: mn.accountIndex,
+      address: mn.owner,
+      message: this.getSignText(name, vote),
+    }));
+  }
+
+  // --- VOTING DISTRIBUTION --- //
+  private async getVoteDistribution(cfpList: CfpInfo[]): Promise<{ cfpId: number; distribution: Distribution }[]> {
     // get the DFI distribution
     const userWithVotes = await this.userService.getAllUserWithVotes();
-    const dfiDistribution: { [cfpId: string]: Distribution } = {};
+    const dfiDistribution: { [cfpId: string]: Distribution } = cfpList.reduce(
+      (prev, curr) => ({ ...prev, [curr.id]: { yes: 0, no: 0, neutral: 0 } }),
+      {},
+    );
 
     for (const user of userWithVotes) {
-      const votes: { [cfpId: string]: 'Yes' | 'No' | 'Neutral' } = JSON.parse(user.votes);
+      const votes: Votes = JSON.parse(user.votes);
       const stakingBalance = await this.getDfiStakingBalanceFor(user.id);
 
       for (const [cfpId, vote] of Object.entries(votes)) {
-        dfiDistribution[cfpId] ??= { yes: 0, no: 0, neutral: 0 };
-        dfiDistribution[cfpId][vote.toLowerCase()] += stakingBalance;
+        if (dfiDistribution[+cfpId]) dfiDistribution[+cfpId][vote.toLowerCase()] += stakingBalance;
       }
     }
 
@@ -60,11 +80,11 @@ export class VotingService {
     return Object.entries(dfiDistribution).map(([cfpId, { yes, no, neutral }]) => {
       const total = Util.sum([yes, no, neutral]);
       return {
-        cfpId,
+        cfpId: +cfpId,
         distribution: {
-          yes: Util.round(yes / total, 2),
-          no: Util.round(no / total, 2),
-          neutral: Util.round(neutral / total, 2),
+          yes: total ? Util.round(yes / total, 2) : 0,
+          no: total ? Util.round(no / total, 2) : 0,
+          neutral: total ? Util.round(neutral / total, 2) : 1,
         },
       };
     });
@@ -73,8 +93,25 @@ export class VotingService {
   private async getDfiStakingBalanceFor(userId: number): Promise<number> {
     const stakings = await this.stakingService.getStakingsByUserId(userId, {
       asset: { name: 'DFI', type: AssetType.COIN } as Asset,
-      stakingStrategy: StakingStrategy.MASTERNODE,
+      strategy: StakingStrategy.MASTERNODE,
     });
     return stakings.reduce((a, s) => a + s.balance, 0);
+  }
+
+  // --- CFP HELPERS --- //
+  private async getCfpInfos(): Promise<{ startDate: Date; cfpList: CfpInfo[] }> {
+    const cfpList = await this.getCurrentCfpList();
+    return {
+      startDate: new Date(cfpList[0].startDate),
+      cfpList: cfpList.map((cfp) => ({ id: cfp.number, name: cfp.title.split(':')[0] })),
+    };
+  }
+
+  private async getCurrentCfpList(): Promise<CfpDto[]> {
+    return this.http.get(`${Config.kyc.apiUrl}/statistic/cfp/latest`);
+  }
+
+  private getSignText(cfpName: string, vote: Vote): string {
+    return `${cfpName}-${vote}`.toLowerCase();
   }
 }
