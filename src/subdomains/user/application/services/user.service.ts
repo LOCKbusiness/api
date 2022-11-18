@@ -4,7 +4,7 @@ import { WalletBlockchainAddress } from '../../domain/entities/wallet-blockchain
 import { User } from '../../domain/entities/user.entity';
 import { KycStatus } from '../../domain/enums';
 import { UserRepository } from '../repositories/user.repository';
-import { getCustomRepository, In, IsNull, Not } from 'typeorm';
+import { getCustomRepository, IsNull, Not } from 'typeorm';
 import { Votes } from 'src/subdomains/voting/application/dto/votes.dto';
 
 @Injectable()
