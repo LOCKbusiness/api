@@ -3,15 +3,14 @@ import { Deposit } from 'src/subdomains/staking/domain/entities/deposit.entity';
 import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
 import { Withdrawal } from 'src/subdomains/staking/domain/entities/withdrawal.entity';
 import { DepositStatus, RewardStatus, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
-import { CoinTrackingCsvHistoryDto } from '../dto/output/coin-tracking-history.dto';
-import { CoinTrackingTransactionTypes } from '../services/staking-history.service';
+import { CoinTrackingCsvHistoryDto, CoinTrackingTransactionType } from '../dto/output/coin-tracking-history.dto';
 
 export class CoinTrackingHistoryDtoMapper {
   static mapStakingDeposits(deposits: Deposit[]): CoinTrackingCsvHistoryDto[] {
     return deposits
       .filter((c) => c.status === DepositStatus.CONFIRMED)
       .map((c) => ({
-        type: CoinTrackingTransactionTypes.DEPOSIT,
+        type: CoinTrackingTransactionType.DEPOSIT,
         buyAmount: c.amount,
         buyAsset: this.getAssetSymbolCT(c.asset),
         sellAmount: null,
@@ -32,7 +31,7 @@ export class CoinTrackingHistoryDtoMapper {
     return withdrawals
       .filter((c) => c.status === WithdrawalStatus.CONFIRMED)
       .map((c) => ({
-        type: CoinTrackingTransactionTypes.WITHDRAWAL,
+        type: CoinTrackingTransactionType.WITHDRAWAL,
         buyAmount: null,
         buyAsset: null,
         sellAmount: c.amount,
@@ -53,7 +52,7 @@ export class CoinTrackingHistoryDtoMapper {
     return rewards
       .filter((c) => c.status === RewardStatus.CONFIRMED)
       .map((c) => ({
-        type: CoinTrackingTransactionTypes.STAKING,
+        type: CoinTrackingTransactionType.STAKING,
         buyAmount: c.amount,
         buyAsset: this.getAssetSymbolCT(c.asset),
         sellAmount: null,
