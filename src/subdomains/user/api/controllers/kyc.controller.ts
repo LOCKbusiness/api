@@ -1,5 +1,5 @@
 import { Body, Controller, ForbiddenException, Get, NotFoundException, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiExcludeEndpoint, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { WalletService } from '../../application/services/wallet.service';
 import { Config } from 'src/config/config';
@@ -31,7 +31,7 @@ export class KycController {
   @Post()
   @ApiBearerAuth()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  @ApiResponse({ status: 201, type: KycDto })
+  @ApiCreatedResponse({ type: KycDto })
   async startKyc(@GetJwt() jwt: JwtPayload): Promise<KycDto> {
     return this.kycService.startKyc(jwt.userId);
   }

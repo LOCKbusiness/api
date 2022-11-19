@@ -94,8 +94,11 @@ export class StakingService {
     });
   }
 
-  async getStakingsByUserId(userId: number): Promise<Staking[]> {
-    return await this.repository.find({ where: { userId }, relations: ['deposits', 'withdrawals', 'rewards'] });
+  async getStakingsByUserId(userId: number, type?: StakingType): Promise<Staking[]> {
+    return this.repository.find({
+      where: { userId, ...type },
+      relations: ['asset', 'deposits', 'withdrawals', 'rewards'],
+    });
   }
 
   async setStakingFee(stakingId: number, dto: SetStakingFeeDto): Promise<void> {

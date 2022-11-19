@@ -1,6 +1,6 @@
 import { Controller, UseGuards, Body, Post, Param } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { GetJwt } from 'src/shared/auth/get-jwt.decorator';
@@ -17,7 +17,7 @@ export class DepositController {
   @Post()
   @ApiBearerAuth()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  @ApiResponse({ status: 201, type: StakingOutputDto })
+  @ApiCreatedResponse({ type: StakingOutputDto })
   async createDeposit(
     @GetJwt() jwt: JwtPayload,
     @Param('stakingId') stakingId: string,

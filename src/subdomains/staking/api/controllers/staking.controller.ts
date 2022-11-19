@@ -1,6 +1,6 @@
 import { Controller, UseGuards, Body, Get, Param, Patch, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiBearerAuth, ApiExcludeEndpoint, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExcludeEndpoint, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { StakingService } from '../../application/services/staking.service';
@@ -20,7 +20,7 @@ export class StakingController {
   @Get()
   @ApiBearerAuth()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  @ApiResponse({ status: 200, type: StakingOutputDto })
+  @ApiOkResponse({ type: StakingOutputDto })
   async getStaking(@GetJwt() jwt: JwtPayload, @Query() query: GetOrCreateStakingQuery): Promise<StakingOutputDto> {
     // TODO: remove
     query.asset ??= query.assetName;
@@ -29,7 +29,7 @@ export class StakingController {
 
   @Get('balance')
   @ApiBearerAuth()
-  @ApiResponse({ status: 200, type: BalanceOutputDto, isArray: true })
+  @ApiOkResponse({ type: BalanceOutputDto, isArray: true })
   async getStakingUserBalance(@Query() query: BalanceQuery): Promise<BalanceOutputDto[]> {
     if (query.depositAddress) return this.stakingService.getDepositAddressBalances(query.depositAddress);
     return this.stakingService.getUserAddressBalances(query.userAddress);
