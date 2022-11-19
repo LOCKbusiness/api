@@ -17,7 +17,7 @@ import { Vote, Votes } from '../dto/votes.dto';
 
 @Injectable()
 export class VotingService {
-  private currentResult: CfpResultDto[] = [];
+  private currentResults: CfpResultDto[] = [];
 
   constructor(
     private readonly userService: UserService,
@@ -34,9 +34,9 @@ export class VotingService {
   @Cron(CronExpression.EVERY_HOUR)
   async updateResult(): Promise<void> {
     const { cfpList } = await this.getCfpInfos();
-    const distribution = await this.getVoteDistribution(cfpList);
+    const distributions = await this.getVoteDistributions(cfpList);
 
-    this.currentResult = distribution.map((d) => ({
+    this.currentResults = distributions.map((d) => ({
       number: d.cfpId,
       name: cfpList.find((c) => c.id === d.cfpId).name,
       result: d.distribution,
@@ -44,29 +44,29 @@ export class VotingService {
   }
 
   get result(): CfpResultDto[] {
-    return this.currentResult;
+    return this.currentResults;
   }
 
   // --- SIGN MESSAGES --- //
   async getSignMessages(): Promise<CfpSignMessageDto[]> {
     const { startDate, cfpList } = await this.getCfpInfos();
-    const distribution = await this.getVoteDistribution(cfpList);
+    const distributions = await this.getVoteDistributions(cfpList);
     const masternodes = await this.masternodeService.getAllVotersAt(startDate);
 
-    // get masternode distribution
+    // get masternode distribution and signing messages
     const mnCount = masternodes.length;
-    return distribution.map(({ cfpId, distribution: { yes, no } }) => {
+    return distributions.map(({ cfpId, distribution: { yes, no } }) => {
       const { name } = cfpList.find((c) => c.id === cfpId);
-      const mnCopy = [...masternodes];
+      const tmpMasternodes = [...masternodes];
       const yesMnCount = Math.round(yes * mnCount);
       const noMnCount = Math.round(no * mnCount);
 
       return {
         name,
         votes: [
-          ...this.getSignInfos(mnCopy.splice(0, yesMnCount), name, Vote.YES),
-          ...this.getSignInfos(mnCopy.splice(0, noMnCount), name, Vote.NO),
-          ...this.getSignInfos(mnCopy, name, Vote.NEUTRAL),
+          ...this.getSignInfos(tmpMasternodes.splice(0, yesMnCount), name, Vote.YES),
+          ...this.getSignInfos(tmpMasternodes.splice(0, noMnCount), name, Vote.NO),
+          ...this.getSignInfos(tmpMasternodes, name, Vote.NEUTRAL),
         ],
       };
     });
@@ -80,12 +80,12 @@ export class VotingService {
     return masternodes.map((mn) => ({
       accountIndex: mn.accountIndex,
       address: mn.owner,
-      message: this.getSignText(name, vote),
+      message: `${name}-${vote}`.toLowerCase(),
     }));
   }
 
   // --- VOTING DISTRIBUTION --- //
-  private async getVoteDistribution(cfpList: CfpInfo[]): Promise<{ cfpId: number; distribution: Distribution }[]> {
+  private async getVoteDistributions(cfpList: CfpInfo[]): Promise<{ cfpId: number; distribution: Distribution }[]> {
     // get the DFI distribution
     const userWithVotes = await this.userService.getAllUserWithVotes();
     const dfiDistribution: { [cfpId: string]: Distribution } = cfpList.reduce(
@@ -135,9 +135,5 @@ export class VotingService {
 
   private async getCurrentCfpList(): Promise<CfpDto[]> {
     return this.http.get(`${Config.kyc.apiUrl}/statistic/cfp/latest`);
-  }
-
-  private getSignText(cfpName: string, vote: Vote): string {
-    return `${cfpName}-${vote}`.toLowerCase();
   }
 }
