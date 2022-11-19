@@ -6,6 +6,7 @@ import { JwtPayload } from 'src/shared/auth/jwt-payload.interface';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
+import { CfpResultDto } from '../application/dto/cfp-result.dto';
 import { CfpSignMessageDto } from '../application/dto/cfp-sign-message.dto';
 import { Vote, Votes } from '../application/dto/votes.dto';
 import { VotingService } from '../application/services/voting.service';
@@ -31,11 +32,17 @@ export class VotingController {
     return this.userService.updateVotes(jwt.userId, votes);
   }
 
+  @Get('result')
+  @ApiOkResponse({ type: CfpResultDto, isArray: true })
+  async getCurrentResult(): Promise<CfpResultDto[]> {
+    return this.votingService.result;
+  }
+
   @Get('sign-messages')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.TRANSACTION_SIGNER))
   async getSignInformation(): Promise<CfpSignMessageDto[]> {
-    return this.votingService.getVotingSignMessages();
+    return this.votingService.getSignMessages();
   }
 }
