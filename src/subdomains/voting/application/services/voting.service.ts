@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { Config } from 'src/config/config';
 import { MasternodeService } from 'src/integration/masternode/application/services/masternode.service';
 import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
@@ -8,6 +9,7 @@ import { Util } from 'src/shared/util';
 import { StakingService } from 'src/subdomains/staking/application/services/staking.service';
 import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
+import { CfpResultDto } from '../dto/cfp-result.dto';
 import { CfpSignMessageDto } from '../dto/cfp-sign-message.dto';
 import { CfpDto, CfpInfo } from '../dto/cfp.dto';
 import { Distribution } from '../dto/distribution.dto';
@@ -15,6 +17,8 @@ import { Vote, Votes } from '../dto/votes.dto';
 
 @Injectable()
 export class VotingService {
+  private currentResult: CfpResultDto[] = [];
+
   constructor(
     private readonly userService: UserService,
     private readonly stakingService: StakingService,
@@ -22,7 +26,29 @@ export class VotingService {
     private readonly http: HttpService,
   ) {}
 
-  async getVotingSignMessages(): Promise<CfpSignMessageDto[]> {
+  // --- CURRENT RESULT --- //
+  async onModuleInit() {
+    await this.updateResult();
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async updateResult(): Promise<void> {
+    const { cfpList } = await this.getCfpInfos();
+    const distribution = await this.getVoteDistribution(cfpList);
+
+    this.currentResult = distribution.map((d) => ({
+      number: d.cfpId,
+      name: cfpList.find((c) => c.id === d.cfpId).name,
+      result: d.distribution,
+    }));
+  }
+
+  get result(): CfpResultDto[] {
+    return this.currentResult;
+  }
+
+  // --- SIGN MESSAGES --- //
+  async getSignMessages(): Promise<CfpSignMessageDto[]> {
     const { startDate, cfpList } = await this.getCfpInfos();
     const distribution = await this.getVoteDistribution(cfpList);
     const masternodes = await this.masternodeService.getAllVotersAt(startDate);
