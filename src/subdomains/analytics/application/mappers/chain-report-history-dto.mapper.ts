@@ -53,7 +53,7 @@ export class ChainReportHistoryDtoMapper {
         feeAmount: null,
         feeAsset: null,
         txId: c.reinvestTxId,
-        description: 'LOCK Staking Deposit',
+        description: 'LOCK Staking Reward',
       }));
   }
 

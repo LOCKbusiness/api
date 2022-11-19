@@ -13,11 +13,15 @@ import { CoinTrackingHistoryDtoMapper } from '../mappers/coin-tracking-history-d
 import { ChainReportCsvHistoryDto, ChainReportTransactionType } from '../dto/output/chain-report-history.dto';
 import { ChainReportHistoryDtoMapper } from '../mappers/chain-report-history-dto.mapper';
 
-type HistoryDto<T> = T extends ExportType.COMPACT ? CompactHistoryDto : CoinTrackingCsvHistoryDto;
+type HistoryDto<T> = T extends ExportType.COMPACT
+  ? CompactHistoryDto
+  : T extends ExportType.COIN_TRACKING
+  ? CoinTrackingCsvHistoryDto
+  : ChainReportCsvHistoryDto;
 
 export enum ExportType {
   COMPACT = 'compact',
-  CT = 'CT',
+  COIN_TRACKING = 'CoinTracking',
   CHAIN_REPORT = 'ChainReport',
 }
 
@@ -41,15 +45,14 @@ export class StakingHistoryService {
     const withdrawals = stakingEntities.reduce((prev, curr) => prev.concat(curr.withdrawals), [] as Withdrawal[]);
     const rewards = stakingEntities.reduce((prev, curr) => prev.concat(curr.rewards), [] as Reward[]);
 
-    const transactions = (
-      exportFormat === ExportType.CT
-        ? this.getHistoryCT(deposits, withdrawals, rewards)
-        : exportFormat === ExportType.CHAIN_REPORT
-        ? this.getHistoryChainReport(deposits, withdrawals, rewards)
-        : this.getHistoryCompact(deposits, withdrawals, rewards)
-    ) as HistoryDto<T>[];
-
-    return transactions;
+    switch (exportFormat) {
+      case ExportType.COIN_TRACKING:
+        return this.getHistoryCT(deposits, withdrawals, rewards) as HistoryDto<T>[];
+      case ExportType.CHAIN_REPORT:
+        return this.getHistoryChainReport(deposits, withdrawals, rewards) as HistoryDto<T>[];
+      case ExportType.COMPACT:
+        return this.getHistoryCompact(deposits, withdrawals, rewards) as HistoryDto<T>[];
+    }
   }
 
   // --- HELPER METHODS --- //

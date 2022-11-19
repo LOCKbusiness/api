@@ -61,7 +61,7 @@ export class CoinTrackingHistoryDtoMapper {
         feeAsset: null,
         exchange: 'LOCK.space Staking',
         tradeGroup: 'Staking',
-        comment: 'LOCK Staking Deposit',
+        comment: 'LOCK Staking Reward',
         txId: c.reinvestTxId,
         date: c.reinvestOutputDate ?? c.updated,
         buyValueInEur: c.amountEur,

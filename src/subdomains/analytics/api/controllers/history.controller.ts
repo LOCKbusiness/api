@@ -39,10 +39,14 @@ export class HistoryController {
     }
   }
 
-  @Get('CT')
+  @Get('CoinTracking')
   @ApiResponse({ status: 200, type: CoinTrackingCsvHistoryDto, isArray: true })
   async getCsvCT(@Query() query: HistoryQueryTaxTools, @Response({ passthrough: true }) res): Promise<StreamableFile> {
-    const csvFile = await this.historyService.getHistoryCsv(query.userAddress, query.depositAddress, ExportType.CT);
+    const csvFile = await this.historyService.getHistoryCsv(
+      query.userAddress,
+      query.depositAddress,
+      ExportType.COIN_TRACKING,
+    );
     res.set({
       'Content-Type': 'text/csv',
       'Content-Disposition': `attachment; filename="LOCK_CT_history_${this.formatDate()}.csv"`,
