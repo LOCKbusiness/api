@@ -16,7 +16,7 @@ export class DeFiClient extends NodeClient {
         depth: toBlock - fromBlock,
         maxBlockHeight: toBlock,
         no_rewards: true,
-        limit: Number.POSITIVE_INFINITY,
+        limit: 1000000,
       }),
     );
   }
