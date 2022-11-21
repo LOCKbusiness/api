@@ -43,9 +43,17 @@ export class Transaction extends IEntity {
     return this;
   }
 
+  get isVerified(): boolean {
+    return this.verifierSignature != null;
+  }
+
   signed(hex: string): this {
     this.signedHex = hex;
     return this;
+  }
+
+  get isSigned(): boolean {
+    return this.signedHex != null;
   }
 
   invalidated(reason?: string): this {
@@ -53,6 +61,10 @@ export class Transaction extends IEntity {
     this.invalidationReason = reason;
     this.signedHex = null;
     return this;
+  }
+
+  get isInvalidated(): boolean {
+    return this.invalidationReason != null;
   }
 
   foundOnBlockchain(): this {

@@ -52,6 +52,8 @@ export class TransactionService {
   async verified(id: string, signature: string) {
     const tx = await this.repository.findOne({ chainId: id });
     if (!tx) throw new NotFoundException('Transaction not found');
+    if (tx.isVerified) return;
+
     console.info(`${tx.chainId} verified`);
     await this.repository.save(tx.verified(signature));
   }
@@ -59,6 +61,8 @@ export class TransactionService {
   async invalidated(id: string, reason?: string) {
     const tx = await this.repository.findOne({ chainId: id });
     if (!tx) throw new NotFoundException('Transaction not found');
+    if (tx.isInvalidated) return;
+
     console.info(`${tx.chainId} invalidated with reason: ${reason}`);
     await this.repository.save(tx.invalidated(reason));
 
@@ -70,7 +74,9 @@ export class TransactionService {
   async signed(id: string, hex: string) {
     const tx = await this.repository.findOne({ chainId: id });
     if (!tx) throw new NotFoundException('Transaction not found');
-    if (tx.invalidationReason) throw new BadRequestException('Transaction is invalidated');
+    if (tx.isInvalidated) throw new BadRequestException('Transaction is invalidated');
+    if (tx.isSigned) return;
+
     console.info(`${tx.chainId} signed`);
     await this.repository.save(tx.signed(hex));
 

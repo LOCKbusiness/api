@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { RealIP } from 'nestjs-real-ip';
 import { AuthService } from '../../application/services/auth.service';
 import { SignInDto } from '../../application/dto/sign-in.dto';
@@ -13,19 +13,19 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('sign-up')
-  @ApiResponse({ status: 201, type: AuthResponseDto })
+  @ApiCreatedResponse({ type: AuthResponseDto })
   signUp(@Body() dto: SignUpDto, @RealIP() ip: string): Promise<AuthResponseDto> {
     return this.authService.signUp(dto, ip);
   }
 
   @Post('sign-in')
-  @ApiResponse({ status: 201, type: AuthResponseDto })
+  @ApiCreatedResponse({ type: AuthResponseDto })
   signIn(@Body() signInDto: SignInDto): Promise<AuthResponseDto> {
     return this.authService.signIn(signInDto);
   }
 
   @Get('sign-message')
-  @ApiResponse({ status: 200, type: SignMessageDto })
+  @ApiOkResponse({ type: SignMessageDto })
   getSignMessage(@Query('address') address: string): SignMessageDto {
     return this.authService.getSignMessage(address);
   }

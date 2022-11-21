@@ -94,6 +94,7 @@ export class Configuration {
     phrase: process.env.KYC_PHRASE?.split(',') ?? [],
     allowedWebhookIps: process.env.KYC_WEBHOOK_IPS?.split(',') ?? [],
     apiUrl: process.env.KYC_API_URL,
+    walletId: +process.env.KYC_WALLET_ID,
     frontendUrl: (kycHash: string) => `${process.env.KYC_FRONTEND_URL}?code=${kycHash}`,
   };
 
@@ -111,6 +112,7 @@ export class Configuration {
   blockchain = {
     minFeeRate: 0.00001,
     minFeeBuffer: 0.1,
+    minDefiTxFeeBuffer: 0.00001,
     default: {
       user: process.env.NODE_USER,
       password: process.env.NODE_PASSWORD,
@@ -171,7 +173,7 @@ export class Configuration {
 
       address: process.env.LIQUIDITY_ADDRESS,
       wallet: process.env.LIQUIDITY_WALLET_NAME,
-      account: process.env.LIQUIDITY_ACCOUNT_INDEX,
+      account: +process.env.LIQUIDITY_ACCOUNT_INDEX,
     },
     aprPeriod: 28, // days
   };
@@ -180,7 +182,7 @@ export class Configuration {
     liquidity: {
       address: process.env.YIELD_MACHINE_LIQUIDITY_ADDRESS,
       wallet: process.env.YIELD_MACHINE_LIQUIDITY_WALLET_NAME,
-      account: process.env.YIELD_MACHINE_LIQUIDITY_ACCOUNT_INDEX,
+      account: +process.env.YIELD_MACHINE_LIQUIDITY_ACCOUNT_INDEX,
     },
   };
 

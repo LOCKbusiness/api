@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import BigNumber from 'bignumber.js';
 import { TokenProviderService } from 'src/blockchain/ain/whale/token-provider.service';
+import { Config } from 'src/config/config';
 import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
 import { VaultService } from 'src/subdomains/yield-machine/application/services/vault.service';
 import { Vault } from 'src/subdomains/yield-machine/domain/entities/vault.entity';
@@ -27,13 +28,18 @@ export class YieldMachineService {
   ) {}
 
   async create({ command, parameters }: TransactionInput): Promise<string> {
+    const isSendFromLiq =
+      command === TransactionCommand.ACCOUNT_TO_ACCOUNT && parameters.from === Config.yieldMachine.liquidity.address;
+
     const vault = await this.retrieveVault(parameters);
-    if (!vault) throw new NotFoundException('Vault or address not found');
+    if (!isSendFromLiq && !vault) throw new NotFoundException('Vault or address not found');
 
     switch (command) {
       case TransactionCommand.ACCOUNT_TO_ACCOUNT:
         const token = await this.tokenProviderService.get(parameters.token);
-        return this.sendToken(parameters, +token.id, vault.wallet, vault.accountIndex);
+        const wallet = isSendFromLiq ? Config.yieldMachine.liquidity.wallet : vault.wallet;
+        const accountIndex = isSendFromLiq ? Config.yieldMachine.liquidity.account : vault.accountIndex;
+        return this.sendToken(parameters, +token.id, wallet, accountIndex);
       case TransactionCommand.CREATE_VAULT:
         return this.createVault(parameters, vault.wallet, vault.accountIndex);
       case TransactionCommand.DEPOSIT_TO_VAULT:

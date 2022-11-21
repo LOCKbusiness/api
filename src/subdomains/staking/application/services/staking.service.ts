@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Lock } from 'src/shared/lock';
@@ -94,8 +94,11 @@ export class StakingService {
     });
   }
 
-  async getStakingsByUserId(userId: number): Promise<Staking[]> {
-    return await this.repository.find({ where: { userId }, relations: ['deposits', 'withdrawals', 'rewards'] });
+  async getStakingsByUserId(userId: number, type?: StakingType): Promise<Staking[]> {
+    return this.repository.find({
+      where: { userId, ...type },
+      relations: ['asset', 'deposits', 'withdrawals', 'rewards'],
+    });
   }
 
   async setStakingFee(stakingId: number, dto: SetStakingFeeDto): Promise<void> {
@@ -129,7 +132,7 @@ export class StakingService {
       .select('SUM(amount)', 'rewardVolume')
       .where('staking.assetId = :id', { id: asset.id })
       .andWhere('staking.strategy = :strategy', { strategy })
-      .andWhere('rewards.created BETWEEN :dateFrom AND :dateTo', { dateFrom, dateTo })
+      .andWhere('rewards.reinvestOutputDate BETWEEN :dateFrom AND :dateTo', { dateFrom, dateTo })
       .getRawOne<{ rewardVolume: number }>();
 
     return rewardVolume / Util.daysDiff(dateFrom, dateTo);

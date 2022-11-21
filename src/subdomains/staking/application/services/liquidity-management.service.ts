@@ -12,7 +12,8 @@ import { Masternode } from 'src/integration/masternode/domain/entities/masternod
 import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
-import { UtxoProviderService, UtxoSizePriority } from 'src/blockchain/ain/jellyfish/utxo-provider.service';
+import { UtxoProviderService } from 'src/blockchain/ain/jellyfish/services/utxo-provider.service';
+import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/domain/enums';
 
 @Injectable()
 export class LiquidityManagementService {
@@ -265,7 +266,7 @@ export class LiquidityManagementService {
                 Config.masternode.collateral + Config.masternode.fee + Config.masternode.creationFee,
               ),
               ownerWallet: Config.staking.liquidity.wallet,
-              accountIndex: +Config.staking.liquidity.account,
+              accountIndex: Config.staking.liquidity.account,
               sizePriority: UtxoSizePriority.BIG,
             });
           },
@@ -311,7 +312,7 @@ export class LiquidityManagementService {
               to: masternode.owner,
               amount: new BigNumber(Config.masternode.resignFee),
               ownerWallet: Config.staking.liquidity.wallet,
-              accountIndex: +Config.staking.liquidity.account,
+              accountIndex: Config.staking.liquidity.account,
               sizePriority: UtxoSizePriority.SMALL,
             });
           },
