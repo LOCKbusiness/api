@@ -1,8 +1,8 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotImplementedException, UnauthorizedException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
-import { WithdrawalStatus } from '../../domain/enums';
+import { StakingStrategy, WithdrawalStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingDeFiChainService } from '../../infrastructure/staking-defichain.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
@@ -59,6 +59,9 @@ export class StakingWithdrawalService {
     await this.kycCheck.check(userId, walletId);
 
     const staking = await this.authorize.authorize(userId, stakingId);
+    if (staking.strategy === StakingStrategy.LIQUIDITY_MINING)
+      throw new NotImplementedException(`Withdrawals are not allowed for strategy ${staking.strategy}`);
+
     const withdrawal = this.factory.createWithdrawalDraft(staking, dto);
 
     staking.addWithdrawalDraft(withdrawal);
