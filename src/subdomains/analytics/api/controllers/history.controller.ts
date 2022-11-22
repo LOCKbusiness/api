@@ -55,7 +55,7 @@ export class HistoryController {
   }
 
   @Get('ChainReport')
-  @ApiResponse({ status: 200, type: ChainReportCsvHistoryDto, isArray: true })
+  @ApiOkResponse({ status: 200, type: ChainReportCsvHistoryDto, isArray: true })
   async getCsvChainReport(
     @Query() query: HistoryQueryTaxTools,
     @Response({ passthrough: true }) res,
