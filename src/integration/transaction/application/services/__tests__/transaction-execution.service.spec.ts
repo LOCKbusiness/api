@@ -2,29 +2,27 @@ import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import BigNumber from 'bignumber.js';
 import { BehaviorSubject } from 'rxjs';
+import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/domain/enums';
 import { createCustomRawTxDto } from 'src/blockchain/ain/jellyfish/dto/__mocks__/raw-tx.dto.mock';
-import { JellyfishService } from 'src/blockchain/ain/jellyfish/jellyfish.service';
-import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/utxo-provider.service';
+import { RawTxService } from 'src/blockchain/ain/jellyfish/services/raw-tx.service';
+import { RawTxMasternode } from 'src/blockchain/ain/jellyfish/utils/raw-tx-masternode';
+import { RawTxUtxo } from 'src/blockchain/ain/jellyfish/utils/raw-tx-utxo';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { NodeService } from 'src/blockchain/ain/node/node.service';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
+import { Config } from 'src/config/config';
 import { createDefaultMasternode } from 'src/integration/masternode/domain/entities/__mocks__/masternode.entity.mock';
 import { TransactionType } from 'src/integration/transaction/domain/enums';
 import { TestUtil } from 'src/shared/__tests__/test-util';
+import { TransactionCacheService } from '../transaction-cache.service';
 import { TransactionExecutionService } from '../transaction-execution.service';
 import { TransactionService } from '../transaction.service';
 
-enum TestSetup {
-  CREATE_MASTERNODE,
-  RESIGN_MASTERNODE,
-  SEND_FROM_LIQ,
-  SEND_TO_LIQ,
-}
-
 const rawTxCreateMasternode = createCustomRawTxDto({ hex: 'create-masternode' });
 const rawTxResignMasternode = createCustomRawTxDto({ hex: 'resign-masternode' });
+const rawTxWithdrawal = createCustomRawTxDto({ hex: 'withdrawal' });
 const rawTxSendFromLiq = createCustomRawTxDto({ hex: 'send-from-liq' });
 const rawTxSendToLiq = createCustomRawTxDto({ hex: 'send-to-liq' });
 
@@ -32,7 +30,8 @@ describe('TransactionExecutionService', () => {
   let service: TransactionExecutionService;
 
   let transactionService: TransactionService;
-  let jellyfishService: JellyfishService;
+  let transactionCache: TransactionCacheService;
+  let rawTxService: RawTxService;
   let cryptoService: CryptoService;
   let whaleService: WhaleService;
   let nodeService: NodeService;
@@ -40,15 +39,22 @@ describe('TransactionExecutionService', () => {
   let whaleClient: WhaleClient;
   let nodeClient: DeFiClient;
 
+  let rawTxMasternode: RawTxMasternode;
+  let rawTxUtxo: RawTxUtxo;
+
   beforeEach(async () => {
     transactionService = createMock<TransactionService>();
-    jellyfishService = createMock<JellyfishService>();
+    transactionCache = createMock<TransactionCacheService>();
+    rawTxService = createMock<RawTxService>();
     cryptoService = createMock<CryptoService>();
     whaleService = createMock<WhaleService>();
     nodeService = createMock<NodeService>();
 
     whaleClient = createMock<WhaleClient>();
     nodeClient = createMock<DeFiClient>();
+
+    rawTxMasternode = createMock<RawTxMasternode>();
+    rawTxUtxo = createMock<RawTxUtxo>();
 
     jest.spyOn(whaleClient, 'sendRaw').mockResolvedValue('tx-id');
     jest.spyOn(nodeClient, 'dumpPrivKey').mockResolvedValue('L52sDjGxf8Y5NHy5BjTpQHQUjHDjrqErHyTomskefFXrKPdjf7Di');
@@ -57,42 +63,76 @@ describe('TransactionExecutionService', () => {
     jest
       .spyOn(nodeService, 'getConnectedNode')
       .mockImplementation(() => new BehaviorSubject(nodeClient).asObservable());
+    // Krysh: jest spyOn property is supported since 29.1.0, we are running 27
+    // therefore this workaround
+    // https://github.com/facebook/jest/issues/9675
+    Object.defineProperty(rawTxService, 'Masternode', {
+      get() {
+        return rawTxMasternode;
+      },
+    });
+    Object.defineProperty(rawTxService, 'Utxo', {
+      get() {
+        return rawTxUtxo;
+      },
+    });
 
     const module: TestingModule = await Test.createTestingModule({
       imports: [],
       providers: [
         TransactionExecutionService,
         { provide: TransactionService, useValue: transactionService },
-        { provide: JellyfishService, useValue: jellyfishService },
+        { provide: TransactionCacheService, useValue: transactionCache },
+        { provide: RawTxService, useValue: rawTxService },
         { provide: CryptoService, useValue: cryptoService },
         { provide: WhaleService, useValue: whaleService },
         { provide: NodeService, useValue: nodeService },
-        TestUtil.provideConfig({ staking: { signature: { address: 'some-test-address' } } }),
+        TestUtil.provideConfig({
+          staking: {
+            signature: { address: 'some-test-address' },
+            liquidity: { address: 'some-test-liquidity-address' },
+          },
+        }),
       ],
     }).compile();
 
     service = module.get<TransactionExecutionService>(TransactionExecutionService);
   });
 
-  function setup(testSetup: TestSetup) {
-    switch (testSetup) {
-      case TestSetup.CREATE_MASTERNODE:
-        jest.spyOn(jellyfishService, 'rawTxForCreate').mockResolvedValue(rawTxCreateMasternode);
-        break;
-      case TestSetup.RESIGN_MASTERNODE:
-        jest.spyOn(jellyfishService, 'rawTxForResign').mockResolvedValue(rawTxResignMasternode);
-        break;
-      case TestSetup.SEND_FROM_LIQ:
-        jest.spyOn(jellyfishService, 'rawTxForSendFromLiq').mockResolvedValue(rawTxSendFromLiq);
-        break;
-      case TestSetup.SEND_TO_LIQ:
-        jest.spyOn(jellyfishService, 'rawTxForSendToLiq').mockResolvedValue(rawTxSendToLiq);
-        break;
-    }
-  }
+  const Setup = {
+    CreateMasternode: () => {
+      jest.spyOn(rawTxMasternode, 'create').mockResolvedValue(rawTxCreateMasternode);
+    },
+    CreateMasternodeFail: () => {
+      Setup.CreateMasternode();
+      jest.spyOn(transactionService, 'sign').mockRejectedValue('Error');
+    },
+    ResignMasternode: () => {
+      jest.spyOn(rawTxMasternode, 'resign').mockResolvedValue(rawTxResignMasternode);
+    },
+    Withdrawal: () => {
+      jest.spyOn(transactionCache, 'get').mockResolvedValue(undefined);
+      jest.spyOn(rawTxUtxo, 'sendWithChange').mockResolvedValue(rawTxWithdrawal);
+    },
+    WithdrawalFail: () => {
+      Setup.Withdrawal();
+      jest.spyOn(transactionService, 'sign').mockRejectedValue('Error');
+    },
+    WithdrawalCache: () => {
+      jest.spyOn(transactionCache, 'get').mockResolvedValue(rawTxWithdrawal);
+    },
+    SendFromLiq: () => {
+      jest.spyOn(rawTxUtxo, 'sendWithChange').mockResolvedValue(rawTxSendFromLiq);
+    },
+    SendToLiq: () => {
+      jest.spyOn(rawTxUtxo, 'forward').mockResolvedValue(rawTxSendToLiq);
+    },
+  };
 
+  // --- SUCCESS CASES --- //
   it('should create raw tx, request sign message, sign and broadcast for create masternode', async () => {
-    setup(TestSetup.CREATE_MASTERNODE);
+    Setup.CreateMasternode();
+
     const masternode = createDefaultMasternode();
     const txId = await service.createMasternode({
       masternode,
@@ -101,7 +141,7 @@ describe('TransactionExecutionService', () => {
     });
 
     expect(txId).toStrictEqual('tx-id');
-    expect(jellyfishService.rawTxForCreate).toBeCalledWith(masternode);
+    expect(rawTxMasternode.create).toBeCalledWith(masternode);
     expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
     expect(transactionService.sign).toBeCalledWith(rawTxCreateMasternode, 'signed-tx-hex-as-message', {
       ownerWallet: 'cold-wallet-a',
@@ -112,7 +152,8 @@ describe('TransactionExecutionService', () => {
   });
 
   it('should create raw tx, request sign message, sign and broadcast for resign masternode', async () => {
-    setup(TestSetup.RESIGN_MASTERNODE);
+    Setup.ResignMasternode();
+
     const masternode = createDefaultMasternode();
     const txId = await service.resignMasternode({
       masternode,
@@ -121,7 +162,7 @@ describe('TransactionExecutionService', () => {
     });
 
     expect(txId).toStrictEqual('tx-id');
-    expect(jellyfishService.rawTxForResign).toBeCalledWith(masternode);
+    expect(rawTxMasternode.resign).toBeCalledWith(masternode);
     expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
     expect(transactionService.sign).toBeCalledWith(rawTxResignMasternode, 'signed-tx-hex-as-message', {
       ownerWallet: 'cold-wallet-a',
@@ -131,8 +172,60 @@ describe('TransactionExecutionService', () => {
     expect(whaleClient.sendRaw).toBeCalledWith('signed-raw-tx-hex');
   });
 
+  it('should create raw tx, request sign message, sign and broadcast for withdrawal', async () => {
+    Setup.Withdrawal();
+
+    const withdrawal = {
+      withdrawalId: 37,
+      amount: new BigNumber(5.3456),
+      to: 'user-address',
+    };
+    const txId = await service.sendWithdrawal(withdrawal);
+
+    expect(txId).toStrictEqual('tx-id');
+    expect(rawTxUtxo.sendWithChange).toBeCalledWith(
+      Config.staking.liquidity.address,
+      withdrawal.to,
+      withdrawal.amount,
+      UtxoSizePriority.FITTING,
+    );
+    expect(transactionCache.set).toBeCalledWith(
+      TransactionType.WITHDRAWAL,
+      withdrawal.withdrawalId.toString(),
+      rawTxWithdrawal,
+    );
+    expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
+    expect(transactionService.sign).toBeCalledWith(rawTxWithdrawal, 'signed-tx-hex-as-message', {
+      id: withdrawal.withdrawalId,
+      type: TransactionType.WITHDRAWAL,
+    });
+    expect(whaleClient.sendRaw).toBeCalledWith('signed-raw-tx-hex');
+  });
+
+  it('should not create raw tx for withdrawal from cache', async () => {
+    Setup.WithdrawalCache();
+
+    const withdrawal = {
+      withdrawalId: 37,
+      amount: new BigNumber(5.3456),
+      to: 'user-address',
+    };
+    const txId = await service.sendWithdrawal(withdrawal);
+
+    expect(txId).toStrictEqual('tx-id');
+    expect(rawTxUtxo.sendWithChange).toBeCalledTimes(0);
+    expect(transactionCache.set).toBeCalledTimes(0);
+    expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
+    expect(transactionService.sign).toBeCalledWith(rawTxWithdrawal, 'signed-tx-hex-as-message', {
+      id: withdrawal.withdrawalId,
+      type: TransactionType.WITHDRAWAL,
+    });
+    expect(whaleClient.sendRaw).toBeCalledWith('signed-raw-tx-hex');
+  });
+
   it('should create raw tx, request sign message, sign and broadcast for send from liquidity manager', async () => {
-    setup(TestSetup.SEND_FROM_LIQ);
+    Setup.SendFromLiq();
+
     const masternode = createDefaultMasternode();
     const txId = await service.sendFromLiq({
       to: masternode.owner,
@@ -143,7 +236,8 @@ describe('TransactionExecutionService', () => {
     });
 
     expect(txId).toStrictEqual('tx-id');
-    expect(jellyfishService.rawTxForSendFromLiq).toBeCalledWith(
+    expect(rawTxUtxo.sendWithChange).toBeCalledWith(
+      'some-test-liquidity-address',
       'owner-address',
       new BigNumber(42),
       UtxoSizePriority.BIG,
@@ -158,7 +252,8 @@ describe('TransactionExecutionService', () => {
   });
 
   it('should create raw tx, request sign message, sign and broadcast for send to liquidity manager', async () => {
-    setup(TestSetup.SEND_TO_LIQ);
+    Setup.SendToLiq();
+
     const masternode = createDefaultMasternode();
     const txId = await service.sendToLiq({
       from: masternode.owner,
@@ -168,7 +263,7 @@ describe('TransactionExecutionService', () => {
     });
 
     expect(txId).toStrictEqual('tx-id');
-    expect(jellyfishService.rawTxForSendToLiq).toBeCalledWith('owner-address', new BigNumber(42));
+    expect(rawTxUtxo.forward).toBeCalledWith('owner-address', 'some-test-liquidity-address', new BigNumber(42));
     expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
     expect(transactionService.sign).toBeCalledWith(rawTxSendToLiq, 'signed-tx-hex-as-message', {
       ownerWallet: 'cold-wallet-a',
@@ -176,5 +271,59 @@ describe('TransactionExecutionService', () => {
       type: TransactionType.SEND_TO_LIQ,
     });
     expect(whaleClient.sendRaw).toBeCalledWith('signed-raw-tx-hex');
+  });
+
+  // --- FAIL CASES --- //
+  it('should unlock UTXOs on create masternode fail', async () => {
+    Setup.CreateMasternodeFail();
+
+    const masternode = createDefaultMasternode();
+    await expect(
+      service.createMasternode({
+        masternode,
+        ownerWallet: masternode.ownerWallet,
+        accountIndex: masternode.accountIndex,
+      }),
+    ).rejects.toBe('Error');
+
+    expect(rawTxMasternode.create).toBeCalledWith(masternode);
+    expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
+    expect(transactionService.sign).toBeCalledWith(rawTxCreateMasternode, 'signed-tx-hex-as-message', {
+      ownerWallet: 'cold-wallet-a',
+      accountIndex: 1,
+      type: TransactionType.CREATE_MASTERNODE,
+    });
+    expect(whaleClient.sendRaw).toBeCalledTimes(0);
+    expect(rawTxService.unlockUtxosOf).toBeCalledWith(rawTxCreateMasternode);
+  });
+
+  it('should not unlock UTXOs on withdrawal fail', async () => {
+    Setup.WithdrawalFail();
+
+    const withdrawal = {
+      withdrawalId: 37,
+      amount: new BigNumber(5.3456),
+      to: 'user-address',
+    };
+    await expect(service.sendWithdrawal(withdrawal)).rejects.toBe('Error');
+
+    expect(rawTxUtxo.sendWithChange).toBeCalledWith(
+      Config.staking.liquidity.address,
+      withdrawal.to,
+      withdrawal.amount,
+      UtxoSizePriority.FITTING,
+    );
+    expect(transactionCache.set).toBeCalledWith(
+      TransactionType.WITHDRAWAL,
+      withdrawal.withdrawalId.toString(),
+      rawTxWithdrawal,
+    );
+    expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
+    expect(transactionService.sign).toBeCalledWith(rawTxWithdrawal, 'signed-tx-hex-as-message', {
+      id: withdrawal.withdrawalId,
+      type: TransactionType.WITHDRAWAL,
+    });
+    expect(whaleClient.sendRaw).toBeCalledTimes(0);
+    expect(rawTxService.unlockUtxosOf).toBeCalledTimes(0);
   });
 });

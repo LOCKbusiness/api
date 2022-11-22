@@ -9,6 +9,7 @@ import { StakingCombinedObserver } from './observers/staking-combined.observer';
 import { SystemStateSnapshotRepository } from './application/repositories/system-state-snapshot.repository';
 import { NotificationModule } from 'src/integration/notification/notification.module';
 import { BlockchainModule } from 'src/blockchain/blockchain.module';
+import { StakingExternalObserver } from './observers/staking-external.observer';
 
 @Module({
   imports: [
@@ -17,7 +18,13 @@ import { BlockchainModule } from 'src/blockchain/blockchain.module';
     BlockchainModule,
     NotificationModule,
   ],
-  providers: [MonitoringService, NodeBalanceObserver, NodeHealthObserver, StakingCombinedObserver],
+  providers: [
+    MonitoringService,
+    NodeBalanceObserver,
+    NodeHealthObserver,
+    StakingCombinedObserver,
+    StakingExternalObserver,
+  ],
   controllers: [MonitoringController],
   exports: [MonitoringService],
 })

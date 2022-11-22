@@ -4,7 +4,7 @@ import { MainNet } from '@defichain/jellyfish-network';
 import { isEthereumAddress } from 'class-validator';
 import { verifyMessage } from 'ethers/lib/utils';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { JellyfishService } from 'src/blockchain/ain/jellyfish/jellyfish.service';
+import { JellyfishService } from 'src/blockchain/ain/jellyfish/services/jellyfish.service';
 
 @Injectable()
 export class CryptoService {

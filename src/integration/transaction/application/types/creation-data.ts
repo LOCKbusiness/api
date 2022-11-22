@@ -1,5 +1,5 @@
 import BigNumber from 'bignumber.js';
-import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/utxo-provider.service';
+import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/domain/enums';
 import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
 
 export interface WalletBaseData {

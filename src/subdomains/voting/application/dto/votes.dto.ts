@@ -5,5 +5,5 @@ export enum Vote {
 }
 
 export interface Votes {
-  [number: number]: Vote;
+  [cfpId: string]: Vote;
 }

@@ -10,6 +10,7 @@ export enum PayInPurpose {
 export enum PayInStatus {
   CREATED = 'Created',
   ACKNOWLEDGED = 'Acknowledged',
+  FAILED = 'Failed',
 }
 
 @Entity()
@@ -68,6 +69,13 @@ export class PayIn extends IEntity {
   acknowledge(purpose: PayInPurpose): this {
     this.purpose = purpose;
     this.status = PayInStatus.ACKNOWLEDGED;
+
+    return this;
+  }
+
+  fail(purpose: PayInPurpose): this {
+    this.purpose = purpose;
+    this.status = PayInStatus.FAILED;
 
     return this;
   }

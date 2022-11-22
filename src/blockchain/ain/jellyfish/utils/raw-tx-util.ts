@@ -1,7 +1,7 @@
 import {
   DeFiTransactionConstants,
-  Transaction,
   TransactionSegWit,
+  CTransactionSegWit,
   Witness,
   WitnessScript,
   Script,
@@ -13,12 +13,14 @@ import {
   PoolSwap,
 } from '@defichain/jellyfish-transaction';
 import { fromAddress, fromScriptHex } from '@defichain/jellyfish-address';
-import { Prevout } from '@defichain/jellyfish-transaction-builder';
+import { Prevout, calculateFeeP2WPKH } from '@defichain/jellyfish-transaction-builder';
 import BigNumber from 'bignumber.js';
 import { Config } from 'src/config/config';
 import { MasternodeTimeLock } from 'src/subdomains/staking/domain/enums';
 import { DefiTxHelper } from './defi-tx-helper';
-import { JellyfishService } from './jellyfish.service';
+import { JellyfishService } from '../services/jellyfish.service';
+import { UtxoInformation } from '../domain/entities/utxo-information';
+import { RawTxDto } from '../dto/raw-tx.dto';
 
 interface OpPushData {
   type: string;
@@ -28,19 +30,19 @@ interface OpPushData {
 export class RawTxUtil {
   // --- PARSING --- //
 
-  static parseAddress(owner: string): [Script, string] {
-    const network = JellyfishService.getNetwork();
-    const decodedAddress = fromAddress(owner, network.name);
-    const pushData: OpPushData = decodedAddress?.script.stack[1] as any;
-    if (!decodedAddress?.script || !pushData?.hex) throw new Error('Could not parse owner address');
-    return [decodedAddress.script, pushData.hex];
+  static parseAddress(address: string): [Script, string] {
+    return this.parseScriptAndHex(address, 1);
   }
 
-  static parseOperatorPubKeyHash(operator: string): [Script, string] {
+  static parseLegacyAddress(legacy: string): [Script, string] {
+    return this.parseScriptAndHex(legacy, 2);
+  }
+
+  private static parseScriptAndHex(address: string, pushDataIndex: number): [Script, string] {
     const network = JellyfishService.getNetwork();
-    const decodedAddress = fromAddress(operator, network.name);
-    const pushData: OpPushData = decodedAddress?.script.stack[2] as any;
-    if (!decodedAddress?.script || !pushData?.hex) throw new Error('Could not parse operator address');
+    const decodedAddress = fromAddress(address, network.name);
+    const pushData: OpPushData = decodedAddress?.script.stack[pushDataIndex] as any;
+    if (!decodedAddress?.script || !pushData?.hex) throw new Error(`Could not parse ${address}`);
     return [decodedAddress.script, pushData.hex];
   }
 
@@ -174,15 +176,6 @@ export class RawTxUtil {
 
   // --- TX CREATION --- //
 
-  static createTx(vins: Vin[], vouts: Vout[]): Transaction {
-    return {
-      version: DeFiTransactionConstants.Version,
-      vin: vins,
-      vout: vouts,
-      lockTime: 0x00000000,
-    };
-  }
-
   static createTxSegWit(vins: Vin[], vouts: Vout[], witnesses: Witness[]): TransactionSegWit {
     return {
       version: DeFiTransactionConstants.Version,
@@ -192,6 +185,52 @@ export class RawTxUtil {
       vout: vouts,
       witness: witnesses,
       lockTime: 0x00000000,
+    };
+  }
+
+  static generateTx(utxo: UtxoInformation, vins: Vin[], vouts: Vout[], witnesses: Witness[]): RawTxDto {
+    const tx = RawTxUtil.createTxSegWit(vins, vouts, witnesses);
+    return RawTxUtil.toDto(tx, utxo);
+  }
+
+  static generateTxAndCalcFee(
+    utxo: UtxoInformation,
+    vins: Vin[],
+    vouts: Vout[],
+    witnesses: Witness[],
+    operationFee = new BigNumber(0),
+  ): RawTxDto {
+    const tx = RawTxUtil.createTxSegWit(vins, vouts, witnesses);
+    const fee = calculateFeeP2WPKH(new BigNumber(Config.blockchain.minFeeRate), tx);
+    const lastElement = vouts[vouts.length - 1];
+    lastElement.value = lastElement.value.minus(fee).minus(operationFee);
+
+    return RawTxUtil.toDto(tx, utxo);
+  }
+
+  static generateDefiTx(
+    fromScript: Script,
+    fromPubKeyHash: string,
+    utxo: UtxoInformation,
+    vout: Vout,
+    operationFee = new BigNumber(0),
+  ): RawTxDto {
+    const vins = RawTxUtil.createVins(utxo.prevouts);
+    const vouts = [vout, RawTxUtil.createVoutReturn(fromScript, utxo.total)];
+
+    const witness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(fromPubKeyHash)]);
+    const witnesses = new Array(vins.length).fill(witness);
+
+    return RawTxUtil.generateTxAndCalcFee(utxo, vins, vouts, witnesses, operationFee);
+  }
+
+  private static toDto(tx: TransactionSegWit, utxo: UtxoInformation): RawTxDto {
+    const txObj = new CTransactionSegWit(tx);
+    return {
+      id: txObj.txId,
+      hex: txObj.toHex(),
+      scriptHex: utxo.scriptHex,
+      prevouts: utxo.prevouts,
     };
   }
 }

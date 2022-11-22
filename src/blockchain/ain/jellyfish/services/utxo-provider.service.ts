@@ -3,30 +3,17 @@ import { Prevout } from '@defichain/jellyfish-transaction-builder';
 import BigNumber from 'bignumber.js';
 import { SmartBuffer } from 'smart-buffer';
 import { toOPCodes } from '@defichain/jellyfish-transaction';
-import { WhaleClient } from '../whale/whale-client';
-import { WhaleService } from '../whale/whale.service';
+import { WhaleClient } from '../../whale/whale-client';
+import { WhaleService } from '../../whale/whale.service';
 import { Injectable } from '@nestjs/common';
 import { Config } from 'src/config/config';
 import { Util } from 'src/shared/util';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Lock } from 'src/shared/lock';
-
-export interface UtxoInformation {
-  prevouts: Prevout[];
-  scriptHex: string;
-  total: BigNumber;
-}
-
-export enum UtxoSizePriority {
-  BIG,
-  SMALL,
-  FITTING,
-}
-
-export interface UtxoStatistics {
-  quantity: number;
-  biggest: BigNumber;
-}
+import { UtxoSizePriority } from '../domain/enums';
+import { UtxoInformation } from '../domain/entities/utxo-information';
+import { UtxoStatistics } from '../domain/entities/utxo-statistics';
+import { UtxoConfig } from '../domain/entities/utxo-config';
 
 interface AddressUnspent extends JellyfishAddressUnspent {
   id: string;
@@ -41,7 +28,7 @@ interface BlockedUtxo {
 @Injectable()
 export class UtxoProviderService {
   private readonly lockUtxo = new Lock(1800);
-  private blockHeight = 0;
+  private addressToBlockHeight = new Map<string, number>();
   private unspent = new Map<string, AddressUnspent[]>();
   private spent = new Map<string, BlockedUtxo[]>();
 
@@ -106,26 +93,17 @@ export class UtxoProviderService {
     );
   }
 
-  async provideUntilAmount(
-    address: string,
-    amount: BigNumber,
-    sizePriority: UtxoSizePriority,
-    useFeeBuffer: boolean,
-  ): Promise<UtxoInformation> {
+  async provideUntilAmount(address: string, amount: BigNumber, config: UtxoConfig): Promise<UtxoInformation> {
     const unspent = await this.retrieveUnspent(address);
     return UtxoProviderService.parseUnspent(
-      this.markUsed(address, UtxoProviderService.provideUntilAmount(unspent, amount, sizePriority, useFeeBuffer)),
+      this.markUsed(address, UtxoProviderService.provideUntilAmount(unspent, amount, config)),
     );
   }
 
-  async provideNumber(
-    address: string,
-    numberOfUtxos: number,
-    sizePriority: UtxoSizePriority,
-  ): Promise<UtxoInformation> {
+  async provideNumber(address: string, numberOfUtxos: number, config: UtxoConfig): Promise<UtxoInformation> {
     const unspent = await this.retrieveUnspent(address);
     return UtxoProviderService.parseUnspent(
-      this.markUsed(address, UtxoProviderService.provideNumber(unspent, numberOfUtxos, sizePriority)),
+      this.markUsed(address, UtxoProviderService.provideNumber(unspent, numberOfUtxos, config)),
     );
   }
 
@@ -134,7 +112,11 @@ export class UtxoProviderService {
     return UtxoProviderService.parseUnspent(
       this.markUsed(
         address,
-        UtxoProviderService.provideUntilAmount(unspent, new BigNumber(0), UtxoSizePriority.FITTING, true),
+        UtxoProviderService.provideUntilAmount(unspent, new BigNumber(0), {
+          useFeeBuffer: true,
+          sizePriority: UtxoSizePriority.FITTING,
+          customFeeBuffer: Config.blockchain.minDefiTxFeeBuffer,
+        }),
       ),
     );
   }
@@ -163,16 +145,12 @@ export class UtxoProviderService {
   }
 
   private async checkBlockAndInvalidate(address: string) {
-    const forceNew = this.unspent.get(address) === undefined;
+    const storedBlockHeight = this.addressToBlockHeight.get(address);
     const currentBlockHeight = await this.whaleClient.getBlockHeight();
-    console.info(
-      `update ${address}: force? ${forceNew ? 'yes' : 'no'} stored block ${
-        this.blockHeight
-      } blockchain block ${currentBlockHeight}`,
-    );
-    if (!forceNew && this.blockHeight === currentBlockHeight) return;
+    console.info(`update ${address}: stored block ${storedBlockHeight} blockchain block ${currentBlockHeight}`);
+    if (storedBlockHeight === currentBlockHeight) return;
 
-    this.blockHeight = currentBlockHeight;
+    this.addressToBlockHeight.set(address, currentBlockHeight);
 
     const currentUnspent = await this.whaleClient
       .getAllUnspent(address)
@@ -203,14 +181,16 @@ export class UtxoProviderService {
   private static provideUntilAmount(
     unspent: AddressUnspent[],
     amount: BigNumber,
-    sizePriority: UtxoSizePriority,
-    useFeeBuffer: boolean,
+    config: UtxoConfig,
   ): AddressUnspent[] {
-    const amountPlusFeeBuffer = amount.plus(Config.blockchain.minFeeBuffer);
-    const wantedAmount = useFeeBuffer ? amountPlusFeeBuffer : amount;
-    let [neededUnspent, total] = UtxoProviderService.tryProvideUntilAmount(unspent, wantedAmount, sizePriority);
-    if (total.lt(wantedAmount) && sizePriority === UtxoSizePriority.FITTING) {
-      [neededUnspent, total] = UtxoProviderService.tryProvideUntilAmount(unspent, wantedAmount, UtxoSizePriority.BIG);
+    const amountPlusFeeBuffer = amount.plus(config.customFeeBuffer ?? Config.blockchain.minFeeBuffer);
+    const wantedAmount = config.useFeeBuffer ? amountPlusFeeBuffer : amount;
+    let [neededUnspent, total] = UtxoProviderService.tryProvideUntilAmount(unspent, wantedAmount, config);
+    if (total.lt(wantedAmount) && config.sizePriority === UtxoSizePriority.FITTING) {
+      [neededUnspent, total] = UtxoProviderService.tryProvideUntilAmount(unspent, wantedAmount, {
+        ...config,
+        sizePriority: UtxoSizePriority.BIG,
+      });
     }
     if (total.lt(wantedAmount))
       throw new Error(
@@ -224,7 +204,7 @@ export class UtxoProviderService {
   private static tryProvideUntilAmount(
     unspent: AddressUnspent[],
     amountPlusFeeBuffer: BigNumber,
-    sizePriority: UtxoSizePriority,
+    { sizePriority }: UtxoConfig,
   ): [AddressUnspent[], BigNumber] {
     const neededUnspent: AddressUnspent[] = [];
     let total = new BigNumber(0);
@@ -243,7 +223,7 @@ export class UtxoProviderService {
   private static provideNumber(
     unspent: AddressUnspent[],
     numberOfUtxos: number,
-    sizePriority: UtxoSizePriority,
+    { sizePriority }: UtxoConfig,
   ): AddressUnspent[] {
     unspent = unspent.sort(sizePriority === UtxoSizePriority.BIG ? this.orderDescending : this.orderAscending);
     return unspent.slice(0, numberOfUtxos);

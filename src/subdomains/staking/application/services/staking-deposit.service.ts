@@ -97,10 +97,10 @@ export class StakingDepositService {
     if (Config.processDisabled(Process.STAKING_DEPOSIT)) return;
 
     try {
-      const pendingDeposits = await this.depositRepository.find({
-        where: { status: DepositStatus.PENDING, updated: LessThan(Util.daysBefore(1)) },
+      const openDeposits = await this.depositRepository.find({
+        where: { status: DepositStatus.OPEN, updated: LessThan(Util.daysBefore(1)) },
       });
-      for (const deposit of pendingDeposits) {
+      for (const deposit of openDeposits) {
         const txId = await this.whaleClient.getTx(deposit.payInTxId).catch(() => null);
         if (!txId) await this.depositRepository.update(deposit.id, { status: DepositStatus.FAILED });
       }
@@ -187,8 +187,16 @@ export class StakingDepositService {
     for (const [stakingId, payIn] of stakingPairs) {
       try {
         const staking = await this.repository.findOne({ where: { id: stakingId } });
-        const payInValid = staking.getConfirmedDeposits().length > 0 || (await this.isFirstPayInValid(staking, payIn));
 
+        // verify asset
+        const hasSameAsset = staking.asset.id === payIn.asset.id;
+        if (!hasSameAsset) {
+          await this.payInService.failedPayIn(payIn, PayInPurpose.STAKING);
+          continue;
+        }
+
+        // verify first pay in
+        const payInValid = staking.getConfirmedDeposits().length > 0 || (await this.isFirstPayInValid(staking, payIn));
         if (payInValid) {
           this.createOrUpdateDeposit(staking, payIn);
         } else {

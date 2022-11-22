@@ -60,6 +60,13 @@
         "containerId": "",
         "created": "2022-11-09T15:22:39.258Z",
         "sortNum": 100000
+      },
+      {
+        "_id": "46522555-23ad-43c0-97db-3bd91a3606c9",
+        "name": "Monitoring",
+        "containerId": "",
+        "created": "2022-11-17T14:35:44.515Z",
+        "sortNum": 110000
       }
     ],
     "settings": {

@@ -1,6 +1,6 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { Method } from 'axios';
-import { JellyfishService } from 'src/blockchain/ain/jellyfish/jellyfish.service';
+import { JellyfishService } from 'src/blockchain/ain/jellyfish/services/jellyfish.service';
 import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
 import { Config } from 'src/config/config';
 import { HttpError, HttpService } from 'src/shared/services/http.service';
@@ -44,7 +44,7 @@ export class KycService {
     const { accessToken } = await this.callApi<{ accessToken }>('auth/signUp', 'POST', {
       address,
       signature,
-      walletId: 7,
+      walletId: Config.kyc.walletId,
     });
     return accessToken;
   }

@@ -1,16 +1,11 @@
 import { RawTxDto } from 'src/blockchain/ain/jellyfish/dto/raw-tx.dto';
-import { Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from 'typeorm';
+import { IEntity } from 'src/shared/models/entity';
+import { Column, Entity } from 'typeorm';
 
 @Entity()
-export class Transaction {
-  @PrimaryColumn()
-  id: string;
-
-  @UpdateDateColumn()
-  updated: Date;
-
-  @CreateDateColumn()
-  created: Date;
+export class Transaction extends IEntity {
+  @Column({ unique: true })
+  chainId: string;
 
   @Column({ length: 'MAX', nullable: true })
   payload: string;
@@ -35,7 +30,7 @@ export class Transaction {
 
   static create(id: string, rawTx: RawTxDto, payload: any, issuerSignature: string): Transaction {
     const tx = new Transaction();
-    tx.id = id;
+    tx.chainId = id;
     tx.rawTx = JSON.stringify(rawTx);
     tx.issuerSignature = issuerSignature;
     tx.payload = payload && JSON.stringify(payload);
@@ -48,9 +43,17 @@ export class Transaction {
     return this;
   }
 
+  get isVerified(): boolean {
+    return this.verifierSignature != null;
+  }
+
   signed(hex: string): this {
     this.signedHex = hex;
     return this;
+  }
+
+  get isSigned(): boolean {
+    return this.signedHex != null;
   }
 
   invalidated(reason?: string): this {
@@ -58,6 +61,10 @@ export class Transaction {
     this.invalidationReason = reason;
     this.signedHex = null;
     return this;
+  }
+
+  get isInvalidated(): boolean {
+    return this.invalidationReason != null;
   }
 
   foundOnBlockchain(): this {

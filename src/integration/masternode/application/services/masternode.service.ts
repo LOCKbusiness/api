@@ -70,8 +70,9 @@ export class MasternodeService {
   async masternodeBlockCheck(): Promise<void> {
     if (Config.processDisabled(Process.MASTERNODE)) return;
 
-    const masternodeWithoutBlocks = await this.masternodeRepo.find({ where: { firstBlockFound: IsNull() } });
-
+    const masternodeWithoutBlocks = await this.masternodeRepo.find({
+      where: { firstBlockFound: IsNull(), creationHash: Not(IsNull()) },
+    });
     for (const masternode of masternodeWithoutBlocks) {
       try {
         const masternodeInfo = await this.client.getMasternodeInfo(masternode.creationHash);
@@ -83,6 +84,7 @@ export class MasternodeService {
     }
   }
 
+  // --- PUBLIC METHODS --- //
   async getIdleMasternodes(count: number): Promise<Masternode[]> {
     const masternodes = await this.masternodeRepo.find({
       where: { state: MasternodeState.IDLE },
@@ -146,6 +148,15 @@ export class MasternodeService {
     return this.masternodeRepo.find({ where: { creationHash: Not(IsNull()), resignHash: IsNull() } });
   }
 
+  async getAllVotersAt(date: Date): Promise<Masternode[]> {
+    return this.masternodeRepo.find({
+      where: [
+        { firstBlockFound: LessThan(date), resignDate: IsNull() },
+        { firstBlockFound: LessThan(date), resignDate: MoreThan(date) },
+      ],
+    });
+  }
+
   async getAllWithStates(states: MasternodeState[]): Promise<Masternode[]> {
     return this.masternodeRepo.find({
       where: {
@@ -202,6 +213,7 @@ export class MasternodeService {
     }
   }
 
+  // --- LIFECYCLE METHODS --- //
   async enabling(
     id: number,
     owner: string,

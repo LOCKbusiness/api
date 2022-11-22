@@ -145,8 +145,13 @@
     "method": "PUT",
     "sortNum": 130000,
     "created": "2022-10-10T14:42:51.082Z",
-    "modified": "2022-10-10T14:43:17.577Z",
-    "headers": [],
+    "modified": "2022-11-15T19:57:38.828Z",
+    "headers": [
+      {
+        "name": "Device-Id",
+        "value": "my-device-id-468"
+      }
+    ],
     "params": [],
     "body": {
       "type": "json",
@@ -265,6 +270,33 @@
       {
         "name": "strategy",
         "value": "LiquidityMining",
+        "isPath": false
+      }
+    ],
+    "tests": []
+  },
+  {
+    "_id": "e6cbbdcf-c9bd-4c94-a774-6c7a1ba8d7ea",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "46522555-23ad-43c0-97db-3bd91a3606c9",
+    "name": "Get",
+    "url": "{{url}}/v1/monitoring/data",
+    "method": "GET",
+    "sortNum": 200000,
+    "created": "2022-11-17T14:36:42.933Z",
+    "modified": "2022-11-17T17:20:56.263Z",
+    "headers": [],
+    "params": [
+      {
+        "name": "subsystem",
+        "value": "staking",
+        "isDisabled": true,
+        "isPath": false
+      },
+      {
+        "name": "metric",
+        "value": "external",
+        "isDisabled": true,
         "isPath": false
       }
     ],
