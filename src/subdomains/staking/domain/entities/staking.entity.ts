@@ -54,6 +54,7 @@ export class Staking extends IEntity {
   @OneToMany(() => Withdrawal, (withdrawal) => withdrawal.staking, { eager: true, cascade: true })
   withdrawals: Withdrawal[];
 
+  // TODO -> this is not needed, just send to whatever provided in reward, this is a BlockchainAddress -> RewardBlockchainAddress
   @ManyToOne(() => WalletBlockchainAddress, { eager: true, nullable: false })
   rewardsPayoutAddress: WalletBlockchainAddress;
 
@@ -303,7 +304,7 @@ export class Staking extends IEntity {
 
   private updateRewardBalance(): number {
     const confirmedRewards = this.getRewardsByStatus(RewardStatus.CONFIRMED);
-    const confirmedRewardsAmount = Util.sumObj(confirmedRewards, 'amount');
+    const confirmedRewardsAmount = Util.sumObj(confirmedRewards, 'inputReferenceAmount');
 
     this.rewardsAmount = confirmedRewardsAmount;
 

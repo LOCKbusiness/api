@@ -5,7 +5,6 @@ import { Util } from 'src/shared/utils/util';
 import { Column, Entity, ManyToOne } from 'typeorm';
 
 export enum PayoutOrderContext {
-  BUY_CRYPTO = 'BuyCrypto',
   STAKING_REWARD = 'StakingReward',
 }
 

@@ -55,7 +55,7 @@ export class CoinTrackingHistoryDtoMapper {
       .map((c) => ({
         type: CoinTrackingTransactionTypes.STAKING,
         buyAmount: c.amount,
-        buyAsset: this.getAssetSymbolCT(c.asset),
+        buyAsset: this.getAssetSymbolCT(c.targetAsset),
         sellAmount: null,
         sellAsset: null,
         fee: null,
@@ -63,8 +63,8 @@ export class CoinTrackingHistoryDtoMapper {
         exchange: 'LOCK.space Staking',
         tradeGroup: 'Staking',
         comment: 'LOCK Staking Deposit',
-        txId: c.reinvestTxId,
-        date: c.reinvestOutputDate ?? c.updated,
+        txId: c.txId,
+        date: c.outputDate ?? c.updated,
         buyValueInEur: c.amountEur,
         sellValueInEur: null,
       }));

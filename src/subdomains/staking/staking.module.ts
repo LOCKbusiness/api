@@ -27,6 +27,12 @@ import { AssetStakingMetadataRepository } from './application/repositories/asset
 import { WithdrawalRepository } from './application/repositories/withdrawal.repository';
 import { WithdrawalController } from './api/controllers/withdrawal.controller';
 import { DepositRepository } from './application/repositories/deposit.repository';
+import { StakingRewardBatchService } from './application/services/staking-reward-batch.service';
+import { StakingRewardDexService } from './application/services/staking-reward-dex.service';
+import { StakingRewardOutService } from './application/services/staking-reward-out.service';
+import { RewardBatchRepository } from './application/repositories/reward-batch.repository';
+import { RewardRepository } from './application/repositories/reward.repository';
+import { StakingRewardNotificationService } from './application/services/staking-reward-notification.service';
 
 @Module({
   imports: [
@@ -35,6 +41,8 @@ import { DepositRepository } from './application/repositories/deposit.repository
       StakingBlockchainAddressRepository,
       WithdrawalRepository,
       DepositRepository,
+      RewardRepository,
+      RewardBatchRepository,
       AssetStakingMetadataRepository,
     ]),
     BlockchainModule,
@@ -59,6 +67,10 @@ import { DepositRepository } from './application/repositories/deposit.repository
     StakingDepositService,
     StakingDeFiChainService,
     StakingRewardService,
+    StakingRewardBatchService,
+    StakingRewardDexService,
+    StakingRewardOutService,
+    StakingRewardNotificationService,
     StakingWithdrawalService,
     StakingFactory,
     StakingBlockchainAddressService,

@@ -57,14 +57,14 @@ export class CompactHistoryDtoMapper {
       .map((c) => ({
         type: HistoryTransactionType.REWARD,
         inputAmount: c.amount,
-        inputAsset: c.asset.name,
+        inputAsset: c.targetAsset.name,
         outputAmount: null,
         outputAsset: null,
         amountInEur: c.amountEur,
         amountInChf: c.amountChf,
         amountInUsd: c.amountUsd,
-        txId: c.reinvestTxId,
-        date: c.reinvestOutputDate ?? c.updated,
+        txId: c.txId,
+        date: c.outputDate ?? c.updated,
         status: this.CompactStatusMapper[c.status],
       }))
       .filter((c) => c.status != null);
