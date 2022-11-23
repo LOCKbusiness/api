@@ -17,6 +17,7 @@ import { JellyfishService } from 'src/blockchain/ain/jellyfish/services/jellyfis
 import { TokenProviderService } from 'src/blockchain/ain/whale/token-provider.service';
 import { UtxoProviderService } from 'src/blockchain/ain/jellyfish/services/utxo-provider.service';
 import { RawTxService } from 'src/blockchain/ain/jellyfish/services/raw-tx.service';
+import { RawTxDto } from 'src/blockchain/ain/jellyfish/dto/raw-tx.dto';
 
 @Injectable()
 export class StakingDeFiChainService {
@@ -38,7 +39,7 @@ export class StakingDeFiChainService {
     this.wallet = this.jellyfishService.createWallet(Config.payIn.forward.phrase);
   }
 
-  //*** PUBLIC API ***//
+  // --- PUBLIC API --- //
   async checkSync(): Promise<void> {
     await this.inputClient.checkSync();
   }
@@ -58,7 +59,7 @@ export class StakingDeFiChainService {
   }
 
   async sendWithdrawal(withdrawal: Withdrawal): Promise<string> {
-    return this.transactionExecutionService.sendFromLiqToCustomer({
+    return this.transactionExecutionService.sendWithdrawal({
       to: withdrawal.staking.withdrawalAddress.address,
       amount: new BigNumber(withdrawal.amount),
       withdrawalId: withdrawal.id,
@@ -76,13 +77,14 @@ export class StakingDeFiChainService {
     return transaction && transaction.block.hash != null;
   }
 
+  // --- FORWARDING HELPERS --- //
   private async forwardMasternodeDeposit(address: string, amount: number): Promise<string> {
     const forwardToLiq = await this.rawTxService.Utxo.forward(
       address,
       Config.staking.liquidity.address,
       new BigNumber(amount),
     );
-    return this.inputClient.signAndSend(forwardToLiq.hex);
+    return await this.send(forwardToLiq);
   }
 
   private async forwardLiquidityMiningDeposit(address: string, amount: number, asset: Asset): Promise<string> {
@@ -97,12 +99,7 @@ export class StakingDeFiChainService {
       new BigNumber(amount),
       new BigNumber(Config.payIn.forward.accountToAccountFee),
     );
-    try {
-      return await this.inputClient.signAndSend(forwardToLiq.hex);
-    } catch (e) {
-      await this.rawTxService.unlockUtxosOf(forwardToLiq);
-      throw e;
-    }
+    return await this.send(forwardToLiq);
   }
 
   private async sendFeeUtxosToDepositIfNeeded(address: string): Promise<void> {
@@ -133,6 +130,15 @@ export class StakingDeFiChainService {
       console.info(`... completed`);
     } catch (e) {
       await this.rawTxService.unlockUtxosOf(sendUtxosToDeposit);
+      throw e;
+    }
+  }
+
+  private async send(rawTx: RawTxDto): Promise<string> {
+    try {
+      return await this.inputClient.signAndSend(rawTx.hex);
+    } catch (e) {
+      await this.rawTxService.unlockUtxosOf(rawTx);
       throw e;
     }
   }

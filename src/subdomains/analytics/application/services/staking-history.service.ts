@@ -5,23 +5,24 @@ import { HistoryTransactionType, CompactHistoryDto } from '../dto/output/history
 import { Deposit } from 'src/subdomains/staking/domain/entities/deposit.entity';
 import { Withdrawal } from 'src/subdomains/staking/domain/entities/withdrawal.entity';
 import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
-import { CoinTrackingCsvHistoryDto } from '../dto/output/coin-tracking-history.dto';
+import { CoinTrackingCsvHistoryDto, CoinTrackingTransactionType } from '../dto/output/coin-tracking-history.dto';
 import { Staking } from 'src/subdomains/staking/domain/entities/staking.entity';
 import { Util } from 'src/shared/util';
 import { CompactHistoryDtoMapper } from '../mappers/compact-history-dto.mapper';
 import { CoinTrackingHistoryDtoMapper } from '../mappers/coin-tracking-history-dto.mapper';
+import { ChainReportCsvHistoryDto, ChainReportTransactionType } from '../dto/output/chain-report-history.dto';
+import { ChainReportHistoryDtoMapper } from '../mappers/chain-report-history-dto.mapper';
 
-type HistoryDto<T> = T extends ExportType.COMPACT ? CompactHistoryDto : CoinTrackingCsvHistoryDto;
+type HistoryDto<T> = T extends ExportType.COMPACT
+  ? CompactHistoryDto
+  : T extends ExportType.COIN_TRACKING
+  ? CoinTrackingCsvHistoryDto
+  : ChainReportCsvHistoryDto;
 
 export enum ExportType {
   COMPACT = 'compact',
-  CT = 'CT',
-}
-
-export enum CoinTrackingTransactionTypes {
-  DEPOSIT = 'Deposit',
-  WITHDRAWAL = 'Withdrawal',
-  STAKING = 'Staking',
+  COIN_TRACKING = 'CoinTracking',
+  CHAIN_REPORT = 'ChainReport',
 }
 
 @Injectable()
@@ -44,13 +45,14 @@ export class StakingHistoryService {
     const withdrawals = stakingEntities.reduce((prev, curr) => prev.concat(curr.withdrawals), [] as Withdrawal[]);
     const rewards = stakingEntities.reduce((prev, curr) => prev.concat(curr.rewards), [] as Reward[]);
 
-    const transactions = (
-      exportFormat === ExportType.CT
-        ? this.getHistoryCT(deposits, withdrawals, rewards)
-        : this.getHistoryCompact(deposits, withdrawals, rewards)
-    ) as HistoryDto<T>[];
-
-    return transactions;
+    switch (exportFormat) {
+      case ExportType.COIN_TRACKING:
+        return this.getHistoryCT(deposits, withdrawals, rewards) as HistoryDto<T>[];
+      case ExportType.CHAIN_REPORT:
+        return this.getHistoryChainReport(deposits, withdrawals, rewards) as HistoryDto<T>[];
+      case ExportType.COMPACT:
+        return this.getHistoryCompact(deposits, withdrawals, rewards) as HistoryDto<T>[];
+    }
   }
 
   // --- HELPER METHODS --- //
@@ -70,6 +72,22 @@ export class StakingHistoryService {
       .sort((tx1, tx2) => (tx1.date.getTime() > tx2.date.getTime() ? -1 : 1));
 
     return this.filterDuplicateTxCT(transactions);
+  }
+
+  private getHistoryChainReport(
+    deposits: Deposit[],
+    withdrawals: Withdrawal[],
+    rewards: Reward[],
+  ): ChainReportCsvHistoryDto[] {
+    const transactions: ChainReportCsvHistoryDto[] = [
+      ChainReportHistoryDtoMapper.mapStakingDeposits(deposits),
+      ChainReportHistoryDtoMapper.mapStakingWithdrawals(withdrawals),
+      ChainReportHistoryDtoMapper.mapStakingRewards(rewards),
+    ]
+      .reduce((prev, curr) => prev.concat(curr), [])
+      .sort((tx1, tx2) => (tx1.timestamp.getTime() > tx2.timestamp.getTime() ? -1 : 1));
+
+    return this.filterDuplicateTxChainReport(transactions);
   }
 
   private getHistoryCompact(deposits: Deposit[], withdrawals: Withdrawal[], rewards: Reward[]): CompactHistoryDto[] {
@@ -94,12 +112,25 @@ export class StakingHistoryService {
     return [headers].concat(values).join('\n');
   }
 
+  private filterDuplicateTxChainReport(transactions: ChainReportCsvHistoryDto[]): ChainReportCsvHistoryDto[] {
+    Array.from(Util.groupBy(transactions, 'txId'))
+      .map(([_, transactions]) => transactions)
+      .filter((r) => r.length > 1)
+      .forEach((transactions) =>
+        transactions.forEach(
+          (r, _) => (r.txId = r.transactionType === ChainReportTransactionType.DEPOSIT ? 'remove' : r.txId),
+        ),
+      );
+
+    return transactions.filter((r) => r.txId !== 'remove');
+  }
+
   private filterDuplicateTxCT(transactions: CoinTrackingCsvHistoryDto[]): CoinTrackingCsvHistoryDto[] {
     Array.from(Util.groupBy(transactions, 'txId'))
       .map(([_, transactions]) => transactions)
       .filter((r) => r.length > 1)
       .forEach((transactions) =>
-        transactions.forEach((r, _) => (r.txId = r.type === CoinTrackingTransactionTypes.DEPOSIT ? 'remove' : r.txId)),
+        transactions.forEach((r, _) => (r.txId = r.type === CoinTrackingTransactionType.DEPOSIT ? 'remove' : r.txId)),
       );
 
     return transactions.filter((r) => r.txId !== 'remove');
