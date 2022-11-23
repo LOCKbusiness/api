@@ -67,7 +67,7 @@ export class KycController {
             console.error(`Failed to send KYC completion mail for user ${user.id}: user has no email`);
           }
         }
-        this.userService.updateUser(user.id, dto.data);
+        await this.userService.updateUser(user.id, dto.data);
         break;
       case KycResult.FAILED:
         // notify support
