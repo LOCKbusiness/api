@@ -22,7 +22,7 @@ export class RawTxService {
   public readonly Vault: RawTxVault;
 
   constructor(private readonly utxoProvider: UtxoProviderService, scheduler: SchedulerRegistry) {
-    this.queue = new QueueHandler(scheduler, 65000);
+    this.queue = new QueueHandler(scheduler, 900000);
 
     this.Account = new RawTxAccount((c) => this.call(c), utxoProvider);
     this.Masternode = new RawTxMasternode((c) => this.call(c), utxoProvider);
@@ -32,10 +32,10 @@ export class RawTxService {
   }
 
   async unlockUtxosOf(rawTx: RawTxDto): Promise<void> {
-    return this.call(() => this.executeUnlockUtxos(rawTx.prevouts, rawTx.scriptHex));
+    return this.call(() => Promise.resolve(this.executeUnlockUtxos(rawTx.prevouts, rawTx.scriptHex)));
   }
 
-  private async executeUnlockUtxos(prevouts: Prevout[], scriptHex: string): Promise<void> {
+  private executeUnlockUtxos(prevouts: Prevout[], scriptHex: string) {
     this.utxoProvider.unlockSpentBasedOn(prevouts, RawTxUtil.parseAddressFromScriptHex(scriptHex));
   }
 
