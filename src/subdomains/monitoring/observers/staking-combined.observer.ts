@@ -35,9 +35,8 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
   async fetch(): Promise<StakingData> {
     if (Config.processDisabled(Process.MONITORING)) return;
 
-    let data: StakingData;
     try {
-      data = await this.getStaking();
+      const data = await this.getStaking();
 
       this.emit(data);
 
