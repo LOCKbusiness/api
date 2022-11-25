@@ -1,4 +1,4 @@
-import { FeeResult } from 'src/subdomains/supporting/payout/interfaces';
+import { FeeResult } from 'src/subdomains/payout/interfaces';
 import { PayoutOrder } from '../../../../entities/payout-order.entity';
 import { PayoutOrderRepository } from '../../../../repositories/payout-order.repository';
 import { PrepareStrategy } from './prepare.strategy';

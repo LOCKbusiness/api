@@ -3,7 +3,6 @@ import { Asset } from 'src/shared/models/asset/asset.entity';
 import { IEntity } from 'src/shared/models/entity';
 import { Util } from 'src/shared/util';
 import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
-import { AbortBatchCreationException } from '../exceptions/abort-batch-creation.exception';
 import { Reward } from './reward.entity';
 
 export enum RewardBatchStatus {
@@ -13,9 +12,6 @@ export enum RewardBatchStatus {
   PAYING_OUT = 'PayingOut',
   COMPLETE = 'Complete',
 }
-
-type IsPurchaseRequired = boolean;
-type LiquidityWarning = boolean;
 
 @Entity()
 export class RewardBatch extends IEntity {
@@ -48,44 +44,6 @@ export class RewardBatch extends IEntity {
     this.outputReferenceAmount = Util.round((this.outputReferenceAmount ?? 0) + reward.outputReferenceAmount, 8);
 
     return this;
-  }
-
-  // amounts to be provided in reference asset
-  optimizeByLiquidity(availableAmount: number, maxPurchasableAmount: number): [IsPurchaseRequired, LiquidityWarning] {
-    if (this.isEnoughToSecureBatch(availableAmount)) {
-      // no changes to batch required, no purchase required
-      return [false, false];
-    }
-
-    if (this.isEnoughToSecureAtLeastOneTransaction(availableAmount)) {
-      this.reBatchToMaxReferenceAmount(availableAmount);
-
-      // no purchase required yet, proceeding with transactions for all available liquidity
-      return [false, false];
-    }
-
-    if (
-      !this.isWholeBatchAmountPurchasable(maxPurchasableAmount, 0.05) &&
-      this.isEnoughToSecureAtLeastOneTransaction(maxPurchasableAmount, 0.05)
-    ) {
-      this.reBatchToMaxReferenceAmount(maxPurchasableAmount, 0.05);
-
-      /**
-       * purchase is required, though liquidity is not enough to purchase for entire batch -> re-batching to smaller amount *
-       * warning is returned because on high load of small transactions, big transaction might be sliced out over and over again, without any notice
-       */
-      return [true, true];
-    }
-
-    if (!this.isEnoughToSecureAtLeastOneTransaction(maxPurchasableAmount)) {
-      const { name, type, blockchain } = this.targetAsset;
-
-      throw new AbortBatchCreationException(
-        `Not enough liquidity to create batch for asset ${name} ${type} ${blockchain}.`,
-      );
-    }
-
-    return [true, false];
   }
 
   secure(liquidity: number): this {

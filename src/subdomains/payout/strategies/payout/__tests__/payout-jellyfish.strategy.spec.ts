@@ -1,5 +1,5 @@
 import { mock } from 'jest-mock-extended';
-import { NotificationService } from 'src/subdomains/supporting/notification/services/notification.service';
+import { NotificationService } from 'src/integration/notification/services/notification.service';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { createCustomAsset } from 'src/shared/models/asset/__mocks__/asset.entity.mock';
 import { PayoutOrder, PayoutOrderContext, PayoutOrderStatus } from '../../../entities/payout-order.entity';
@@ -46,31 +46,31 @@ describe('PayoutJellyfishStrategy', () => {
 
     it('separates orders in different groups by context', () => {
       const orders = [
-        createCustomPayoutOrder({ context: PayoutOrderContext.BUY_CRYPTO }),
-        createCustomPayoutOrder({ context: PayoutOrderContext.BUY_CRYPTO }),
         createCustomPayoutOrder({ context: PayoutOrderContext.STAKING_REWARD }),
+        createCustomPayoutOrder({ context: PayoutOrderContext.STAKING_REWARD }),
+        createCustomPayoutOrder({ context: PayoutOrderContext.CRYPTO_CRYPTO }),
       ];
 
       const groups = strategy.groupOrdersByContextWrapper(orders);
 
       expect([...groups.entries()].length).toBe(2);
-      expect([...groups.keys()][0]).toBe(PayoutOrderContext.BUY_CRYPTO);
-      expect([...groups.keys()][1]).toBe(PayoutOrderContext.STAKING_REWARD);
+      expect([...groups.keys()][0]).toBe(PayoutOrderContext.STAKING_REWARD);
+      expect([...groups.keys()][1]).toBe(PayoutOrderContext.CRYPTO_CRYPTO);
       expect([...groups.values()][0].length).toBe(2);
       expect([...groups.values()][1].length).toBe(1);
     });
 
     it('puts orders with same context in one group', () => {
       const orders = [
-        createCustomPayoutOrder({ context: PayoutOrderContext.BUY_CRYPTO }),
-        createCustomPayoutOrder({ context: PayoutOrderContext.BUY_CRYPTO }),
-        createCustomPayoutOrder({ context: PayoutOrderContext.BUY_CRYPTO }),
+        createCustomPayoutOrder({ context: PayoutOrderContext.STAKING_REWARD }),
+        createCustomPayoutOrder({ context: PayoutOrderContext.STAKING_REWARD }),
+        createCustomPayoutOrder({ context: PayoutOrderContext.STAKING_REWARD }),
       ];
 
       const groups = strategy.groupOrdersByContextWrapper(orders);
 
       expect([...groups.entries()].length).toBe(1);
-      expect([...groups.keys()][0]).toBe(PayoutOrderContext.BUY_CRYPTO);
+      expect([...groups.keys()][0]).toBe(PayoutOrderContext.STAKING_REWARD);
       expect([...groups.values()][0].length).toBe(3);
     });
   });
@@ -78,8 +78,8 @@ describe('PayoutJellyfishStrategy', () => {
   describe('#createPayoutGroups(...)', () => {
     it('restricts grouping orders with different assets', () => {
       const orders = [
-        createCustomPayoutOrder({ asset: createCustomAsset({ dexName: 'BTC' }) }),
-        createCustomPayoutOrder({ asset: createCustomAsset({ dexName: 'ETH' }) }),
+        createCustomPayoutOrder({ asset: createCustomAsset({ name: 'BTC' }) }),
+        createCustomPayoutOrder({ asset: createCustomAsset({ name: 'ETH' }) }),
       ];
 
       const testCall = () => strategy.createPayoutGroupsWrapper(orders, 10);
@@ -249,7 +249,7 @@ describe('PayoutJellyfishStrategy', () => {
         type: 'ErrorMonitoring',
         metadata: {
           context: 'Payout',
-          correlationId: 'PayoutOrder&BuyCrypto&1',
+          correlationId: 'PayoutOrder&StakingReward&1',
         },
         options: {
           suppressRecurring: true,
@@ -266,7 +266,7 @@ describe('PayoutJellyfishStrategy', () => {
         type: 'ErrorMonitoring',
         metadata: {
           context: 'Payout',
-          correlationId: 'PayoutOrder&BuyCrypto&1',
+          correlationId: 'PayoutOrder&StakingReward&1',
         },
         options: {
           suppressRecurring: true,

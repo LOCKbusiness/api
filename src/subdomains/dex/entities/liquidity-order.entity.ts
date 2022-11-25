@@ -1,12 +1,15 @@
-import { Blockchain } from 'src/integration/blockchain/shared/enums/blockchain.enum';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { IEntity } from 'src/shared/models/entity';
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { LiquidityTransactionResult } from '../interfaces';
 
 export enum LiquidityOrderContext {
+  BUY_CRYPTO = 'BuyCrypto',
   STAKING_REWARD = 'StakingReward',
   CREATE_POOL_PAIR = 'CreatePoolPair',
+  PRICING = 'Pricing',
+  LIQUIDITY_MANAGEMENT = 'LiquidityManagement',
 }
 
 export enum LiquidityOrderType {
@@ -124,8 +127,7 @@ export class LiquidityOrder extends IEntity {
   }
 
   private setTargetAmount(incomingAmount: number): void {
-    this.targetAmount =
-      this.referenceAsset.dexName === this.targetAsset.dexName ? this.referenceAmount : incomingAmount;
+    this.targetAmount = this.referenceAsset.name === this.targetAsset.name ? this.referenceAmount : incomingAmount;
   }
 
   static getIsReferenceAsset(asset: string): boolean {
@@ -137,10 +139,10 @@ export class LiquidityOrder extends IEntity {
   }
 
   get isReferenceAsset(): boolean {
-    return LiquidityOrder.getIsReferenceAsset(this.targetAsset.dexName);
+    return LiquidityOrder.getIsReferenceAsset(this.targetAsset.name);
   }
 
   get maxPriceSlippage(): number {
-    return LiquidityOrder.getMaxPriceSlippage(this.targetAsset.dexName);
+    return LiquidityOrder.getMaxPriceSlippage(this.targetAsset.name);
   }
 }

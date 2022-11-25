@@ -56,8 +56,8 @@ export class CompactHistoryDtoMapper {
     return rewards
       .map((c) => ({
         type: HistoryTransactionType.REWARD,
-        inputAmount: c.amount,
-        inputAsset: c.targetAsset.name,
+        inputAmount: c.inputReferenceAmount,
+        inputAsset: c.referenceAsset.name,
         outputAmount: null,
         outputAsset: null,
         amountInEur: c.amountEur,

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { Blockchain } from 'src/integration/blockchain/shared/enums/blockchain.enum';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { AssetService } from 'src/shared/models/asset/asset.service';
-import { Util } from 'src/shared/utils/util';
+import { Util } from 'src/shared/util';
 import { CheckLiquidityRequest, CheckLiquidityResult } from '../../../interfaces';
 import { DexDeFiChainService } from '../../../services/dex-defichain.service';
 import { DexUtil } from '../../../utils/dex.util';
@@ -54,7 +54,7 @@ export class DeFiChainPoolPairStrategy extends CheckLiquidityStrategy {
     const containsDFI = this.pairContainsDFI(targetAsset);
 
     const token = await this.assetService.getAssetByQuery({
-      dexName: containsDFI ? 'DFI' : 'DUSD',
+      name: containsDFI ? 'DFI' : 'DUSD',
       blockchain: Blockchain.DEFICHAIN,
       type: AssetType.TOKEN,
     });

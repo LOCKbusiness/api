@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { AssetService } from 'src/shared/models/asset/asset.service';
-import { Util } from 'src/shared/utils/util';
+import { Util } from 'src/shared/util';
 import { LiquidityOrder } from '../../../entities/liquidity-order.entity';
 import { CheckLiquidityRequest, CheckLiquidityResult } from '../../../interfaces';
 import { DexDeFiChainLiquidityResult, DexDeFiChainService } from '../../../services/dex-defichain.service';
@@ -28,7 +28,7 @@ export class DeFiChainDefaultStrategy extends CheckLiquidityStrategy {
       referenceAsset,
       referenceAmount,
       targetAsset,
-      LiquidityOrder.getMaxPriceSlippage(targetAsset.dexName),
+      LiquidityOrder.getMaxPriceSlippage(targetAsset.name),
       prioritySwapAssets,
     );
 
@@ -51,9 +51,9 @@ export class DeFiChainDefaultStrategy extends CheckLiquidityStrategy {
 
       return purchaseStrategy.getPrioritySwapAssets();
     } catch (e) {
-      const { dexName, type, blockchain } = targetAsset;
+      const { name, type, blockchain } = targetAsset;
       console.warn(
-        `Error while getting priority assets from purchase liquidity strategy. Target asset: ${dexName} ${type} ${blockchain}`,
+        `Error while getting priority assets from purchase liquidity strategy. Target asset: ${name} ${type} ${blockchain}`,
       );
 
       return [];

@@ -1,5 +1,5 @@
-import { FeeResult } from 'src/subdomains/supporting/payout/interfaces';
 import { Asset } from 'src/shared/models/asset/asset.entity';
+import { FeeResult } from 'src/subdomains/payout/interfaces';
 import { PayoutOrder } from '../../../../entities/payout-order.entity';
 
 export abstract class PrepareStrategy {

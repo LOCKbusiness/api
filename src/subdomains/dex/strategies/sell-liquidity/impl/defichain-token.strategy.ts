@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Blockchain } from 'src/integration/blockchain/shared/enums/blockchain.enum';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { Asset, AssetCategory, AssetType } from 'src/shared/models/asset/asset.entity';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { LiquidityOrder } from '../../../entities/liquidity-order.entity';
@@ -29,7 +29,7 @@ export class DeFiChainTokenStrategy extends DeFiChainStrategy {
       await this.bookLiquiditySell(order);
       await this.liquidityOrderRepo.save(order);
     } catch (e) {
-      this.handleSellLiquidityError(request, e);
+      await this.handleSellLiquidityError(request, e);
     }
   }
 
@@ -44,14 +44,14 @@ export class DeFiChainTokenStrategy extends DeFiChainStrategy {
     const targetAssetName = this.defineTargetAssetName(sellAsset);
 
     return this.assetService.getAssetByQuery({
-      dexName: targetAssetName,
+      name: targetAssetName,
       blockchain: Blockchain.DEFICHAIN,
       type: AssetType.TOKEN,
     });
   }
 
   private defineTargetAssetName(sellAsset: Asset): string {
-    switch (sellAsset.dexName) {
+    switch (sellAsset.name) {
       case 'BTC':
         throw new Error('Selling BTC on DEX is not supported by DeFiChainTokenStrategy');
 
@@ -78,7 +78,7 @@ export class DeFiChainTokenStrategy extends DeFiChainStrategy {
     );
 
     console.info(
-      `Booked sell of ${referenceAmount} ${referenceAsset.dexName} liquidity for ${targetAsset.dexName}. Context: ${order.context}. CorrelationId: ${order.correlationId}.`,
+      `Booked sell of ${referenceAmount} ${referenceAsset.name} liquidity for ${targetAsset.name}. Context: ${order.context}. CorrelationId: ${order.correlationId}.`,
     );
 
     order.addBlockchainTransactionMetadata(txId);

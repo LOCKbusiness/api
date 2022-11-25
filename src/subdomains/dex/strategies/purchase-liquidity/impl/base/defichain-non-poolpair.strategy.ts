@@ -1,5 +1,3 @@
-import { Blockchain } from 'src/integration/blockchain/shared/enums/blockchain.enum';
-import { NotificationService } from 'src/subdomains/supporting/notification/services/notification.service';
 import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { LiquidityOrder } from '../../../../entities/liquidity-order.entity';
@@ -10,6 +8,8 @@ import { LiquidityOrderRepository } from '../../../../repositories/liquidity-ord
 import { DexDeFiChainService } from '../../../../services/dex-defichain.service';
 import { PurchaseLiquidityStrategy } from './purchase-liquidity.strategy';
 import { PurchaseLiquidityStrategyAlias } from '../../purchase-liquidity.facade';
+import { NotificationService } from 'src/integration/notification/services/notification.service';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
 
 export abstract class DeFiChainNonPoolPairStrategy extends PurchaseLiquidityStrategy {
   private prioritySwapAssetDescriptors: { name: string; type: AssetType }[] = [];
@@ -42,7 +42,7 @@ export abstract class DeFiChainNonPoolPairStrategy extends PurchaseLiquidityStra
   }
 
   async addPurchaseData(order: LiquidityOrder): Promise<void> {
-    const amount = await this.dexDeFiChainService.getSwapAmount(order.txId, order.targetAsset.dexName);
+    const amount = await this.dexDeFiChainService.getSwapAmount(order.txId, order.targetAsset.name);
 
     order.purchased(amount);
     order.recordFee(await this.feeAsset(), 0);
@@ -76,7 +76,7 @@ export abstract class DeFiChainNonPoolPairStrategy extends PurchaseLiquidityStra
     const txId = await this.dexDeFiChainService.swapLiquidity(swapAsset, swapAmount, targetAsset, maxPriceSlippage);
 
     console.info(
-      `Booked purchase of ${swapAmount} ${swapAsset.dexName} worth liquidity for asset ${order.targetAsset.dexName}. Context: ${order.context}. CorrelationId: ${order.correlationId}.`,
+      `Booked purchase of ${swapAmount} ${swapAsset.name} worth liquidity for asset ${order.targetAsset.name}. Context: ${order.context}. CorrelationId: ${order.correlationId}.`,
     );
 
     order.addBlockchainTransactionMetadata(txId, swapAsset, swapAmount);
@@ -92,7 +92,7 @@ export abstract class DeFiChainNonPoolPairStrategy extends PurchaseLiquidityStra
     for (const descriptor of this.prioritySwapAssetDescriptors) {
       const prioritySwapAsset = await this.getSwapAsset(descriptor);
 
-      if (!(targetAsset.dexName === 'DUSD' && prioritySwapAsset.dexName === 'DUSD')) {
+      if (!(targetAsset.name === 'DUSD' && prioritySwapAsset.name === 'DUSD')) {
         try {
           return {
             asset: prioritySwapAsset,
@@ -114,9 +114,7 @@ export abstract class DeFiChainNonPoolPairStrategy extends PurchaseLiquidityStra
     }
 
     throw new NotEnoughLiquidityException(
-      `Failed to find suitable source asset for liquidity order (target asset ${targetAsset.dexName}). `.concat(
-        ...errors,
-      ),
+      `Failed to find suitable source asset for liquidity order (target asset ${targetAsset.name}). `.concat(...errors),
     );
   }
 
@@ -128,7 +126,7 @@ export abstract class DeFiChainNonPoolPairStrategy extends PurchaseLiquidityStra
 
     if (cachedAsset) return cachedAsset;
 
-    const asset = await this.assetService.getAssetByQuery({ dexName: name, type, blockchain: Blockchain.DEFICHAIN });
+    const asset = await this.assetService.getAssetByQuery({ name, type, blockchain: Blockchain.DEFICHAIN });
 
     if (asset) {
       this.prioritySwapAssets.push(asset);

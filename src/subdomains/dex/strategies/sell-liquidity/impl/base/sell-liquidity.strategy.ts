@@ -1,5 +1,5 @@
-import { LiquidityOrder } from 'src/subdomains/supporting/dex/entities/liquidity-order.entity';
 import { Asset } from 'src/shared/models/asset/asset.entity';
+import { LiquidityOrder } from 'src/subdomains/dex/entities/liquidity-order.entity';
 import { SellLiquidityRequest } from '../../../../interfaces';
 import { SellLiquidityStrategyAlias } from '../../sell-liquidity.facade';
 
@@ -20,9 +20,12 @@ export abstract class SellLiquidityStrategy {
   protected abstract getFeeAsset(): Promise<Asset>;
 
   protected async handleSellLiquidityError(request: SellLiquidityRequest, e: Error): Promise<void> {
-    const { dexName, blockchain, type } = request.sellAsset;
+    const { name, blockchain, type } = request.sellAsset;
 
-    console.error(`Error while trying to sell liquidity of ${dexName} ${blockchain} ${type}`, e);
+    const errorMessage = `Error while trying to sell liquidity of ${name} ${blockchain} ${type}`;
+    console.error(errorMessage, e);
+
+    throw new Error(errorMessage);
   }
 
   //*** GETTERS ***//

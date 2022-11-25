@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { DeFiClient } from 'src/integration/blockchain/ain/node/defi-client';
-import { NodeService, NodeType } from 'src/integration/blockchain/ain/node/node.service';
-import { DeFiChainUtil } from 'src/integration/blockchain/ain/utils/defichain.util';
-import { Blockchain } from 'src/integration/blockchain/shared/enums/blockchain.enum';
+import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
+import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
+import { DeFiChainUtil } from 'src/blockchain/ain/utils/defichain.util';
 import { Config } from 'src/config/config';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { Asset } from 'src/shared/models/asset/asset.entity';
-import { SettingService } from 'src/shared/models/setting/setting.service';
-import { Util } from 'src/shared/utils/util';
+import { SettingService } from 'src/shared/services/setting.service';
+import { Util } from 'src/shared/util';
 import { ChainSwapId, LiquidityOrder } from '../entities/liquidity-order.entity';
 import { NotEnoughLiquidityException } from '../exceptions/not-enough-liquidity.exception';
 import { PriceSlippageException } from '../exceptions/price-slippage.exception';
@@ -31,7 +31,7 @@ export class DexDeFiChainService {
     private readonly settingService: SettingService,
     readonly nodeService: NodeService,
   ) {
-    nodeService.getConnectedNode(NodeType.DEX).subscribe((client) => (this.#dexClient = client));
+    nodeService.getConnectedNode(NodeType.REW).subscribe((client) => (this.#dexClient = client));
   }
 
   // *** PUBLIC API *** //
@@ -75,10 +75,10 @@ export class DexDeFiChainService {
 
     try {
       return await this.#dexClient.compositeSwap(
-        Config.blockchain.default.dexWalletAddress,
-        swapAsset.dexName,
-        Config.blockchain.default.dexWalletAddress,
-        targetAsset.dexName,
+        Config.blockchain.default.rewWalletAddress,
+        swapAsset.name,
+        Config.blockchain.default.rewWalletAddress,
+        targetAsset.name,
         swapAmount,
         [],
         maxPrice,
@@ -86,7 +86,7 @@ export class DexDeFiChainService {
     } catch (e) {
       if (this.isCompositeSwapSlippageError(e)) {
         throw new PriceSlippageException(
-          `Price is higher than indicated. Composite swap ${swapAmount} ${swapAsset.dexName} to ${targetAsset.dexName}. Maximum price for asset ${targetAsset.dexName} is ${maxPrice} ${swapAsset.dexName}.`,
+          `Price is higher than indicated. Composite swap ${swapAmount} ${swapAsset.name} to ${targetAsset.name}. Maximum price for asset ${targetAsset.name} is ${maxPrice} ${swapAsset.name}.`,
         );
       }
 
@@ -95,20 +95,20 @@ export class DexDeFiChainService {
   }
 
   async sellDfiCoin(amount: number): Promise<string> {
-    return this.#dexClient.toToken(Config.blockchain.default.dexWalletAddress, amount);
+    return this.#dexClient.toToken(Config.blockchain.default.rewWalletAddress, amount);
   }
 
   async addPoolLiquidity(poolPair: [string, string]): Promise<string> {
-    return this.#dexClient.addPoolLiquidity(Config.blockchain.default.dexWalletAddress, poolPair);
+    return this.#dexClient.addPoolLiquidity(Config.blockchain.default.rewWalletAddress, poolPair);
   }
 
   async transferLiquidity(addressTo: string, asset: string, amount: number): Promise<string> {
-    return this.#dexClient.sendToken(Config.blockchain.default.dexWalletAddress, addressTo, asset, amount);
+    return this.#dexClient.sendToken(Config.blockchain.default.rewWalletAddress, addressTo, asset, amount);
   }
 
   async transferMinimalUtxo(address: string): Promise<string> {
     return this.#dexClient.sendToken(
-      Config.blockchain.default.dexWalletAddress,
+      Config.blockchain.default.rewWalletAddress,
       address,
       'DFI',
       Config.blockchain.default.minDeposit.DeFiChain.DFI / 2,
@@ -172,15 +172,15 @@ export class DexDeFiChainService {
       return Util.round(swapAmount + swapAmount * 0.05, 8);
     }
 
-    return this.#dexClient.testCompositeSwap(referenceAsset.dexName, swapAsset.dexName, referenceAmount);
+    return this.#dexClient.testCompositeSwap(referenceAsset.name, swapAsset.name, referenceAmount);
   }
 
   async getAssetAvailability(asset: Asset): Promise<number> {
     const pendingOrders = (await this.liquidityOrderRepo.find({ isReady: true, isComplete: false })).filter(
-      (o) => o.targetAsset.dexName === asset.dexName && o.targetAsset.blockchain === Blockchain.DEFICHAIN,
+      (o) => o.targetAsset.name === asset.name && o.targetAsset.blockchain === Blockchain.DEFICHAIN,
     );
     const pendingAmount = Util.sumObj<LiquidityOrder>(pendingOrders, 'targetAmount');
-    const availableAmount = await this.deFiChainUtil.getAvailableTokenAmount(asset.dexName, this.#dexClient);
+    const availableAmount = await this.deFiChainUtil.getAvailableTokenAmount(asset.name, this.#dexClient);
 
     return Util.round(availableAmount - pendingAmount, 8);
   }
@@ -188,9 +188,9 @@ export class DexDeFiChainService {
   // *** HELPER METHODS *** //
 
   private async getTargetAmount(sourceAsset: Asset, sourceAmount: number, targetAsset: Asset): Promise<number> {
-    return targetAsset.dexName === sourceAsset.dexName
+    return targetAsset.name === sourceAsset.name
       ? sourceAmount
-      : await this.#dexClient.testCompositeSwap(sourceAsset.dexName, targetAsset.dexName, sourceAmount);
+      : await this.#dexClient.testCompositeSwap(sourceAsset.name, targetAsset.name, sourceAmount);
   }
 
   private async checkAssetAvailability(asset: Asset, requiredAmount: number): Promise<void> {
@@ -198,7 +198,7 @@ export class DexDeFiChainService {
 
     if (requiredAmount > availableAmount) {
       throw new NotEnoughLiquidityException(
-        `Not enough liquidity of asset ${asset.dexName}. Trying to use ${requiredAmount} ${asset.dexName} worth liquidity. Available amount: ${availableAmount}.`,
+        `Not enough liquidity of asset ${asset.name}. Trying to use ${requiredAmount} ${asset.name} worth liquidity. Available amount: ${availableAmount}.`,
       );
     }
   }
@@ -218,10 +218,10 @@ export class DexDeFiChainService {
     try {
       const availableAmount = await this.getAssetAvailability(swapAsset);
 
-      return this.#dexClient.testCompositeSwap(swapAsset.dexName, targetAsset.dexName, availableAmount);
+      return this.#dexClient.testCompositeSwap(swapAsset.name, targetAsset.name, availableAmount);
     } catch (e) {
       console.warn(
-        `Could not find purchasable amount for swapAsset: ${swapAsset.dexName}, targetAsset: ${targetAsset.dexName}`,
+        `Could not find purchasable amount for swapAsset: ${swapAsset.name}, targetAsset: ${targetAsset.name}`,
       );
 
       return 0;
@@ -257,7 +257,7 @@ export class DexDeFiChainService {
   ): string {
     const actualPrice = Util.round(sourceAmount / targetAmount, 8);
 
-    return `Price is higher than indicated. Test swap ${sourceAmount} ${sourceAsset.dexName} to ${targetAmount} ${targetAsset.dexName}. Maximum price for asset ${targetAsset.dexName} is ${maxPrice} ${sourceAsset.dexName}. Actual price is ${actualPrice} ${sourceAsset.dexName}`;
+    return `Price is higher than indicated. Test swap ${sourceAmount} ${sourceAsset.name} to ${targetAmount} ${targetAsset.name}. Maximum price for asset ${targetAsset.name} is ${maxPrice} ${sourceAsset.name}. Actual price is ${actualPrice} ${sourceAsset.name}`;
   }
 
   private async getMaxPriceForPurchaseLiquidity(
@@ -286,11 +286,11 @@ export class DexDeFiChainService {
     return (
       1 /
       ((await this.#dexClient.testCompositeSwap(
-        sourceAsset.dexName,
-        targetAsset.dexName,
-        this.getMinimalPriceReferenceAmount(sourceAsset.dexName),
+        sourceAsset.name,
+        targetAsset.name,
+        this.getMinimalPriceReferenceAmount(sourceAsset.name),
       )) /
-        this.getMinimalPriceReferenceAmount(sourceAsset.dexName))
+        this.getMinimalPriceReferenceAmount(sourceAsset.name))
     );
   }
 

@@ -28,8 +28,9 @@ export class StakingRewardService {
     const staking = await this.repository.findOne(stakingId, { relations: ['rewards'] });
     if (!staking) throw new NotFoundException('Staking not found');
 
-    const reward = this.factory.createReward(staking, dto);
+    const reward = await this.factory.createReward(staking, dto);
 
+    // TODO -> this method might not be needed
     staking.addReward(reward);
 
     await this.repository.save(staking);
@@ -44,9 +45,9 @@ export class StakingRewardService {
     if (!this.lock.acquire()) return;
 
     try {
+      // TODO -> preparation is not needed, but will be required later
       await this.batchService.batchRewardsByAssets();
       await this.dexService.secureLiquidity();
-      // TODO -> preparation is not needed, but will be required later
       await this.outService.payoutRewards();
     } catch (e) {
       console.error('Error while processing rewards', e);

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { DexService } from 'src/subdomains/supporting/dex/services/dex.service';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { AssetService } from 'src/shared/models/asset/asset.service';
+import { DexService } from 'src/subdomains/dex/services/dex.service';
 import { PayoutOrder } from '../../../entities/payout-order.entity';
 import { FeeResult } from '../../../interfaces';
 import { PayoutOrderRepository } from '../../../repositories/payout-order.repository';

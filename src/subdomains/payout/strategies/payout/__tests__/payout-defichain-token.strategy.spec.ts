@@ -1,8 +1,8 @@
 import { mock } from 'jest-mock-extended';
-import { NotificationService } from 'src/subdomains/supporting/notification/services/notification.service';
-import { DexService } from 'src/subdomains/supporting/dex/services/dex.service';
+import { NotificationService } from 'src/integration/notification/services/notification.service';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { createCustomAsset } from 'src/shared/models/asset/__mocks__/asset.entity.mock';
+import { DexService } from 'src/subdomains/dex/services/dex.service';
 import { PayoutOrder } from '../../../entities/payout-order.entity';
 import {
   createCustomPayoutOrder,
@@ -45,9 +45,9 @@ describe('PayoutDeFiChainTokenStrategy', () => {
 
     it('separates orders in different groups by token', () => {
       const orders = [
-        createCustomPayoutOrder({ asset: createCustomAsset({ dexName: 'BTC' }) }),
-        createCustomPayoutOrder({ asset: createCustomAsset({ dexName: 'BTC' }) }),
-        createCustomPayoutOrder({ asset: createCustomAsset({ dexName: 'ETH' }) }),
+        createCustomPayoutOrder({ asset: createCustomAsset({ name: 'BTC' }) }),
+        createCustomPayoutOrder({ asset: createCustomAsset({ name: 'BTC' }) }),
+        createCustomPayoutOrder({ asset: createCustomAsset({ name: 'ETH' }) }),
       ];
 
       const groups = strategy.groupOrdersByTokenWrapper(orders);
@@ -61,9 +61,9 @@ describe('PayoutDeFiChainTokenStrategy', () => {
 
     it('puts orders with same token in one group', () => {
       const orders = [
-        createCustomPayoutOrder({ asset: createCustomAsset({ dexName: 'BTC' }) }),
-        createCustomPayoutOrder({ asset: createCustomAsset({ dexName: 'BTC' }) }),
-        createCustomPayoutOrder({ asset: createCustomAsset({ dexName: 'BTC' }) }),
+        createCustomPayoutOrder({ asset: createCustomAsset({ name: 'BTC' }) }),
+        createCustomPayoutOrder({ asset: createCustomAsset({ name: 'BTC' }) }),
+        createCustomPayoutOrder({ asset: createCustomAsset({ name: 'BTC' }) }),
       ];
 
       const groups = strategy.groupOrdersByTokenWrapper(orders);

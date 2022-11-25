@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Blockchain } from 'src/integration/blockchain/shared/enums/blockchain.enum';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { LiquidityOrder } from '../../../entities/liquidity-order.entity';
@@ -29,7 +29,7 @@ export class DeFiChainCoinStrategy extends DeFiChainStrategy {
       await this.bookLiquiditySell(order);
       await this.liquidityOrderRepo.save(order);
     } catch (e) {
-      this.handleSellLiquidityError(request, e);
+      await this.handleSellLiquidityError(request, e);
     }
   }
 
@@ -46,14 +46,14 @@ export class DeFiChainCoinStrategy extends DeFiChainStrategy {
   private async bookLiquiditySell(order: LiquidityOrder): Promise<void> {
     const { referenceAsset, referenceAmount } = order;
 
-    if (referenceAsset.dexName !== 'DFI') {
+    if (referenceAsset.name !== 'DFI') {
       throw new Error('Sell liquidity DeFiChainCoinStrategy supports only DFI Coin');
     }
 
     const txId = await this.dexDeFiChainService.sellDfiCoin(referenceAmount);
 
     console.info(
-      `Booked sell of ${referenceAmount} ${referenceAsset.dexName} coin liquidity. Context: ${order.context}. CorrelationId: ${order.correlationId}.`,
+      `Booked sell of ${referenceAmount} ${referenceAsset.name} coin liquidity. Context: ${order.context}. CorrelationId: ${order.correlationId}.`,
     );
 
     order.addBlockchainTransactionMetadata(txId);

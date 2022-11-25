@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { DeFiClient } from 'src/integration/blockchain/ain/node/defi-client';
-import { NodeService, NodeType } from 'src/integration/blockchain/ain/node/node.service';
-import { WhaleService } from 'src/integration/blockchain/ain/whale/whale.service';
+import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
+import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
+import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
+import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { Config } from 'src/config/config';
 import { PayoutOrderContext } from '../entities/payout-order.entity';
 import { PayoutGroup, PayoutJellyfishService } from './base/payout-jellyfish.service';
@@ -9,12 +10,12 @@ import { PayoutGroup, PayoutJellyfishService } from './base/payout-jellyfish.ser
 @Injectable()
 export class PayoutDeFiChainService extends PayoutJellyfishService {
   #outClient: DeFiClient;
-  #intClient: DeFiClient;
+  #whaleClient: WhaleClient;
 
   constructor(readonly nodeService: NodeService, private readonly whaleService: WhaleService) {
     super();
-    nodeService.getConnectedNode(NodeType.OUTPUT).subscribe((client) => (this.#outClient = client));
-    nodeService.getConnectedNode(NodeType.INT).subscribe((client) => (this.#intClient = client));
+    nodeService.getConnectedNode(NodeType.REW).subscribe((client) => (this.#outClient = client));
+    whaleService.getClient().subscribe((client) => (this.#whaleClient = client));
   }
 
   async isHealthy(context: PayoutOrderContext): Promise<boolean> {
@@ -43,20 +44,18 @@ export class PayoutDeFiChainService extends PayoutJellyfishService {
   }
 
   async getUtxoForAddress(address: string): Promise<number> {
-    return parseFloat(await this.whaleService.getClient().getBalance(address));
+    return +this.#whaleClient.getUTXOBalance(address);
   }
 
-  getWalletAddress(context: PayoutOrderContext): string {
-    if (context === PayoutOrderContext.BUY_CRYPTO) return Config.blockchain.default.outWalletAddress;
-    if (context === PayoutOrderContext.STAKING_REWARD) return Config.blockchain.default.intWalletAddress;
+  getWalletAddress(_: PayoutOrderContext): string {
+    return Config.blockchain.default.rewWalletAddress;
   }
 
   isLightWalletAddress(address: string): boolean {
     return ['df1', 'tf1'].includes(address.slice(0, 3));
   }
 
-  private getClient(context: PayoutOrderContext): DeFiClient {
-    if (context === PayoutOrderContext.BUY_CRYPTO) return this.#outClient;
-    if (context === PayoutOrderContext.STAKING_REWARD) return this.#intClient;
+  private getClient(_: PayoutOrderContext): DeFiClient {
+    return this.#outClient;
   }
 }

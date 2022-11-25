@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Blockchain } from 'src/integration/blockchain/shared/enums/blockchain.enum';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { LiquidityOrder, LiquidityOrderType } from '../entities/liquidity-order.entity';
 import { PurchaseLiquidityRequest, ReserveLiquidityRequest, SellLiquidityRequest } from '../interfaces';

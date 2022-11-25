@@ -1,13 +1,10 @@
-import {
-  PayoutGroup,
-  PayoutJellyfishService,
-} from 'src/subdomains/supporting/payout/services/base/payout-jellyfish.service';
-import { Util } from 'src/shared/utils/util';
+import { MailContext, MailType } from 'src/integration/notification/enums';
+import { NotificationService } from 'src/integration/notification/services/notification.service';
+import { Util } from 'src/shared/util';
+import { PayoutGroup, PayoutJellyfishService } from 'src/subdomains/payout/services/base/payout-jellyfish.service';
 import { PayoutOrder, PayoutOrderContext } from '../../../../entities/payout-order.entity';
 import { PayoutOrderRepository } from '../../../../repositories/payout-order.repository';
 import { PayoutStrategy } from './payout.strategy';
-import { MailContext, MailType } from 'src/subdomains/supporting/notification/enums';
-import { NotificationService } from 'src/subdomains/supporting/notification/services/notification.service';
 
 export abstract class JellyfishStrategy extends PayoutStrategy {
   constructor(
@@ -163,7 +160,7 @@ export abstract class JellyfishStrategy extends PayoutStrategy {
   //*** HELPER METHODS ***//
 
   private validateIfOrdersOfSameAsset(orders: PayoutOrder[]): boolean {
-    return orders.every((order, i) => (orders[i + 1] ? order.asset.dexName === orders[i + 1].asset.dexName : true));
+    return orders.every((order, i) => (orders[i + 1] ? order.asset.name === orders[i + 1].asset.name : true));
   }
 
   private async calculateOrderPayoutFee(order: PayoutOrder, totalPayoutFee: number): Promise<number> {

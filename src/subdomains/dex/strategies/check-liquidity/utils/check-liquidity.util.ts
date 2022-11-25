@@ -1,5 +1,5 @@
 import { Asset } from 'src/shared/models/asset/asset.entity';
-import { Util } from 'src/shared/utils/util';
+import { Util } from 'src/shared/util';
 import { CheckLiquidityRequest, CheckLiquidityResult } from '../../../interfaces';
 
 export class CheckLiquidityUtil {

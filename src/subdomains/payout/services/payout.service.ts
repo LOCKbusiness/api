@@ -1,18 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
-import { Lock } from 'src/shared/utils/lock';
+import { Lock } from 'src/shared/lock';
 import { PayoutOrder, PayoutOrderContext, PayoutOrderStatus } from '../entities/payout-order.entity';
 import { PayoutOrderFactory } from '../factories/payout-order.factory';
 import { PayoutOrderRepository } from '../repositories/payout-order.repository';
 import { DuplicatedEntryException } from '../exceptions/duplicated-entry.exception';
 import { PayoutLogService } from './payout-log.service';
 import { FeeRequest, FeeResult, PayoutRequest } from '../interfaces';
-import { MailContext, MailType } from 'src/subdomains/supporting/notification/enums';
-import { NotificationService } from 'src/subdomains/supporting/notification/services/notification.service';
-import { MailRequest } from 'src/subdomains/supporting/notification/interfaces';
 import { PayoutStrategiesFacade, PayoutStrategyAlias } from '../strategies/payout/payout.facade';
 import { PrepareStrategiesFacade } from '../strategies/prepare/prepare.facade';
-import { Util } from 'src/shared/utils/util';
+import { Util } from 'src/shared/util';
+import { MailType, MailContext } from 'src/integration/notification/enums';
+import { MailRequest } from 'src/integration/notification/interfaces';
+import { NotificationService } from 'src/integration/notification/services/notification.service';
 
 @Injectable()
 export class PayoutService {

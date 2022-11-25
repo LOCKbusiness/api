@@ -6,7 +6,7 @@ import { PriceSlippageException } from '../exceptions/price-slippage.exception';
 import { NotEnoughLiquidityException } from '../exceptions/not-enough-liquidity.exception';
 import { LiquidityOrderNotReadyException } from '../exceptions/liquidity-order-not-ready.exception';
 import { Interval } from '@nestjs/schedule';
-import { Lock } from 'src/shared/utils/lock';
+import { Lock } from 'src/shared/lock';
 import { Not, IsNull } from 'typeorm';
 import { LiquidityOrderFactory } from '../factories/liquidity-order.factory';
 import { CheckLiquidityStrategies } from '../strategies/check-liquidity/check-liquidity.facade';
@@ -46,7 +46,7 @@ export class DexService {
 
       if (!strategy) {
         throw new Error(
-          `No check liquidity strategy for asset ${targetAsset.dexName} ${targetAsset.type} ${targetAsset.blockchain}`,
+          `No check liquidity strategy for asset ${targetAsset.name} ${targetAsset.type} ${targetAsset.blockchain}`,
         );
       }
 
@@ -62,13 +62,13 @@ export class DexService {
     const { context, correlationId, targetAsset } = request;
 
     try {
-      console.info(`Reserving ${targetAsset.dexName} liquidity. Context: ${context}. Correlation ID: ${correlationId}`);
+      console.info(`Reserving ${targetAsset.name} liquidity. Context: ${context}. Correlation ID: ${correlationId}`);
 
       const strategy = this.checkStrategies.getCheckLiquidityStrategy(targetAsset);
 
       if (!strategy) {
         throw new Error(
-          `No check liquidity strategy for asset ${targetAsset.dexName} ${targetAsset.type} ${targetAsset.blockchain}`,
+          `No check liquidity strategy for asset ${targetAsset.name} ${targetAsset.type} ${targetAsset.blockchain}`,
         );
       }
 
@@ -100,14 +100,12 @@ export class DexService {
 
     if (!strategy) {
       throw new Error(
-        `No purchase liquidity strategy for asset ${targetAsset.dexName} ${targetAsset.type} ${targetAsset.blockchain}`,
+        `No purchase liquidity strategy for asset ${targetAsset.name} ${targetAsset.type} ${targetAsset.blockchain}`,
       );
     }
 
     try {
-      console.info(
-        `Purchasing ${targetAsset.dexName} liquidity. Context: ${context}. Correlation ID: ${correlationId}`,
-      );
+      console.info(`Purchasing ${targetAsset.name} liquidity. Context: ${context}. Correlation ID: ${correlationId}`);
       await strategy.purchaseLiquidity(request);
     } catch (e) {
       // publicly exposed exception
@@ -127,12 +125,12 @@ export class DexService {
 
     if (!strategy) {
       throw new Error(
-        `No sell liquidity strategy for asset ${sellAsset.dexName} ${sellAsset.type} ${sellAsset.blockchain}`,
+        `No sell liquidity strategy for asset ${sellAsset.name} ${sellAsset.type} ${sellAsset.blockchain}`,
       );
     }
 
     try {
-      console.info(`Selling ${sellAsset.dexName} liquidity. Context: ${context}. Correlation ID: ${correlationId}`);
+      console.info(`Selling ${sellAsset.name} liquidity. Context: ${context}. Correlation ID: ${correlationId}`);
       await strategy.sellLiquidity(request);
     } catch (e) {
       // publicly exposed exception
@@ -198,11 +196,13 @@ export class DexService {
     }
   }
 
-  async getPendingOrdersCount(targetAsset: Asset): Promise<number> {
+  async getPendingOrdersCount(asset: Asset): Promise<number> {
     const pendingOrders = await this.liquidityOrderRepo.find({
       where: [
-        { targetAsset, isComplete: false },
-        { targetAsset, isReady: false },
+        { targetAsset: asset, isComplete: false },
+        { targetAsset: asset, isReady: false },
+        { swapAsset: asset, isComplete: false },
+        { swapAsset: asset, isReady: false },
       ],
     });
 
@@ -214,7 +214,7 @@ export class DexService {
   async transferLiquidity(request: TransferRequest): Promise<string> {
     const { destinationAddress, asset, amount } = request;
 
-    return this.dexDeFiChainService.transferLiquidity(destinationAddress, asset.dexName, amount);
+    return this.dexDeFiChainService.transferLiquidity(destinationAddress, asset.name, amount);
   }
 
   async transferMinimalUtxo(address: string): Promise<string> {
@@ -249,7 +249,7 @@ export class DexService {
     const { metadata, target } = liquidity;
     if (!metadata.isEnoughAvailableLiquidity) {
       throw new NotEnoughLiquidityException(
-        `Not enough liquidity of asset ${target.asset.dexName}. Available amount: ${target.availableAmount}.`,
+        `Not enough liquidity of asset ${target.asset.name}. Available amount: ${target.availableAmount}.`,
       );
     }
 
@@ -264,8 +264,8 @@ export class DexService {
         const strategy = this.purchaseStrategies.getPurchaseLiquidityStrategy(order.targetAsset);
 
         if (!strategy) {
-          const { dexName, blockchain, type } = order.targetAsset;
-          throw new Error(`No purchase liquidity strategy for asset ${dexName} ${blockchain} ${type}`);
+          const { name, blockchain, type } = order.targetAsset;
+          throw new Error(`No purchase liquidity strategy for asset ${name} ${blockchain} ${type}`);
         }
 
         await strategy.addPurchaseData(order);

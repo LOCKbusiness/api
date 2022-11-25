@@ -2,7 +2,7 @@ import { Controller, UseGuards, Body, Post, Get, Put, Query } from '@nestjs/comm
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
-import { UserRole } from 'src/shared/auth/user-role.enum';
+import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { LiquidityOrderContext } from './entities/liquidity-order.entity';
 import {
   CheckLiquidityRequest,
@@ -22,7 +22,7 @@ export class DexController {
   @Get('check-liquidity')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async checkLiquidity(@Query() dto: CheckLiquidityRequest): Promise<CheckLiquidityResult> {
     if (process.env.ENVIRONMENT === 'test') {
       return this.dexService.checkLiquidity(dto);
@@ -32,7 +32,7 @@ export class DexController {
   @Post('reserve-liquidity')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async reserveLiquidity(@Body() dto: ReserveLiquidityRequest): Promise<number> {
     if (process.env.ENVIRONMENT === 'test') {
       return this.dexService.reserveLiquidity(dto);
@@ -42,7 +42,7 @@ export class DexController {
   @Post('purchase-liquidity')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async purchaseLiquidity(@Body() dto: PurchaseLiquidityRequest): Promise<void> {
     if (process.env.ENVIRONMENT === 'test') {
       return this.dexService.purchaseLiquidity(dto);
@@ -52,7 +52,7 @@ export class DexController {
   @Post('transfer-liquidity')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async transferLiquidity(@Body() dto: TransferRequest): Promise<string> {
     if (process.env.ENVIRONMENT === 'test') {
       return this.dexService.transferLiquidity(dto);
@@ -62,7 +62,7 @@ export class DexController {
   @Post('transfer-minimal-utxo')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async transferMinimalUtxo(@Query('address') address: string): Promise<string> {
     if (process.env.ENVIRONMENT === 'test') {
       return this.dexService.transferMinimalUtxo(address);
@@ -72,7 +72,7 @@ export class DexController {
   @Get('liquidity-after-purchase')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async fetchTargetLiquidityAfterPurchase(
     @Query('context') context: LiquidityOrderContext,
     @Query('correlationId') correlationId: string,
@@ -85,7 +85,7 @@ export class DexController {
   @Get('transfer-completion')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async checkTransferCompletion(@Query('transferTxId') transferTxId: string): Promise<boolean> {
     if (process.env.ENVIRONMENT === 'test') {
       return this.dexService.checkTransferCompletion(transferTxId);
@@ -95,7 +95,7 @@ export class DexController {
   @Put('complete-orders')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(UserRole.ADMIN))
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async completeOrders(
     @Query('context') context: LiquidityOrderContext,
     @Query('correlationId') correlationId: string,

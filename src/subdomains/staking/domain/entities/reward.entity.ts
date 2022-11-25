@@ -20,13 +20,10 @@ export class Reward extends IEntity {
   status: RewardStatus;
 
   @ManyToOne(() => Asset, { eager: true, nullable: false })
-  inputReferenceAsset: Asset;
+  referenceAsset: Asset;
 
   @Column({ type: 'float', nullable: false, default: 0 })
   inputReferenceAmount: number;
-
-  @ManyToOne(() => Asset, { eager: true, nullable: false })
-  outputReferenceAsset: Asset;
 
   @Column({ type: 'float', nullable: false, default: 0 })
   outputReferenceAmount: number;
@@ -69,36 +66,6 @@ export class Reward extends IEntity {
 
   @Column({ type: 'float', nullable: false, default: 0 })
   amountChf: number;
-
-  //*** FACTORY METHODS ***//
-
-  static create(
-    staking: Staking,
-    status: RewardStatus,
-    inputReferenceAsset: Asset,
-    inputReferenceAmount: number,
-    outputReferenceAsset: Asset,
-    outputReferenceAmount: number,
-    feePercent: number,
-    feeAmount: number,
-    targetAsset: Asset,
-    targetAddress: string,
-  ): Reward {
-    const reward = new Reward();
-
-    reward.staking = staking;
-    reward.status = status;
-    reward.inputReferenceAsset = inputReferenceAsset;
-    reward.inputReferenceAmount = inputReferenceAmount;
-    reward.outputReferenceAsset = outputReferenceAsset;
-    reward.outputReferenceAmount = outputReferenceAmount;
-    reward.feePercent = feePercent;
-    reward.feeAmount = feeAmount;
-    reward.targetAsset = targetAsset;
-    reward.targetAddress = targetAddress;
-
-    return reward;
-  }
 
   //*** PUBLIC API ***//
 

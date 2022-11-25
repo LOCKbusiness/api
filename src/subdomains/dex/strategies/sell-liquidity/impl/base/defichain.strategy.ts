@@ -1,6 +1,6 @@
-import { LiquidityOrder } from 'src/subdomains/supporting/dex/entities/liquidity-order.entity';
-import { LiquidityOrderRepository } from 'src/subdomains/supporting/dex/repositories/liquidity-order.repository';
-import { DexDeFiChainService } from 'src/subdomains/supporting/dex/services/dex-defichain.service';
+import { LiquidityOrder } from 'src/subdomains/dex/entities/liquidity-order.entity';
+import { LiquidityOrderRepository } from 'src/subdomains/dex/repositories/liquidity-order.repository';
+import { DexDeFiChainService } from 'src/subdomains/dex/services/dex-defichain.service';
 import { SellLiquidityStrategyAlias } from '../../sell-liquidity.facade';
 import { SellLiquidityStrategy } from './sell-liquidity.strategy';
 
@@ -14,7 +14,7 @@ export abstract class DeFiChainStrategy extends SellLiquidityStrategy {
   }
 
   async addSellData(order: LiquidityOrder): Promise<void> {
-    const amount = await this.dexDeFiChainService.getSwapAmount(order.txId, order.targetAsset.dexName);
+    const amount = await this.dexDeFiChainService.getSwapAmount(order.txId, order.targetAsset.name);
 
     order.sold(amount);
     order.recordFee(await this.feeAsset(), 0);

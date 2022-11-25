@@ -77,6 +77,16 @@ export class NodeClient {
     return this.callNode((c) => c.wallet.getTransaction(txId));
   }
 
+  async sendUtxoToMany(payload: { addressTo: string; amount: number }[]): Promise<string> {
+    if (payload.length > 100) {
+      throw new Error('Too many addresses in one transaction batch, allowed max 100 for UTXO');
+    }
+
+    const batch = payload.reduce((acc, p) => ({ ...acc, [p.addressTo]: `${p.amount}` }), {});
+
+    return this.callNode((c) => c.wallet.sendMany(batch), true);
+  }
+
   async getMasternodeInfo(id: string): Promise<MasternodeInfo> {
     if (!id) throw new Error('Id is undefined');
     return this.callNode((c) => c.masternode.getMasternode(id).then((r) => r[id]));

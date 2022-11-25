@@ -4,10 +4,10 @@ import { PayoutOrderRepository } from '../../../repositories/payout-order.reposi
 import { PayoutGroup } from '../../../services/base/payout-jellyfish.service';
 import { PayoutDeFiChainService } from '../../../services/payout-defichain.service';
 import { JellyfishStrategy } from './base/jellyfish.strategy';
-import { NotificationService } from 'src/subdomains/supporting/notification/services/notification.service';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { FeeResult } from '../../../interfaces';
 import { Asset } from 'src/shared/models/asset/asset.entity';
+import { NotificationService } from 'src/integration/notification/services/notification.service';
 
 @Injectable()
 export class DeFiChainCoinStrategy extends JellyfishStrategy {

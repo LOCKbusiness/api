@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationService } from 'src/subdomains/supporting/notification/services/notification.service';
-import { DexService } from 'src/subdomains/supporting/dex/services/dex.service';
+import { NotificationService } from 'src/integration/notification/services/notification.service';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { AssetService } from 'src/shared/models/asset/asset.service';
+import { DexService } from 'src/subdomains/dex/services/dex.service';
 import { PayoutOrderContext, PayoutOrder } from '../../../entities/payout-order.entity';
 import { FeeResult } from '../../../interfaces';
 import { PayoutOrderRepository } from '../../../repositories/payout-order.repository';
@@ -59,12 +59,12 @@ export class DeFiChainTokenStrategy extends JellyfishStrategy {
     const groups = new Map<TokenName, PayoutOrder[]>();
 
     orders.forEach((order) => {
-      const existingGroup = groups.get(order.asset.dexName);
+      const existingGroup = groups.get(order.asset.name);
 
       if (existingGroup) {
         existingGroup.push(order);
       } else {
-        groups.set(order.asset.dexName, [order]);
+        groups.set(order.asset.name, [order]);
       }
     });
 

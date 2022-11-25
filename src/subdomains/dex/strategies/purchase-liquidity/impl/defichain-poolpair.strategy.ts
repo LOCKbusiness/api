@@ -3,22 +3,22 @@ import { Interval } from '@nestjs/schedule';
 import { Not } from 'typeorm';
 import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { AssetService } from 'src/shared/models/asset/asset.service';
-import { Util } from 'src/shared/utils/util';
-import { Lock } from 'src/shared/utils/lock';
-import { SettingService } from 'src/shared/models/setting/setting.service';
-import { Blockchain } from 'src/integration/blockchain/shared/enums/blockchain.enum';
+import { Util } from 'src/shared/util';
+import { Lock } from 'src/shared/lock';
 import { LiquidityOrderContext, LiquidityOrder } from '../../../entities/liquidity-order.entity';
 import { NotEnoughLiquidityException } from '../../../exceptions/not-enough-liquidity.exception';
 import { PriceSlippageException } from '../../../exceptions/price-slippage.exception';
 import { LiquidityOrderFactory } from '../../../factories/liquidity-order.factory';
 import { PurchaseLiquidityRequest } from '../../../interfaces';
-import { NotificationService } from 'src/subdomains/supporting/notification/services/notification.service';
 import { LiquidityOrderRepository } from '../../../repositories/liquidity-order.repository';
 import { DexService } from '../../../services/dex.service';
 import { PurchaseLiquidityStrategy } from './base/purchase-liquidity.strategy';
 import { DexDeFiChainService } from '../../../services/dex-defichain.service';
 import { DexUtil } from '../../../utils/dex.util';
 import { PurchaseLiquidityStrategyAlias } from '../purchase-liquidity.facade';
+import { NotificationService } from 'src/integration/notification/services/notification.service';
+import { SettingService } from 'src/shared/services/setting.service';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
 
 @Injectable()
 export class DeFiChainPoolPairStrategy extends PurchaseLiquidityStrategy {
@@ -55,7 +55,7 @@ export class DeFiChainPoolPairStrategy extends PurchaseLiquidityStrategy {
   }
 
   async addPurchaseData(order: LiquidityOrder): Promise<void> {
-    const amount = await this.dexDeFiChainService.getSwapAmount(order.txId, order.targetAsset.dexName);
+    const amount = await this.dexDeFiChainService.getSwapAmount(order.txId, order.targetAsset.name);
 
     order.purchased(amount);
     order.recordFee(await this.feeAsset(), 0);
@@ -102,19 +102,19 @@ export class DeFiChainPoolPairStrategy extends PurchaseLiquidityStrategy {
     const assetPair = DexUtil.parseAssetPair(asset);
 
     const leftAsset = await this.assetService.getAssetByQuery({
-      dexName: assetPair[0],
+      name: assetPair[0],
       blockchain: Blockchain.DEFICHAIN,
       type: AssetType.TOKEN,
     });
     const rightAsset = await this.assetService.getAssetByQuery({
-      dexName: assetPair[1],
+      name: assetPair[1],
       blockchain: Blockchain.DEFICHAIN,
       type: AssetType.TOKEN,
     });
 
     if (!leftAsset || !rightAsset) {
       throw new Error(
-        `Could not find all matching assets for pair ${asset.dexName}. LeftAsset: ${leftAsset.dexName}. Right asset: ${rightAsset.dexName}`,
+        `Could not find all matching assets for pair ${asset.name}. LeftAsset: ${leftAsset.name}. Right asset: ${rightAsset.name}`,
       );
     }
 
@@ -153,18 +153,18 @@ export class DeFiChainPoolPairStrategy extends PurchaseLiquidityStrategy {
   private async addPoolPair(parentOrder: LiquidityOrder, derivedOrders: LiquidityOrder[]): Promise<void> {
     const [leftAsset, rightAsset] = DexUtil.parseAssetPair(parentOrder.targetAsset);
 
-    const leftOrder = derivedOrders.find((o) => o.targetAsset.dexName === leftAsset);
-    const rightOrder = derivedOrders.find((o) => o.targetAsset.dexName === rightAsset);
+    const leftOrder = derivedOrders.find((o) => o.targetAsset.name === leftAsset);
+    const rightOrder = derivedOrders.find((o) => o.targetAsset.name === rightAsset);
 
     console.info(
-      `Creating poolpair token of ${leftOrder.targetAsset.dexName} ${leftOrder.targetAmount} and ${rightOrder.targetAsset.dexName} ${rightOrder.targetAmount}`,
+      `Creating poolpair token of ${leftOrder.targetAsset.name} ${leftOrder.targetAmount} and ${rightOrder.targetAsset.name} ${rightOrder.targetAmount}`,
     );
     try {
       await this.addPoolLiquidity(
         parentOrder,
-        leftOrder.targetAsset.dexName,
+        leftOrder.targetAsset.name,
         leftOrder.targetAmount,
-        rightOrder.targetAsset.dexName,
+        rightOrder.targetAsset.name,
         rightOrder.targetAmount,
       );
     } catch (e) {

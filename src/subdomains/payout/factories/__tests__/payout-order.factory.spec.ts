@@ -1,5 +1,5 @@
 import { mock } from 'jest-mock-extended';
-import { Blockchain } from 'src/integration/blockchain/shared/enums/blockchain.enum';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { createCustomAsset } from 'src/shared/models/asset/__mocks__/asset.entity.mock';
 import { PayoutOrder, PayoutOrderContext, PayoutOrderStatus } from '../../entities/payout-order.entity';
 import { createDefaultPayoutOrder } from '../../entities/__mocks__/payout-order.entity.mock';
@@ -29,14 +29,14 @@ describe('PayoutOrderFactory', () => {
 
   describe('#createOrder(...)', () => {
     it('calls repo create(...) with correct parameters', () => {
-      factory.createOrder(createCustomPayoutRequest({ asset: createCustomAsset({ dexName: 'TSLA' }) }));
+      factory.createOrder(createCustomPayoutRequest({ asset: createCustomAsset({ name: 'TSLA' }) }));
 
       expect(repositoryCreateSpy).toBeCalledTimes(1);
       expect(repositoryCreateSpy).toBeCalledWith({
-        context: PayoutOrderContext.BUY_CRYPTO,
+        context: PayoutOrderContext.STAKING_REWARD,
         correlationId: 'CID_01',
         chain: Blockchain.DEFICHAIN,
-        asset: createCustomAsset({ dexName: 'TSLA' }),
+        asset: createCustomAsset({ name: 'TSLA' }),
         amount: 1,
         destinationAddress: 'ADDR_01',
         status: PayoutOrderStatus.CREATED,

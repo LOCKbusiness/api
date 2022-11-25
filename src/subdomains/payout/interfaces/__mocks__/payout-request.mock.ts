@@ -11,7 +11,7 @@ export function createCustomPayoutRequest(customValues: Partial<PayoutRequest>):
 
   const keys = Object.keys(customValues);
   return {
-    context: keys.includes('context') ? context : PayoutOrderContext.BUY_CRYPTO,
+    context: keys.includes('context') ? context : PayoutOrderContext.STAKING_REWARD,
     correlationId: keys.includes('correlationId') ? correlationId : 'CID_01',
     asset: keys.includes('asset') ? asset : createDefaultAsset(),
     amount: keys.includes('amount') ? amount : 1,

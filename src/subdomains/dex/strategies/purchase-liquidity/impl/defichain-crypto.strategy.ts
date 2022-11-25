@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationService } from 'src/subdomains/supporting/notification/services/notification.service';
 import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { LiquidityOrderFactory } from '../../../factories/liquidity-order.factory';
@@ -7,6 +6,7 @@ import { LiquidityOrderRepository } from '../../../repositories/liquidity-order.
 import { DexDeFiChainService } from '../../../services/dex-defichain.service';
 import { DeFiChainNonPoolPairStrategy } from './base/defichain-non-poolpair.strategy';
 import { PurchaseLiquidityStrategyAlias } from '../purchase-liquidity.facade';
+import { NotificationService } from 'src/integration/notification/services/notification.service';
 
 @Injectable()
 export class DeFiChainCryptoStrategy extends DeFiChainNonPoolPairStrategy {

@@ -1,11 +1,12 @@
-import { Blockchain } from 'src/integration/blockchain/shared/enums/blockchain.enum';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { IEntity } from 'src/shared/models/entity';
-import { Util } from 'src/shared/utils/util';
+import { Util } from 'src/shared/util';
 import { Column, Entity, ManyToOne } from 'typeorm';
 
 export enum PayoutOrderContext {
   STAKING_REWARD = 'StakingReward',
+  CRYPTO_CRYPTO = 'CryptoCrypto',
 }
 
 export enum PayoutOrderStatus {

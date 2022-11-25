@@ -1,4 +1,4 @@
-import { Blockchain } from 'src/integration/blockchain/shared/enums/blockchain.enum';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { AssetCategory } from 'src/shared/models/asset/asset.entity';
 import { createCustomAsset, createDefaultAsset } from 'src/shared/models/asset/__mocks__/asset.entity.mock';
 import { LiquidityOrder, LiquidityOrderContext, LiquidityOrderType } from '../liquidity-order.entity';
@@ -33,13 +33,13 @@ export function createCustomLiquidityOrder(customValues: Partial<LiquidityOrder>
   entity.context = keys.includes('context') ? context : LiquidityOrderContext.BUY_CRYPTO;
   entity.correlationId = keys.includes('correlationId') ? correlationId : 'CID_01';
   entity.chain = keys.includes('chain') ? chain : Blockchain.DEFICHAIN;
-  entity.referenceAsset = keys.includes('referenceAsset') ? referenceAsset : createCustomAsset({ dexName: 'BTC' });
+  entity.referenceAsset = keys.includes('referenceAsset') ? referenceAsset : createCustomAsset({ name: 'BTC' });
   entity.referenceAmount = keys.includes('referenceAmount') ? referenceAmount : 1;
   entity.targetAsset = keys.includes('targetAsset') ? targetAsset : createDefaultAsset();
   entity.targetAmount = keys.includes('targetAmount') ? targetAmount : 2;
   entity.isReady = keys.includes('isReady') ? isReady : false;
   entity.isComplete = keys.includes('isComplete') ? isComplete : false;
-  entity.swapAsset = keys.includes('swapAsset') ? swapAsset : createCustomAsset({ dexName: 'DFI' });
+  entity.swapAsset = keys.includes('swapAsset') ? swapAsset : createCustomAsset({ name: 'DFI' });
   entity.swapAmount = keys.includes('swapAmount') ? swapAmount : 1;
   entity.strategy = keys.includes('strategy') ? strategy : AssetCategory.CRYPTO;
   entity.txId = keys.includes('txId') ? txId : 'PID_01';

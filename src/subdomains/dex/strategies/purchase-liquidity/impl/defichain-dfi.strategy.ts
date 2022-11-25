@@ -9,7 +9,7 @@ import { PurchaseLiquidityStrategyAlias } from '../purchase-liquidity.facade';
 import { NotificationService } from 'src/integration/notification/services/notification.service';
 
 @Injectable()
-export class DeFiChainStockStrategy extends DeFiChainNonPoolPairStrategy {
+export class DeFiChainDfiStrategy extends DeFiChainNonPoolPairStrategy {
   constructor(
     readonly notificationService: NotificationService,
     readonly assetService: AssetService,
@@ -23,8 +23,8 @@ export class DeFiChainStockStrategy extends DeFiChainNonPoolPairStrategy {
       dexDeFiChainService,
       liquidityOrderRepo,
       liquidityOrderFactory,
-      [{ name: 'DUSD', type: AssetType.TOKEN }],
-      PurchaseLiquidityStrategyAlias.DEFICHAIN_STOCK,
+      [{ name: 'BTC', type: AssetType.TOKEN }],
+      PurchaseLiquidityStrategyAlias.DEFICHAIN_DFI,
     );
   }
 

@@ -1,5 +1,5 @@
 import { mock } from 'jest-mock-extended';
-import { Blockchain } from 'src/integration/blockchain/shared/enums/blockchain.enum';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { AssetCategory } from 'src/shared/models/asset/asset.entity';
 import { createCustomAsset } from 'src/shared/models/asset/__mocks__/asset.entity.mock';
 import { LiquidityOrder, LiquidityOrderContext, LiquidityOrderType } from '../../entities/liquidity-order.entity';
@@ -44,7 +44,7 @@ describe('LiquidityOrderFactory', () => {
 
     it('calls repo create(...) with correct parameters', () => {
       factory.createPurchaseOrder(
-        createCustomGetLiquidityRequest({ targetAsset: createCustomAsset({ dexName: 'TSLA' }) }),
+        createCustomGetLiquidityRequest({ targetAsset: createCustomAsset({ name: 'TSLA' }) }),
         Blockchain.DEFICHAIN,
         AssetCategory.CRYPTO,
       );
@@ -58,12 +58,11 @@ describe('LiquidityOrderFactory', () => {
         referenceAsset: {
           blockchain: 'DeFiChain',
           category: 'Crypto',
-          dexName: 'BTC',
-          name: 'dTSLA',
+          name: 'BTC',
           type: 'Coin',
         },
         referenceAmount: 1,
-        targetAsset: createCustomAsset({ dexName: 'TSLA' }),
+        targetAsset: createCustomAsset({ name: 'TSLA' }),
       });
     });
   });
@@ -71,7 +70,7 @@ describe('LiquidityOrderFactory', () => {
   describe('#createReservationOrder(...)', () => {
     it('calls repo create(...) with correct parameters', () => {
       factory.createReservationOrder(
-        createCustomGetLiquidityRequest({ targetAsset: createCustomAsset({ dexName: 'TSLA' }) }),
+        createCustomGetLiquidityRequest({ targetAsset: createCustomAsset({ name: 'TSLA' }) }),
         Blockchain.DEFICHAIN,
       );
 
@@ -84,12 +83,11 @@ describe('LiquidityOrderFactory', () => {
         referenceAsset: {
           blockchain: 'DeFiChain',
           category: 'Crypto',
-          dexName: 'BTC',
-          name: 'dTSLA',
+          name: 'BTC',
           type: 'Coin',
         },
         referenceAmount: 1,
-        targetAsset: createCustomAsset({ dexName: 'TSLA' }),
+        targetAsset: createCustomAsset({ name: 'TSLA' }),
       });
     });
   });

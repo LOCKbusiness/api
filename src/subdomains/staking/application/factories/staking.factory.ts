@@ -1,16 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { AssetService } from 'src/shared/models/asset/asset.service';
 import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wallet-blockchain-address.entity';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Reward } from '../../domain/entities/reward.entity';
 import { StakingBlockchainAddress } from '../../domain/entities/staking-blockchain-address.entity';
 import { Staking, StakingType } from '../../domain/entities/staking.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
+import { RewardStatus } from '../../domain/enums';
 import { CreateDepositDto } from '../dto/input/create-deposit.dto';
 import { CreateRewardDto } from '../dto/input/create-reward.dto';
 import { CreateWithdrawalDraftDto } from '../dto/input/create-withdrawal-draft.dto';
+import { RewardRepository } from '../repositories/reward.repository';
 
 @Injectable()
 export class StakingFactory {
+  constructor(private readonly repo: RewardRepository, private readonly assetService: AssetService) {}
+
   createStaking(
     userId: number,
     type: StakingType,
@@ -32,9 +37,34 @@ export class StakingFactory {
     return Withdrawal.create(staking, amount);
   }
 
-  createReward(staking: Staking, dto: CreateRewardDto): Reward {
-    const { amount, reinvestTxId, reinvestOutputDate, fee, amountEur, amountUsd, amountChf } = dto;
+  async createReward(staking: Staking, dto: CreateRewardDto): Promise<Reward> {
+    const {
+      referenceAssetId,
+      inputReferenceAmount,
+      outputReferenceAmount,
+      feePercent,
+      feeAmount,
+      targetAssetId,
+      targetAddress,
+    } = dto;
 
-    return Reward.create(staking, amount, reinvestTxId, reinvestOutputDate, fee, amountEur, amountUsd, amountChf);
+    const referenceAsset = await this.assetService.getAssetById(referenceAssetId);
+    const targetAsset = await this.assetService.getAssetById(targetAssetId);
+
+    if (!referenceAsset || !targetAsset) {
+      throw new BadRequestException('Provided asset ID(s) not found in the database');
+    }
+
+    return this.repo.create({
+      staking,
+      status: RewardStatus.CREATED,
+      referenceAsset,
+      inputReferenceAmount,
+      outputReferenceAmount,
+      feePercent,
+      feeAmount,
+      targetAsset,
+      targetAddress,
+    });
   }
 }

@@ -54,7 +54,7 @@ export class CoinTrackingHistoryDtoMapper {
       .filter((c) => c.status === RewardStatus.CONFIRMED)
       .map((c) => ({
         type: CoinTrackingTransactionTypes.STAKING,
-        buyAmount: c.amount,
+        buyAmount: c.targetAmount,
         buyAsset: this.getAssetSymbolCT(c.targetAsset),
         sellAmount: null,
         sellAsset: null,
