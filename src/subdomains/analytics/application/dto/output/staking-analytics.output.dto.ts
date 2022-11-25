@@ -9,4 +9,10 @@ export class StakingAnalyticsOutputDto {
 
   @ApiProperty()
   apr: number;
+
+  @ApiProperty()
+  masternodes: number;
+
+  @ApiProperty()
+  tvl: number;
 }
