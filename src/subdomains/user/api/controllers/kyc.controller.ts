@@ -71,14 +71,17 @@ export class KycController {
         }
 
         // ignore rejected KYC, if already completed
-        if (user.hasKyc && dto.data.kycStatus === KycStatus.REJECTED) return;
+        if (user.hasKyc && dto.data.kycStatus === KycStatus.REJECTED) {
+          console.info('Ignored rejected KYC because KYC is already completed');
+          return;
+        }
 
         await this.userService.updateUser(user.id, dto.data);
         break;
 
       case KycResult.FAILED:
-        await this.notificationService
-          .sendMail({
+        if (user.mail) {
+          await this.notificationService.sendMail({
             type: MailType.USER,
             input: {
               user,
@@ -87,9 +90,10 @@ export class KycController {
                 url: Config.kyc.frontendUrl(user.kycHash),
               },
             },
-          })
-          .catch(() => null);
-
+          });
+        } else {
+          console.error(`Failed to send KYC failed mail for user ${user.id}: user has no email`);
+        }
         // notify support
         await this.notificationService.sendMail({ type: MailType.KYC_SUPPORT, input: { user } });
         console.error(`Received KYC failed webhook for user with KYC ID ${dto.id}`);
