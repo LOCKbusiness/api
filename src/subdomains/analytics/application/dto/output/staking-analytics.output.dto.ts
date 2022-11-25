@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional } from 'class-validator';
 
 export class StakingAnalyticsOutputDto {
   @ApiProperty()
@@ -11,7 +12,8 @@ export class StakingAnalyticsOutputDto {
   apr: number;
 
   @ApiProperty()
-  masternodes: number;
+  @IsOptional()
+  masternodeCount: number;
 
   @ApiProperty()
   tvl: number;

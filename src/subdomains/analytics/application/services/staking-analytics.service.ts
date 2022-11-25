@@ -52,36 +52,24 @@ export class StakingAnalyticsService {
       const { dateFrom, dateTo } = StakingAnalytics.getAprPeriod();
       const stakingTypes = await this.getStakingTypes();
 
-      // masternode count
-
-      // get unpaid masternodes
       const masternodes = await getCustomRepository(MasternodeRepository).count({
         where: { creationHash: Not(IsNull()), resignHash: IsNull() },
       });
-
-      // calculate database balance
-      const dbBalance = await getCustomRepository(StakingRepository)
-        .createQueryBuilder('staking')
-        .leftJoin('staking.asset', 'asset')
-        .select('SUM(balance)', 'balance')
-        .where('asset.name = :name', { name: 'DFI' })
-        .getRawOne<{ balance: number }>()
-        .then((b) => b.balance);
-
-      // get unpaid masternodes
-      const unpaidMasternodes = await getCustomRepository(MasternodeRepository).count({
-        where: { creationHash: Not(IsNull()), creationFeePaid: false },
-      });
-
-      // calculate should balance (database balance - unpaid creation fees)
-
-      const tvl = dbBalance - unpaidMasternodes * Config.masternode.fee;
 
       for (const type of stakingTypes) {
         const averageBalance = await this.stakingService.getAverageStakingBalance(type, dateFrom, dateTo);
         const averageRewards = await this.stakingService.getAverageRewards(type, dateFrom, dateTo);
 
         const analytics = (await this.repository.findOne(type)) ?? this.repository.create(type);
+
+        // calculate database balance
+        const tvl = await getCustomRepository(StakingRepository)
+          .createQueryBuilder('staking')
+          .leftJoin('staking.asset', 'asset')
+          .select('SUM(balance)', 'balance')
+          .where('asset.name = :name', { name: type.asset })
+          .getRawOne<{ balance: number }>()
+          .then((b) => b.balance);
 
         analytics.updateAnalytics(averageBalance, averageRewards, masternodes, tvl);
 
