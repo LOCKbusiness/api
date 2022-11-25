@@ -26,10 +26,12 @@ describe('StakingAnalytics', () => {
 
       const analytics = new StakingAnalytics();
 
-      const updatedAnalytics = analytics.updateAnalytics(averageBalance, averageReward);
+      const updatedAnalytics = analytics.updateAnalytics(averageBalance, averageReward, 3, 100);
 
       expect(updatedAnalytics.apr).toBe(1.022);
       expect(updatedAnalytics.apy).toBe(1.775);
+      expect(updatedAnalytics.masternodes).toBe(3);
+      expect(updatedAnalytics.tvl).toBe(100);
     });
   });
 });
