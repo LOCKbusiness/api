@@ -20,17 +20,17 @@ export class StakingAnalytics extends IEntity {
   apy: number;
 
   @Column({ type: 'float', nullable: true })
-  masternodes: number;
+  masternodeCount: number;
 
   @Column({ type: 'float', nullable: true })
   tvl: number;
 
   //*** PUBLIC API ***//
 
-  updateAnalytics(averageBalance: number, averageRewards: number, masternodes: number, tvl: number): this {
+  updateAnalytics(averageBalance: number, averageRewards: number, masternodeCount: number, tvl: number): this {
     this.apr = this.calculateApr(averageBalance, averageRewards);
     this.apy = this.calculateApy(this.apr);
-    this.masternodes = masternodes;
+    this.masternodeCount = masternodeCount;
     this.tvl = tvl;
     return this;
   }

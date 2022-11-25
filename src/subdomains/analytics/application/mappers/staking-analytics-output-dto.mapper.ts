@@ -8,7 +8,7 @@ export class StakingAnalyticsOutputDtoMapper {
     dto.updated = analytics.updated;
     dto.apr = analytics.apr;
     dto.apy = analytics.apy;
-    dto.masternodeCount = analytics.masternodes;
+    dto.masternodeCount = analytics.masternodeCount;
     dto.tvl = analytics.tvl;
 
     return dto;

@@ -3,7 +3,6 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Config, Process } from 'src/config/config';
 import { MasternodeRepository } from 'src/integration/masternode/application/repositories/masternode.repository';
 import { AssetQuery, AssetService } from 'src/shared/models/asset/asset.service';
-import { StakingRepository } from 'src/subdomains/staking/application/repositories/staking.repository';
 import { StakingService } from 'src/subdomains/staking/application/services/staking.service';
 import { StakingStrategyValidator } from 'src/subdomains/staking/application/validators/staking-strategy.validator';
 import { StakingType, StakingTypes } from 'src/subdomains/staking/domain/entities/staking.entity';
@@ -63,14 +62,8 @@ export class StakingAnalyticsService {
         const analytics = (await this.repository.findOne(type)) ?? this.repository.create(type);
 
         // calculate database balance
-        const tvl = await getCustomRepository(StakingRepository)
-          .createQueryBuilder('staking')
-          .leftJoin('staking.asset', 'asset')
-          .select('SUM(balance)', 'balance')
-          .where('asset.name = :name', { name: type.asset })
-          .getRawOne<{ balance: number }>()
-          .then((b) => b.balance);
 
+        const tvl = await this.stakingService.getCurrentTotalStakingBalance(type);
         analytics.updateAnalytics(averageBalance, averageRewards, masternodes, tvl);
 
         await this.repository.save(analytics);
