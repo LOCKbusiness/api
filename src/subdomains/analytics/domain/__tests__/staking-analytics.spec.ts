@@ -24,7 +24,7 @@ describe('StakingAnalytics', () => {
       const averageBalance = 100;
       const averageReward = 0.28;
       const masternodeCount = 3;
-      const tvl = 3;
+      const tvl = 100;
 
       const analytics = new StakingAnalytics();
 
