@@ -7,7 +7,7 @@
     },
     "failed": {
       "salutation":"Dear {name},",
-      "body": "<p>Unfortunately, Your KYC at LOCK failed!</p><p></p><p>However, You can proceed with the Video-Identification to finalize your KYC at LOCK <a href=\"{url}\" style=\"color:#000000\">here</a></p><p>In any case of questions, please reach out to: mailto:support@lock.space</p>",
+      "body": "<p>Unfortunately, Your KYC at LOCK failed!</p><p></p><p>However, You can proceed with the Video-Identification to finalize your KYC at LOCK <a href=\"{url}\" style=\"color:#000000\">here</a></p><p>In any case of questions, please reach out to: <a href=\"mailto:support@lock.space\" style=\"color:#000000\">support@lock.space</p>",
       "title": "LOCK KYC failed"
     }
   }
