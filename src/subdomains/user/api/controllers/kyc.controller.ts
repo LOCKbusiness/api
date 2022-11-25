@@ -13,6 +13,7 @@ import { KycService } from '../../application/services/kyc.service';
 import { KycDto } from '../../application/dto/kyc.dto';
 import { UserService } from '../../application/services/user.service';
 import { KycResult, KycStatus } from '../../domain/enums';
+import { KycCompleted } from '../../domain/utils';
 import { NotificationService } from 'src/integration/notification/services/notification.service';
 import { MailType } from 'src/integration/notification/enums';
 
@@ -57,7 +58,8 @@ export class KycController {
 
     switch (dto.result) {
       case KycResult.STATUS_CHANGED:
-        if (user.kycStatus == KycStatus.NA && dto.data.kycStatus == KycStatus.LIGHT) {
+        // send notification on KYC completed
+        if (user.kycStatus === KycStatus.NA && KycCompleted(dto.data.kycStatus)) {
           if (user.mail) {
             await this.notificationService.sendMail({
               type: MailType.USER,
@@ -67,13 +69,13 @@ export class KycController {
             console.error(`Failed to send KYC completion mail for user ${user.id}: user has no email`);
           }
         }
-        if (
-          (user.kycStatus == KycStatus.FULL || user.kycStatus == KycStatus.LIGHT) &&
-          dto.data.kycStatus == KycStatus.REJECTED
-        )
-          return;
+
+        // ignore rejected KYC, if already completed
+        if (user.hasKyc && dto.data.kycStatus === KycStatus.REJECTED) return;
+
         await this.userService.updateUser(user.id, dto.data);
         break;
+
       case KycResult.FAILED:
         await this.notificationService
           .sendMail({
@@ -87,10 +89,12 @@ export class KycController {
             },
           })
           .catch(() => null);
+
         // notify support
         await this.notificationService.sendMail({ type: MailType.KYC_SUPPORT, input: { user } });
         console.error(`Received KYC failed webhook for user with KYC ID ${dto.id}`);
         break;
+
       default:
         console.error(`Received KYC webhook with invalid result ${dto.result}`);
     }
