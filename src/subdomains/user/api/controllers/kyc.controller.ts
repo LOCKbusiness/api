@@ -80,7 +80,7 @@ export class KycController {
   }
 
   private checkIp(ip: string, data: any) {
-    if (!Config.kyc.allowedWebhookIps.includes('*') && !Config.kyc.allowedWebhookIps.includes(ip)) {
+    if (!Config.kyc.allowedWebhookIps.includes('*') && !Config.kyc.allowedWebhookIps.some((ai) => ip.includes(ai))) {
       console.error(`Received webhook call from invalid IP ${ip}:`, data);
       throw new ForbiddenException('Invalid source IP');
     }
