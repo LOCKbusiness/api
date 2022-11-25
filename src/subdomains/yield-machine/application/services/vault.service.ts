@@ -13,4 +13,8 @@ export class VaultService {
   async getByAddressAndVault(address: string, vault: string): Promise<Vault> {
     return this.repository.findOne({ where: { address, vault } });
   }
+
+  async getAllAddresses(): Promise<string[]> {
+    return this.repository.find().then((vaults) => vaults.map((v) => v.address));
+  }
 }
