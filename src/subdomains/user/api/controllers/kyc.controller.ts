@@ -67,9 +67,26 @@ export class KycController {
             console.error(`Failed to send KYC completion mail for user ${user.id}: user has no email`);
           }
         }
+        if (
+          (user.kycStatus == KycStatus.FULL || user.kycStatus == KycStatus.LIGHT) &&
+          dto.data.kycStatus == KycStatus.REJECTED
+        )
+          return;
         await this.userService.updateUser(user.id, dto.data);
         break;
       case KycResult.FAILED:
+        await this.notificationService
+          .sendMail({
+            type: MailType.USER,
+            input: {
+              user,
+              translationKey: 'mail.kyc.failed',
+              translationParams: {
+                url: Config.kyc.frontendUrl(user.kycHash),
+              },
+            },
+          })
+          .catch(() => null);
         // notify support
         await this.notificationService.sendMail({ type: MailType.KYC_SUPPORT, input: { user } });
         console.error(`Received KYC failed webhook for user with KYC ID ${dto.id}`);
