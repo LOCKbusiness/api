@@ -60,13 +60,13 @@ export class Reward extends IEntity {
 
   //*** REFERENCE DATA ***//
 
-  @Column({ type: 'float', nullable: false, default: 0 })
+  @Column({ type: 'float', nullable: true, default: null })
   amountEur: number;
 
-  @Column({ type: 'float', nullable: false, default: 0 })
+  @Column({ type: 'float', nullable: true, default: null })
   amountUsd: number;
 
-  @Column({ type: 'float', nullable: false, default: 0 })
+  @Column({ type: 'float', nullable: true, default: null })
   amountChf: number;
 
   //*** FACTORY METHODS ***//

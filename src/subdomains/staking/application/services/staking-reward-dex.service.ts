@@ -3,7 +3,6 @@ import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { Config } from 'src/config/config';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { Util } from 'src/shared/util';
 import { LiquidityOrderContext } from 'src/subdomains/dex/entities/liquidity-order.entity';
 import { LiquidityOrderNotReadyException } from 'src/subdomains/dex/exceptions/liquidity-order-not-ready.exception';
 import { NotEnoughLiquidityException } from 'src/subdomains/dex/exceptions/not-enough-liquidity.exception';
@@ -32,13 +31,11 @@ export class StakingRewardDexService {
   }
 
   async prepareDfiToken(): Promise<void> {
-    const newRewards = await this.rewardRepo.find({ status: RewardStatus.CREATED });
+    const dfiAmount = await this.getDfiAmountForNewRewards();
 
-    const dfiAmount = this.getDfiAmountFromNewRewards(newRewards);
-
-    await this.designateRewardsPreparation(newRewards);
+    await this.designateRewardsPreparation();
     await this.swapDfiToken(dfiAmount);
-    await this.confirmRewardsForProcessing(newRewards);
+    await this.confirmRewardsForProcessing();
   }
 
   async secureLiquidity(): Promise<void> {
@@ -62,19 +59,25 @@ export class StakingRewardDexService {
 
   //*** HELPER METHODS ***//
 
-  private getDfiAmountFromNewRewards(rewards: Reward[]): number {
-    const dfiRewards = rewards.filter(
-      (r) => r.referenceAsset.name === 'DFI' && r.referenceAsset.blockchain === Blockchain.DEFICHAIN,
-    );
-
-    return Util.sumObj<Reward>(dfiRewards, 'outputReferenceAmount');
+  private async getDfiAmountForNewRewards(): Promise<number> {
+    return this.rewardRepo
+      .createQueryBuilder('reward')
+      .leftJoin('reward.referenceAsset', 'referenceAsset')
+      .select('SUM(outputReferenceAmount)', 'amount')
+      .where('status = :status', { status: RewardStatus.CREATED })
+      .andWhere('referenceAsset.name = :name', { name: 'DFI' })
+      .andWhere('referenceAsset.blockchain = :blockchain', { blockchain: Blockchain.DEFICHAIN })
+      .getRawOne<{ amount: number }>()
+      .then((r) => r.amount);
   }
 
-  private async designateRewardsPreparation(rewards: Reward[]): Promise<void> {
-    for (const reward of rewards) {
-      reward.designateRewardsPreparation();
-      await this.rewardRepo.save(reward);
-    }
+  private async designateRewardsPreparation(): Promise<void> {
+    await this.rewardRepo
+      .createQueryBuilder('reward')
+      .update(Reward)
+      .set({ status: RewardStatus.PREPARATION_PENDING })
+      .where('status = :status', { status: RewardStatus.CREATED })
+      .execute();
   }
 
   private async swapDfiToken(dfiAmount: number): Promise<void> {
@@ -82,11 +85,13 @@ export class StakingRewardDexService {
     await this.#rewClient.waitForTx(swapTxId);
   }
 
-  private async confirmRewardsForProcessing(rewards: Reward[]): Promise<void> {
-    for (const reward of rewards) {
-      reward.confirmRewardsPreparation();
-      await this.rewardRepo.save(reward);
-    }
+  private async confirmRewardsForProcessing(): Promise<void> {
+    await this.rewardRepo
+      .createQueryBuilder('reward')
+      .update(Reward)
+      .set({ status: RewardStatus.PREPARATION_CONFIRMED })
+      .where('status = :status', { status: RewardStatus.PREPARATION_PENDING })
+      .execute();
   }
 
   private async checkPendingBatches(pendingBatches: RewardBatch[]): Promise<void> {
