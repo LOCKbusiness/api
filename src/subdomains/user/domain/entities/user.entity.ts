@@ -1,6 +1,7 @@
 import { IEntity } from 'src/shared/models/entity';
 import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { KycStatus } from '../enums';
+import { KycCompleted, KycFulfills } from '../utils';
 import { Country } from './country.entity';
 import { Wallet } from './wallet.entity';
 
@@ -50,4 +51,12 @@ export class User extends IEntity {
 
   @OneToMany(() => Wallet, (wallet) => wallet.user)
   wallets: Wallet[];
+
+  get hasKyc(): boolean {
+    return KycCompleted(this.kycStatus);
+  }
+
+  hasAtLeast(minKyc: KycStatus): boolean {
+    return KycFulfills(this.kycStatus, minKyc);
+  }
 }

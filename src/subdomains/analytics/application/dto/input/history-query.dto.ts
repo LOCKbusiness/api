@@ -27,4 +27,4 @@ export class HistoryQueryCompact extends HistoryQueryBase {
   type: ExportDataType = ExportDataType.CSV;
 }
 
-export class HistoryQueryCT extends HistoryQueryBase {}
+export class HistoryQueryTaxTools extends HistoryQueryBase {}

@@ -56,7 +56,7 @@ export class UtxoProviderService {
     this.lockUtxo.release();
   }
 
-  async unlockSpentBasedOn(prevouts: Prevout[], address: string): Promise<void> {
+  unlockSpentBasedOn(prevouts: Prevout[], address: string): void {
     const idsToUnlock = prevouts.map(UtxoProviderService.idForPrevout);
     console.info(`unlock ${address}: to unlock ${idsToUnlock}`);
     const spentToUnlock = this.spent

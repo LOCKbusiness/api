@@ -1,6 +1,11 @@
 import { Controller, Get, StreamableFile, Response, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { ExportDataType, HistoryQueryCompact, HistoryQueryCT } from '../../application/dto/input/history-query.dto';
+import {
+  ExportDataType,
+  HistoryQueryCompact,
+  HistoryQueryTaxTools,
+} from '../../application/dto/input/history-query.dto';
+import { ChainReportCsvHistoryDto } from '../../application/dto/output/chain-report-history.dto';
 import { CoinTrackingCsvHistoryDto } from '../../application/dto/output/coin-tracking-history.dto';
 import { CompactHistoryDto } from '../../application/dto/output/history.dto';
 import { ExportType, StakingHistoryService } from '../../application/services/staking-history.service';
@@ -34,13 +39,35 @@ export class HistoryController {
     }
   }
 
-  @Get('CT')
+  @Get('CoinTracking')
   @ApiOkResponse({ type: CoinTrackingCsvHistoryDto, isArray: true })
-  async getCsvCT(@Query() query: HistoryQueryCT, @Response({ passthrough: true }) res): Promise<StreamableFile> {
-    const csvFile = await this.historyService.getHistoryCsv(query.userAddress, query.depositAddress, ExportType.CT);
+  async getCsvCT(@Query() query: HistoryQueryTaxTools, @Response({ passthrough: true }) res): Promise<StreamableFile> {
+    const csvFile = await this.historyService.getHistoryCsv(
+      query.userAddress,
+      query.depositAddress,
+      ExportType.COIN_TRACKING,
+    );
     res.set({
       'Content-Type': 'text/csv',
       'Content-Disposition': `attachment; filename="LOCK_CT_history_${this.formatDate()}.csv"`,
+    });
+    return csvFile;
+  }
+
+  @Get('ChainReport')
+  @ApiOkResponse({ status: 200, type: ChainReportCsvHistoryDto, isArray: true })
+  async getCsvChainReport(
+    @Query() query: HistoryQueryTaxTools,
+    @Response({ passthrough: true }) res,
+  ): Promise<StreamableFile> {
+    const csvFile = await this.historyService.getHistoryCsv(
+      query.userAddress,
+      query.depositAddress,
+      ExportType.CHAIN_REPORT,
+    );
+    res.set({
+      'Content-Type': 'text/csv',
+      'Content-Disposition': `attachment; filename="LOCK_ChainReport_history_${this.formatDate()}.csv"`,
     });
     return csvFile;
   }

@@ -37,8 +37,8 @@ export class StakingAnalyticsService {
   }
 
   //*** JOBS ***//
-  onModuleInit() {
-    this.updateStakingAnalytics();
+  async onModuleInit() {
+    await this.updateStakingAnalytics();
   }
 
   @Cron(CronExpression.EVERY_HOUR)

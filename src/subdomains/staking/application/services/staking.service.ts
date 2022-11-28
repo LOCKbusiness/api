@@ -127,12 +127,15 @@ export class StakingService {
   //*** HELPER METHODS ***//
 
   private async createStaking(userId: number, walletId: number, type: StakingType): Promise<Staking> {
-    const depositAddress = await this.addressService.getAvailableAddress();
-    const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
+    // retry (in case of deposit address conflict)
+    return Util.retry(async () => {
+      const depositAddress = await this.addressService.getAvailableAddress();
+      const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
 
-    const staking = this.factory.createStaking(userId, type, depositAddress, withdrawalAddress);
+      const staking = this.factory.createStaking(userId, type, depositAddress, withdrawalAddress);
 
-    return this.repository.save(staking);
+      return this.repository.save(staking);
+    }, 2);
   }
 
   private async getPreviousTotalStakingBalance(type: StakingType, currentBalance: number, date: Date): Promise<number> {

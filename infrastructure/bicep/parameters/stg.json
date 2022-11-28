@@ -87,10 +87,10 @@
       "value": "xxx"
     },
     "kycApiUrl": {
-      "value": "https://dev.api.dfx.swiss/v1"
+      "value": "https://api.dfx.swiss/v1"
     },
     "kycFrontendUrl": {
-      "value": "https://dev.kyc.lock.space"
+      "value": "https://kyc.lock.space"
     },
     "forwardPhrase": {
       "value": "xxx"

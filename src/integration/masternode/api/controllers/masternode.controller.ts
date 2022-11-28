@@ -25,7 +25,7 @@ export class MasternodeController {
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
-  addFee(@Body() dto: AddMasternodeFee) {
-    this.masternodeService.addFee(dto.feeAmount);
+  async addFee(@Body() dto: AddMasternodeFee) {
+    await this.masternodeService.addFee(dto.feeAmount);
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { Config } from 'src/config/config';
+import { Config, Process } from 'src/config/config';
 import { MasternodeService } from 'src/integration/masternode/application/services/masternode.service';
 import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
 import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
@@ -33,14 +33,20 @@ export class VotingService {
 
   @Cron(CronExpression.EVERY_HOUR)
   async updateResult(): Promise<void> {
-    const { cfpList } = await this.getCfpInfos();
-    const distributions = await this.getVoteDistributions(cfpList);
+    if (Config.processDisabled(Process.ANALYTICS)) return;
 
-    this.currentResults = distributions.map((d) => ({
-      number: d.cfpId,
-      name: cfpList.find((c) => c.id === d.cfpId).name,
-      result: d.distribution,
-    }));
+    try {
+      const { cfpList } = await this.getCfpInfos();
+      const distributions = await this.getVoteDistributions(cfpList);
+
+      this.currentResults = distributions.map((d) => ({
+        number: d.cfpId,
+        name: cfpList.find((c) => c.id === d.cfpId).name,
+        result: d.distribution,
+      }));
+    } catch (e) {
+      console.error(`Exception during voting evaluation:`, e);
+    }
   }
 
   get result(): CfpResultDto[] {
