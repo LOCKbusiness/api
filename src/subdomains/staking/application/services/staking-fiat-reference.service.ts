@@ -6,6 +6,7 @@ import { Price } from 'src/shared/models/price';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Reward } from '../../domain/entities/reward.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
+import { DepositStatus, RewardStatus, WithdrawalStatus } from '../../domain/enums';
 import { FiatPriceProvider, FIAT_PRICE_PROVIDER } from '../interfaces';
 import { DepositRepository } from '../repositories/deposit.repository';
 import { RewardRepository } from '../repositories/reward.repository';
@@ -46,15 +47,33 @@ export class StakingFiatReferenceService {
   //*** HELPER METHODS ***//
 
   private async getDepositsWithoutFiatReferences(): Promise<Deposit[]> {
-    return this.depositRepo.find({ where: [{ amountChf: null }, { amountUsd: null }, { amountEur: null }] });
+    return this.depositRepo.find({
+      where: [
+        { amountChf: null, status: DepositStatus.CONFIRMED },
+        { amountUsd: null, status: DepositStatus.CONFIRMED },
+        { amountEur: null, status: DepositStatus.CONFIRMED },
+      ],
+    });
   }
 
   private async getWithdrawalsWithoutFiatReferences(): Promise<Withdrawal[]> {
-    return this.withdrawalRepo.find({ where: [{ amountChf: null }, { amountUsd: null }, { amountEur: null }] });
+    return this.withdrawalRepo.find({
+      where: [
+        { amountChf: null, status: WithdrawalStatus.CONFIRMED },
+        { amountUsd: null, status: WithdrawalStatus.CONFIRMED },
+        { amountEur: null, status: WithdrawalStatus.CONFIRMED },
+      ],
+    });
   }
 
   private async getRewardsWithoutFiatReferences(): Promise<Reward[]> {
-    return this.rewardRepo.find({ where: [{ amountChf: null }, { amountUsd: null }, { amountEur: null }] });
+    return this.rewardRepo.find({
+      where: [
+        { amountChf: null, status: RewardStatus.CONFIRMED },
+        { amountUsd: null, status: RewardStatus.CONFIRMED },
+        { amountEur: null, status: RewardStatus.CONFIRMED },
+      ],
+    });
   }
 
   private defineRelevantAssets(deposits: Deposit[], withdrawals: Withdrawal[], rewards: Reward[]): number[] {

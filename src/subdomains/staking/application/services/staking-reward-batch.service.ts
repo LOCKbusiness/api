@@ -17,7 +17,7 @@ export class StakingRewardBatchService {
         where: {
           referenceAsset: Not(IsNull()),
           outputReferenceAmount: Not(IsNull()),
-          targetAsset: IsNull(),
+          targetAsset: Not(IsNull()),
           batch: IsNull(),
           status: RewardStatus.PREPARATION_CONFIRMED,
         },

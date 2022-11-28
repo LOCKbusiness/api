@@ -87,7 +87,7 @@ export class DeFiChainDefaultStrategy extends CheckLiquidityStrategy {
         amount: feeAmount,
       },
       metadata: {
-        isEnoughAvailableLiquidity: availableAmount > targetAmount,
+        isEnoughAvailableLiquidity: availableAmount >= targetAmount,
         isSlippageDetected,
         slippageMessage,
       },

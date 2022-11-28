@@ -100,18 +100,6 @@ export class Reward extends IEntity {
 
   //*** PUBLIC API ***//
 
-  designateRewardsPreparation(): this {
-    this.status = RewardStatus.PREPARATION_PENDING;
-
-    return this;
-  }
-
-  confirmRewardsPreparation(): this {
-    this.status = RewardStatus.PREPARATION_CONFIRMED;
-
-    return this;
-  }
-
   calculateOutputAmount(batchReferenceAmount: number, batchTargetAmount: number): this {
     if (batchReferenceAmount === 0) {
       throw new Error('Cannot calculate targetAmount, provided batchReferenceAmount is 0');

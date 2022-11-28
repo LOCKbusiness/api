@@ -23,7 +23,7 @@ export class DeFiChainStockStrategy extends DeFiChainNonPoolPairStrategy {
       dexDeFiChainService,
       liquidityOrderRepo,
       liquidityOrderFactory,
-      [{ name: 'DUSD', type: AssetType.TOKEN }],
+      [{ name: 'DFI', type: AssetType.TOKEN }],
       PurchaseLiquidityStrategyAlias.DEFICHAIN_STOCK,
     );
   }

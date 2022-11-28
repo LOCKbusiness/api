@@ -53,4 +53,16 @@ export class StakingRewardNotificationService {
       metadata: { context: MailContext.STAKING, correlationId },
     });
   }
+
+  async sendRewardsPausedErrorMail(dfiAmount: number, message: string, e?: Error): Promise<void> {
+    const correlationId = `RewardBatch&${dfiAmount}`;
+    const errors = e ? [message, e.message] : [message];
+
+    await this.notificationService.sendMail({
+      type: MailType.ERROR_MONITORING,
+      input: { subject: 'DFI Reward Payout Paused', errors },
+      options: { debounce: 1800000 },
+      metadata: { context: MailContext.STAKING, correlationId },
+    });
+  }
 }

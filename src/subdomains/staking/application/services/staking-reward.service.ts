@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Lock } from 'src/shared/lock';
+import { SettingService } from 'src/shared/services/setting.service';
 import { CreateRewardDto } from '../dto/input/create-reward.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
@@ -20,6 +21,7 @@ export class StakingRewardService {
     private readonly batchService: StakingRewardBatchService,
     private readonly dexService: StakingRewardDexService,
     private readonly outService: StakingRewardOutService,
+    private readonly settingService: SettingService,
   ) {}
 
   //*** PUBLIC API ***//
@@ -41,9 +43,11 @@ export class StakingRewardService {
 
   @Cron(CronExpression.EVERY_MINUTE)
   async processRewards(): Promise<void> {
+    if ((await this.settingService.get('reward-payout')) !== 'on') return;
     if (!this.lock.acquire()) return;
 
     try {
+      await this.dexService.prepareDfiToken();
       await this.batchService.batchRewardsByAssets();
       await this.dexService.secureLiquidity();
       await this.outService.payoutRewards();

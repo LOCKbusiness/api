@@ -118,7 +118,7 @@ export class StakingRewardOutService {
     const isBatchComplete = batch.rewards.every((r) => r.status === RewardStatus.CONFIRMED);
 
     if (isBatchComplete) {
-      console.info(`Buy crypto batch payout complete. Batch ID: ${batch.id}`);
+      console.info(`Reward batch payout complete. Batch ID: ${batch.id}`);
       batch.complete();
 
       await this.rewardBatchRepo.save(batch);

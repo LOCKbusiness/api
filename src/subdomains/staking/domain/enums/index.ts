@@ -24,6 +24,7 @@ export enum RewardStatus {
   CREATED = 'Created',
   PREPARATION_PENDING = 'PreparationPending',
   PREPARATION_CONFIRMED = 'PreparationConfirmed',
+  PAUSED = 'Paused',
   CONFIRMED = 'Confirmed',
 }
 

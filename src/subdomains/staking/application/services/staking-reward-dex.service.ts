@@ -33,9 +33,24 @@ export class StakingRewardDexService {
   async prepareDfiToken(): Promise<void> {
     const dfiAmount = await this.getDfiAmountForNewRewards();
 
+    if (!dfiAmount) return;
+
+    console.log(`Preparing DFI reward process in amount of ${dfiAmount} DFI`);
+
     await this.designateRewardsPreparation();
-    await this.swapDfiToken(dfiAmount);
-    await this.confirmRewardsForProcessing();
+
+    try {
+      await this.swapDfiToken(dfiAmount);
+      await this.confirmRewardsForProcessing();
+
+      console.log(`Prepared DFI reward process in amount of ${dfiAmount} DFI`);
+    } catch (e) {
+      const errorMessage = `Error while trying to prepare DFI reward payout of amount ${dfiAmount}`;
+      console.error(errorMessage, e);
+
+      await this.pauseRewards();
+      await this.rewardNotificationService.sendRewardsPausedErrorMail(dfiAmount, errorMessage, e);
+    }
   }
 
   async secureLiquidity(): Promise<void> {
@@ -82,6 +97,8 @@ export class StakingRewardDexService {
 
   private async swapDfiToken(dfiAmount: number): Promise<void> {
     const swapTxId = await this.#rewClient.toToken(Config.blockchain.default.rewWalletAddress, dfiAmount);
+    console.log(`Preparing DFI Reward payout process. Swapped ${dfiAmount} utxo to DFI token. SwapTxId: ${swapTxId}`);
+
     await this.#rewClient.waitForTx(swapTxId);
   }
 
@@ -93,6 +110,17 @@ export class StakingRewardDexService {
       .where('status = :status', { status: RewardStatus.PREPARATION_PENDING })
       .execute();
   }
+
+  private async pauseRewards(): Promise<void> {
+    await this.rewardRepo
+      .createQueryBuilder('reward')
+      .update(Reward)
+      .set({ status: RewardStatus.PAUSED })
+      .where('status = :status', { status: RewardStatus.PREPARATION_PENDING })
+      .execute();
+  }
+
+  private;
 
   private async checkPendingBatches(pendingBatches: RewardBatch[]): Promise<void> {
     for (const batch of pendingBatches) {
