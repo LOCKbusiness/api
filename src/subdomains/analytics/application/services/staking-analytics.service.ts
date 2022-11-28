@@ -34,7 +34,7 @@ export class StakingAnalyticsService {
     const assetSpec = StakingStrategyValidator.validate(strategy, asset, blockchain);
     const type = await this.getStakingType(assetSpec, strategy);
 
-    const analytics = await this.repository.findOne(type);
+    const analytics = await this.repository.findOne({ where: { type }, relations: ['asset'] });
     if (!analytics) throw new NotFoundException();
 
     return StakingAnalyticsOutputDtoMapper.entityToDto(analytics);
