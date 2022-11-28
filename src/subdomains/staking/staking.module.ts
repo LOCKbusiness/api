@@ -33,6 +33,7 @@ import { StakingRewardOutService } from './application/services/staking-reward-o
 import { RewardBatchRepository } from './application/repositories/reward-batch.repository';
 import { RewardRepository } from './application/repositories/reward.repository';
 import { StakingRewardNotificationService } from './application/services/staking-reward-notification.service';
+import { StakingFiatReferenceService } from './application/services/staking-fiat-reference.service';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { StakingRewardNotificationService } from './application/services/staking
       useClass: CoinGeckoService,
     },
     StakingService,
+    StakingFiatReferenceService,
     StakingDepositService,
     StakingDeFiChainService,
     StakingRewardService,

@@ -192,18 +192,6 @@ export class Staking extends IEntity {
     return addresses.every((a) => a === this.withdrawalAddress.address);
   }
 
-  calculateFiatReferences(prices: Price[]): this {
-    const deposits = this.getDepositsWithoutFiatReferences();
-    const withdrawals = this.getWithdrawalsWithoutFiatReferences();
-    const rewards = this.getRewardsWithoutFiatReferences();
-
-    deposits.forEach((d) => d.calculateFiatReferences(prices));
-    withdrawals.forEach((w) => w.calculateFiatReferences(prices));
-    rewards.forEach((r) => r.calculateFiatReferences(prices));
-
-    return this;
-  }
-
   //*** GETTERS ***//
 
   getWithdrawal(withdrawalId: number): Withdrawal {
