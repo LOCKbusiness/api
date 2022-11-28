@@ -50,9 +50,10 @@ export class UserService {
 
   async canStake(userId: number, walletId: number): Promise<boolean> {
     const user = await this.userRepo.findOne(userId, { relations: ['wallets', 'wallets.walletProvider'] });
-    const minKycStatus = user.wallets.find((w) => w.id === walletId)?.walletProvider.minStakingKycStatus;
+    const minKycStatus =
+      user.wallets.find((w) => w.id === walletId)?.walletProvider.minStakingKycStatus ?? KycStatus.NA;
 
-    return this.kycStatusFulfills(user.kycStatus, minKycStatus);
+    return user.hasAtLeast(minKycStatus);
   }
 
   async getWalletAddress(userId: number, walletId: number): Promise<WalletBlockchainAddress> {
@@ -74,19 +75,5 @@ export class UserService {
 
   async getAllUserWithVotes(): Promise<User[]> {
     return await this.userRepo.find({ votes: Not(IsNull()) });
-  }
-
-  // --- HELPER METHODS --- //
-  private kycStatusFulfills(status: KycStatus, min: KycStatus): boolean {
-    switch (min) {
-      case KycStatus.NA:
-        return true;
-      case KycStatus.LIGHT:
-        return status !== KycStatus.NA;
-      case KycStatus.FULL:
-        return status === KycStatus.FULL;
-      default:
-        return false;
-    }
   }
 }

@@ -1,11 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Config, Process } from 'src/config/config';
+import { MasternodeService } from 'src/integration/masternode/application/services/masternode.service';
 import { AssetQuery, AssetService } from 'src/shared/models/asset/asset.service';
 import { StakingService } from 'src/subdomains/staking/application/services/staking.service';
 import { StakingStrategyValidator } from 'src/subdomains/staking/application/validators/staking-strategy.validator';
 import { StakingType, StakingTypes } from 'src/subdomains/staking/domain/entities/staking.entity';
 import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
+import { VaultService } from 'src/integration/vault/application/services/vault.service';
 import { StakingAnalytics } from '../../domain/staking-analytics.entity';
 import { StakingAnalyticsQuery } from '../dto/input/staking-analytics-query.dto';
 import { StakingAnalyticsOutputDto } from '../dto/output/staking-analytics.output.dto';
@@ -17,6 +19,8 @@ export class StakingAnalyticsService {
   constructor(
     private readonly repository: StakingAnalyticsRepository,
     private readonly stakingService: StakingService,
+    private readonly masternodeService: MasternodeService,
+    private readonly vaultService: VaultService,
     private readonly assetService: AssetService,
   ) {}
 
@@ -37,8 +41,8 @@ export class StakingAnalyticsService {
   }
 
   //*** JOBS ***//
-  onModuleInit() {
-    this.updateStakingAnalytics();
+  async onModuleInit() {
+    await this.updateStakingAnalytics();
   }
 
   @Cron(CronExpression.EVERY_HOUR)
@@ -50,18 +54,32 @@ export class StakingAnalyticsService {
       const stakingTypes = await this.getStakingTypes();
 
       for (const type of stakingTypes) {
+        // get APR
         const averageBalance = await this.stakingService.getAverageStakingBalance(type, dateFrom, dateTo);
         const averageRewards = await this.stakingService.getAverageRewards(type, dateFrom, dateTo);
 
         const analytics = (await this.repository.findOne(type)) ?? this.repository.create(type);
 
-        analytics.updateAnalytics(averageBalance, averageRewards);
+        // get TVL and operator count
+        const tvl = await this.stakingService.getCurrentTotalStakingBalance(type);
+        const operatorCount = await this.getOperatorCount(type);
 
+        analytics.updateAnalytics(averageBalance, averageRewards, operatorCount, tvl);
         await this.repository.save(analytics);
       }
     } catch (e) {
       console.error('Exception during staking analytics update:', e);
     }
+  }
+
+  private async getOperatorCount(type: StakingType): Promise<number | undefined> {
+    if (type.asset.name === 'DFI') {
+      return await this.masternodeService.getActiveCount();
+    } else if (type.asset.name === 'DUSD') {
+      return await this.vaultService.getActiveCount();
+    }
+
+    return undefined;
   }
 
   private async getStakingTypes(): Promise<StakingType[]> {

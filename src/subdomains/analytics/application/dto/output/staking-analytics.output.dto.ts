@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class StakingAnalyticsOutputDto {
   @ApiProperty()
@@ -9,4 +9,13 @@ export class StakingAnalyticsOutputDto {
 
   @ApiProperty()
   apr: number;
+
+  @ApiPropertyOptional()
+  operatorCount: number;
+
+  @ApiProperty()
+  tvl: number;
+
+  @ApiProperty()
+  asset: string;
 }
