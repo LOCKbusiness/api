@@ -4,6 +4,11 @@
       "salutation":"Dear {name},",
       "body": "<p>We have good news for you.</p><p></p><p>Your KYC at LOCK is completed and the review has been successful!</p><p>You can start using LOCK anytime now and enjoy rewards on your Cryptos with a maximum of flexibility, security and transparency.</p>",
       "title": "LOCK KYC successful"
+    },
+    "failed": {
+      "salutation":"Dear {name},",
+      "body": "<p>Unfortunately, Your KYC at LOCK failed!</p><p></p><p>However, You can proceed with the Video-Identification to finalize your KYC at LOCK <a href=\"{url}\" style=\"color:#000000\">here</a></p><p>In any case of questions, please reach out to: <a href=\"mailto:support@lock.space\" style=\"color:#000000\">support@lock.space</a></p>",
+      "title": "LOCK KYC failed"
     }
   }
 }

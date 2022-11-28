@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import BigNumber from 'bignumber.js';
 import { TokenProviderService } from 'src/blockchain/ain/whale/token-provider.service';
 import { Config } from 'src/config/config';
@@ -34,6 +34,16 @@ export class YieldMachineService {
     const vault = await this.retrieveVault(parameters);
     if (!isSendFromLiq && !vault) throw new NotFoundException('Vault or address not found');
 
+    // additional checks for account to account txs
+    if (command === TransactionCommand.ACCOUNT_TO_ACCOUNT) {
+      const allowedAddresses = await this.vaultService
+        .getAllAddresses()
+        .then((addresses) => addresses.concat(Config.yieldMachine.liquidity.address));
+
+      if (!this.isSendAllowed(parameters, allowedAddresses))
+        throw new ForbiddenException('Send parameters are not allowed');
+    }
+
     switch (command) {
       case TransactionCommand.ACCOUNT_TO_ACCOUNT:
         const token = await this.tokenProviderService.get(parameters.token);
@@ -59,6 +69,13 @@ export class YieldMachineService {
         const toToken = await this.tokenProviderService.get(parameters.toToken);
         return this.compositeSwap(parameters, +fromToken.id, +toToken.id, vault.wallet, vault.accountIndex);
     }
+  }
+
+  private isSendAllowed(parameters: SendTokenParameters, allowedAddresses: string[]): boolean {
+    return (
+      (parameters.token === 'DFI' && allowedAddresses.includes(parameters.from)) ||
+      (allowedAddresses.includes(parameters.from) && allowedAddresses.includes(parameters.to))
+    );
   }
 
   private sendToken(
@@ -122,8 +139,8 @@ export class YieldMachineService {
 
   private paybackLoan(vault: Vault, parameters: PaybackLoanParameters): Promise<string> {
     return this.transactionExecutionService.paybackLoan({
-      from: parameters.address,
-      vault: parameters.vault,
+      from: vault.address,
+      vault: vault.vault,
       token: vault.blockchainPairTokenAId,
       amount: new BigNumber(parameters.amount),
       ownerWallet: vault.wallet,

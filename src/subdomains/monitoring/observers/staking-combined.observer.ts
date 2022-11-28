@@ -35,17 +35,15 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
   async fetch(): Promise<StakingData> {
     if (Config.processDisabled(Process.MONITORING)) return;
 
-    let data: StakingData;
     try {
-      data = await this.getStaking();
+      const data = await this.getStaking();
+
+      this.emit(data);
+
+      return data;
     } catch (e) {
       console.error('Exception during monitoring staking combined:', e);
-      return;
     }
-
-    this.emit(data);
-
-    return data;
   }
 
   // *** HELPER METHODS *** //
@@ -101,6 +99,4 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
     const difference = Util.round(actual - should, Config.defaultVolumeDecimal);
     return { actual, should, difference };
   }
-
-
 }

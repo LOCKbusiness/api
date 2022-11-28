@@ -13,6 +13,7 @@ import { KycService } from '../../application/services/kyc.service';
 import { KycDto } from '../../application/dto/kyc.dto';
 import { UserService } from '../../application/services/user.service';
 import { KycResult, KycStatus } from '../../domain/enums';
+import { KycCompleted } from '../../domain/utils';
 import { NotificationService } from 'src/integration/notification/services/notification.service';
 import { MailType } from 'src/integration/notification/enums';
 
@@ -57,7 +58,8 @@ export class KycController {
 
     switch (dto.result) {
       case KycResult.STATUS_CHANGED:
-        if (user.kycStatus == KycStatus.NA && dto.data.kycStatus == KycStatus.LIGHT) {
+        // send notification on KYC completed
+        if (user.kycStatus === KycStatus.NA && KycCompleted(dto.data.kycStatus)) {
           if (user.mail) {
             await this.notificationService.sendMail({
               type: MailType.USER,
@@ -67,20 +69,43 @@ export class KycController {
             console.error(`Failed to send KYC completion mail for user ${user.id}: user has no email`);
           }
         }
+
+        // ignore rejected KYC, if already completed
+        if (user.hasKyc && dto.data.kycStatus === KycStatus.REJECTED) {
+          console.info('Ignored rejected KYC because KYC is already completed');
+          return;
+        }
+
         await this.userService.updateUser(user.id, dto.data);
         break;
+
       case KycResult.FAILED:
+        if (user.mail) {
+          await this.notificationService.sendMail({
+            type: MailType.USER,
+            input: {
+              user,
+              translationKey: 'mail.kyc.failed',
+              translationParams: {
+                url: Config.kyc.frontendUrl(user.kycHash),
+              },
+            },
+          });
+        } else {
+          console.error(`Failed to send KYC failed mail for user ${user.id}: user has no email`);
+        }
         // notify support
         await this.notificationService.sendMail({ type: MailType.KYC_SUPPORT, input: { user } });
         console.error(`Received KYC failed webhook for user with KYC ID ${dto.id}`);
         break;
+
       default:
         console.error(`Received KYC webhook with invalid result ${dto.result}`);
     }
   }
 
   private checkIp(ip: string, data: any) {
-    if (!Config.kyc.allowedWebhookIps.includes('*') && !Config.kyc.allowedWebhookIps.includes(ip)) {
+    if (!Config.kyc.allowedWebhookIps.includes('*') && !Config.kyc.allowedWebhookIps.some((ai) => ip.includes(ai))) {
       console.error(`Received webhook call from invalid IP ${ip}:`, data);
       throw new ForbiddenException('Invalid source IP');
     }

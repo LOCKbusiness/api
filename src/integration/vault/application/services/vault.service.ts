@@ -15,6 +15,10 @@ export class VaultService {
     return this.repository.findOne({ where: { address, vault } });
   }
 
+  async getAllAddresses(): Promise<string[]> {
+    return this.repository.find().then((vaults) => vaults.map((v) => v.address));
+  }
+
   async getActiveCount(): Promise<number> {
     return this.repository.count({ where: { vault: Not(IsNull()) } });
   }
