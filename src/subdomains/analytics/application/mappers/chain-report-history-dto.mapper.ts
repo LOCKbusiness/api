@@ -44,15 +44,15 @@ export class ChainReportHistoryDtoMapper {
     return rewards
       .filter((c) => c.status === RewardStatus.CONFIRMED)
       .map((c) => ({
-        timestamp: c.reinvestOutputDate ?? c.updated,
+        timestamp: c.outputDate ?? c.updated,
         transactionType: ChainReportTransactionType.STAKING,
-        inputAmount: c.amount,
-        inputAsset: this.getAssetSymbolChainReport(c.asset),
+        inputAmount: c.inputReferenceAmount,
+        inputAsset: this.getAssetSymbolChainReport(c.referenceAsset),
         outputAmount: null,
         outputAsset: null,
         feeAmount: null,
         feeAsset: null,
-        txId: c.reinvestTxId,
+        txId: c.txId,
         description: 'LOCK Staking Reward',
       }));
   }
