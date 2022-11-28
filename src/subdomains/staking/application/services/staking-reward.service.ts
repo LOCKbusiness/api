@@ -30,7 +30,6 @@ export class StakingRewardService {
 
     const reward = await this.factory.createReward(staking, dto);
 
-    // TODO -> this method might not be needed
     staking.addReward(reward);
 
     await this.repository.save(staking);
@@ -45,7 +44,6 @@ export class StakingRewardService {
     if (!this.lock.acquire()) return;
 
     try {
-      // TODO -> preparation is not needed, but will be required later
       await this.batchService.batchRewardsByAssets();
       await this.dexService.secureLiquidity();
       await this.outService.payoutRewards();

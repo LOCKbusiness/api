@@ -195,9 +195,11 @@ export class Staking extends IEntity {
   calculateFiatReferences(prices: Price[]): this {
     const deposits = this.getDepositsWithoutFiatReferences();
     const withdrawals = this.getWithdrawalsWithoutFiatReferences();
+    const rewards = this.getRewardsWithoutFiatReferences();
 
     deposits.forEach((d) => d.calculateFiatReferences(prices));
     withdrawals.forEach((w) => w.calculateFiatReferences(prices));
+    rewards.forEach((r) => r.calculateFiatReferences(prices));
 
     return this;
   }
@@ -269,6 +271,12 @@ export class Staking extends IEntity {
     return this.withdrawals.filter(
       (w) =>
         (w.amountChf == null || w.amountEur == null || w.amountUsd == null) && w.status === WithdrawalStatus.CONFIRMED,
+    );
+  }
+
+  getRewardsWithoutFiatReferences(): Reward[] {
+    return this.rewards.filter(
+      (w) => (w.amountChf == null || w.amountEur == null || w.amountUsd == null) && w.status === RewardStatus.CONFIRMED,
     );
   }
 

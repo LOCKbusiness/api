@@ -1,5 +1,7 @@
+import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { IEntity } from 'src/shared/models/entity';
+import { Price } from 'src/shared/models/price';
 import { Util } from 'src/shared/util';
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { RewardStatus } from '../enums';
@@ -67,6 +69,35 @@ export class Reward extends IEntity {
   @Column({ type: 'float', nullable: false, default: 0 })
   amountChf: number;
 
+  //*** FACTORY METHODS ***//
+
+  static create(
+    staking: Staking,
+    referenceAsset: Asset,
+    inputReferenceAmount: number,
+    outputReferenceAmount: number,
+    feePercent: number,
+    feeAmount: number,
+    targetAsset: Asset,
+    targetAddress: string,
+  ): Reward {
+    const reward = new Reward();
+
+    reward.status = RewardStatus.CREATED;
+    reward.staking = staking;
+    reward.referenceAsset = referenceAsset;
+    reward.inputReferenceAmount = inputReferenceAmount;
+    reward.outputReferenceAmount = outputReferenceAmount;
+    reward.feePercent = feePercent;
+    reward.feeAmount = feeAmount;
+    reward.targetAsset = targetAsset;
+    reward.targetAddress = targetAddress;
+
+    reward.isReinvest = targetAddress === staking.depositAddress.address;
+
+    return reward;
+  }
+
   //*** PUBLIC API ***//
 
   calculateOutputAmount(batchReferenceAmount: number, batchTargetAmount: number): this {
@@ -87,5 +118,26 @@ export class Reward extends IEntity {
     return this;
   }
 
-  //*** HELPER METHODS ***//
+  calculateFiatReferences(prices: Price[]): this {
+    this.amountChf = Staking.calculateFiatReferenceAmount(
+      Fiat.CHF,
+      this.referenceAsset.name,
+      this.outputReferenceAmount,
+      prices,
+    );
+    this.amountUsd = Staking.calculateFiatReferenceAmount(
+      Fiat.USD,
+      this.referenceAsset.name,
+      this.outputReferenceAmount,
+      prices,
+    );
+    this.amountEur = Staking.calculateFiatReferenceAmount(
+      Fiat.EUR,
+      this.referenceAsset.name,
+      this.outputReferenceAmount,
+      prices,
+    );
+
+    return this;
+  }
 }

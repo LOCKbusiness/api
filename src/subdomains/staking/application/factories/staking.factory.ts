@@ -6,15 +6,13 @@ import { Reward } from '../../domain/entities/reward.entity';
 import { StakingBlockchainAddress } from '../../domain/entities/staking-blockchain-address.entity';
 import { Staking, StakingType } from '../../domain/entities/staking.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
-import { RewardStatus } from '../../domain/enums';
 import { CreateDepositDto } from '../dto/input/create-deposit.dto';
 import { CreateRewardDto } from '../dto/input/create-reward.dto';
 import { CreateWithdrawalDraftDto } from '../dto/input/create-withdrawal-draft.dto';
-import { RewardRepository } from '../repositories/reward.repository';
 
 @Injectable()
 export class StakingFactory {
-  constructor(private readonly repo: RewardRepository, private readonly assetService: AssetService) {}
+  constructor(private readonly assetService: AssetService) {}
 
   createStaking(
     userId: number,
@@ -55,9 +53,8 @@ export class StakingFactory {
       throw new BadRequestException('Provided asset ID(s) not found in the database');
     }
 
-    return this.repo.create({
+    return Reward.create(
       staking,
-      status: RewardStatus.CREATED,
       referenceAsset,
       inputReferenceAmount,
       outputReferenceAmount,
@@ -65,6 +62,6 @@ export class StakingFactory {
       feeAmount,
       targetAsset,
       targetAddress,
-    });
+    );
   }
 }
