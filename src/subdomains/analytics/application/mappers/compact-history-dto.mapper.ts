@@ -15,8 +15,6 @@ export class CompactHistoryDtoMapper {
     [WithdrawalStatus.CONFIRMED]: CompactHistoryStatus.CONFIRMED,
     [WithdrawalStatus.FAILED]: CompactHistoryStatus.FAILED,
     [RewardStatus.CREATED]: null,
-    [RewardStatus.PREPARATION_PENDING]: CompactHistoryStatus.PENDING,
-    [RewardStatus.PREPARATION_CONFIRMED]: CompactHistoryStatus.PENDING,
     [RewardStatus.CONFIRMED]: CompactHistoryStatus.CONFIRMED,
   };
 
