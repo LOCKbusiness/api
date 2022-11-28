@@ -34,6 +34,8 @@ import { RewardBatchRepository } from './application/repositories/reward-batch.r
 import { RewardRepository } from './application/repositories/reward.repository';
 import { StakingRewardNotificationService } from './application/services/staking-reward-notification.service';
 import { StakingFiatReferenceService } from './application/services/staking-fiat-reference.service';
+import { DexModule } from '../dex/dex.module';
+import { PayoutModule } from '../payout/payout.module';
 
 @Module({
   imports: [
@@ -50,6 +52,8 @@ import { StakingFiatReferenceService } from './application/services/staking-fiat
     SharedModule,
     UserModule,
     PayInModule,
+    DexModule,
+    PayoutModule,
     IntegrationModule,
   ],
   controllers: [
