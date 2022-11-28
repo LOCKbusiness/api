@@ -15,4 +15,7 @@ export class StakingAnalyticsOutputDto {
 
   @ApiProperty()
   tvl: number;
+
+  @ApiProperty()
+  asset: string;
 }
