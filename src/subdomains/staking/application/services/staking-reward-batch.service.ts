@@ -19,7 +19,7 @@ export class StakingRewardBatchService {
           outputReferenceAmount: Not(IsNull()),
           targetAsset: IsNull(),
           batch: IsNull(),
-          status: RewardStatus.CREATED,
+          status: RewardStatus.PREPARATION_CONFIRMED,
         },
         relations: ['staking', 'batch'],
       });

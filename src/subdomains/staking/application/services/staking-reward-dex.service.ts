@@ -1,4 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
+import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
+import { Config } from 'src/config/config';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
+import { Util } from 'src/shared/util';
 import { LiquidityOrderContext } from 'src/subdomains/dex/entities/liquidity-order.entity';
 import { LiquidityOrderNotReadyException } from 'src/subdomains/dex/exceptions/liquidity-order-not-ready.exception';
 import { NotEnoughLiquidityException } from 'src/subdomains/dex/exceptions/not-enough-liquidity.exception';
@@ -6,16 +11,35 @@ import { PriceSlippageException } from 'src/subdomains/dex/exceptions/price-slip
 import { PurchaseLiquidityRequest, ReserveLiquidityRequest } from 'src/subdomains/dex/interfaces';
 import { DexService } from 'src/subdomains/dex/services/dex.service';
 import { RewardBatch, RewardBatchStatus } from '../../domain/entities/reward-batch.entity';
+import { Reward } from '../../domain/entities/reward.entity';
+import { RewardStatus } from '../../domain/enums';
 import { RewardBatchRepository } from '../repositories/reward-batch.repository';
+import { RewardRepository } from '../repositories/reward.repository';
 import { StakingRewardNotificationService } from './staking-reward-notification.service';
 
 @Injectable()
 export class StakingRewardDexService {
+  #rewClient: DeFiClient;
+
   constructor(
+    private readonly rewardRepo: RewardRepository,
     private readonly rewardBatchRepo: RewardBatchRepository,
     private readonly rewardNotificationService: StakingRewardNotificationService,
     private readonly dexService: DexService,
-  ) {}
+    nodeService: NodeService,
+  ) {
+    nodeService.getConnectedNode(NodeType.REW).subscribe((client) => (this.#rewClient = client));
+  }
+
+  async prepareDfiToken(): Promise<void> {
+    const newRewards = await this.rewardRepo.find({ status: RewardStatus.CREATED });
+
+    const dfiAmount = this.getDfiAmountFromNewRewards(newRewards);
+
+    await this.designateRewardsPreparation(newRewards);
+    await this.swapDfiToken(dfiAmount);
+    await this.confirmRewardsForProcessing(newRewards);
+  }
 
   async secureLiquidity(): Promise<void> {
     try {
@@ -33,6 +57,35 @@ export class StakingRewardDexService {
       await this.processNewBatches(newBatches);
     } catch (e) {
       console.error(e);
+    }
+  }
+
+  //*** HELPER METHODS ***//
+
+  private getDfiAmountFromNewRewards(rewards: Reward[]): number {
+    const dfiRewards = rewards.filter(
+      (r) => r.referenceAsset.name === 'DFI' && r.referenceAsset.blockchain === Blockchain.DEFICHAIN,
+    );
+
+    return Util.sumObj<Reward>(dfiRewards, 'outputReferenceAmount');
+  }
+
+  private async designateRewardsPreparation(rewards: Reward[]): Promise<void> {
+    for (const reward of rewards) {
+      reward.designateRewardsPreparation();
+      await this.rewardRepo.save(reward);
+    }
+  }
+
+  private async swapDfiToken(dfiAmount: number): Promise<void> {
+    const swapTxId = await this.#rewClient.toToken(Config.blockchain.default.rewWalletAddress, dfiAmount);
+    await this.#rewClient.waitForTx(swapTxId);
+  }
+
+  private async confirmRewardsForProcessing(rewards: Reward[]): Promise<void> {
+    for (const reward of rewards) {
+      reward.confirmRewardsPreparation();
+      await this.rewardRepo.save(reward);
     }
   }
 
