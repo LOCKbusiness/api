@@ -7,9 +7,10 @@ import { StakingAnalyticsRepository } from './application/repositories/staking-a
 import { StakingHistoryService } from './application/services/staking-history.service';
 import { StakingAnalyticsService } from './application/services/staking-analytics.service';
 import { SharedModule } from 'src/shared/shared.module';
+import { IntegrationModule } from 'src/integration/integration.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([StakingAnalyticsRepository]), StakingModule, SharedModule],
+  imports: [TypeOrmModule.forFeature([StakingAnalyticsRepository]), IntegrationModule, StakingModule, SharedModule],
   controllers: [StakingAnalyticsController, HistoryController],
   providers: [StakingAnalyticsService, StakingHistoryService],
   exports: [],

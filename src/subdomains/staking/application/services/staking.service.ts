@@ -124,6 +124,16 @@ export class StakingService {
     return rewardVolume / Util.daysDiff(dateFrom, dateTo);
   }
 
+  async getCurrentTotalStakingBalance({ asset, strategy }: StakingType): Promise<number> {
+    return this.repository
+      .createQueryBuilder('staking')
+      .select('SUM(balance)', 'balance')
+      .where('staking.assetId = :id', { id: asset.id })
+      .andWhere('staking.strategy = :strategy', { strategy })
+      .getRawOne<{ balance: number }>()
+      .then((b) => b.balance);
+  }
+
   //*** HELPER METHODS ***//
 
   private async createStaking(userId: number, walletId: number, type: StakingType): Promise<Staking> {
@@ -143,16 +153,6 @@ export class StakingService {
     const withdrawalsFromDate = (await this.getTotalWithdrawalsSince(type, date)) ?? 0;
 
     return currentBalance - depositsFromDate + withdrawalsFromDate;
-  }
-
-  private async getCurrentTotalStakingBalance({ asset, strategy }: StakingType): Promise<number> {
-    return this.repository
-      .createQueryBuilder('staking')
-      .select('SUM(balance)', 'balance')
-      .where('staking.assetId = :id', { id: asset.id })
-      .andWhere('staking.strategy = :strategy', { strategy })
-      .getRawOne<{ balance: number }>()
-      .then((b) => b.balance);
   }
 
   private async getTotalDepositsSince({ asset, strategy }: StakingType, date: Date): Promise<number> {

@@ -8,6 +8,9 @@ export class StakingAnalyticsOutputDtoMapper {
     dto.updated = analytics.updated;
     dto.apr = analytics.apr;
     dto.apy = analytics.apy;
+    dto.operatorCount = analytics.operatorCount;
+    dto.tvl = analytics.tvl;
+    dto.asset = analytics.asset.name;
 
     return dto;
   }
