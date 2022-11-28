@@ -23,13 +23,17 @@ describe('StakingAnalytics', () => {
     it('calculates APR and APY', () => {
       const averageBalance = 100;
       const averageReward = 0.28;
+      const operatorCount = 3;
+      const tvl = 100;
 
       const analytics = new StakingAnalytics();
 
-      const updatedAnalytics = analytics.updateAnalytics(averageBalance, averageReward);
+      const updatedAnalytics = analytics.updateAnalytics(averageBalance, averageReward, operatorCount, tvl);
 
       expect(updatedAnalytics.apr).toBe(1.022);
       expect(updatedAnalytics.apy).toBe(1.775);
+      expect(updatedAnalytics.operatorCount).toBe(3);
+      expect(updatedAnalytics.tvl).toBe(100);
     });
   });
 });

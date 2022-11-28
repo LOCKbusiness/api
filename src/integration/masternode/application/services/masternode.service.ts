@@ -26,7 +26,7 @@ export class MasternodeService {
   private client: DeFiClient;
 
   constructor(
-    private readonly masternodeRepo: MasternodeRepository,
+    private readonly repository: MasternodeRepository,
     private readonly masternodeOwnerService: MasternodeOwnerService,
     private readonly http: HttpService,
     private readonly settingService: SettingService,
@@ -43,7 +43,7 @@ export class MasternodeService {
     try {
       if (!Config.mydefichain.username) return;
 
-      const masternodeOperators = await this.masternodeRepo.find({
+      const masternodeOperators = await this.repository.find({
         select: ['operator'],
       });
 
@@ -56,8 +56,8 @@ export class MasternodeService {
         );
 
         for (const operator of missingOperators) {
-          const newOperator = this.masternodeRepo.create({ operator, server });
-          await this.masternodeRepo.save(newOperator);
+          const newOperator = this.repository.create({ operator, server });
+          await this.repository.save(newOperator);
         }
       }
     } catch (e) {
@@ -70,14 +70,14 @@ export class MasternodeService {
   async masternodeBlockCheck(): Promise<void> {
     if (Config.processDisabled(Process.MASTERNODE)) return;
 
-    const masternodeWithoutBlocks = await this.masternodeRepo.find({
+    const masternodeWithoutBlocks = await this.repository.find({
       where: { firstBlockFound: IsNull(), creationHash: Not(IsNull()) },
     });
     for (const masternode of masternodeWithoutBlocks) {
       try {
         const masternodeInfo = await this.client.getMasternodeInfo(masternode.creationHash);
         if (masternodeInfo.mintedBlocks > 0)
-          await this.masternodeRepo.update(masternode.id, { firstBlockFound: new Date() });
+          await this.repository.update(masternode.id, { firstBlockFound: new Date() });
       } catch (e) {
         console.error(`Exception during masternode block check with masternode id: ${masternode.id}. Error:`, e);
       }
@@ -86,7 +86,7 @@ export class MasternodeService {
 
   // --- PUBLIC METHODS --- //
   async getIdleMasternodes(count: number): Promise<Masternode[]> {
-    const masternodes = await this.masternodeRepo.find({
+    const masternodes = await this.repository.find({
       where: { state: MasternodeState.IDLE },
       take: count,
     });
@@ -101,7 +101,7 @@ export class MasternodeService {
   }
 
   async getNewOwners(count: number): Promise<MasternodeOwnerDto[]> {
-    const masternodes = await this.masternodeRepo.find({
+    const masternodes = await this.repository.find({
       where: { owner: Not(IsNull()) },
     });
     const owners = this.masternodeOwnerService.provide(
@@ -128,28 +128,23 @@ export class MasternodeService {
         node.owner = info.address;
         node.ownerWallet = info.wallet;
         node.timeLock = timeLock;
-        return this.masternodeRepo.save(node);
+        return this.repository.save(node);
       }),
     );
 
     return masternodes;
   }
 
-  async getActiveCount(date: Date = new Date()): Promise<number> {
-    return this.masternodeRepo.count({
-      where: [
-        { creationDate: LessThan(date), resignDate: IsNull() },
-        { creationDate: LessThan(date), resignDate: MoreThan(date) },
-      ],
-    });
+  async getActiveCount(): Promise<number> {
+    return this.repository.count({ where: { creationHash: Not(IsNull()), resignHash: IsNull() } });
   }
 
   async getActive(): Promise<Masternode[]> {
-    return this.masternodeRepo.find({ where: { creationHash: Not(IsNull()), resignHash: IsNull() } });
+    return this.repository.find({ where: { creationHash: Not(IsNull()), resignHash: IsNull() } });
   }
 
   async getAllVotersAt(date: Date): Promise<Masternode[]> {
-    return this.masternodeRepo.find({
+    return this.repository.find({
       where: [
         { firstBlockFound: LessThan(date), resignDate: IsNull() },
         { firstBlockFound: LessThan(date), resignDate: MoreThan(date) },
@@ -158,7 +153,7 @@ export class MasternodeService {
   }
 
   async getAllWithStates(states: MasternodeState[]): Promise<Masternode[]> {
-    return this.masternodeRepo.find({
+    return this.repository.find({
       where: {
         state: In(states),
       },
@@ -192,7 +187,7 @@ export class MasternodeService {
 
   // get unpaid fee in DFI
   async getUnpaidFee(): Promise<number> {
-    const unpaidMasternodeFee = await this.masternodeRepo.count({
+    const unpaidMasternodeFee = await this.repository.count({
       where: { creationHash: Not(IsNull()), creationFeePaid: false },
     });
     return unpaidMasternodeFee * Config.masternode.fee;
@@ -200,7 +195,7 @@ export class MasternodeService {
 
   // add masternode creationFee
   async addFee(paidFee: number): Promise<void> {
-    const unpaidMasternodes = await this.masternodeRepo.find({
+    const unpaidMasternodes = await this.repository.find({
       where: { creationHash: Not(IsNull()), creationFeePaid: false },
     });
 
@@ -209,7 +204,7 @@ export class MasternodeService {
       throw new BadRequestException(`Fee amount not divisible by ${Config.masternode.fee}`);
 
     for (const mn of unpaidMasternodes.slice(0, paidMasternodeCount)) {
-      await this.masternodeRepo.update(mn.id, { creationFeePaid: true });
+      await this.repository.update(mn.id, { creationFeePaid: true });
     }
   }
 
@@ -221,7 +216,7 @@ export class MasternodeService {
     timeLock: MasternodeTimeLock,
     accountIndex: number,
   ): Promise<void> {
-    const masternode = await this.masternodeRepo.findOne(id);
+    const masternode = await this.repository.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
 
     masternode.state = MasternodeState.ENABLING;
@@ -230,11 +225,11 @@ export class MasternodeService {
     masternode.timeLock = timeLock;
     masternode.accountIndex = accountIndex;
 
-    await this.masternodeRepo.save(masternode);
+    await this.repository.save(masternode);
   }
 
   async preEnabled(id: number, txId: string): Promise<void> {
-    const masternode = await this.masternodeRepo.findOne(id);
+    const masternode = await this.repository.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (masternode.creationHash) throw new ConflictException('Masternode already created');
 
@@ -242,30 +237,30 @@ export class MasternodeService {
     masternode.creationHash = txId;
     masternode.creationDate = new Date();
 
-    await this.masternodeRepo.save(masternode);
+    await this.repository.save(masternode);
   }
 
   async enabled(id: number): Promise<void> {
-    const masternode = await this.masternodeRepo.findOne(id);
+    const masternode = await this.repository.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
 
     masternode.state = MasternodeState.ENABLED;
 
-    await this.masternodeRepo.save(masternode);
+    await this.repository.save(masternode);
   }
 
   async resigning(id: number): Promise<void> {
-    const masternode = await this.masternodeRepo.findOne(id);
+    const masternode = await this.repository.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (masternode.state !== MasternodeState.ENABLED) throw new ConflictException('Masternode not yet created');
 
     masternode.state = MasternodeState.RESIGNING;
 
-    await this.masternodeRepo.save(masternode);
+    await this.repository.save(masternode);
   }
 
   async preResigned(id: number, txId: string): Promise<void> {
-    const masternode = await this.masternodeRepo.findOne(id);
+    const masternode = await this.repository.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (!masternode.creationHash) throw new ConflictException('Masternode not yet created');
     if (masternode.resignHash) throw new ConflictException('Masternode already resigned');
@@ -274,25 +269,25 @@ export class MasternodeService {
     masternode.resignHash = txId;
     masternode.resignDate = new Date();
 
-    await this.masternodeRepo.save(masternode);
+    await this.repository.save(masternode);
   }
 
   async movingCollateral(id: number): Promise<void> {
-    const masternode = await this.masternodeRepo.findOne(id);
+    const masternode = await this.repository.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
 
     masternode.state = MasternodeState.MOVING_COLLATERAL;
 
-    await this.masternodeRepo.save(masternode);
+    await this.repository.save(masternode);
   }
 
   async resigned(id: number): Promise<void> {
-    const masternode = await this.masternodeRepo.findOne(id);
+    const masternode = await this.repository.findOne(id);
     if (!masternode) throw new NotFoundException('Masternode not found');
 
     masternode.state = MasternodeState.RESIGNED;
 
-    await this.masternodeRepo.save(masternode);
+    await this.repository.save(masternode);
   }
 
   // --- HELPER METHODS --- //

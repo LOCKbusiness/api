@@ -3,8 +3,8 @@ import BigNumber from 'bignumber.js';
 import { TokenProviderService } from 'src/blockchain/ain/whale/token-provider.service';
 import { Config } from 'src/config/config';
 import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
-import { VaultService } from 'src/subdomains/yield-machine/application/services/vault.service';
-import { Vault } from 'src/subdomains/yield-machine/domain/entities/vault.entity';
+import { VaultService } from 'src/integration/vault/application/services/vault.service';
+import { Vault } from 'src/integration/vault/domain/entities/vault.entity';
 import { TransactionCommand } from '../../domain/enums';
 import {
   AddPoolLiquidityParameters,
