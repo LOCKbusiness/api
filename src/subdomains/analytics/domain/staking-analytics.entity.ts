@@ -28,8 +28,9 @@ export class StakingAnalytics extends IEntity {
   //*** PUBLIC API ***//
 
   updateAnalytics(averageBalance: number, averageRewards: number, operatorCount: number, tvl: number): this {
-    this.apr = this.calculateApr(averageBalance, averageRewards);
-    this.apy = this.calculateApy(this.apr);
+    this.apr =
+      this.strategy === StakingStrategy.MASTERNODE ? this.calculateApr(averageBalance, averageRewards) : this.apr;
+    this.apy = this.strategy === StakingStrategy.MASTERNODE ? this.calculateApy(this.apr) : this.apy;
     this.operatorCount = operatorCount;
     this.tvl = tvl;
     return this;
