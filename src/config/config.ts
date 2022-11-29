@@ -109,6 +109,13 @@ export class Configuration {
       'By_signing_this_message,_you_confirm_to_LOCK_that_you_are_the_sole_owner_of_the_provided_Blockchain_address._Your_ID:_',
   };
 
+  azure = {
+    subscriptionId: process.env.AZURE_SUBSCRIPTION_ID,
+    tenantId: process.env.AZURE_TENANT_ID,
+    clientId: process.env.AZURE_CLIENT_ID,
+    clientSecret: process.env.AZURE_CLIENT_SECRET,
+  };
+
   blockchain = {
     minFeeRate: 0.00001,
     minFeeBuffer: 0.1,

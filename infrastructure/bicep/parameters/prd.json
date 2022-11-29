@@ -97,6 +97,18 @@
     },
     "kycWalletId": {
       "value": 7
+    },
+    "azureSubscriptionId": {
+      "value": "xxx"
+    },
+    "azureTenantId": {
+      "value": "xxx"
+    },
+    "azureClientId": {
+      "value": "xxx"
+    },
+    "azureClientSecret": {
+      "value": "xxx"
     }
   }
 }
