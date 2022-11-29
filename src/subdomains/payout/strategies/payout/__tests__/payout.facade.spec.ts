@@ -4,6 +4,7 @@ import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { AssetType } from 'src/shared/models/asset/asset.entity';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { createCustomAsset } from 'src/shared/models/asset/__mocks__/asset.entity.mock';
+import { SettingService } from 'src/shared/services/setting.service';
 import { DexService } from 'src/subdomains/dex/services/dex.service';
 import { PayoutOrderRepository } from '../../../repositories/payout-order.repository';
 import { PayoutDeFiChainService } from '../../../services/payout-defichain.service';
@@ -30,13 +31,14 @@ describe('PayoutStrategiesFacade', () => {
       mock<PayoutDeFiChainService>(),
       mock<PayoutOrderRepository>(),
       mock<AssetService>(),
+      mock<SettingService>(),
     );
 
     facade = new PayoutStrategiesFacadeWrapper(deFiChainCoin, deFiChainToken);
   });
 
   describe('#constructor(...)', () => {
-    it('adds all payoutStrategies to a map', () => {
+    it('adds all payoutStrategies to a  map', () => {
       expect([...facade.getStrategies().entries()].length).toBe(2);
     });
 
