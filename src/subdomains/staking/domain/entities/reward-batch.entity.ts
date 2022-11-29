@@ -87,70 +87,6 @@ export class RewardBatch extends IEntity {
 
   //*** HELPER METHODS ***//
 
-  private isEnoughToSecureBatch(amount: number): boolean {
-    return amount >= this.outputReferenceAmount;
-  }
-
-  private isEnoughToSecureAtLeastOneTransaction(amount: number, bufferCap = 0): boolean {
-    // configurable reserve cap, because purchasable amounts are indicative and may be different on actual purchase
-    return amount >= this.smallestTransactionReferenceAmount * (1 + bufferCap);
-  }
-
-  private isWholeBatchAmountPurchasable(maxPurchasableAmount: number, bufferCap = 0): boolean {
-    // configurable reserve cap, because purchasable amounts are indicative and may be different on actual purchase
-    return maxPurchasableAmount >= this.outputReferenceAmount * (1 + bufferCap);
-  }
-
-  private reBatchToMaxReferenceAmount(liquidityLimit: number, bufferCap = 0): this {
-    if (this.id || this.created) throw new Error(`Cannot re-batch previously saved batch. Batch ID: ${this.id}`);
-
-    const currentTransactions = this.sortTransactionsAsc();
-    const reBatchTransactions = [];
-    let requiredLiquidity = 0;
-
-    for (const tx of currentTransactions) {
-      requiredLiquidity += tx.outputReferenceAmount;
-
-      // configurable reserve cap, because purchasable amounts are indicative and may be different on actual purchase
-      if (requiredLiquidity <= liquidityLimit * (1 - bufferCap)) {
-        reBatchTransactions.push(tx);
-        continue;
-      }
-
-      break;
-    }
-
-    if (reBatchTransactions.length === 0) {
-      const { name, type, blockchain } = this.targetAsset;
-
-      throw new Error(
-        `Cannot re-batch transactions in batch, liquidity limit is too low. Out asset: ${name} ${type} ${blockchain}`,
-      );
-    }
-
-    this.overwriteTransactions(reBatchTransactions);
-
-    return this;
-  }
-
-  private overwriteTransactions(overwriteRewards: Reward[]): void {
-    if (this.id || this.created) {
-      throw new Error(`Cannot overwrite transactions of previously saved batch. Batch ID: ${this.id}`);
-    }
-
-    this.resetBatch();
-    overwriteRewards.forEach((tx) => this.addTransaction(tx));
-  }
-
-  private resetBatch(): void {
-    if (this.id || this.created) {
-      throw new Error(`Cannot reset previously saved batch. Batch ID: ${this.id}`);
-    }
-
-    this.rewards = [];
-    this.outputReferenceAmount = 0;
-  }
-
   private fixRoundingMismatch(): void {
     const transactionsTotal = Util.sumObj<Reward>(this.rewards, 'targetAmount');
 
@@ -181,9 +117,5 @@ export class RewardBatch extends IEntity {
     } else {
       throw new Error(`Output amount mismatch is too high. Mismatch: ${mismatch} ${this.targetAsset.name}`);
     }
-  }
-
-  private sortTransactionsAsc(): Reward[] {
-    return this.rewards.sort((a, b) => a.outputReferenceAmount - b.outputReferenceAmount);
   }
 }

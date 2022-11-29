@@ -216,7 +216,6 @@ export class DexDeFiChainService {
 
   private async getPurchasableAmount(swapAsset: Asset, targetAsset: Asset): Promise<number> {
     try {
-      console.log('swapAsset', swapAsset);
       const availableAmount = await this.getAssetAvailability(swapAsset);
 
       if (!availableAmount) return 0;

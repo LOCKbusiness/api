@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { NotificationService } from 'src/integration/notification/services/notification.service';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { AssetService } from 'src/shared/models/asset/asset.service';
+import { SettingService } from 'src/shared/services/setting.service';
 import { DexService } from 'src/subdomains/dex/services/dex.service';
 import { PayoutOrderContext, PayoutOrder } from '../../../entities/payout-order.entity';
 import { FeeResult } from '../../../interfaces';
@@ -20,6 +21,7 @@ export class DeFiChainTokenStrategy extends JellyfishStrategy {
     protected readonly jellyfishService: PayoutDeFiChainService,
     protected readonly payoutOrderRepo: PayoutOrderRepository,
     protected readonly assetService: AssetService,
+    private readonly settingService: SettingService,
   ) {
     super(notificationService, payoutOrderRepo, jellyfishService);
   }
@@ -72,6 +74,8 @@ export class DeFiChainTokenStrategy extends JellyfishStrategy {
   }
 
   private async checkUtxoForGroup(orders: PayoutOrder[]): Promise<void> {
+    if ((await this.settingService.get('check-min-utxo-on-payout')) !== 'on') return;
+
     for (const order of orders) {
       if (this.isEligibleForMinimalUtxo(order.destinationAddress)) {
         await this.checkUtxo(order.destinationAddress);
