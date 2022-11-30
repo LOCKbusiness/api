@@ -54,6 +54,12 @@ param forwardPhrase string
 
 param kycWalletId int
 
+param azureSubscriptionId string
+param azureTenantId string
+param azureClientId string
+@secure()
+param azureClientSecret string
+
 // --- VARIABLES --- //
 var compName = 'lock'
 var apiName = 'api'
@@ -391,6 +397,22 @@ resource apiAppService 'Microsoft.Web/sites@2018-11-01' = if (env != 'loc') {
         {
           name: 'KYC_WALLET_ID'
           value: kycWalletId
+        }
+        {
+          name: 'AZURE_SUBSCRIPTION_ID'
+          value: azureSubscriptionId
+        }
+        {
+          name: 'AZURE_TENANT_ID'
+          value: azureTenantId
+        }
+        {
+          name: 'AZURE_CLIENT_ID'
+          value: azureClientId
+        }
+        {
+          name: 'AZURE_CLIENT_SECRET'
+          value: azureClientSecret
         }
       ]
     }
