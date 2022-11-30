@@ -95,9 +95,6 @@
     "forwardPhrase": {
       "value": "xxx"
     },
-    "kycWalletId": {
-      "value": 7
-    },
     "azureSubscriptionId": {
       "value": "xxx"
     },
@@ -109,6 +106,9 @@
     },
     "azureClientSecret": {
       "value": "xxx"
+    },
+    "kycWalletId": {
+      "value": 7
     }
   }
 }
