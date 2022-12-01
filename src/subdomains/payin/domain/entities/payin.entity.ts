@@ -1,7 +1,7 @@
 import { Asset } from 'src/shared/models/asset/asset.entity';
+import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 import { IEntity } from 'src/shared/models/entity';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
-import { PayInBlockchainAddress } from './payin-blockchain-address.entity';
+import { Column, Entity, ManyToOne } from 'typeorm';
 
 export enum PayInPurpose {
   STAKING = 'Staking',
@@ -24,9 +24,8 @@ export class PayIn extends IEntity {
   @Column()
   txType: string;
 
-  @ManyToOne(() => PayInBlockchainAddress, { nullable: false, eager: true, cascade: true })
-  @JoinColumn()
-  address: PayInBlockchainAddress;
+  @Column(() => BlockchainAddress)
+  address: BlockchainAddress;
 
   @Column({ nullable: true })
   returnTxId: string;
@@ -46,7 +45,7 @@ export class PayIn extends IEntity {
   //*** FACTORY METHODS ***//
 
   static create(
-    address: PayInBlockchainAddress,
+    address: BlockchainAddress,
     txType: string,
     txId: string,
     blockHeight: number,

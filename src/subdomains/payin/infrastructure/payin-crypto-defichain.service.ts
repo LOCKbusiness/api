@@ -5,8 +5,8 @@ import { Config } from 'src/config/config';
 import { AccountHistory as JellyAccountHistory } from '@defichain/jellyfish-api-core/dist/category/account';
 import { PayInTransaction } from '../application/interfaces';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { PayInBlockchainAddress } from '../domain/entities/payin-blockchain-address.entity';
 import { AssetType } from 'src/shared/models/asset/asset.entity';
+import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 
 interface HistoryAmount {
   amount: number;
@@ -82,7 +82,7 @@ export class PayInDeFiChainService {
 
   private mapHistoriesToTransactions(histories: AccountHistory[]): PayInTransaction[] {
     return histories.map((h) => ({
-      address: PayInBlockchainAddress.create(h.owner, Blockchain.DEFICHAIN),
+      address: BlockchainAddress.create(h.owner, Blockchain.DEFICHAIN),
       type: h.type,
       txId: h.txid,
       blockHeight: h.blockHeight,

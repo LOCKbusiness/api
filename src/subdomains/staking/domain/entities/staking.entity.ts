@@ -2,17 +2,17 @@ import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { Deposit } from './deposit.entity';
 import { Reward } from './reward.entity';
 import { Withdrawal } from './withdrawal.entity';
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { IEntity } from 'src/shared/models/entity';
 import { DepositStatus, RewardStatus, StakingStatus, StakingStrategy, WithdrawalStatus } from '../enums';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Util } from 'src/shared/util';
-import { StakingBlockchainAddress } from './staking-blockchain-address.entity';
-import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wallet-blockchain-address.entity';
 import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Price } from 'src/shared/models/price';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { AssetQuery } from 'src/shared/models/asset/asset.service';
+import { RewardRoute } from './reward-route.entity';
+import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 
 export interface StakingType {
   asset: Asset;
@@ -41,22 +41,20 @@ export class Staking extends IEntity {
   @Column({ type: 'float', nullable: false, default: 0 })
   balance: number;
 
-  @OneToOne(() => StakingBlockchainAddress, { eager: true, nullable: false })
-  @JoinColumn()
-  depositAddress: StakingBlockchainAddress;
+  @Column(() => BlockchainAddress)
+  depositAddress: BlockchainAddress;
 
   @OneToMany(() => Deposit, (deposit) => deposit.staking, { eager: true, cascade: true })
   deposits: Deposit[];
 
-  @ManyToOne(() => WalletBlockchainAddress, { eager: true, nullable: false })
-  withdrawalAddress: WalletBlockchainAddress;
+  @Column(() => BlockchainAddress)
+  withdrawalAddress: BlockchainAddress;
 
   @OneToMany(() => Withdrawal, (withdrawal) => withdrawal.staking, { eager: true, cascade: true })
   withdrawals: Withdrawal[];
 
-  // TODO -> this is not needed, just send to whatever provided in reward, this is a BlockchainAddress -> RewardBlockchainAddress
-  @ManyToOne(() => WalletBlockchainAddress, { eager: true, nullable: false })
-  rewardsPayoutAddress: WalletBlockchainAddress;
+  @ManyToOne(() => RewardRoute, { eager: true, nullable: false })
+  rewardRoutes: RewardRoute[];
 
   @OneToMany(() => Reward, (reward) => reward.staking, { cascade: true })
   rewards: Reward[];
@@ -72,8 +70,8 @@ export class Staking extends IEntity {
   static create(
     userId: number,
     { asset, strategy }: StakingType,
-    depositAddress: StakingBlockchainAddress,
-    withdrawalAddress: WalletBlockchainAddress,
+    depositAddress: BlockchainAddress,
+    withdrawalAddress: BlockchainAddress,
   ): Staking {
     const staking = new Staking();
 
@@ -85,7 +83,6 @@ export class Staking extends IEntity {
 
     staking.depositAddress = depositAddress;
     staking.withdrawalAddress = withdrawalAddress;
-    staking.rewardsPayoutAddress = withdrawalAddress;
 
     staking.deposits = [];
     staking.withdrawals = [];

@@ -15,7 +15,7 @@ import { StakingBalanceDtoMapper } from '../mappers/staking-balance-dto.mapper';
 import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
 import { StakingRepository } from '../repositories/staking.repository';
 import { StakingStrategyValidator } from '../validators/staking-strategy.validator';
-import { StakingBlockchainAddressService } from './staking-blockchain-address.service';
+import { ReservedBlockchainAddressService } from '../../../address-pool/application/services/reserved-blockchain-address.service';
 
 @Injectable()
 export class StakingService {
@@ -25,7 +25,7 @@ export class StakingService {
     private readonly authorize: StakingAuthorizeService,
     private readonly kycCheck: StakingKycCheckService,
     private readonly factory: StakingFactory,
-    private readonly addressService: StakingBlockchainAddressService,
+    private readonly addressService: ReservedBlockchainAddressService,
     private readonly assetService: AssetService,
   ) {}
 

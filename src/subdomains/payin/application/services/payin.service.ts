@@ -4,11 +4,11 @@ import { Config, Process } from 'src/config/config';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { Lock } from 'src/shared/lock';
 import { AssetService } from 'src/shared/models/asset/asset.service';
+import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 import { PayIn, PayInPurpose, PayInStatus } from '../../domain/entities/payin.entity';
 import { PayInDeFiChainService } from '../../infrastructure/payin-crypto-defichain.service';
 import { PayInFactory } from '../factories/payin.factory';
 import { PayInTransaction } from '../interfaces';
-import { PayInBlockchainAddressRepository } from '../repositories/payin-blockchain-address.repository';
 import { PayInRepository } from '../repositories/payin.repository';
 
 @Injectable()
@@ -17,7 +17,6 @@ export class PayInService {
 
   constructor(
     private readonly payInRepository: PayInRepository,
-    private readonly addressRepository: PayInBlockchainAddressRepository,
     private readonly factory: PayInFactory,
     private readonly deFiChainService: PayInDeFiChainService,
     private readonly assetService: AssetService,
@@ -97,10 +96,7 @@ export class PayInService {
       type: tx.assetType,
     });
 
-    const existingAddress = await this.addressRepository.findOne({
-      address: tx.address.address,
-      blockchain: tx.address.blockchain,
-    });
+    const address = BlockchainAddress.create(tx.address.address, tx.address.blockchain);
 
     if (!assetEntity) {
       const message = `Failed to process DeFiChain pay in. No asset ${tx.asset} found. PayInTransaction:`;
@@ -109,7 +105,7 @@ export class PayInService {
       throw new Error(message);
     }
 
-    return this.factory.createFromTransaction(tx, assetEntity, existingAddress);
+    return this.factory.createFromTransaction(tx, assetEntity, address);
   }
 
   // TODO - consider more reliable solution - in case of DB fail, some PayIns might be lost

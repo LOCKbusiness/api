@@ -9,9 +9,7 @@ import { RewardController } from './api/controllers/reward.controller';
 import { StakingController } from './api/controllers/staking.controller';
 import { StakingWithdrawalController } from './api/controllers/staking-withdrawal.controller';
 import { StakingFactory } from './application/factories/staking.factory';
-import { StakingBlockchainAddressRepository } from './application/repositories/staking-blockchain-address.repository';
 import { StakingRepository } from './application/repositories/staking.repository';
-import { StakingBlockchainAddressService } from './application/services/staking-blockchain-address.service';
 import { LiquidityManagementService } from './application/services/liquidity-management.service';
 import { StakingDepositService } from './application/services/staking-deposit.service';
 import { StakingRewardService } from './application/services/staking-reward.service';
@@ -41,7 +39,6 @@ import { PayoutModule } from '../payout/payout.module';
   imports: [
     TypeOrmModule.forFeature([
       StakingRepository,
-      StakingBlockchainAddressRepository,
       WithdrawalRepository,
       DepositRepository,
       RewardRepository,
@@ -79,7 +76,6 @@ import { PayoutModule } from '../payout/payout.module';
     StakingRewardNotificationService,
     StakingWithdrawalService,
     StakingFactory,
-    StakingBlockchainAddressService,
     StakingAuthorizeService,
     StakingKycCheckService,
     LiquidityManagementService,

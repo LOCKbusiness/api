@@ -14,13 +14,13 @@ import { StakingFactory } from '../factories/staking.factory';
 import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
 import { StakingRepository } from '../repositories/staking.repository';
 import { WithdrawalDraftOutputDtoMapper } from '../mappers/withdrawal-draft-output-dto.mapper';
-import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wallet-blockchain-address.entity';
 import { WithdrawalRepository } from '../repositories/withdrawal.repository';
 import { WithdrawalOutputDto } from '../dto/output/withdrawal.output.dto';
 import { WithdrawalOutputDtoMapper } from '../mappers/withdrawal-output-dto.mapper';
 import { Between } from 'typeorm';
 import { TransactionDto } from 'src/subdomains/analytics/application/dto/output/transactions.dto';
 import { Config, Process } from 'src/config/config';
+import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 
 @Injectable()
 export class StakingWithdrawalService {
@@ -188,7 +188,7 @@ export class StakingWithdrawalService {
 
   //*** HELPER METHOD ***//
 
-  private verifySignature(signature: string, withdrawal: Withdrawal, withdrawalAddress: WalletBlockchainAddress): void {
+  private verifySignature(signature: string, withdrawal: Withdrawal, withdrawalAddress: BlockchainAddress): void {
     const isValid = this.cryptoService.verifySignature(withdrawal.signMessage, withdrawalAddress.address, signature);
 
     if (!isValid) throw new UnauthorizedException();

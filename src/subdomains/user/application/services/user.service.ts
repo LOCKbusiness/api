@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Config } from 'src/config/config';
-import { WalletBlockchainAddress } from '../../domain/entities/wallet-blockchain-address.entity';
 import { User } from '../../domain/entities/user.entity';
 import { KycStatus } from '../../domain/enums';
 import { UserRepository } from '../repositories/user.repository';
 import { getCustomRepository, IsNull, Not } from 'typeorm';
 import { Votes } from 'src/subdomains/voting/application/dto/votes.dto';
+import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 
 @Injectable()
 export class UserService {
@@ -56,7 +56,7 @@ export class UserService {
     return user.hasAtLeast(minKycStatus);
   }
 
-  async getWalletAddress(userId: number, walletId: number): Promise<WalletBlockchainAddress> {
+  async getWalletAddress(userId: number, walletId: number): Promise<BlockchainAddress> {
     const user = await this.userRepo.findOne({ where: { id: userId }, relations: ['wallets', 'wallets.address'] });
 
     return user.wallets.find((w) => w.id === walletId).address;

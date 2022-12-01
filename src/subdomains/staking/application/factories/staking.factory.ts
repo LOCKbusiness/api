@@ -1,14 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AssetService } from 'src/shared/models/asset/asset.service';
-import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wallet-blockchain-address.entity';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Reward } from '../../domain/entities/reward.entity';
-import { StakingBlockchainAddress } from '../../domain/entities/staking-blockchain-address.entity';
+import { ReservedBlockchainAddress } from '../../../address-pool/domain/entities/reserved-blockchain-address.entity';
 import { Staking, StakingType } from '../../domain/entities/staking.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { CreateDepositDto } from '../dto/input/create-deposit.dto';
 import { CreateRewardDto } from '../dto/input/create-reward.dto';
 import { CreateWithdrawalDraftDto } from '../dto/input/create-withdrawal-draft.dto';
+import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 
 @Injectable()
 export class StakingFactory {
@@ -17,8 +17,8 @@ export class StakingFactory {
   createStaking(
     userId: number,
     type: StakingType,
-    depositAddress: StakingBlockchainAddress,
-    withdrawalAddress: WalletBlockchainAddress,
+    depositAddress: ReservedBlockchainAddress,
+    withdrawalAddress: BlockchainAddress,
   ): Staking {
     return Staking.create(userId, type, depositAddress, withdrawalAddress);
   }
