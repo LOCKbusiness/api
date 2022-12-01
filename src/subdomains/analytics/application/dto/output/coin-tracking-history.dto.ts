@@ -4,6 +4,7 @@ export enum CoinTrackingTransactionType {
   DEPOSIT = 'Deposit',
   WITHDRAWAL = 'Withdrawal',
   STAKING = 'Staking',
+  REWARD_BONUS = 'Reward / Bonus',
 }
 
 export class CoinTrackingHistoryBase {

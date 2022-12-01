@@ -83,21 +83,21 @@ export class StakingService {
     if (!user) throw new NotFoundException('User not found');
     return await this.repository.find({
       where: { userId: user.id },
-      relations: ['rewards', 'withdrawals', 'deposits'],
+      relations: ['rewards', 'rewards.staking', 'withdrawals', 'deposits'],
     });
   }
 
   async getStakingsByDepositAddress(address: string): Promise<Staking[]> {
     return await this.repository.find({
       where: { depositAddress: { address: address } },
-      relations: ['depositAddress', 'rewards', 'withdrawals', 'deposits'],
+      relations: ['depositAddress', 'rewards', 'rewards.staking', 'withdrawals', 'deposits'],
     });
   }
 
   async getStakingsByUserId(userId: number, type?: StakingType): Promise<Staking[]> {
     return this.repository.find({
       where: { userId, ...type },
-      relations: ['asset', 'deposits', 'withdrawals', 'rewards'],
+      relations: ['asset', 'deposits', 'withdrawals', 'rewards', 'rewards.staking'],
     });
   }
 
