@@ -94,6 +94,7 @@ export class KycController {
               translationKey: 'mail.kyc.failed',
               translationParams: {
                 url: Config.kyc.frontendUrl(user.kycHash),
+                name: user.firstName,
               },
             },
           });
