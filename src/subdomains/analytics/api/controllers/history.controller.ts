@@ -1,10 +1,6 @@
 import { Controller, Get, StreamableFile, Response, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import {
-  ExportDataType,
-  HistoryQueryCompact,
-  HistoryQueryTaxTools,
-} from '../../application/dto/input/history-query.dto';
+import { ExportDataType, HistoryQueryBase } from '../../application/dto/input/history-query.dto';
 import { ChainReportCsvHistoryDto } from '../../application/dto/output/chain-report-history.dto';
 import { CoinTrackingCsvHistoryDto } from '../../application/dto/output/coin-tracking-history.dto';
 import { CompactHistoryDto } from '../../application/dto/output/history.dto';
@@ -18,7 +14,7 @@ export class HistoryController {
   @Get('compact')
   @ApiOkResponse({ type: CompactHistoryDto, isArray: true })
   async getCsvCompact(
-    @Query() query: HistoryQueryCompact,
+    @Query() query: HistoryQueryBase,
     @Response({ passthrough: true }) res,
   ): Promise<CompactHistoryDto[] | StreamableFile> {
     switch (query.type) {
@@ -41,35 +37,50 @@ export class HistoryController {
 
   @Get('CoinTracking')
   @ApiOkResponse({ type: CoinTrackingCsvHistoryDto, isArray: true })
-  async getCsvCT(@Query() query: HistoryQueryTaxTools, @Response({ passthrough: true }) res): Promise<StreamableFile> {
-    const csvFile = await this.historyService.getHistoryCsv(
-      query.userAddress,
-      query.depositAddress,
-      ExportType.COIN_TRACKING,
-    );
-    res.set({
-      'Content-Type': 'text/csv',
-      'Content-Disposition': `attachment; filename="LOCK_CT_history_${this.formatDate()}.csv"`,
-    });
-    return csvFile;
+  async getCsvCT(
+    @Query() query: HistoryQueryBase,
+    @Response({ passthrough: true }) res,
+  ): Promise<CoinTrackingCsvHistoryDto[] | StreamableFile> {
+    switch (query.type) {
+      case ExportDataType.CSV:
+        const csvFile = await this.historyService.getHistoryCsv(
+          query.userAddress,
+          query.depositAddress,
+          ExportType.COIN_TRACKING,
+        );
+        res.set({
+          'Content-Type': 'text/csv',
+          'Content-Disposition': `attachment; filename="LOCK_CT_history_${this.formatDate()}.csv"`,
+        });
+        return csvFile;
+
+      case ExportDataType.JSON:
+        return await this.historyService.getHistory(query.userAddress, query.depositAddress, ExportType.COIN_TRACKING);
+    }
   }
 
   @Get('ChainReport')
   @ApiOkResponse({ status: 200, type: ChainReportCsvHistoryDto, isArray: true })
   async getCsvChainReport(
-    @Query() query: HistoryQueryTaxTools,
+    @Query() query: HistoryQueryBase,
     @Response({ passthrough: true }) res,
-  ): Promise<StreamableFile> {
-    const csvFile = await this.historyService.getHistoryCsv(
-      query.userAddress,
-      query.depositAddress,
-      ExportType.CHAIN_REPORT,
-    );
-    res.set({
-      'Content-Type': 'text/csv',
-      'Content-Disposition': `attachment; filename="LOCK_ChainReport_history_${this.formatDate()}.csv"`,
-    });
-    return csvFile;
+  ): Promise<ChainReportCsvHistoryDto[] | StreamableFile> {
+    switch (query.type) {
+      case ExportDataType.CSV:
+        const csvFile = await this.historyService.getHistoryCsv(
+          query.userAddress,
+          query.depositAddress,
+          ExportType.CHAIN_REPORT,
+        );
+        res.set({
+          'Content-Type': 'text/csv',
+          'Content-Disposition': `attachment; filename="LOCK_ChainReport_history_${this.formatDate()}.csv"`,
+        });
+        return csvFile;
+
+      case ExportDataType.JSON:
+        return await this.historyService.getHistory(query.userAddress, query.depositAddress, ExportType.CHAIN_REPORT);
+    }
   }
 
   // --- HELPER METHODS --- //
