@@ -6,7 +6,7 @@ export enum ExportDataType {
   JSON = 'json',
 }
 
-export class HistoryQueryBase {
+export class HistoryQuery {
   @ApiPropertyOptional()
   @IsNotEmpty()
   @IsString()

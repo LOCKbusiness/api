@@ -1,6 +1,6 @@
 import { Controller, Get, StreamableFile, Response, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { ExportDataType, HistoryQueryBase } from '../../application/dto/input/history-query.dto';
+import { ExportDataType, HistoryQuery } from '../../application/dto/input/history-query.dto';
 import { ChainReportCsvHistoryDto } from '../../application/dto/output/chain-report-history.dto';
 import { CoinTrackingCsvHistoryDto } from '../../application/dto/output/coin-tracking-history.dto';
 import { CompactHistoryDto } from '../../application/dto/output/history.dto';
@@ -14,7 +14,7 @@ export class HistoryController {
   @Get('compact')
   @ApiOkResponse({ type: CompactHistoryDto, isArray: true })
   async getCsvCompact(
-    @Query() query: HistoryQueryBase,
+    @Query() query: HistoryQuery,
     @Response({ passthrough: true }) res,
   ): Promise<CompactHistoryDto[] | StreamableFile> {
     switch (query.type) {
@@ -38,7 +38,7 @@ export class HistoryController {
   @Get('CoinTracking')
   @ApiOkResponse({ type: CoinTrackingCsvHistoryDto, isArray: true })
   async getCsvCT(
-    @Query() query: HistoryQueryBase,
+    @Query() query: HistoryQuery,
     @Response({ passthrough: true }) res,
   ): Promise<CoinTrackingCsvHistoryDto[] | StreamableFile> {
     switch (query.type) {
@@ -62,7 +62,7 @@ export class HistoryController {
   @Get('ChainReport')
   @ApiOkResponse({ status: 200, type: ChainReportCsvHistoryDto, isArray: true })
   async getCsvChainReport(
-    @Query() query: HistoryQueryBase,
+    @Query() query: HistoryQuery,
     @Response({ passthrough: true }) res,
   ): Promise<ChainReportCsvHistoryDto[] | StreamableFile> {
     switch (query.type) {
