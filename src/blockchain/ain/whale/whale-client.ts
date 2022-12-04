@@ -46,11 +46,7 @@ export class WhaleClient {
       true,
     );
 
-    if (tx) {
-      // wait for Ocean to settle
-      await Util.delay(5000);
-      return tx.id;
-    }
+    if (tx) return tx.id;
 
     throw new Error(`Wait for TX ${txId} timed out`);
   }
