@@ -2,7 +2,7 @@ import { Asset, AssetCategory } from 'src/shared/models/asset/asset.entity';
 import { Deposit } from 'src/subdomains/staking/domain/entities/deposit.entity';
 import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
 import { Withdrawal } from 'src/subdomains/staking/domain/entities/withdrawal.entity';
-import { DepositStatus, RewardStatus, StakingStrategy, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
+import { DepositStatus, RewardStatus, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
 import { CoinTrackingCsvHistoryDto, CoinTrackingTransactionType } from '../dto/output/coin-tracking-history.dto';
 
 export class CoinTrackingHistoryDtoMapper {
@@ -52,10 +52,7 @@ export class CoinTrackingHistoryDtoMapper {
     return rewards
       .filter((c) => c.status === RewardStatus.CONFIRMED)
       .map((c) => ({
-        type:
-          c.staking.strategy === StakingStrategy.LIQUIDITY_MINING
-            ? CoinTrackingTransactionType.REWARD_BONUS
-            : CoinTrackingTransactionType.STAKING,
+        type: CoinTrackingTransactionType.STAKING,
         buyAmount: c.amount,
         buyAsset: this.getAssetSymbolCT(c.asset),
         sellAmount: null,
@@ -63,9 +60,8 @@ export class CoinTrackingHistoryDtoMapper {
         fee: null,
         feeAsset: null,
         exchange: 'LOCK.space Staking',
-        tradeGroup: c.staking.strategy === StakingStrategy.LIQUIDITY_MINING ? null : 'Staking',
-        comment:
-          c.staking.strategy === StakingStrategy.LIQUIDITY_MINING ? 'LOCK Yield Machine Reward' : 'LOCK Staking Reward',
+        tradeGroup: 'Staking',
+        comment: 'LOCK Staking Reward',
         txId: c.reinvestTxId,
         date: c.reinvestOutputDate ?? c.updated,
         buyValueInEur: c.amountEur,
