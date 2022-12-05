@@ -114,7 +114,7 @@ export class StakingHistoryService {
         .map((v) =>
           v instanceof Date
             ? toGermanLocalDateString
-              ? v.toLocaleDateString('de-DE', { timeZone: 'CET' })
+              ? v.toLocaleString('de-DE', { timeZone: 'CET' })
               : v.toISOString()
             : v,
         )
