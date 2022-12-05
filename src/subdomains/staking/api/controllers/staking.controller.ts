@@ -1,4 +1,4 @@
-import { Controller, UseGuards, Body, Get, Param, Patch, Query } from '@nestjs/common';
+import { Controller, UseGuards, Body, Get, Param, Patch, Query, Put } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiExcludeEndpoint, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
@@ -35,11 +35,20 @@ export class StakingController {
     return this.stakingService.getUserAddressBalances(query.userAddress);
   }
 
+  // --- ADMIN ROUTES --- //
   @Patch(':id/staking-fee')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async setStakingFee(@Param('id') stakingId: string, @Body() dto: SetStakingFeeDto): Promise<void> {
     return this.stakingService.setStakingFee(+stakingId, dto);
+  }
+
+  @Put(':id/balance')
+  @ApiBearerAuth()
+  @ApiExcludeEndpoint()
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
+  async updateBalance(@Param('id') stakingId: string): Promise<void> {
+    return this.stakingService.updateBalance(+stakingId);
   }
 }
