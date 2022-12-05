@@ -45,8 +45,10 @@ export class StakingHistoryService {
     const stakingEntities = await this.getStakingEntitiesByAddress(userAddress, depositAddress);
     const deposits = stakingEntities.reduce((prev, curr) => prev.concat(curr.deposits), [] as Deposit[]);
     const withdrawals = stakingEntities.reduce((prev, curr) => prev.concat(curr.withdrawals), [] as Withdrawal[]);
-    stakingEntities.forEach((staking) => staking.rewards.map((reward) => (reward.staking.strategy = staking.strategy)));
-    const rewards = stakingEntities.reduce((prev, curr) => prev.concat(curr.rewards), [] as Reward[]);
+    const rewards = stakingEntities.reduce(
+      (prev, curr) => prev.concat(curr.rewards.map((r) => Object.assign(r, { staking: curr }))),
+      [] as Reward[],
+    );
 
     switch (exportFormat) {
       case ExportType.COIN_TRACKING:
