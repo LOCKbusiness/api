@@ -198,7 +198,6 @@ export class Configuration {
     minOperateValue: 100, // DFI
     minSplitValue: 20000, // DFI
     amount: {
-      min: 100, // quantity of UTXOs
       max: 300, // quantity of UTXOs
     },
     split: 100, // UTXO
