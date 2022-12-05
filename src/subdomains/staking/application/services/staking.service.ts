@@ -76,7 +76,7 @@ export class StakingService {
   async getStakingsByDepositAddress(address: string): Promise<Staking[]> {
     return await this.repository.find({
       where: { depositAddress: { address: address } },
-      relations: ['depositAddress', 'rewards', 'withdrawals', 'deposits'],
+      relations: ['rewards', 'withdrawals', 'deposits'],
     });
   }
 
@@ -142,7 +142,7 @@ export class StakingService {
       const depositAddress = await this.addressService.getAvailableAddress();
       const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
 
-      const staking = this.factory.createStaking(userId, type, depositAddress, withdrawalAddress);
+      const staking = await this.factory.createStaking(userId, type, depositAddress, withdrawalAddress);
 
       return this.repository.save(staking);
     }, 2);

@@ -1,6 +1,7 @@
 import { Config } from 'src/config/config';
 import { Staking } from '../../domain/entities/staking.entity';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
+import { RewardRouteOutputDtoMapper } from './reward-route-output-dto.mapper';
 
 export class StakingOutputDtoMapper {
   static entityToDto(staking: Staking): StakingOutputDto {
@@ -17,6 +18,7 @@ export class StakingOutputDtoMapper {
     dto.balance = staking.getBalance();
     dto.pendingDeposits = staking.getUnconfirmedDepositsAmount();
     dto.pendingWithdrawals = staking.getPendingWithdrawalsAmount();
+    dto.rewardRoutes = staking.rewardRoutes.map(RewardRouteOutputDtoMapper.entityToDto);
 
     return dto;
   }

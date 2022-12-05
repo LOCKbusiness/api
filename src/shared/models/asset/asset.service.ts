@@ -13,7 +13,11 @@ export interface AssetQuery {
 export class AssetService {
   constructor(private assetRepo: AssetRepository) {}
 
-  async getAllAsset(blockchain: Blockchain): Promise<Asset[]> {
+  async getAllAssets(): Promise<Asset[]> {
+    return this.assetRepo.find();
+  }
+
+  async getAllAssetsForBlockchain(blockchain: Blockchain): Promise<Asset[]> {
     return this.assetRepo.find({ where: { blockchain } });
   }
 

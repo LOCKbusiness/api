@@ -6,6 +6,7 @@ import { Util } from 'src/shared/util';
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { RewardStatus } from '../enums';
 import { RewardBatch } from './reward-batch.entity';
+import { RewardRoute } from './reward-route.entity';
 import { Staking } from './staking.entity';
 
 @Entity()
@@ -36,11 +37,8 @@ export class Reward extends IEntity {
   @Column({ type: 'float', nullable: false, default: 0 })
   feeAmount: number;
 
-  @ManyToOne(() => Asset, { eager: true, nullable: false })
-  targetAsset: Asset;
-
-  @Column({ nullable: true })
-  targetAddress: string;
+  @ManyToOne(() => RewardRoute, { eager: true, nullable: true })
+  rewardRoute: RewardRoute;
 
   //*** PAYOUT PROPS ***//
 
@@ -78,8 +76,7 @@ export class Reward extends IEntity {
     outputReferenceAmount: number,
     feePercent: number,
     feeAmount: number,
-    targetAsset: Asset,
-    targetAddress: string,
+    rewardRoute: RewardRoute,
   ): Reward {
     const reward = new Reward();
 
@@ -90,10 +87,11 @@ export class Reward extends IEntity {
     reward.outputReferenceAmount = outputReferenceAmount;
     reward.feePercent = feePercent;
     reward.feeAmount = feeAmount;
-    reward.targetAsset = targetAsset;
-    reward.targetAddress = targetAddress;
+    reward.rewardRoute = rewardRoute;
 
-    reward.isReinvest = targetAddress === staking.depositAddress.address;
+    reward.isReinvest =
+      rewardRoute.targetAddress.address === staking.depositAddress.address &&
+      rewardRoute.targetAddress.blockchain === staking.depositAddress.blockchain;
 
     return reward;
   }

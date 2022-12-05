@@ -85,9 +85,9 @@ export class StakingRewardOutService {
     const request: PayoutRequest = {
       context: PayoutOrderContext.STAKING_REWARD,
       correlationId: reward.id.toString(),
-      asset: reward.targetAsset,
+      asset: reward.rewardRoute.targetAsset,
       amount: reward.targetAmount,
-      destinationAddress: reward.targetAddress,
+      destinationAddress: reward.rewardRoute.targetAddress.address,
     };
 
     await this.payoutService.doPayout(request);

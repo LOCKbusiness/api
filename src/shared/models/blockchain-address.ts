@@ -2,10 +2,10 @@ import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { Column } from 'typeorm';
 
 export class BlockchainAddress {
-  @Column({ nullable: false })
+  @Column({ nullable: true })
   address: string;
 
-  @Column({ nullable: false })
+  @Column({ nullable: true })
   blockchain: Blockchain;
 
   //*** FACTORY METHODS ***//

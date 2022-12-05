@@ -34,6 +34,9 @@ import { StakingRewardNotificationService } from './application/services/staking
 import { StakingFiatReferenceService } from './application/services/staking-fiat-reference.service';
 import { DexModule } from '../dex/dex.module';
 import { PayoutModule } from '../payout/payout.module';
+import { RewardRouteRepository } from './application/repositories/reward-route.repository';
+import { AddressPoolModule } from '../address-pool/address-pool.module';
+import { RewardRouteController } from './api/controllers/reward-route.controller';
 
 @Module({
   imports: [
@@ -43,6 +46,7 @@ import { PayoutModule } from '../payout/payout.module';
       DepositRepository,
       RewardRepository,
       RewardBatchRepository,
+      RewardRouteRepository,
       AssetStakingMetadataRepository,
     ]),
     BlockchainModule,
@@ -52,11 +56,13 @@ import { PayoutModule } from '../payout/payout.module';
     DexModule,
     PayoutModule,
     IntegrationModule,
+    AddressPoolModule,
   ],
   controllers: [
     StakingController,
     DepositController,
     RewardController,
+    RewardRouteController,
     StakingWithdrawalController,
     WithdrawalController,
   ],

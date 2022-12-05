@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsInt, IsNotEmpty, IsNumber } from 'class-validator';
 
 export class CreateRewardDto {
   @ApiProperty()
@@ -30,10 +30,5 @@ export class CreateRewardDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsInt()
-  targetAssetId: number;
-
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsString()
-  targetAddress: string;
+  rewardRouteId: number;
 }

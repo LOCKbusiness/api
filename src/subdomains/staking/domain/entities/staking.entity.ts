@@ -53,7 +53,7 @@ export class Staking extends IEntity {
   @OneToMany(() => Withdrawal, (withdrawal) => withdrawal.staking, { eager: true, cascade: true })
   withdrawals: Withdrawal[];
 
-  @ManyToOne(() => RewardRoute, { eager: true, nullable: false })
+  @OneToMany(() => RewardRoute, (route) => route.staking, { eager: true, cascade: true })
   rewardRoutes: RewardRoute[];
 
   @OneToMany(() => Reward, (reward) => reward.staking, { cascade: true })
@@ -83,12 +83,17 @@ export class Staking extends IEntity {
 
     staking.depositAddress = depositAddress;
     staking.withdrawalAddress = withdrawalAddress;
+    staking.rewardRoutes = [this.createDefaultRewardRoute(staking, asset, depositAddress)];
 
     staking.deposits = [];
     staking.withdrawals = [];
     staking.rewards = [];
 
     return staking;
+  }
+
+  static createDefaultRewardRoute(staking: Staking, asset: Asset, depositAddress: BlockchainAddress): RewardRoute {
+    return RewardRoute.create(staking, 'Reinvest', 1, asset, depositAddress);
   }
 
   //*** PUBLIC API ***//
@@ -175,6 +180,15 @@ export class Staking extends IEntity {
 
     this.rewards.push(reward);
     this.updateRewardBalance();
+
+    return this;
+  }
+
+  setRewardRoutes(newRewardRoutes: RewardRoute[]): this {
+    this.validateRewardDistribution(newRewardRoutes);
+    this.validateDuplicatedRoutes(newRewardRoutes);
+
+    this.updateRewardRoutes(newRewardRoutes);
 
     return this;
   }
@@ -302,6 +316,69 @@ export class Staking extends IEntity {
     this.rewardsAmount = confirmedRewardsAmount;
 
     return this.rewardsAmount;
+  }
+
+  private validateRewardDistribution(newRewardRoutes: RewardRoute[]): void {
+    const totalDistribution = Util.sumObj<RewardRoute>(newRewardRoutes, 'rewardPercent');
+
+    if (totalDistribution !== 1) {
+      throw new BadRequestException(
+        `Cannot create reward strategy. Total reward distribution must be 100%, instead distributed total of ${Util.round(
+          totalDistribution * 100,
+          2,
+        )}%`,
+      );
+    }
+  }
+
+  private validateDuplicatedRoutes(newRewardRoutes: RewardRoute[]): void {
+    newRewardRoutes.forEach((route) => {
+      const duplicatedRoute = this.findDuplicatedRoute(route, newRewardRoutes);
+
+      if (duplicatedRoute) {
+        throw new BadRequestException(
+          `Cannot create reward strategy. Provided duplicated route for asset ${duplicatedRoute.targetAsset.name} and address ${duplicatedRoute.targetAddress.address}`,
+        );
+      }
+    });
+  }
+
+  private findDuplicatedRoute(currentRoute: RewardRoute, allRewardRoutes: RewardRoute[]): RewardRoute | null {
+    return allRewardRoutes.some(
+      (r, index) =>
+        allRewardRoutes.findIndex(
+          (_r) =>
+            _r.targetAddress.address === r.targetAddress.address &&
+            _r.targetAddress.blockchain === r.targetAddress.blockchain &&
+            _r.targetAsset.id === r.targetAsset.id,
+        ) !== index,
+    )
+      ? currentRoute
+      : null;
+  }
+
+  private updateRewardRoutes(newRewardRoutes: RewardRoute[]): void {
+    this.resetExistingRoutes();
+
+    newRewardRoutes.forEach((newRoute) => {
+      const existingRoute = this.rewardRoutes.find(
+        (_r) =>
+          _r.targetAsset.id === newRoute.targetAsset.id &&
+          _r.targetAddress.address === newRoute.targetAddress.address &&
+          _r.targetAddress.blockchain === newRoute.targetAddress.blockchain,
+      );
+
+      if (existingRoute) {
+        existingRoute.updateRoute(newRoute.label, newRoute.rewardPercent);
+        return;
+      }
+
+      this.rewardRoutes.push(newRoute);
+    });
+  }
+
+  private resetExistingRoutes(): void {
+    this.rewardRoutes.forEach((route) => (route.rewardPercent = 0));
   }
 
   private isEnoughBalanceForWithdrawal(withdrawal: Withdrawal): boolean {

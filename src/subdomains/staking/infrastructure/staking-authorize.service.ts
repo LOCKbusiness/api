@@ -7,7 +7,7 @@ export class StakingAuthorizeService {
   constructor(private readonly repository: StakingRepository) {}
 
   async authorize(userId: number, stakingId: number): Promise<Staking> {
-    const staking = await this.repository.findOne({ id: stakingId, userId });
+    const staking = await this.repository.findOne({ where: { id: stakingId, userId }, relations: ['rewardRoutes'] });
     if (!staking) throw new UnauthorizedException();
 
     return staking;

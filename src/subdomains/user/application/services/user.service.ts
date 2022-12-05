@@ -57,7 +57,7 @@ export class UserService {
   }
 
   async getWalletAddress(userId: number, walletId: number): Promise<BlockchainAddress> {
-    const user = await this.userRepo.findOne({ where: { id: userId }, relations: ['wallets', 'wallets.address'] });
+    const user = await this.userRepo.findOne({ where: { id: userId }, relations: ['wallets'] });
 
     return user.wallets.find((w) => w.id === walletId).address;
   }
