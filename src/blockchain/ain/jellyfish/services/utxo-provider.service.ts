@@ -77,8 +77,12 @@ export class UtxoProviderService {
     const quantity = unspent?.length ?? 0;
     const sortedUnspent = unspent?.sort(UtxoProviderService.orderDescending);
     const biggest = new BigNumber(sortedUnspent?.[0]?.vout.value);
+    const amountOfMerged =
+      (unspent?.length ?? 0) > Config.utxo.merge
+        ? UtxoProviderService.sum(sortedUnspent?.slice(-Config.utxo.merge))
+        : undefined;
 
-    return { quantity, biggest };
+    return { quantity, biggest, amountOfMerged };
   }
 
   async addressHasUtxoExactAmount(address: string, amount: BigNumber): Promise<boolean> {
@@ -243,6 +247,10 @@ export class UtxoProviderService {
 
   private static orderDescending(a: AddressUnspent, b: AddressUnspent): number {
     return new BigNumber(b.vout.value).minus(new BigNumber(a.vout.value)).toNumber();
+  }
+
+  private static sum(unspent: AddressUnspent[]): BigNumber {
+    return new BigNumber(unspent.map((u) => +u.vout.value).reduce((curr, prev) => curr + prev));
   }
 
   // --- PARSING --- //

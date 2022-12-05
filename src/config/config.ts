@@ -196,12 +196,12 @@ export class Configuration {
   utxo = {
     maxInputs: 300, // quantity of UTXOs
     minOperateValue: 100, // DFI
-    minSplitValue: 1000, // DFI
+    minSplitValue: 20000, // DFI
     amount: {
       min: 100, // quantity of UTXOs
       max: 300, // quantity of UTXOs
     },
-    split: 10, // UTXO
+    split: 100, // UTXO
     merge: 100, // UTXO
   };
 

@@ -238,12 +238,14 @@ export class LiquidityManagementService {
     if (liqBalance.lt(Config.utxo.minOperateValue)) throw new Error('Too low liquidity to operate');
 
     const utxoStatistics = await this.utxoProviderService.getStatistics(Config.staking.liquidity.address);
-    if (utxoStatistics.quantity < Config.utxo.amount.min && utxoStatistics.biggest.gte(Config.utxo.minSplitValue)) {
+    if (utxoStatistics.quantity < Config.utxo.amount.min || utxoStatistics.biggest.gte(Config.utxo.minSplitValue)) {
       await this.transactionExecutionService.splitBiggestUtxo({
         address: Config.staking.liquidity.address,
         split: Config.utxo.split,
       });
     } else if (utxoStatistics.quantity > Config.utxo.amount.max) {
+      if (utxoStatistics.amountOfMerged && utxoStatistics.amountOfMerged.gt(Config.utxo.minSplitValue))
+        throw new Error(`Merge would exceed limit of ${utxoStatistics.amountOfMerged.toString()}`);
       await this.transactionExecutionService.mergeSmallestUtxos({
         address: Config.staking.liquidity.address,
         merge: Config.utxo.merge,
