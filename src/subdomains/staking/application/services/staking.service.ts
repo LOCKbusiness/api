@@ -101,15 +101,6 @@ export class StakingService {
     });
   }
 
-  async setStakingFee(stakingId: number, dto: SetStakingFeeDto): Promise<void> {
-    const { feePercent } = dto;
-    const staking = await this.repository.findOne(stakingId);
-
-    staking.setStakingFee(feePercent);
-
-    await this.repository.save(staking);
-  }
-
   async getAverageStakingBalance(type: StakingType, dateFrom: Date, dateTo: Date): Promise<number> {
     const currentBalance = (await this.getCurrentTotalStakingBalance(type)) ?? 0;
     const balances: number[] = [];
@@ -146,6 +137,24 @@ export class StakingService {
       .andWhere('staking.strategy = :strategy', { strategy })
       .getRawOne<{ balance: number }>()
       .then((b) => b.balance);
+  }
+
+  async setStakingFee(stakingId: number, { feePercent }: SetStakingFeeDto): Promise<void> {
+    const staking = await this.repository.findOne(stakingId);
+    if (!staking) throw new NotFoundException('Staking not found');
+
+    staking.setStakingFee(feePercent);
+
+    await this.repository.save(staking);
+  }
+
+  async updateBalance(stakingId: number): Promise<void> {
+    const staking = await this.repository.findOne(stakingId);
+    if (!staking) throw new NotFoundException('Staking not found');
+
+    staking.updateBalance();
+
+    await this.repository.save(staking);
   }
 
   //*** JOBS ***//
