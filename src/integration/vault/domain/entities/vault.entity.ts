@@ -29,4 +29,7 @@ export class Vault extends IEntity {
 
   @Column({ type: 'integer', nullable: false })
   maxCollateralRatio: number;
+
+  // @Column({ type: 'integer', nullable: false })
+  // emergencyCollateralRatio: number;
 }

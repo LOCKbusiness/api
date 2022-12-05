@@ -1,5 +1,6 @@
 import { ApiPagedResponse, WhaleApiClient } from '@defichain/whale-api-client';
-import { AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
+import { AddressToken, AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
+import { LoanVaultActive, LoanVaultState } from '@defichain/whale-api-client/dist/api/loan';
 import { TokenData } from '@defichain/whale-api-client/dist/api/tokens';
 import { Transaction, TransactionVin } from '@defichain/whale-api-client/dist/api/transactions';
 import BigNumber from 'bignumber.js';
@@ -31,6 +32,24 @@ export class WhaleClient {
 
   async getAllTokens(): Promise<TokenData[]> {
     return await this.getAll(() => this.client.tokens.list(200));
+  }
+
+  async getVault(address: string, vaultId: string): Promise<LoanVaultActive> {
+    const vaults = await this.client.address.listVault(address);
+    // looks weird i know.
+    // There are two different LoanVault types
+    // 1) LoanVaultActive (which we want)
+    // 2) LoanVaultLiquidated
+    // second has only one state which is IN_LIQUIDATION
+    // therefore it is safe to cast
+    return vaults
+      .filter((vault) => vault.state !== LoanVaultState.IN_LIQUIDATION)
+      .map((v) => v as LoanVaultActive)
+      .find((vault) => vault.vaultId === vaultId);
+  }
+
+  async getBalancesOf(address: string): Promise<AddressToken[]> {
+    return await this.getAll(() => this.client.address.listToken(address));
   }
 
   async sendRaw(hex: string): Promise<string> {

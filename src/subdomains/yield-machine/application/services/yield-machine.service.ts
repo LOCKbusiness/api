@@ -1,10 +1,15 @@
+import { AddressToken } from '@defichain/whale-api-client/dist/api/address';
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import BigNumber from 'bignumber.js';
 import { TokenProviderService } from 'src/blockchain/ain/whale/token-provider.service';
+import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
+import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { Config } from 'src/config/config';
 import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
 import { VaultService } from 'src/integration/vault/application/services/vault.service';
 import { Vault } from 'src/integration/vault/domain/entities/vault.entity';
+import { Lock } from 'src/shared/lock';
 import { TransactionCommand } from '../../domain/enums';
 import {
   AddPoolLiquidityParameters,
@@ -21,11 +26,85 @@ import {
 
 @Injectable()
 export class YieldMachineService {
+  private readonly emergencyVaultCheckLock = new Lock(600);
+
+  private whaleClient: WhaleClient;
   constructor(
     private readonly transactionExecutionService: TransactionExecutionService,
     private readonly vaultService: VaultService,
     private readonly tokenProviderService: TokenProviderService,
-  ) {}
+    private readonly whaleService: WhaleService,
+  ) {
+    whaleService.getClient().subscribe((client) => (this.whaleClient = client));
+
+    this.checkVaultsForEmergency();
+  }
+
+  @Cron(CronExpression.EVERY_5_MINUTES)
+  async checkVaultsForEmergency() {
+    if (!this.emergencyVaultCheckLock.acquire()) return;
+    const vaults = await this.vaultService.getAll();
+    const vaultInfos = await Promise.all(
+      vaults.filter((v) => v.vault).map((v) => this.whaleClient.getVault(v.address, v.vault)),
+    );
+    const allEmergencyProcesses: Promise<unknown>[] = [];
+    for (const vault of vaultInfos) {
+      const dbVault = vaults.find((v) => v.vault === vault.vaultId);
+      // TODO (Krysh) change to emergency ratio
+      if (dbVault.minCollateralRatio < +vault.collateralRatio) {
+        console.info(`starting emergency payback for ${dbVault.vault} on ${dbVault.address}`);
+        try {
+          allEmergencyProcesses.push(this.executeEmergencyFor(dbVault));
+        } catch (e) {
+          console.error('Exception during vault emergency check:', e);
+        }
+      }
+    }
+    await Promise.all(allEmergencyProcesses);
+    console.info(`finished emergency check`);
+    this.emergencyVaultCheckLock.release();
+  }
+
+  private async executeEmergencyFor(vault: Vault): Promise<string[]> {
+    const logId = `${vault.address} (${vault.vault})`;
+    let tokens = await this.whaleClient.getBalancesOf(vault.address);
+    const amountToRemoveFromPool = this.amountOf(vault.blockchainPairId, tokens);
+    if (!amountToRemoveFromPool) throw new Error(`${logId}: No pool liquidity found for vault: ${vault.vault}`);
+    console.info(`${logId}: Removing ${amountToRemoveFromPool} of pool ${vault.blockchainPairId}`);
+    const removePoolTx = await this.removePoolLiquidity(vault, {
+      amount: +amountToRemoveFromPool,
+      address: vault.address,
+    });
+    await this.whaleClient.waitForTx(removePoolTx);
+    // read again from blockchain to know how many tokens can be payed back
+    tokens = await this.whaleClient.getBalancesOf(vault.address);
+    const savingTxs: Promise<string>[] = [];
+    const amountToPayback = this.amountOf(vault.blockchainPairTokenAId, tokens);
+    if (amountToPayback) {
+      console.info(`${logId}: Paying back ${amountToPayback} of ${vault.blockchainPairTokenAId}`);
+      const paybackTx = await this.paybackLoan(vault, {
+        amount: +amountToPayback,
+        address: vault.address,
+        vault: vault.vault,
+      });
+      savingTxs.push(this.whaleClient.waitForTx(paybackTx));
+    }
+    const amountToDeposit = this.amountOf(vault.blockchainPairTokenBId, tokens);
+    if (amountToDeposit) {
+      console.info(`${logId}: Depositing ${amountToDeposit} of ${vault.blockchainPairTokenBId}`);
+      const depositTx = await this.paybackLoan(vault, {
+        amount: +amountToDeposit,
+        address: vault.address,
+        vault: vault.vault,
+      });
+      savingTxs.push(this.whaleClient.waitForTx(depositTx));
+    }
+    return Promise.all(savingTxs);
+  }
+
+  private amountOf(tokenId: number, tokens: AddressToken[]): string {
+    return tokens.find((token) => +token.id === tokenId)?.amount;
+  }
 
   async create({ command, parameters }: TransactionInput): Promise<string> {
     const isSendFromLiq =
