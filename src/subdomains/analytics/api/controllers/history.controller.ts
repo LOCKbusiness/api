@@ -4,7 +4,7 @@ import { ExportDataType, HistoryQuery } from '../../application/dto/input/histor
 import { ChainReportCsvHistoryDto } from '../../application/dto/output/chain-report-history.dto';
 import { CoinTrackingCsvHistoryDto } from '../../application/dto/output/coin-tracking-history.dto';
 import { CompactHistoryDto } from '../../application/dto/output/history.dto';
-import { ExportType, StakingHistoryService } from '../../application/services/staking-history.service';
+import { ExportType, HistoryDto, StakingHistoryService } from '../../application/services/staking-history.service';
 
 @ApiTags('Analytics')
 @Controller('analytics/history')
@@ -17,22 +17,7 @@ export class HistoryController {
     @Query() query: HistoryQuery,
     @Response({ passthrough: true }) res,
   ): Promise<CompactHistoryDto[] | StreamableFile> {
-    switch (query.type) {
-      case ExportDataType.CSV:
-        const csvFile = await this.historyService.getHistoryCsv(
-          query.userAddress,
-          query.depositAddress,
-          ExportType.COMPACT,
-        );
-        res.set({
-          'Content-Type': 'text/csv',
-          'Content-Disposition': `attachment; filename="LOCK_history_${this.formatDate()}.csv"`,
-        });
-        return csvFile;
-
-      case ExportDataType.JSON:
-        return await this.historyService.getHistory(query.userAddress, query.depositAddress, ExportType.COMPACT);
-    }
+    return await this.getHistoryData(query, ExportType.COMPACT, res);
   }
 
   @Get('CoinTracking')
@@ -41,22 +26,7 @@ export class HistoryController {
     @Query() query: HistoryQuery,
     @Response({ passthrough: true }) res,
   ): Promise<CoinTrackingCsvHistoryDto[] | StreamableFile> {
-    switch (query.type) {
-      case ExportDataType.CSV:
-        const csvFile = await this.historyService.getHistoryCsv(
-          query.userAddress,
-          query.depositAddress,
-          ExportType.COIN_TRACKING,
-        );
-        res.set({
-          'Content-Type': 'text/csv',
-          'Content-Disposition': `attachment; filename="LOCK_CT_history_${this.formatDate()}.csv"`,
-        });
-        return csvFile;
-
-      case ExportDataType.JSON:
-        return await this.historyService.getHistory(query.userAddress, query.depositAddress, ExportType.COIN_TRACKING);
-    }
+    return await this.getHistoryData(query, ExportType.COIN_TRACKING, res);
   }
 
   @Get('ChainReport')
@@ -65,26 +35,31 @@ export class HistoryController {
     @Query() query: HistoryQuery,
     @Response({ passthrough: true }) res,
   ): Promise<ChainReportCsvHistoryDto[] | StreamableFile> {
-    switch (query.type) {
-      case ExportDataType.CSV:
-        const csvFile = await this.historyService.getHistoryCsv(
-          query.userAddress,
-          query.depositAddress,
-          ExportType.CHAIN_REPORT,
-        );
-        res.set({
-          'Content-Type': 'text/csv',
-          'Content-Disposition': `attachment; filename="LOCK_ChainReport_history_${this.formatDate()}.csv"`,
-        });
-        return csvFile;
-
-      case ExportDataType.JSON:
-        return await this.historyService.getHistory(query.userAddress, query.depositAddress, ExportType.CHAIN_REPORT);
-    }
+    return await this.getHistoryData(query, ExportType.CHAIN_REPORT, res);
   }
 
   // --- HELPER METHODS --- //
   private formatDate(date: Date = new Date()): string {
     return date.toISOString().split('-').join('').split(':').join('').split('T').join('_').split('.')[0];
+  }
+
+  private async getHistoryData<T extends ExportType>(
+    query: HistoryQuery,
+    exportType: T,
+    res: any,
+  ): Promise<HistoryDto<T>[] | StreamableFile> {
+    switch (query.type) {
+      case ExportDataType.CSV:
+        const csvFile = await this.historyService.getHistoryCsv(query.userAddress, query.depositAddress, exportType);
+
+        res.set({
+          'Content-Type': 'text/csv',
+          'Content-Disposition': `attachment; filename="LOCK_${exportType}_history_${this.formatDate()}.csv"`,
+        });
+        return csvFile;
+
+      case ExportDataType.JSON:
+        return await this.historyService.getHistory(query.userAddress, query.depositAddress, exportType);
+    }
   }
 }
