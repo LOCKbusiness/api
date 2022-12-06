@@ -89,7 +89,11 @@ export class MonitoringService {
 
   // *** HELPER METHODS *** /
 
-  async onModuleInit() {
+  onModuleInit() {
+    void this.init();
+  }
+
+  private async init() {
     const state = await this.loadState();
     state && this.#$state.next(state);
 

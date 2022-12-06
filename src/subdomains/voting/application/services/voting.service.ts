@@ -27,8 +27,8 @@ export class VotingService {
   ) {}
 
   // --- CURRENT RESULT --- //
-  async onModuleInit() {
-    await this.updateResult();
+  onModuleInit() {
+    void this.updateResult();
   }
 
   @Cron(CronExpression.EVERY_HOUR)
