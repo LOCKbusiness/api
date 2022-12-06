@@ -2,7 +2,7 @@ import { Asset, AssetCategory } from 'src/shared/models/asset/asset.entity';
 import { Deposit } from 'src/subdomains/staking/domain/entities/deposit.entity';
 import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
 import { Withdrawal } from 'src/subdomains/staking/domain/entities/withdrawal.entity';
-import { DepositStatus, RewardStatus, StakingStrategy, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
+import { DepositStatus, RewardStatus, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
 import { ChainReportCsvHistoryDto, ChainReportTransactionType } from '../dto/output/chain-report-history.dto';
 
 export class ChainReportHistoryDtoMapper {
@@ -45,10 +45,7 @@ export class ChainReportHistoryDtoMapper {
       .filter((c) => c.status === RewardStatus.CONFIRMED)
       .map((c) => ({
         timestamp: c.reinvestOutputDate ?? c.updated,
-        transactionType:
-          c.staking.strategy === StakingStrategy.LIQUIDITY_MINING
-            ? ChainReportTransactionType.LM
-            : ChainReportTransactionType.STAKING,
+        transactionType: ChainReportTransactionType.STAKING,
         inputAmount: c.amount,
         inputAsset: this.getAssetSymbolChainReport(c.asset),
         outputAmount: null,
@@ -56,8 +53,7 @@ export class ChainReportHistoryDtoMapper {
         feeAmount: null,
         feeAsset: null,
         txId: c.reinvestTxId,
-        description:
-          c.staking.strategy === StakingStrategy.LIQUIDITY_MINING ? 'LOCK Yield Machine Reward' : 'LOCK Staking Reward',
+        description: 'LOCK Staking Reward',
       }));
   }
 
