@@ -32,9 +32,7 @@ export class StakingHistoryService {
   async getHistoryCsv(userAddress: string, depositAddress: string, exportType: ExportType): Promise<StreamableFile> {
     const tx = await this.getHistory(userAddress, depositAddress, exportType);
     if (tx.length === 0) throw new NotFoundException('No transactions found');
-    return new StreamableFile(
-      Readable.from([exportType === ExportType.CHAIN_REPORT ? this.toCsv(tx, ';', true) : this.toCsv(tx)]),
-    );
+    return new StreamableFile(Readable.from([this.toCsv(tx)]));
   }
 
   async getHistory<T extends ExportType>(
@@ -45,10 +43,7 @@ export class StakingHistoryService {
     const stakingEntities = await this.getStakingEntitiesByAddress(userAddress, depositAddress);
     const deposits = stakingEntities.reduce((prev, curr) => prev.concat(curr.deposits), [] as Deposit[]);
     const withdrawals = stakingEntities.reduce((prev, curr) => prev.concat(curr.withdrawals), [] as Withdrawal[]);
-    const rewards = stakingEntities.reduce(
-      (prev, curr) => prev.concat(curr.rewards.map((r) => Object.assign(r, { staking: curr }))),
-      [] as Reward[],
-    );
+    const rewards = stakingEntities.reduce((prev, curr) => prev.concat(curr.rewards), [] as Reward[]);
 
     switch (exportFormat) {
       case ExportType.COIN_TRACKING:
@@ -107,17 +102,11 @@ export class StakingHistoryService {
     return this.filterDuplicateTxCompact(transactions);
   }
 
-  private toCsv(list: any[], separator = ',', toGermanLocalDateString = false): string {
+  private toCsv(list: any[], separator = ','): string {
     const headers = Object.keys(list[0]).join(separator);
     const values = list.map((t) =>
       Object.values(t)
-        .map((v) =>
-          v instanceof Date
-            ? toGermanLocalDateString
-              ? v.toLocaleString('de-DE', { timeZone: 'CET' })
-              : v.toISOString()
-            : v,
-        )
+        .map((v) => (v instanceof Date ? v.toISOString() : v))
         .join(separator),
     );
     return [headers].concat(values).join('\n');

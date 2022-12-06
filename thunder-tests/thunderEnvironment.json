@@ -1,33 +1,39 @@
 [
   {
     "_id": "3628328b-582b-4dbd-98c3-fd6c21722812",
-    "name": "loc (TransactionSigner)",
-    "default": false,
+    "name": "loc",
+    "default": true,
     "sortNum": 10000,
     "created": "2022-09-16T14:51:53.293Z",
-    "modified": "2022-12-05T19:35:38.650Z",
+    "modified": "2022-09-16T14:52:34.096Z",
     "data": [
       {
         "name": "url",
         "value": "localhost:3000"
+      },
+      {
+        "name": "token",
+        "value": "changeMe"
       }
-    ],
-    "envFile": "env/loc.transaction-signer.env"
+    ]
   },
   {
     "_id": "0cc529a2-6466-4308-b0a9-00306dd5337c",
-    "name": "dev (Admin)",
+    "name": "dev",
     "default": false,
     "sortNum": 20000,
     "created": "2022-09-16T14:57:29.785Z",
-    "modified": "2022-12-05T19:35:40.987Z",
+    "modified": "2022-09-16T14:57:44.154Z",
     "data": [
       {
         "name": "url",
         "value": "dev.api.lock.space"
+      },
+      {
+        "name": "token",
+        "value": "changeMe"
       }
-    ],
-    "envFile": "env/dev.admin.env"
+    ]
   },
   {
     "_id": "4ff5435f-7bf2-4c70-a7f6-f71ff46ab9a5",
@@ -35,65 +41,16 @@
     "default": false,
     "sortNum": 30000,
     "created": "2022-09-16T14:58:13.092Z",
-    "modified": "2022-12-05T19:09:20.389Z",
+    "modified": "2022-09-16T14:58:23.567Z",
     "data": [
       {
         "name": "url",
         "value": "api.lock.space"
       },
       {
-        "name": "address",
-        "value": ""
-      },
-      {
-        "name": "signature",
-        "value": ""
+        "name": "token",
+        "value": "changeMe"
       }
     ]
-  },
-  {
-    "_id": "5a732969-2af1-4bb6-8048-0b84e1bf426c",
-    "name": "loc (Admin)",
-    "default": false,
-    "sortNum": 5000,
-    "created": "2022-12-05T19:09:41.063Z",
-    "modified": "2022-12-05T19:35:36.450Z",
-    "data": [
-      {
-        "name": "url",
-        "value": "localhost:3000"
-      }
-    ],
-    "envFile": "env/loc.admin.env"
-  },
-  {
-    "_id": "55d8a3a2-bc26-4a38-8031-3ee34108e48c",
-    "name": "dev (TransactionSigner)",
-    "default": true,
-    "sortNum": 25000,
-    "created": "2022-12-05T19:15:36.025Z",
-    "modified": "2022-12-05T19:35:46.130Z",
-    "data": [
-      {
-        "name": "url",
-        "value": "dev.api.lock.space"
-      }
-    ],
-    "envFile": "env/dev.transaction-signer.env"
-  },
-  {
-    "_id": "5d5bc5a3-4343-4e20-8e47-7f1be4c41588",
-    "name": "dev (TransactionChecker)",
-    "default": false,
-    "sortNum": 22500,
-    "created": "2022-12-05T19:15:38.556Z",
-    "modified": "2022-12-05T19:35:43.340Z",
-    "data": [
-      {
-        "name": "url",
-        "value": "dev.api.lock.space"
-      }
-    ],
-    "envFile": "env/dev.transaction-checker.env"
   }
 ]
