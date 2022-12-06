@@ -230,13 +230,6 @@ export class Staking extends IEntity {
     return this.getDepositsByStatus(DepositStatus.PENDING);
   }
 
-  getDepositsWithoutFiatReferences(): Deposit[] {
-    return this.deposits.filter(
-      (d) =>
-        (d.amountChf == null || d.amountEur == null || d.amountUsd == null) && d.status === DepositStatus.CONFIRMED,
-    );
-  }
-
   getUnconfirmedDepositsAmount(): number {
     const unconfirmedDeposits = this.getDepositsByStatus([DepositStatus.OPEN, DepositStatus.PENDING]);
 
@@ -253,19 +246,6 @@ export class Staking extends IEntity {
 
   getPayingOutWithdrawals(): Withdrawal[] {
     return this.getWithdrawalsByStatus(WithdrawalStatus.PAYING_OUT);
-  }
-
-  getWithdrawalsWithoutFiatReferences(): Withdrawal[] {
-    return this.withdrawals.filter(
-      (w) =>
-        (w.amountChf == null || w.amountEur == null || w.amountUsd == null) && w.status === WithdrawalStatus.CONFIRMED,
-    );
-  }
-
-  getRewardsWithoutFiatReferences(): Reward[] {
-    return this.rewards.filter(
-      (w) => (w.amountChf == null || w.amountEur == null || w.amountUsd == null) && w.status === RewardStatus.CONFIRMED,
-    );
   }
 
   //*** HELPER STATIC METHODS ***//

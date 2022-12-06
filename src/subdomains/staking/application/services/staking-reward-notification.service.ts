@@ -15,7 +15,7 @@ export class StakingRewardNotificationService {
     await this.notificationService.sendMail({
       type: MailType.ERROR_MONITORING,
       input: {
-        subject: 'Rewards Payout Warning - liquidity about to be missing.',
+        subject: 'Reward Payout Error - warning, liquidity about to be missing.',
         errors: [message, additionalMessage],
       },
       options: { debounce: 1800000 },
@@ -36,7 +36,7 @@ export class StakingRewardNotificationService {
 
     await this.notificationService.sendMail({
       type: MailType.ERROR_MONITORING,
-      input: { subject: 'Reward Payout Error - missing liquidity.', errors: [message] },
+      input: { subject: 'Reward Payout Error - liquidity is missing.', errors: [message] },
       options: { debounce: 1800000 },
       metadata: { context: MailContext.STAKING, correlationId },
     });
@@ -60,7 +60,7 @@ export class StakingRewardNotificationService {
 
     await this.notificationService.sendMail({
       type: MailType.ERROR_MONITORING,
-      input: { subject: 'DFI Reward Payout Paused', errors },
+      input: { subject: 'Reward Payout Error - rewards paused!', errors },
       options: { debounce: 1800000 },
       metadata: { context: MailContext.STAKING, correlationId },
     });

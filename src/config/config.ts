@@ -124,15 +124,9 @@ export class Configuration {
       rew: {
         active: process.env.NODE_REW_URL_ACTIVE,
         passive: process.env.NODE_REW_URL_PASSIVE,
+        address: process.env.REW_WALLET_ADDRESS,
       },
-      rewWalletAddress: process.env.REW_WALLET_ADDRESS,
       maxPrice: 1000000,
-      minDeposit: {
-        DeFiChain: {
-          DFI: 0.01,
-          USD: 1,
-        },
-      },
     },
   };
 

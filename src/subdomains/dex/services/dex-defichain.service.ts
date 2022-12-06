@@ -75,9 +75,9 @@ export class DexDeFiChainService {
 
     try {
       return await this.#dexClient.compositeSwap(
-        Config.blockchain.default.rewWalletAddress,
+        Config.blockchain.default.rew.address,
         swapAsset.name,
-        Config.blockchain.default.rewWalletAddress,
+        Config.blockchain.default.rew.address,
         targetAsset.name,
         swapAmount,
         [],
@@ -95,23 +95,23 @@ export class DexDeFiChainService {
   }
 
   async sellDfiCoin(amount: number): Promise<string> {
-    return this.#dexClient.toToken(Config.blockchain.default.rewWalletAddress, amount);
+    return this.#dexClient.toToken(Config.blockchain.default.rew.address, amount);
   }
 
   async addPoolLiquidity(poolPair: [string, string]): Promise<string> {
-    return this.#dexClient.addPoolLiquidity(Config.blockchain.default.rewWalletAddress, poolPair);
+    return this.#dexClient.addPoolLiquidity(Config.blockchain.default.rew.address, poolPair);
   }
 
   async transferLiquidity(addressTo: string, asset: string, amount: number): Promise<string> {
-    return this.#dexClient.sendToken(Config.blockchain.default.rewWalletAddress, addressTo, asset, amount);
+    return this.#dexClient.sendToken(Config.blockchain.default.rew.address, addressTo, asset, amount);
   }
 
   async transferMinimalUtxo(address: string): Promise<string> {
     return this.#dexClient.sendToken(
-      Config.blockchain.default.rewWalletAddress,
+      Config.blockchain.default.rew.address,
       address,
       'DFI',
-      Config.blockchain.default.minDeposit.DeFiChain.DFI / 2,
+      Config.payIn.min.DeFiChain.DFI / 2,
     );
   }
 
@@ -122,7 +122,11 @@ export class DexDeFiChainService {
   }
 
   async getSwapAmount(txId: string, asset: string): Promise<number> {
-    const historyEntry = await this.deFiChainUtil.getHistoryEntryForTx(txId, this.#dexClient);
+    const historyEntry = await this.deFiChainUtil.getHistoryEntryForTx(
+      txId,
+      this.#dexClient,
+      Config.blockchain.default.rew.address,
+    );
 
     if (!historyEntry) {
       throw new Error(`Could not find transaction with ID: ${txId} while trying to extract purchased liquidity`);
@@ -180,7 +184,11 @@ export class DexDeFiChainService {
       (o) => o.targetAsset.name === asset.name && o.targetAsset.blockchain === Blockchain.DEFICHAIN,
     );
     const pendingAmount = Util.sumObj<LiquidityOrder>(pendingOrders, 'targetAmount');
-    const availableAmount = await this.deFiChainUtil.getAvailableTokenAmount(asset.name, this.#dexClient);
+    const availableAmount = await this.deFiChainUtil.getAvailableTokenAmount(
+      asset.name,
+      this.#dexClient,
+      Config.blockchain.default.rew.address,
+    );
 
     return Util.round(availableAmount - pendingAmount, 8);
   }

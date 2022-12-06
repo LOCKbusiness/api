@@ -96,7 +96,7 @@ export class StakingRewardDexService {
   }
 
   private async swapDfiToken(dfiAmount: number): Promise<void> {
-    const swapTxId = await this.#rewClient.toToken(Config.blockchain.default.rewWalletAddress, dfiAmount);
+    const swapTxId = await this.#rewClient.toToken(Config.blockchain.default.rew.address, dfiAmount);
     console.log(`Preparing DFI Reward payout process. Swapped ${dfiAmount} utxo to DFI token. SwapTxId: ${swapTxId}`);
 
     await this.#rewClient.waitForTx(swapTxId);
@@ -119,8 +119,6 @@ export class StakingRewardDexService {
       .where('status = :status', { status: RewardStatus.PREPARATION_PENDING })
       .execute();
   }
-
-  private;
 
   private async checkPendingBatches(pendingBatches: RewardBatch[]): Promise<void> {
     for (const batch of pendingBatches) {

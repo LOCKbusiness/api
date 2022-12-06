@@ -1,4 +1,3 @@
-import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { IEntity } from 'src/shared/models/entity';
 import { Util } from 'src/shared/util';
@@ -33,9 +32,6 @@ export class RewardBatch extends IEntity {
   @Column({ length: 256, nullable: true })
   status: RewardBatchStatus;
 
-  @Column({ length: 256, nullable: true })
-  blockchain: Blockchain;
-
   addTransaction(reward: Reward): this {
     reward.batch = this;
 
@@ -50,13 +46,11 @@ export class RewardBatch extends IEntity {
     this.targetAmount = liquidity;
     this.status = RewardBatchStatus.SECURED;
 
-    const updatedRewards = this.rewards.map((r) => {
+    this.rewards.forEach((r) => {
       return r.calculateOutputAmount(this.outputReferenceAmount, this.targetAmount);
     });
 
     this.fixRoundingMismatch();
-
-    this.rewards = updatedRewards;
 
     return this;
   }

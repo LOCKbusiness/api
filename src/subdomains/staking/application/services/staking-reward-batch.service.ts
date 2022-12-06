@@ -68,7 +68,6 @@ export class StakingRewardBatchService {
         batch = this.rewardBatchRepo.create({
           outputReferenceAsset,
           targetAsset,
-          blockchain: targetAsset.blockchain,
           status: RewardBatchStatus.CREATED,
           rewards: [],
         });
