@@ -6,7 +6,7 @@ export enum ExportDataType {
   JSON = 'json',
 }
 
-export class HistoryQueryBase {
+export class HistoryQuery {
   @ApiPropertyOptional()
   @IsNotEmpty()
   @IsString()
@@ -18,13 +18,9 @@ export class HistoryQueryBase {
   @IsString()
   @ValidateIf((b) => b.depositAddress || !b.userAddress)
   depositAddress: string;
-}
 
-export class HistoryQueryCompact extends HistoryQueryBase {
   @ApiPropertyOptional({ enum: ExportDataType })
   @IsOptional()
   @IsEnum(ExportDataType)
   type: ExportDataType = ExportDataType.CSV;
 }
-
-export class HistoryQueryTaxTools extends HistoryQueryBase {}

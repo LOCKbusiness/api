@@ -41,6 +41,12 @@ export class Staking extends IEntity {
   @Column({ type: 'float', nullable: false, default: 0 })
   balance: number;
 
+  @Column({ type: 'float', nullable: false, default: 0 })
+  stageOneBalance: number;
+
+  @Column({ type: 'float', nullable: false, default: 0 })
+  stageTwoBalance: number;
+
   @OneToOne(() => StakingBlockchainAddress, { eager: true, nullable: false })
   @JoinColumn()
   depositAddress: StakingBlockchainAddress;
@@ -201,6 +207,25 @@ export class Staking extends IEntity {
     return this;
   }
 
+  updateBalance(): number {
+    const confirmedDeposits = this.getDepositsByStatus(DepositStatus.CONFIRMED);
+    const confirmedWithdrawals = this.getWithdrawalsByStatus(WithdrawalStatus.CONFIRMED);
+
+    const confirmedDepositsAmount = Util.sumObj(confirmedDeposits, 'amount');
+    const confirmedWithdrawalsAmount = Util.sumObj(confirmedWithdrawals, 'amount');
+
+    this.balance = Util.round(confirmedDepositsAmount - confirmedWithdrawalsAmount, 8);
+
+    // staged balances (staked more than xxx days)
+    const stageOneDeposits = confirmedDeposits.filter((d) => Util.daysDiff(d.created, new Date()) < 2);
+    this.stageOneBalance = this.balance - Util.sumObj(stageOneDeposits, 'amount');
+
+    const stageTwoDeposits = confirmedDeposits.filter((d) => Util.daysDiff(d.created, new Date()) < 6);
+    this.stageTwoBalance = this.balance - Util.sumObj(stageTwoDeposits, 'amount');
+
+    return this.balance;
+  }
+
   //*** GETTERS ***//
 
   getWithdrawal(withdrawalId: number): Withdrawal {
@@ -288,18 +313,6 @@ export class Staking extends IEntity {
   }
 
   //*** HELPER METHODS ***//
-
-  private updateBalance(): number {
-    const confirmedDeposits = this.getDepositsByStatus(DepositStatus.CONFIRMED);
-    const confirmedWithdrawals = this.getWithdrawalsByStatus(WithdrawalStatus.CONFIRMED);
-
-    const confirmedDepositsAmount = Util.sumObj(confirmedDeposits, 'amount');
-    const confirmedWithdrawalsAmount = Util.sumObj(confirmedWithdrawals, 'amount');
-
-    this.balance = Util.round(confirmedDepositsAmount - confirmedWithdrawalsAmount, 8);
-
-    return this.balance;
-  }
 
   private updateRewardBalance(): number {
     const confirmedRewards = this.getRewardsByStatus(RewardStatus.CONFIRMED);
