@@ -33,16 +33,15 @@ export class YieldMachineService {
     private readonly transactionExecutionService: TransactionExecutionService,
     private readonly vaultService: VaultService,
     private readonly tokenProviderService: TokenProviderService,
-    private readonly whaleService: WhaleService,
+    readonly whaleService: WhaleService,
   ) {
     whaleService.getClient().subscribe((client) => (this.whaleClient = client));
-
-    this.checkVaultsForEmergency();
   }
 
   @Cron(CronExpression.EVERY_5_MINUTES)
   async checkVaultsForEmergency() {
     if (!this.emergencyVaultCheckLock.acquire()) return;
+
     const vaults = await this.vaultService.getAll();
     const vaultInfos = await Promise.all(
       vaults.filter((v) => v.vault).map((v) => this.whaleClient.getVault(v.address, v.vault)),
@@ -50,8 +49,7 @@ export class YieldMachineService {
     const allEmergencyProcesses: Promise<unknown>[] = [];
     for (const vault of vaultInfos) {
       const dbVault = vaults.find((v) => v.vault === vault.vaultId);
-      // TODO (Krysh) change to emergency ratio
-      if (dbVault.minCollateralRatio < +vault.collateralRatio) {
+      if (dbVault.emergencyCollateralRatio > +vault.collateralRatio) {
         console.info(`starting emergency payback for ${dbVault.vault} on ${dbVault.address}`);
         try {
           allEmergencyProcesses.push(this.executeEmergencyFor(dbVault));
@@ -62,6 +60,7 @@ export class YieldMachineService {
     }
     await Promise.all(allEmergencyProcesses);
     console.info(`finished emergency check`);
+
     this.emergencyVaultCheckLock.release();
   }
 
@@ -76,7 +75,7 @@ export class YieldMachineService {
       address: vault.address,
     });
     await this.whaleClient.waitForTx(removePoolTx);
-    // read again from blockchain to know how many tokens can be payed back
+    // read again from blockchain to know how many tokens can be payed back and deposited
     tokens = await this.whaleClient.getBalancesOf(vault.address);
     const savingTxs: Promise<string>[] = [];
     const amountToPayback = this.amountOf(vault.blockchainPairTokenAId, tokens);
@@ -92,7 +91,7 @@ export class YieldMachineService {
     const amountToDeposit = this.amountOf(vault.blockchainPairTokenBId, tokens);
     if (amountToDeposit) {
       console.info(`${logId}: Depositing ${amountToDeposit} of ${vault.blockchainPairTokenBId}`);
-      const depositTx = await this.paybackLoan(vault, {
+      const depositTx = await this.depositToVault(vault, {
         amount: +amountToDeposit,
         address: vault.address,
         vault: vault.vault,
