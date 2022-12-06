@@ -40,7 +40,10 @@ export class UtxoManagementService {
 
   async checkUtxos(): Promise<void> {
     const liqBalance = await this.client.getUTXOBalance(Config.staking.liquidity.address);
-    if (liqBalance.lt(Config.utxo.minOperateValue)) throw new Error('Too low liquidity to operate');
+    if (liqBalance.lt(Config.utxo.minOperateValue)) {
+      console.log('Too low liquidity to operate');
+      return;
+    }
 
     const utxoStatistics = await this.getStatistics(Config.staking.liquidity.address);
     if (utxoStatistics.biggest.gte(Config.utxo.minSplitValue)) {
@@ -49,8 +52,10 @@ export class UtxoManagementService {
         split: Config.utxo.split,
       });
     } else if (utxoStatistics.quantity > Config.utxo.amount.max) {
-      if (utxoStatistics.amountOfMerged && utxoStatistics.amountOfMerged.gt(Config.utxo.minSplitValue))
-        throw new Error(`Merge would exceed limit of ${utxoStatistics.amountOfMerged.toString()}`);
+      if (utxoStatistics.amountOfMerged && utxoStatistics.amountOfMerged.gt(Config.utxo.minSplitValue)) {
+        console.log(`Merge would exceed limit of ${utxoStatistics.amountOfMerged.toString()}`);
+        return;
+      }
       await this.transactionExecutionService.mergeSmallestUtxos({
         address: Config.staking.liquidity.address,
         merge: Config.utxo.merge,
