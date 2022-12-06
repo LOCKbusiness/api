@@ -1,10 +1,11 @@
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { IEntity } from 'src/shared/models/entity';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { RewardStatus } from '../enums';
 import { Staking } from './staking.entity';
 
 @Entity()
+@Index(['staking', 'reinvestTxId'], { unique: true })
 export class Reward extends IEntity {
   @ManyToOne(() => Staking, (staking) => staking.rewards, { nullable: false })
   staking: Staking;
