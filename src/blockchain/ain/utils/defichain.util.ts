@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Config } from 'src/config/config';
 import { DeFiClient } from '../node/defi-client';
 
 @Injectable()
@@ -7,6 +6,7 @@ export class DeFiChainUtil {
   async getHistoryEntryForTx(
     txId: string,
     client: DeFiClient,
+    address: string,
   ): Promise<{ txId: string; blockHeight: number; amounts: string[] }> {
     const transaction = await client.getTx(txId);
 
@@ -14,7 +14,7 @@ export class DeFiChainUtil {
       const { height } = await client.getBlock(transaction.blockhash);
 
       return client
-        .getHistories([Config.blockchain.default.rewWalletAddress], height, height + 1)
+        .listHistory(height, height + 1, address)
         .then((histories) =>
           histories
             .map((h) => ({ txId: h.txid, blockHeight: h.blockHeight, amounts: h.amounts }))
@@ -23,10 +23,10 @@ export class DeFiChainUtil {
     }
   }
 
-  async getAvailableTokenAmount(assetName: string, client: DeFiClient): Promise<number> {
+  async getAvailableTokenAmount(assetName: string, client: DeFiClient, address: string): Promise<number> {
     const tokens = await client.getToken();
     const token = tokens
-      .filter((t) => t.owner === Config.blockchain.default.rewWalletAddress)
+      .filter((t) => t.owner === address)
       .map((t) => client.parseAmount(t.amount))
       .find((pt) => pt.asset === assetName);
 

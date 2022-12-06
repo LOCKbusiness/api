@@ -58,25 +58,31 @@ export class KycController {
 
     switch (dto.result) {
       case KycResult.STATUS_CHANGED:
-        // send notification on KYC completed
-        if (user.kycStatus === KycStatus.NA && KycCompleted(dto.data.kycStatus)) {
-          if (user.mail) {
-            await this.notificationService.sendMail({
-              type: MailType.USER,
-              input: { translationKey: 'mail.kyc.success', translationParams: { name: user.firstName }, user },
-            });
-          } else {
-            console.error(`Failed to send KYC completion mail for user ${user.id}: user has no email`);
-          }
-        }
-
         // ignore rejected KYC, if already completed
         if (user.hasKyc && dto.data.kycStatus === KycStatus.REJECTED) {
           console.info('Ignored rejected KYC because KYC is already completed');
           return;
         }
 
-        await this.userService.updateUser(user.id, dto.data);
+        // update
+        const previousKycStatus = user.kycStatus;
+        const updatedUser = await this.userService.updateUser(user.id, dto.data);
+
+        // send notification on KYC completed
+        if (previousKycStatus === KycStatus.NA && KycCompleted(dto.data.kycStatus)) {
+          if (updatedUser.mail) {
+            await this.notificationService.sendMail({
+              type: MailType.USER,
+              input: {
+                translationKey: 'mail.kyc.success',
+                translationParams: { name: updatedUser.firstName },
+                user: updatedUser,
+              },
+            });
+          } else {
+            console.error(`Failed to send KYC completion mail for user ${updatedUser.id}: user has no email`);
+          }
+        }
         break;
 
       case KycResult.FAILED:
@@ -88,12 +94,14 @@ export class KycController {
               translationKey: 'mail.kyc.failed',
               translationParams: {
                 url: Config.kyc.frontendUrl(user.kycHash),
+                name: user.firstName,
               },
             },
           });
         } else {
           console.error(`Failed to send KYC failed mail for user ${user.id}: user has no email`);
         }
+
         // notify support
         await this.notificationService.sendMail({ type: MailType.KYC_SUPPORT, input: { user } });
         console.error(`Received KYC failed webhook for user with KYC ID ${dto.id}`);

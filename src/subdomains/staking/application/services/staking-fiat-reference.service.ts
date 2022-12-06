@@ -38,7 +38,7 @@ export class StakingFiatReferenceService {
       const prices = await this.getReferencePrices(relevantAssets);
       await this.calculateFiatReferences(deposits, withdrawals, rewards, prices);
     } catch (e) {
-      console.error('Exception during staking deposits and withdrawals fiat reference calculation:', e);
+      console.error('Exception during staking deposits, withdrawals and rewards fiat reference calculation:', e);
     } finally {
       this.lock.release();
     }
@@ -77,11 +77,13 @@ export class StakingFiatReferenceService {
   }
 
   private defineRelevantAssets(deposits: Deposit[], withdrawals: Withdrawal[], rewards: Reward[]): number[] {
-    const depositsAssets = [...new Set(deposits.map((d) => d.asset.id))];
-    const withdrawalsAssets = [...new Set(withdrawals.map((w) => w.asset.id))];
-    const rewardsAssets = [...new Set(rewards.map((r) => r.referenceAsset.id))];
-
-    return [...new Set([...depositsAssets, ...withdrawalsAssets, ...rewardsAssets])];
+    return [
+      ...new Set([
+        ...deposits.map((d) => d.asset.id),
+        ...withdrawals.map((w) => w.asset.id),
+        ...rewards.map((r) => r.referenceAsset.id),
+      ]),
+    ];
   }
 
   private async getReferencePrices(uniqueAssetIds: number[]): Promise<Price[]> {

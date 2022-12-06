@@ -18,7 +18,6 @@ export class CompactHistoryDtoMapper {
     [RewardStatus.PAUSED]: CompactHistoryStatus.PENDING,
     [RewardStatus.PREPARATION_PENDING]: CompactHistoryStatus.PENDING,
     [RewardStatus.PREPARATION_CONFIRMED]: CompactHistoryStatus.PENDING,
-    [RewardStatus.CONFIRMED]: CompactHistoryStatus.CONFIRMED,
   };
 
   static mapStakingDeposits(deposits: Deposit[]): CompactHistoryDto[] {

@@ -10,32 +10,13 @@ export class DeFiClient extends NodeClient {
   }
 
   // common
-  async listHistory(fromBlock: number, toBlock: number): Promise<AccountHistory[]> {
-    return this.callNode((c) =>
-      c.account.listAccountHistory(undefined, {
-        depth: toBlock - fromBlock,
-        maxBlockHeight: toBlock,
-        no_rewards: true,
-        limit: 1000000,
-      }),
-    );
-  }
-
-  // TODO -> duplicated logic, clarify with Matthias a reason for #listHistory(...)
-  async getHistories(addresses: string[], fromBlock: number, toBlock: number): Promise<AccountHistory[]> {
-    let results = [];
-    for (const address of addresses) {
-      results = results.concat(await this.getHistory(address, fromBlock, toBlock));
-    }
-    return results;
-  }
-
-  // TODO -> duplicated logic, clarify with Matthias a reason for #listHistory(...)
-  private async getHistory(address: string, fromBlock: number, toBlock: number): Promise<AccountHistory[]> {
+  async listHistory(fromBlock: number, toBlock: number, address?: string): Promise<AccountHistory[]> {
     return this.callNode((c) =>
       c.account.listAccountHistory(address, {
         depth: toBlock - fromBlock,
         maxBlockHeight: toBlock,
+        no_rewards: true,
+        limit: 1000000,
       }),
     );
   }
