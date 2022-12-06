@@ -27,6 +27,7 @@ import { AssetStakingMetadataRepository } from './application/repositories/asset
 import { WithdrawalRepository } from './application/repositories/withdrawal.repository';
 import { WithdrawalController } from './api/controllers/withdrawal.controller';
 import { DepositRepository } from './application/repositories/deposit.repository';
+import { UtxoManagementService } from './application/services/utxo-management.service';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { DepositRepository } from './application/repositories/deposit.repository
     StakingAuthorizeService,
     StakingKycCheckService,
     LiquidityManagementService,
+    UtxoManagementService,
   ],
   exports: [StakingService, StakingDepositService, StakingWithdrawalService],
 })

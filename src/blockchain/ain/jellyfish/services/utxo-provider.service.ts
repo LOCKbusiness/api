@@ -12,7 +12,6 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Lock } from 'src/shared/lock';
 import { UtxoSizePriority } from '../domain/enums';
 import { UtxoInformation } from '../domain/entities/utxo-information';
-import { UtxoStatistics } from '../domain/entities/utxo-statistics';
 import { UtxoConfig } from '../domain/entities/utxo-config';
 
 interface AddressUnspent extends JellyfishAddressUnspent {
@@ -72,19 +71,6 @@ export class UtxoProviderService {
     );
   }
 
-  async getStatistics(address: string): Promise<UtxoStatistics> {
-    const unspent = await this.retrieveUnspent(address);
-    const quantity = unspent?.length ?? 0;
-    const sortedUnspent = unspent?.sort(UtxoProviderService.orderDescending);
-    const biggest = new BigNumber(sortedUnspent?.[0]?.vout.value);
-    const amountOfMerged =
-      (unspent?.length ?? 0) > Config.utxo.merge
-        ? UtxoProviderService.sum(sortedUnspent?.slice(-Config.utxo.merge))
-        : undefined;
-
-    return { quantity, biggest, amountOfMerged };
-  }
-
   async addressHasUtxoExactAmount(address: string, amount: BigNumber): Promise<boolean> {
     const unspent = await this.retrieveUnspent(address);
     return unspent.find((u) => amount.isEqualTo(new BigNumber(u.vout.value))) != null;
@@ -123,6 +109,10 @@ export class UtxoProviderService {
         }),
       ),
     );
+  }
+
+  async retrieveAllUnspent(address: string): Promise<AddressUnspent[]> {
+    return this.retrieveUnspent(address);
   }
 
   // --- HELPER METHODS --- //
@@ -245,12 +235,8 @@ export class UtxoProviderService {
     return new BigNumber(a.vout.value).minus(new BigNumber(b.vout.value)).toNumber();
   }
 
-  private static orderDescending(a: AddressUnspent, b: AddressUnspent): number {
+  static orderDescending(a: AddressUnspent, b: AddressUnspent): number {
     return new BigNumber(b.vout.value).minus(new BigNumber(a.vout.value)).toNumber();
-  }
-
-  private static sum(unspent: AddressUnspent[]): BigNumber {
-    return new BigNumber(unspent.map((u) => +u.vout.value).reduce((curr, prev) => curr + prev));
   }
 
   // --- PARSING --- //
