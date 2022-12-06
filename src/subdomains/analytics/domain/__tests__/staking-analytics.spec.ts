@@ -1,3 +1,4 @@
+import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
 import { StakingAnalytics } from '../staking-analytics.entity';
 
 describe('StakingAnalytics', () => {
@@ -27,6 +28,7 @@ describe('StakingAnalytics', () => {
       const tvl = 100;
 
       const analytics = new StakingAnalytics();
+      analytics.strategy = StakingStrategy.MASTERNODE;
 
       const updatedAnalytics = analytics.updateAnalytics(averageBalance, averageReward, operatorCount, tvl);
 

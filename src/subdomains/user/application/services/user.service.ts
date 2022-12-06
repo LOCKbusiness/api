@@ -19,7 +19,7 @@ export class UserService {
   async updateUser(userId: number, dto: Partial<User>): Promise<User> {
     const user = await this.userRepo.findOne(userId);
     if (!user) throw new NotFoundException('User not found');
-    return await this.userRepo.save({ ...user, ...dto });
+    return await this.userRepo.save(Object.assign(user, dto));
   }
 
   async getUser(userId: number): Promise<User> {

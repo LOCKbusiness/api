@@ -37,16 +37,20 @@ export class WhaleClient {
     return this.client.rawtx.send({ hex });
   }
 
-  async waitForTx(txId: string, timeout = 1200): Promise<string> {
+  async waitForTx(txId: string, timeout = 600000): Promise<string> {
     const tx = await Util.poll(
       () => this.client.transactions.get(txId),
       (t) => t !== undefined,
-      5,
+      5000,
       timeout,
       true,
     );
 
-    if (tx) return tx.id;
+    if (tx) {
+      // wait for Ocean to settle
+      await Util.delay(5000);
+      return tx.id;
+    }
 
     throw new Error(`Wait for TX ${txId} timed out`);
   }

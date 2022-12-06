@@ -10,6 +10,7 @@ import { SystemStateSnapshotRepository } from './application/repositories/system
 import { NotificationModule } from 'src/integration/notification/notification.module';
 import { BlockchainModule } from 'src/blockchain/blockchain.module';
 import { StakingExternalObserver } from './observers/staking-external.observer';
+import { InfrastructureModule } from 'src/integration/infrastructure/infrastructure.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { StakingExternalObserver } from './observers/staking-external.observer';
     SharedModule,
     BlockchainModule,
     NotificationModule,
+    InfrastructureModule,
   ],
   providers: [
     MonitoringService,
