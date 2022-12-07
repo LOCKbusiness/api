@@ -218,10 +218,10 @@ export class Staking extends IEntity {
 
     // staged balances (staked more than xxx days)
     const stageOneDeposits = confirmedDeposits.filter((d) => Util.daysDiff(d.created, new Date()) < 2);
-    this.stageOneBalance = this.balance - Util.sumObj(stageOneDeposits, 'amount');
+    this.stageOneBalance = Math.max(0, Util.round(this.balance - Util.sumObj(stageOneDeposits, 'amount'), 8));
 
     const stageTwoDeposits = confirmedDeposits.filter((d) => Util.daysDiff(d.created, new Date()) < 6);
-    this.stageTwoBalance = this.balance - Util.sumObj(stageTwoDeposits, 'amount');
+    this.stageTwoBalance = Math.max(0, Util.round(this.balance - Util.sumObj(stageTwoDeposits, 'amount'), 8));
 
     return this.balance;
   }
