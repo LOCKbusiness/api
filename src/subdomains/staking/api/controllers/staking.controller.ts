@@ -22,8 +22,6 @@ export class StakingController {
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
   @ApiOkResponse({ type: StakingOutputDto })
   async getStaking(@GetJwt() jwt: JwtPayload, @Query() query: GetOrCreateStakingQuery): Promise<StakingOutputDto> {
-    // TODO: remove
-    query.asset ??= query.assetName;
     return this.stakingService.getOrCreateStaking(jwt.userId, jwt.walletId, query);
   }
 

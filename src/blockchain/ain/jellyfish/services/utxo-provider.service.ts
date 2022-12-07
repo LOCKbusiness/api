@@ -251,7 +251,6 @@ export class UtxoProviderService {
         vout: item.vout.n,
         value: new BigNumber(item.vout.value),
         script: {
-          // TODO(fuxingloh): needs to refactor once jellyfish refactor this.
           stack: toOPCodes(SmartBuffer.fromBuffer(Buffer.from(item.script.hex, 'hex'))),
         },
         tokenId: item.vout.tokenId ?? 0x00,
