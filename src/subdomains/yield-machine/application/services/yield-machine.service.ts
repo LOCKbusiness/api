@@ -5,7 +5,7 @@ import BigNumber from 'bignumber.js';
 import { TokenProviderService } from 'src/blockchain/ain/whale/token-provider.service';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
-import { Config } from 'src/config/config';
+import { Config, Process } from 'src/config/config';
 import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
 import { VaultService } from 'src/integration/vault/application/services/vault.service';
 import { Vault } from 'src/integration/vault/domain/entities/vault.entity';
@@ -40,22 +40,23 @@ export class YieldMachineService {
 
   @Cron(CronExpression.EVERY_5_MINUTES)
   async checkVaultsForEmergency() {
+    if (Config.processDisabled(Process.UTXO_MANAGEMENT)) return;
+
     if (!this.emergencyVaultCheckLock.acquire()) return;
 
     const vaults = await this.vaultService.getAll();
-    const vaultInfos = await Promise.all(
-      vaults.filter((v) => v.vault).map((v) => this.whaleClient.getVault(v.address, v.vault)),
-    );
+    const vaultInfos = await Promise.all(vaults.filter((v) => v.vault).map((v) => this.whaleClient.getVault(v.vault)));
     const allEmergencyProcesses: Promise<unknown>[] = [];
     for (const vault of vaultInfos) {
       const dbVault = vaults.find((v) => v.vault === vault.vaultId);
       if (dbVault.emergencyCollateralRatio > +vault.collateralRatio) {
         console.info(`starting emergency payback for ${dbVault.vault} on ${dbVault.address}`);
-        try {
-          allEmergencyProcesses.push(this.executeEmergencyFor(dbVault));
-        } catch (e) {
-          console.error('Exception during vault emergency check:', e);
-        }
+        const logId = `${dbVault.address} (${dbVault.vault})`;
+        allEmergencyProcesses.push(
+          this.executeEmergencyFor(dbVault, logId).catch((e) =>
+            console.error(`Exception during vault emergency check for ${logId}:`, e),
+          ),
+        );
       }
     }
     await Promise.all(allEmergencyProcesses);
@@ -64,9 +65,10 @@ export class YieldMachineService {
     this.emergencyVaultCheckLock.release();
   }
 
-  private async executeEmergencyFor(vault: Vault): Promise<string[]> {
-    const logId = `${vault.address} (${vault.vault})`;
-    let tokens = await this.whaleClient.getBalancesOf(vault.address);
+  private async executeEmergencyFor(vault: Vault, logId: string): Promise<string[]> {
+    let tokens = await this.whaleClient.getBalances(vault.address);
+
+    // remove liquidity mining pool tokens to have pair token A and pair token B available
     const amountToRemoveFromPool = this.amountOf(vault.blockchainPairId, tokens);
     if (!amountToRemoveFromPool) throw new Error(`${logId}: No pool liquidity found for vault: ${vault.vault}`);
     console.info(`${logId}: Removing ${amountToRemoveFromPool} of pool ${vault.blockchainPairId}`);
@@ -75,8 +77,9 @@ export class YieldMachineService {
       address: vault.address,
     });
     await this.whaleClient.waitForTx(removePoolTx);
-    // read again from blockchain to know how many tokens can be payed back and deposited
-    tokens = await this.whaleClient.getBalancesOf(vault.address);
+
+    // pay back as many pair token A tokens as possible
+    tokens = await this.whaleClient.getBalances(vault.address);
     const savingTxs: Promise<string>[] = [];
     const amountToPayback = this.amountOf(vault.blockchainPairTokenAId, tokens);
     if (amountToPayback) {
@@ -88,6 +91,8 @@ export class YieldMachineService {
       });
       savingTxs.push(this.whaleClient.waitForTx(paybackTx));
     }
+
+    // deposit as many pair token B tokens as possible
     const amountToDeposit = this.amountOf(vault.blockchainPairTokenBId, tokens);
     if (amountToDeposit) {
       console.info(`${logId}: Depositing ${amountToDeposit} of ${vault.blockchainPairTokenBId}`);
@@ -98,6 +103,7 @@ export class YieldMachineService {
       });
       savingTxs.push(this.whaleClient.waitForTx(depositTx));
     }
+
     return Promise.all(savingTxs);
   }
 

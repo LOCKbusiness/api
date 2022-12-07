@@ -22,6 +22,10 @@ export class WhaleClient {
     return this.client.address.getBalance(address).then(BigNumber);
   }
 
+  async getBalances(address: string): Promise<AddressToken[]> {
+    return await this.getAll(() => this.client.address.listToken(address));
+  }
+
   async getBlockHeight(): Promise<number> {
     return (await this.client.stats.get()).count.blocks;
   }
@@ -34,22 +38,10 @@ export class WhaleClient {
     return await this.getAll(() => this.client.tokens.list(200));
   }
 
-  async getVault(address: string, vaultId: string): Promise<LoanVaultActive> {
-    const vaults = await this.client.address.listVault(address);
-    // looks weird i know.
-    // There are two different LoanVault types
-    // 1) LoanVaultActive (which we want)
-    // 2) LoanVaultLiquidated
-    // second has only one state which is IN_LIQUIDATION
-    // therefore it is safe to cast
-    return vaults
-      .filter((vault) => vault.state !== LoanVaultState.IN_LIQUIDATION)
-      .map((v) => v as LoanVaultActive)
-      .find((vault) => vault.vaultId === vaultId);
-  }
-
-  async getBalancesOf(address: string): Promise<AddressToken[]> {
-    return await this.getAll(() => this.client.address.listToken(address));
+  async getVault(vaultId: string): Promise<LoanVaultActive> {
+    const vault = await this.client.loan.getVault(vaultId);
+    if (vault.state === LoanVaultState.IN_LIQUIDATION) return undefined;
+    return vault;
   }
 
   async sendRaw(hex: string): Promise<string> {
