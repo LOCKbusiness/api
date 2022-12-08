@@ -6,10 +6,11 @@ import { Config, Process } from 'src/config/config';
 import { MasternodeRepository } from 'src/integration/masternode/application/repositories/masternode.repository';
 import { Util } from 'src/shared/util';
 import { DepositRepository } from 'src/subdomains/staking/application/repositories/deposit.repository';
+import { RewardRepository } from 'src/subdomains/staking/application/repositories/reward.repository';
 import { StakingBlockchainAddressRepository } from 'src/subdomains/staking/application/repositories/staking-blockchain-address.repository';
 import { StakingRepository } from 'src/subdomains/staking/application/repositories/staking.repository';
 import { WithdrawalRepository } from 'src/subdomains/staking/application/repositories/withdrawal.repository';
-import { DepositStatus, MasternodeState, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
+import { DepositStatus, MasternodeState, StakingStrategy, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
 import { getCustomRepository, In, IsNull, Not } from 'typeorm';
 import { MonitoringService } from '../application/services/monitoring.service';
 import { MetricObserver } from '../metric.observer';
@@ -20,7 +21,12 @@ interface StakingData {
   freeDepositAddresses: number;
   openDeposits: number;
   openWithdrawals: number;
+  lastOutputDates: LastOutputDates;
 }
+
+type LastOutputDates = {
+  [k in StakingStrategy]: Date;
+};
 
 @Injectable()
 export class StakingCombinedObserver extends MetricObserver<StakingData> {
@@ -63,6 +69,7 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
       openWithdrawals: await getCustomRepository(WithdrawalRepository).count({
         where: { status: In([WithdrawalStatus.PENDING, WithdrawalStatus.PAYING_OUT]) },
       }),
+      lastOutputDates: await this.getLastOutputDates(),
     };
   }
 
@@ -98,5 +105,25 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
     // calculate difference
     const difference = Util.round(actual - should, Config.defaultVolumeDecimal);
     return { actual, should, difference };
+  }
+
+  private async getLastOutputDates(): Promise<LastOutputDates> {
+    const lastOutputDates = {};
+
+    for (const strategy in StakingStrategy) {
+      lastOutputDates[StakingStrategy[strategy]] = await this.getLastOutputDate(StakingStrategy[strategy]);
+    }
+
+    return lastOutputDates as LastOutputDates;
+  }
+
+  private async getLastOutputDate(strategy: StakingStrategy): Promise<Date> {
+    return await getCustomRepository(RewardRepository)
+      .findOne({
+        order: { reinvestOutputDate: 'DESC' },
+        where: { staking: { strategy } },
+        relations: ['staking'],
+      })
+      .then((b) => b.reinvestOutputDate);
   }
 }
