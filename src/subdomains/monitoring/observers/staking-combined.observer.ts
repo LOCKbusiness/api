@@ -6,7 +6,7 @@ import { Config, Process } from 'src/config/config';
 import { MasternodeRepository } from 'src/integration/masternode/application/repositories/masternode.repository';
 import { Util } from 'src/shared/util';
 import { DepositRepository } from 'src/subdomains/staking/application/repositories/deposit.repository';
-import { StakingBlockchainAddressRepository } from 'src/subdomains/staking/application/repositories/staking-blockchain-address.repository';
+import { ReservableBlockchainAddressRepository } from 'src/subdomains/address-pool/application/repositories/reservable-blockchain-address.repository';
 import { StakingRepository } from 'src/subdomains/staking/application/repositories/staking.repository';
 import { WithdrawalRepository } from 'src/subdomains/staking/application/repositories/withdrawal.repository';
 import { DepositStatus, MasternodeState, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
@@ -54,10 +54,10 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
       freeOperators: await getCustomRepository(MasternodeRepository).count({
         where: { creationHash: IsNull() },
       }),
-      freeDepositAddresses: await getCustomRepository(StakingBlockchainAddressRepository)
+      freeDepositAddresses: await getCustomRepository(ReservableBlockchainAddressRepository)
         .createQueryBuilder('address')
-        .leftJoin('address.staking', 'staking')
-        .where('staking.id IS NULL')
+        .leftJoin('address.reservation', 'reservation')
+        .where('reservation.id IS NULL')
         .getCount(),
       openDeposits: await getCustomRepository(DepositRepository).count({ where: { status: DepositStatus.PENDING } }),
       openWithdrawals: await getCustomRepository(WithdrawalRepository).count({

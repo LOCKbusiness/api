@@ -17,7 +17,7 @@ export class StakingRewardBatchService {
         where: {
           referenceAsset: Not(IsNull()),
           outputReferenceAmount: Not(IsNull()),
-          targetAsset: Not(IsNull()),
+          rewardRoute: Not(IsNull()),
           batch: IsNull(),
           status: RewardStatus.PREPARATION_CONFIRMED,
         },
@@ -60,18 +60,18 @@ export class StakingRewardBatchService {
     const batches = new Map<string, RewardBatch>();
 
     for (const r of rewards) {
-      const { referenceAsset: outputReferenceAsset, targetAsset } = r;
+      const { referenceAsset: outputReferenceAsset, rewardRoute } = r;
 
-      let batch = batches.get(this.getBatchTempKey(outputReferenceAsset, targetAsset));
+      let batch = batches.get(this.getBatchTempKey(outputReferenceAsset, rewardRoute.targetAsset));
 
       if (!batch) {
         batch = this.rewardBatchRepo.create({
           outputReferenceAsset,
-          targetAsset,
+          targetAsset: rewardRoute.targetAsset,
           status: RewardBatchStatus.CREATED,
           rewards: [],
         });
-        batches.set(this.getBatchTempKey(outputReferenceAsset, targetAsset), batch);
+        batches.set(this.getBatchTempKey(outputReferenceAsset, rewardRoute.targetAsset), batch);
       }
 
       batch.addTransaction(r);

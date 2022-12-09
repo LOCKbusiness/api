@@ -57,7 +57,7 @@ export class CoinTrackingHistoryDtoMapper {
             ? CoinTrackingTransactionType.REWARD_BONUS
             : CoinTrackingTransactionType.STAKING,
         buyAmount: c.targetAmount,
-        buyAsset: this.getAssetSymbolCT(c.targetAsset),
+        buyAsset: this.getAssetSymbolCT(c.rewardRoute.targetAsset),
         sellAmount: null,
         sellAsset: null,
         fee: null,

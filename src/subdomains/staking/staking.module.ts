@@ -9,9 +9,7 @@ import { RewardController } from './api/controllers/reward.controller';
 import { StakingController } from './api/controllers/staking.controller';
 import { StakingWithdrawalController } from './api/controllers/staking-withdrawal.controller';
 import { StakingFactory } from './application/factories/staking.factory';
-import { StakingBlockchainAddressRepository } from './application/repositories/staking-blockchain-address.repository';
 import { StakingRepository } from './application/repositories/staking.repository';
-import { StakingBlockchainAddressService } from './application/services/staking-blockchain-address.service';
 import { LiquidityManagementService } from './application/services/liquidity-management.service';
 import { StakingDepositService } from './application/services/staking-deposit.service';
 import { StakingRewardService } from './application/services/staking-reward.service';
@@ -36,16 +34,19 @@ import { StakingRewardNotificationService } from './application/services/staking
 import { StakingFiatReferenceService } from './application/services/staking-fiat-reference.service';
 import { DexModule } from '../dex/dex.module';
 import { PayoutModule } from '../payout/payout.module';
+import { RewardRouteRepository } from './application/repositories/reward-route.repository';
+import { AddressPoolModule } from '../address-pool/address-pool.module';
+import { RewardRouteController } from './api/controllers/reward-route.controller';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       StakingRepository,
-      StakingBlockchainAddressRepository,
       WithdrawalRepository,
       DepositRepository,
       RewardRepository,
       RewardBatchRepository,
+      RewardRouteRepository,
       AssetStakingMetadataRepository,
     ]),
     BlockchainModule,
@@ -55,11 +56,13 @@ import { PayoutModule } from '../payout/payout.module';
     DexModule,
     PayoutModule,
     IntegrationModule,
+    AddressPoolModule,
   ],
   controllers: [
     StakingController,
     DepositController,
     RewardController,
+    RewardRouteController,
     StakingWithdrawalController,
     WithdrawalController,
   ],
@@ -79,7 +82,6 @@ import { PayoutModule } from '../payout/payout.module';
     StakingRewardNotificationService,
     StakingWithdrawalService,
     StakingFactory,
-    StakingBlockchainAddressService,
     StakingAuthorizeService,
     StakingKycCheckService,
     LiquidityManagementService,

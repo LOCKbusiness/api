@@ -15,7 +15,8 @@ import { StakingBalanceDtoMapper } from '../mappers/staking-balance-dto.mapper';
 import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
 import { StakingRepository } from '../repositories/staking.repository';
 import { StakingStrategyValidator } from '../validators/staking-strategy.validator';
-import { StakingBlockchainAddressService } from './staking-blockchain-address.service';
+import { ReservableBlockchainAddressService } from '../../../address-pool/application/services/reservable-blockchain-address.service';
+import { BlockchainAddressReservationPurpose } from 'src/subdomains/address-pool/domain/enums';
 
 @Injectable()
 export class StakingService {
@@ -25,7 +26,7 @@ export class StakingService {
     private readonly authorize: StakingAuthorizeService,
     private readonly kycCheck: StakingKycCheckService,
     private readonly factory: StakingFactory,
-    private readonly addressService: StakingBlockchainAddressService,
+    private readonly addressService: ReservableBlockchainAddressService,
     private readonly assetService: AssetService,
   ) {}
 
@@ -76,7 +77,7 @@ export class StakingService {
   async getStakingsByDepositAddress(address: string): Promise<Staking[]> {
     return await this.repository.find({
       where: { depositAddress: { address: address } },
-      relations: ['depositAddress', 'rewards', 'withdrawals', 'deposits'],
+      relations: ['rewards', 'withdrawals', 'deposits'],
     });
   }
 
@@ -138,14 +139,12 @@ export class StakingService {
 
   private async createStaking(userId: number, walletId: number, type: StakingType): Promise<Staking> {
     // retry (in case of deposit address conflict)
-    return Util.retry(async () => {
-      const depositAddress = await this.addressService.getAvailableAddress();
-      const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
+    const depositAddress = await this.addressService.getAvailableAddress(BlockchainAddressReservationPurpose.STAKING);
+    const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
 
-      const staking = this.factory.createStaking(userId, type, depositAddress, withdrawalAddress);
+    const staking = await this.factory.createStaking(userId, type, depositAddress, withdrawalAddress);
 
-      return this.repository.save(staking);
-    }, 2);
+    return this.repository.save(staking);
   }
 
   private async getPreviousTotalStakingBalance(type: StakingType, currentBalance: number, date: Date): Promise<number> {

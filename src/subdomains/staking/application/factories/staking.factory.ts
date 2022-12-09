@@ -1,26 +1,30 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AssetService } from 'src/shared/models/asset/asset.service';
-import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wallet-blockchain-address.entity';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Reward } from '../../domain/entities/reward.entity';
-import { StakingBlockchainAddress } from '../../domain/entities/staking-blockchain-address.entity';
+import { ReservableBlockchainAddress } from '../../../address-pool/domain/entities/reservable-blockchain-address.entity';
 import { Staking, StakingType } from '../../domain/entities/staking.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { CreateDepositDto } from '../dto/input/create-deposit.dto';
 import { CreateRewardDto } from '../dto/input/create-reward.dto';
 import { CreateWithdrawalDraftDto } from '../dto/input/create-withdrawal-draft.dto';
+import { BlockchainAddress } from 'src/shared/models/blockchain-address';
+import { CreateRewardRouteDto } from '../dto/input/create-reward-route.dto';
+import { RewardRoute } from '../../domain/entities/reward-route.entity';
+import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
+import { RewardRouteRepository } from '../repositories/reward-route.repository';
 
 @Injectable()
 export class StakingFactory {
-  constructor(private readonly assetService: AssetService) {}
+  constructor(private readonly assetService: AssetService, private readonly rewardRouteRepo: RewardRouteRepository) {}
 
-  createStaking(
+  async createStaking(
     userId: number,
     type: StakingType,
-    depositAddress: StakingBlockchainAddress,
-    withdrawalAddress: WalletBlockchainAddress,
-  ): Staking {
-    return Staking.create(userId, type, depositAddress, withdrawalAddress);
+    depositAddress: ReservableBlockchainAddress,
+    withdrawalAddress: BlockchainAddress,
+  ): Promise<Staking> {
+    return Staking.create(userId, type, depositAddress.address, withdrawalAddress);
   }
 
   createDeposit(staking: Staking, dto: CreateDepositDto): Deposit {
@@ -36,21 +40,21 @@ export class StakingFactory {
   }
 
   async createReward(staking: Staking, dto: CreateRewardDto): Promise<Reward> {
-    const {
-      referenceAssetId,
-      inputReferenceAmount,
-      outputReferenceAmount,
-      feePercent,
-      feeAmount,
-      targetAssetId,
-      targetAddress,
-    } = dto;
+    const { referenceAssetId, inputReferenceAmount, outputReferenceAmount, feePercent, feeAmount, rewardRouteId } = dto;
 
     const referenceAsset = await this.assetService.getAssetById(referenceAssetId);
-    const targetAsset = await this.assetService.getAssetById(targetAssetId);
+    const rewardRoute = await this.rewardRouteRepo.findOne(rewardRouteId);
 
-    if (!referenceAsset || !targetAsset) {
-      throw new BadRequestException('Provided asset ID(s) not found in the database');
+    if (!referenceAsset) {
+      throw new BadRequestException(
+        `Cannot create reward. Provided reference asset ID ${referenceAssetId} not found in the database.`,
+      );
+    }
+
+    if (!rewardRoute) {
+      throw new BadRequestException(
+        `Cannot create reward. Provided reward route ID ${rewardRouteId} not found in the database.`,
+      );
     }
 
     return Reward.create(
@@ -60,8 +64,45 @@ export class StakingFactory {
       outputReferenceAmount,
       feePercent,
       feeAmount,
-      targetAsset,
-      targetAddress,
+      rewardRoute,
     );
+  }
+
+  createRewardRoute(staking: Staking, dto: CreateRewardRouteDto, supportedAssets: Asset[]): RewardRoute {
+    const {
+      label,
+      rewardPercent,
+      targetAsset: targetAssetName,
+      targetAddress: targetAddressName,
+      targetBlockchain,
+    } = dto;
+
+    const targetAsset =
+      this.findCoin(supportedAssets, targetAssetName, targetBlockchain) ??
+      this.findToken(supportedAssets, targetAssetName, targetBlockchain);
+
+    if (!targetAsset) {
+      throw new BadRequestException(
+        `Cannot create reward route. Asset ${targetAssetName} at blockchain ${targetBlockchain} is not supported.`,
+      );
+    }
+
+    const targetAddress = BlockchainAddress.create(targetAddressName, targetBlockchain);
+
+    return RewardRoute.create(staking, label, rewardPercent, targetAsset, targetAddress);
+  }
+
+  //*** HELPER METHODS ***//
+
+  private findCoin(assets: Asset[], name: string, blockchain: string): Asset | undefined {
+    return this.findAsset(assets, name, blockchain, AssetType.COIN);
+  }
+
+  private findToken(assets: Asset[], name: string, blockchain: string): Asset | undefined {
+    return this.findAsset(assets, name, blockchain, AssetType.TOKEN);
+  }
+
+  private findAsset(assets: Asset[], name: string, blockchain: string, type: AssetType): Asset | undefined {
+    return assets.find((a) => a.name === name && a.blockchain === blockchain && a.type === type);
   }
 }

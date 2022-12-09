@@ -6,6 +6,7 @@ import { BlockchainModule } from './blockchain/blockchain.module';
 import { GetConfig } from './config/config';
 import { IntegrationModule } from './integration/integration.module';
 import { SharedModule } from './shared/shared.module';
+import { AddressPoolModule } from './subdomains/address-pool/address-pool.module';
 import { AnalyticsModule } from './subdomains/analytics/analytics.module';
 import { MonitoringModule } from './subdomains/monitoring/monitoring.module';
 import { StakingModule } from './subdomains/staking/staking.module';
@@ -19,6 +20,7 @@ import { YieldMachineModule } from './subdomains/yield-machine/yield-machine.mod
     TypeOrmModule.forRoot(GetConfig().database),
     SharedModule,
     UserModule,
+    AddressPoolModule,
     StakingModule,
     YieldMachineModule,
     AnalyticsModule,
