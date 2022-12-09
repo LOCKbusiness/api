@@ -39,7 +39,7 @@ export class UtxoManagementService {
   }
 
   async checkUtxos(): Promise<void> {
-    const liqBalance = await this.client.getUTXOBalance(Config.staking.liquidity.address);
+    const liqBalance = await this.client.getUtxoBalance(Config.staking.liquidity.address);
     if (liqBalance.lt(Config.utxo.minOperateValue)) {
       console.log('Too low liquidity to operate');
       return;
