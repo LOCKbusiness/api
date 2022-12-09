@@ -110,8 +110,8 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
   private async getLastOutputDates(): Promise<LastOutputDates> {
     const lastOutputDates: LastOutputDates = {};
 
-    for (const strategy in StakingStrategy) {
-      lastOutputDates[strategy] = await this.getLastOutputDate(StakingStrategy[strategy]);
+    for (const strategy of Object.values(StakingStrategy)) {
+      lastOutputDates[strategy] = await this.getLastOutputDate(strategy);
     }
 
     return lastOutputDates;
