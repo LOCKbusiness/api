@@ -25,7 +25,7 @@ interface StakingData {
 }
 
 type LastOutputDates = {
-  [k in StakingStrategy]: Date;
+  [k in StakingStrategy]?: Date;
 };
 
 @Injectable()
@@ -108,13 +108,13 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
   }
 
   private async getLastOutputDates(): Promise<LastOutputDates> {
-    const lastOutputDates = {};
+    const lastOutputDates: LastOutputDates = {};
 
     for (const strategy in StakingStrategy) {
-      lastOutputDates[StakingStrategy[strategy]] = await this.getLastOutputDate(StakingStrategy[strategy]);
+      lastOutputDates[strategy] = await this.getLastOutputDate(StakingStrategy[strategy]);
     }
 
-    return lastOutputDates as LastOutputDates;
+    return lastOutputDates;
   }
 
   private async getLastOutputDate(strategy: StakingStrategy): Promise<Date> {
@@ -124,6 +124,6 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
         where: { staking: { strategy } },
         relations: ['staking'],
       })
-      .then((b) => b.reinvestOutputDate);
+      .then((b) => b?.reinvestOutputDate);
   }
 }
