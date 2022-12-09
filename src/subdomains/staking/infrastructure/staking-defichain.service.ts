@@ -9,7 +9,7 @@ import { fromScriptHex } from '@defichain/jellyfish-address';
 import { NetworkName } from '@defichain/jellyfish-network';
 import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
 import BigNumber from 'bignumber.js';
-import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/models/asset/asset.entity';
 import { StakingStrategy } from '../domain/enums';
 import { JellyfishWallet, WalletHdNode } from '@defichain/jellyfish-wallet';
 import { WhaleWalletAccount } from '@defichain/whale-api-wallet';
