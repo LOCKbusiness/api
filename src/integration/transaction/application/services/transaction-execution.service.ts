@@ -13,7 +13,6 @@ import {
   ResignMasternodeData,
   SendTokenData,
   SendFromLiqData,
-  SendWithdrawalData,
   SendToLiqData,
   SplitData,
   DepositToVaultData,
