@@ -16,7 +16,11 @@ export class VaultService {
   }
 
   async getAllAddresses(): Promise<string[]> {
-    return this.repository.find().then((vaults) => vaults.map((v) => v.address));
+    return this.getAll().then((vaults) => vaults.map((v) => v.address));
+  }
+
+  async getAll(): Promise<Vault[]> {
+    return this.repository.find();
   }
 
   async getActiveCount(): Promise<number> {

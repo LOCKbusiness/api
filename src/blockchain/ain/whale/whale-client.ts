@@ -1,5 +1,6 @@
 import { ApiPagedResponse, WhaleApiClient } from '@defichain/whale-api-client';
-import { AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
+import { AddressToken, AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
+import { LoanVaultActive, LoanVaultState } from '@defichain/whale-api-client/dist/api/loan';
 import { TokenData } from '@defichain/whale-api-client/dist/api/tokens';
 import { Transaction, TransactionVin } from '@defichain/whale-api-client/dist/api/transactions';
 import BigNumber from 'bignumber.js';
@@ -21,6 +22,10 @@ export class WhaleClient {
     return this.client.address.getBalance(address).then(BigNumber);
   }
 
+  async getBalances(address: string): Promise<AddressToken[]> {
+    return await this.getAll(() => this.client.address.listToken(address));
+  }
+
   async getBlockHeight(): Promise<number> {
     return (await this.client.stats.get()).count.blocks;
   }
@@ -31,6 +36,12 @@ export class WhaleClient {
 
   async getAllTokens(): Promise<TokenData[]> {
     return await this.getAll(() => this.client.tokens.list(200));
+  }
+
+  async getVault(vaultId: string): Promise<LoanVaultActive> {
+    const vault = await this.client.loan.getVault(vaultId);
+    if (vault.state === LoanVaultState.IN_LIQUIDATION) return undefined;
+    return vault;
   }
 
   async sendRaw(hex: string): Promise<string> {

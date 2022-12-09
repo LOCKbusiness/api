@@ -37,6 +37,7 @@ import { PayoutModule } from '../payout/payout.module';
 import { RewardRouteRepository } from './application/repositories/reward-route.repository';
 import { AddressPoolModule } from '../address-pool/address-pool.module';
 import { RewardRouteController } from './api/controllers/reward-route.controller';
+import { UtxoManagementService } from './application/services/utxo-management.service';
 
 @Module({
   imports: [
@@ -85,6 +86,7 @@ import { RewardRouteController } from './api/controllers/reward-route.controller
     StakingAuthorizeService,
     StakingKycCheckService,
     LiquidityManagementService,
+    UtxoManagementService,
   ],
   exports: [StakingService, StakingDepositService, StakingWithdrawalService],
 })

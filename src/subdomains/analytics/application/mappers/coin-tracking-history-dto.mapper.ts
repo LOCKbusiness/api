@@ -20,8 +20,8 @@ export class CoinTrackingHistoryDtoMapper {
         exchange: 'LOCK.space Staking',
         tradeGroup: 'Staking',
         comment: 'LOCK Staking Deposit',
-        txId: c.payInTxId,
         date: c.created,
+        txId: c.payInTxId,
         buyValueInEur: c.amountEur,
         sellValueInEur: null,
       }));
@@ -41,8 +41,8 @@ export class CoinTrackingHistoryDtoMapper {
         exchange: 'LOCK.space Staking',
         tradeGroup: null,
         comment: 'LOCK Staking Withdrawal',
-        txId: c.withdrawalTxId,
         date: c.outputDate ?? c.updated,
+        txId: c.withdrawalTxId,
         buyValueInEur: null,
         sellValueInEur: c.amountEur,
       }));

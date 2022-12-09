@@ -13,7 +13,7 @@ import { CoinTrackingHistoryDtoMapper } from '../mappers/coin-tracking-history-d
 import { ChainReportCsvHistoryDto, ChainReportTransactionType } from '../dto/output/chain-report-history.dto';
 import { ChainReportHistoryDtoMapper } from '../mappers/chain-report-history-dto.mapper';
 
-type HistoryDto<T> = T extends ExportType.COMPACT
+export type HistoryDto<T> = T extends ExportType.COMPACT
   ? CompactHistoryDto
   : T extends ExportType.COIN_TRACKING
   ? CoinTrackingCsvHistoryDto
