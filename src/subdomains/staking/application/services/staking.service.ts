@@ -144,23 +144,6 @@ export class StakingService {
     await this.repository.save(staking);
   }
 
-  //*** JOBS ***//
-
-  @Cron(CronExpression.EVERY_MINUTE)
-  async calculateFiatReferenceAmounts(): Promise<void> {
-    if (!this.lock.acquire()) return;
-
-    try {
-      const stakings = await this.getStakingsWithoutFiatReferences();
-      const prices = await this.getReferencePrices(stakings);
-      await this.calculateFiatReferencesForStakings(stakings, prices);
-    } catch (e) {
-      console.error('Exception during staking deposits and withdrawals fiat reference calculation:', e);
-    } finally {
-      this.lock.release();
-    }
-  }
-
   //*** HELPER METHODS ***//
 
   private async createStaking(userId: number, walletId: number, type: StakingType): Promise<Staking> {
