@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { BlockchainAddress } from 'src/shared/models/blockchain-address';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
 
 export class RewardRouteOutputDto {
   @ApiProperty()
@@ -8,15 +8,18 @@ export class RewardRouteOutputDto {
   @ApiProperty()
   stakingId: number;
 
-  @ApiProperty()
-  label: string;
+  @ApiPropertyOptional()
+  label?: string;
 
   @ApiProperty()
   rewardPercent: number;
 
   @ApiProperty()
-  targetAddress: BlockchainAddress;
+  targetAsset: string;
 
   @ApiProperty()
-  targetAsset: string;
+  targetAddress: string;
+
+  @ApiProperty()
+  targetBlockchain: Blockchain;
 }

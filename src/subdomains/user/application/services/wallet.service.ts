@@ -31,7 +31,6 @@ export class WalletService {
   }
 
   async getByAddress(address: string, needsRelation = false): Promise<Wallet> {
-    console.log('getByAddress', address);
     return this.walletRepo.findOne({
       where: { address: { address } },
       relations: needsRelation ? ['user', 'walletProvider'] : [],

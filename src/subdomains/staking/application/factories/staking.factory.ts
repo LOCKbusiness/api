@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Reward } from '../../domain/entities/reward.entity';
-import { ReservedBlockchainAddress } from '../../../address-pool/domain/entities/reserved-blockchain-address.entity';
+import { ReservableBlockchainAddress } from '../../../address-pool/domain/entities/reservable-blockchain-address.entity';
 import { Staking, StakingType } from '../../domain/entities/staking.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { CreateDepositDto } from '../dto/input/create-deposit.dto';
@@ -21,7 +21,7 @@ export class StakingFactory {
   async createStaking(
     userId: number,
     type: StakingType,
-    depositAddress: ReservedBlockchainAddress,
+    depositAddress: ReservableBlockchainAddress,
     withdrawalAddress: BlockchainAddress,
   ): Promise<Staking> {
     return Staking.create(userId, type, depositAddress.address, withdrawalAddress);
@@ -69,14 +69,17 @@ export class StakingFactory {
   }
 
   createRewardRoute(staking: Staking, dto: CreateRewardRouteDto, supportedAssets: Asset[]): RewardRoute {
-    const { label, rewardPercent, targetAssetName, targetAddress: targetAddressName, targetBlockchain } = dto;
+    const {
+      label,
+      rewardPercent,
+      targetAsset: targetAssetName,
+      targetAddress: targetAddressName,
+      targetBlockchain,
+    } = dto;
 
     const targetAsset =
-      targetAssetName === 'DFI'
-        ? supportedAssets.find(
-            (a) => a.name === targetAssetName && a.blockchain === targetBlockchain && a.type === AssetType.COIN,
-          )
-        : supportedAssets.find((a) => a.name === targetAssetName && a.blockchain === targetBlockchain);
+      this.findCoin(supportedAssets, targetAssetName, targetBlockchain) ??
+      this.findToken(supportedAssets, targetAssetName, targetBlockchain);
 
     if (!targetAsset) {
       throw new BadRequestException(
@@ -87,5 +90,19 @@ export class StakingFactory {
     const targetAddress = BlockchainAddress.create(targetAddressName, targetBlockchain);
 
     return RewardRoute.create(staking, label, rewardPercent, targetAsset, targetAddress);
+  }
+
+  //*** HELPER METHODS ***//
+
+  private findCoin(assets: Asset[], name: string, blockchain: string): Asset | undefined {
+    return this.findAsset(assets, name, blockchain, AssetType.COIN);
+  }
+
+  private findToken(assets: Asset[], name: string, blockchain: string): Asset | undefined {
+    return this.findAsset(assets, name, blockchain, AssetType.TOKEN);
+  }
+
+  private findAsset(assets: Asset[], name: string, blockchain: string, type: AssetType): Asset | undefined {
+    return assets.find((a) => a.name === name && a.blockchain === blockchain && a.type === type);
   }
 }

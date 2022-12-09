@@ -9,8 +9,9 @@ export class RewardRouteOutputDtoMapper {
     dto.stakingId = route.staking?.id;
     dto.label = route.label;
     dto.rewardPercent = route.rewardPercent;
-    dto.targetAddress = route.targetAddress;
     dto.targetAsset = route.targetAsset.name;
+    dto.targetAddress = route.targetAddress.address;
+    dto.targetBlockchain = route.targetAddress.blockchain;
 
     return dto;
   }

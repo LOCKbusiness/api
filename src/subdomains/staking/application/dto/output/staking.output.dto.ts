@@ -36,6 +36,6 @@ export class StakingOutputDto {
   @ApiProperty()
   pendingWithdrawals: number;
 
-  @ApiProperty()
+  @ApiProperty({ type: RewardRouteOutputDto, isArray: true })
   rewardRoutes: RewardRouteOutputDto[];
 }

@@ -1,6 +1,6 @@
-import { Controller, UseGuards, Body, Param, Get, Put } from '@nestjs/common';
+import { Controller, UseGuards, Body, Param, Get, Put, ParseArrayPipe } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiBearerAuth, ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { GetJwt } from 'src/shared/auth/get-jwt.decorator';
 import { JwtPayload } from 'src/shared/auth/jwt-payload.interface';
 import { RoleGuard } from 'src/shared/auth/role.guard';
@@ -10,19 +10,19 @@ import { RewardRouteOutputDto } from '../../application/dto/output/reward-route.
 import { StakingOutputDto } from '../../application/dto/output/staking.output.dto';
 import { StakingRewardService } from '../../application/services/staking-reward.service';
 
-@ApiTags('RewardRoute')
-@Controller('staking/:stakingId/rewardRoutes')
+@ApiTags('RewardRoutes')
+@Controller('staking/:stakingId/reward-routes')
 export class RewardRouteController {
   constructor(private readonly stakingRewardService: StakingRewardService) {}
 
   @Put()
   @ApiBearerAuth()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  @ApiCreatedResponse({ type: StakingOutputDto })
+  @ApiOkResponse({ type: StakingOutputDto })
   async setRewardRoutes(
     @GetJwt() jwt: JwtPayload,
     @Param('stakingId') stakingId: string,
-    @Body() dtos: CreateRewardRouteDto[],
+    @Body(new ParseArrayPipe({ items: CreateRewardRouteDto })) dtos: CreateRewardRouteDto[],
   ): Promise<StakingOutputDto> {
     return this.stakingRewardService.setRewardRoutes(jwt.userId, +stakingId, dtos);
   }
@@ -30,7 +30,7 @@ export class RewardRouteController {
   @Get()
   @ApiBearerAuth()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  @ApiCreatedResponse({ type: RewardRouteOutputDto })
+  @ApiOkResponse({ type: RewardRouteOutputDto, isArray: true })
   async getRewardRoutes(
     @GetJwt() jwt: JwtPayload,
     @Param('stakingId') stakingId: string,

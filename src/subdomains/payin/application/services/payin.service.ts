@@ -4,7 +4,6 @@ import { Config, Process } from 'src/config/config';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { Lock } from 'src/shared/lock';
 import { AssetService } from 'src/shared/models/asset/asset.service';
-import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 import { PayIn, PayInPurpose, PayInStatus } from '../../domain/entities/payin.entity';
 import { PayInDeFiChainService } from '../../infrastructure/payin-crypto-defichain.service';
 import { PayInFactory } from '../factories/payin.factory';
@@ -96,8 +95,6 @@ export class PayInService {
       type: tx.assetType,
     });
 
-    const address = BlockchainAddress.create(tx.address.address, tx.address.blockchain);
-
     if (!assetEntity) {
       const message = `Failed to process DeFiChain pay in. No asset ${tx.asset} found. PayInTransaction:`;
       console.error(message, tx);
@@ -105,7 +102,7 @@ export class PayInService {
       throw new Error(message);
     }
 
-    return this.factory.createFromTransaction(tx, assetEntity, address);
+    return this.factory.createFromTransaction(tx, assetEntity);
   }
 
   // TODO - consider more reliable solution - in case of DB fail, some PayIns might be lost

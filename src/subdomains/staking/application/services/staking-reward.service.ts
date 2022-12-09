@@ -64,7 +64,7 @@ export class StakingRewardService {
     const staking = await this.authorize.authorize(userId, stakingId);
     if (!staking) throw new NotFoundException('Staking not found');
 
-    return staking.rewardRoutes.map(RewardRouteOutputDtoMapper.entityToDto);
+    return staking.getActiveRewardRoutes().map(RewardRouteOutputDtoMapper.entityToDto);
   }
 
   //*** JOBS ***//

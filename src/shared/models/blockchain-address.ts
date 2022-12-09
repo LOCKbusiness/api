@@ -18,4 +18,10 @@ export class BlockchainAddress {
 
     return newAddress;
   }
+
+  //*** PUBLIC API ***//
+
+  isEqual(comparedAddress: BlockchainAddress): boolean {
+    return this.address === comparedAddress.address && this.blockchain === comparedAddress.blockchain;
+  }
 }

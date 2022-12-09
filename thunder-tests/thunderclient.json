@@ -261,7 +261,7 @@
     "method": "GET",
     "sortNum": 190000,
     "created": "2022-11-09T15:22:48.310Z",
-    "modified": "2022-12-06T10:15:09.565Z",
+    "modified": "2022-12-09T10:07:18.874Z",
     "headers": [],
     "params": [
       {
@@ -314,16 +314,16 @@
     "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
     "containerId": "2755f99f-d1e0-4ce5-a0f7-9fd0eb7979c0",
     "name": "Set Reward Routes",
-    "url": "{{url}}/v1/staking/14/rewardRoutes",
+    "url": "{{url}}/v1/staking/22/reward-routes",
     "method": "PUT",
     "sortNum": 210000,
     "created": "2022-12-05T11:45:05.532Z",
-    "modified": "2022-12-05T15:18:58.976Z",
+    "modified": "2022-12-09T10:20:11.741Z",
     "headers": [],
     "params": [],
     "body": {
       "type": "json",
-      "raw": "[\n  {\n    \"label\": \"Some route 1\",\n    \"rewardPercent\": 0.2,\n    \"targetAssetName\": \"ETH\",\n    \"targetAddress\": \"tar_address\",\n    \"targetBlockchain\": \"DeFiChain\"\n  },\n  {\n    \"label\": \"Some route new name\",\n    \"rewardPercent\": 0.8,\n    \"targetAssetName\": \"DUSD\",\n    \"targetAddress\": \"tar_address\",\n    \"targetBlockchain\": \"DeFiChain\"\n  }\n]",
+      "raw": "[\n  {\n    \"label\": \"ETH route\",\n    \"rewardPercent\": 1,\n    \"targetAsset\": \"ETH\",\n    \"targetAddress\": \"tar_address\",\n    \"targetBlockchain\": \"DeFiChain\"\n  },\n  {\n    \"label\": \"DUSD route 2\",\n    \"rewardPercent\": 0,\n    \"targetAsset\": \"DUSD\",\n    \"targetAddress\": \"tar_address\",\n    \"targetBlockchain\": \"DeFiChain\"\n  }\n]",
       "form": []
     },
     "tests": []
@@ -333,11 +333,11 @@
     "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
     "containerId": "2755f99f-d1e0-4ce5-a0f7-9fd0eb7979c0",
     "name": "Get Reward Routes",
-    "url": "{{url}}/v1/staking/1/rewardRoutes",
+    "url": "{{url}}/v1/staking/22/reward-routes",
     "method": "GET",
     "sortNum": 220000,
     "created": "2022-12-05T11:45:19.601Z",
-    "modified": "2022-12-05T11:51:39.031Z",
+    "modified": "2022-12-09T10:18:04.525Z",
     "headers": [],
     "params": [],
     "tests": []

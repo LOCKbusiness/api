@@ -259,6 +259,10 @@ export class Staking extends IEntity {
     return this.getWithdrawalsByStatus(WithdrawalStatus.PAYING_OUT);
   }
 
+  getActiveRewardRoutes(): RewardRoute[] {
+    return this.rewardRoutes.filter((r) => r.rewardPercent !== 0);
+  }
+
   //*** HELPER STATIC METHODS ***//
 
   static calculateFiatReferenceAmount(fiatName: Fiat, assetName: string, assetAmount: number, prices: Price[]): number {
@@ -341,12 +345,7 @@ export class Staking extends IEntity {
     this.resetExistingRoutes();
 
     newRewardRoutes.forEach((newRoute) => {
-      const existingRoute = this.rewardRoutes.find(
-        (_r) =>
-          _r.targetAsset.id === newRoute.targetAsset.id &&
-          _r.targetAddress.address === newRoute.targetAddress.address &&
-          _r.targetAddress.blockchain === newRoute.targetAddress.blockchain,
-      );
+      const existingRoute = this.rewardRoutes.find((_r) => _r.isEqual(newRoute));
 
       if (existingRoute) {
         existingRoute.updateRoute(newRoute.label, newRoute.rewardPercent);

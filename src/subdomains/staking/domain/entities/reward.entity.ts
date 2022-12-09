@@ -89,9 +89,7 @@ export class Reward extends IEntity {
     reward.feeAmount = feeAmount;
     reward.rewardRoute = rewardRoute;
 
-    reward.isReinvest =
-      rewardRoute.targetAddress.address === staking.depositAddress.address &&
-      rewardRoute.targetAddress.blockchain === staking.depositAddress.blockchain;
+    reward.isReinvest = rewardRoute.targetAddress.isEqual(staking.depositAddress);
 
     return reward;
   }

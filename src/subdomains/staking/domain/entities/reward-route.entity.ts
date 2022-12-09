@@ -10,8 +10,8 @@ export class RewardRoute extends IEntity {
   @ManyToOne(() => Staking, (staking) => staking.rewardRoutes, { nullable: false })
   staking: Staking;
 
-  @Column({ nullable: false })
-  label: string;
+  @Column({ nullable: true })
+  label?: string;
 
   @Column({ type: 'float', nullable: false })
   rewardPercent: number;
@@ -43,6 +43,10 @@ export class RewardRoute extends IEntity {
   }
 
   //*** PUBLIC API ***//
+
+  isEqual(newRoute: RewardRoute): boolean {
+    return this.targetAsset.id === newRoute.targetAsset.id && this.targetAddress.isEqual(newRoute.targetAddress);
+  }
 
   updateRoute(label: string, rewardPercent: number): this {
     this.label = label;

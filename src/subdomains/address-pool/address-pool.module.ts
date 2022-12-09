@@ -2,16 +2,16 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SharedModule } from 'src/shared/shared.module';
 import { BlockchainAddressReservationRepository } from './application/repositories/blockchain-address-reservation.repository';
-import { ReservedBlockchainAddressRepository } from './application/repositories/reserved-blockchain-address.repository';
-import { ReservedBlockchainAddressService } from './application/services/reserved-blockchain-address.service';
+import { ReservableBlockchainAddressRepository } from './application/repositories/reservable-blockchain-address.repository';
+import { ReservableBlockchainAddressService } from './application/services/reservable-blockchain-address.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ReservedBlockchainAddressRepository, BlockchainAddressReservationRepository]),
+    TypeOrmModule.forFeature([ReservableBlockchainAddressRepository, BlockchainAddressReservationRepository]),
     SharedModule,
   ],
   controllers: [],
-  providers: [ReservedBlockchainAddressService],
-  exports: [ReservedBlockchainAddressService],
+  providers: [ReservableBlockchainAddressService],
+  exports: [ReservableBlockchainAddressService],
 })
 export class AddressPoolModule {}

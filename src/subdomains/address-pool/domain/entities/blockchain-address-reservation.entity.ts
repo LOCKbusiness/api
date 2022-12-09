@@ -1,17 +1,26 @@
 import { IEntity } from 'src/shared/models/entity';
-import { Entity, OneToOne } from 'typeorm';
-import { ReservedBlockchainAddress } from './reserved-blockchain-address.entity';
+import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
+import { BlockchainAddressReservationPurpose } from '../enums';
+import { ReservableBlockchainAddress } from './reservable-blockchain-address.entity';
 
 @Entity()
 export class BlockchainAddressReservation extends IEntity {
-  @OneToOne(() => ReservedBlockchainAddress, (address) => address.reservation, { nullable: false })
-  address: ReservedBlockchainAddress;
+  @Column({ nullable: false })
+  purpose: BlockchainAddressReservationPurpose;
+
+  @OneToOne(() => ReservableBlockchainAddress, (address) => address.reservation, { nullable: false })
+  @JoinColumn()
+  address: ReservableBlockchainAddress;
 
   //*** FACTORY METHODS ***//
 
-  static create(address: ReservedBlockchainAddress): BlockchainAddressReservation {
+  static create(
+    purpose: BlockchainAddressReservationPurpose,
+    address: ReservableBlockchainAddress,
+  ): BlockchainAddressReservation {
     const reservation = new BlockchainAddressReservation();
 
+    reservation.purpose = purpose;
     reservation.address = address;
 
     return reservation;

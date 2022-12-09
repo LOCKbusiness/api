@@ -18,7 +18,7 @@ export class StakingOutputDtoMapper {
     dto.balance = staking.getBalance();
     dto.pendingDeposits = staking.getUnconfirmedDepositsAmount();
     dto.pendingWithdrawals = staking.getPendingWithdrawalsAmount();
-    dto.rewardRoutes = staking.rewardRoutes.map(RewardRouteOutputDtoMapper.entityToDto);
+    dto.rewardRoutes = staking.getActiveRewardRoutes().map(RewardRouteOutputDtoMapper.entityToDto);
 
     return dto;
   }
