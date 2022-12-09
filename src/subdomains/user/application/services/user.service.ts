@@ -34,8 +34,7 @@ export class UserService {
     return await getCustomRepository(UserRepository)
       .createQueryBuilder('user')
       .innerJoin('user.wallets', 'wallets')
-      .innerJoin('wallets.address', 'address')
-      .where('address = :address', { address })
+      .where('wallets.addressAddress = :address', { address })
       .getOne();
   }
 

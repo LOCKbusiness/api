@@ -160,8 +160,7 @@ export class StakingDepositService {
   private async filterStakingPayIns(allPayIns: PayIn[]): Promise<PayIn[]> {
     const stakingAddresses = await this.repository
       .createQueryBuilder('staking')
-      .leftJoin('staking.depositAddress', 'depositAddress')
-      .select('depositAddress.address', 'address')
+      .select('depositAddressAddress', 'address')
       .where('staking.status != :status', { status: StakingStatus.BLOCKED })
       .getRawMany<{ address: string }>()
       .then((a) => a.map((a) => a.address));
