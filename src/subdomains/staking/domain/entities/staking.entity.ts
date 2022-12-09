@@ -328,15 +328,7 @@ export class Staking extends IEntity {
   }
 
   private findDuplicatedRoute(currentRoute: RewardRoute, allRewardRoutes: RewardRoute[]): RewardRoute | null {
-    return allRewardRoutes.some(
-      (r, index) =>
-        allRewardRoutes.findIndex(
-          (_r) =>
-            _r.targetAddress.address === r.targetAddress.address &&
-            _r.targetAddress.blockchain === r.targetAddress.blockchain &&
-            _r.targetAsset.id === r.targetAsset.id,
-        ) !== index,
-    )
+    return allRewardRoutes.some((r, index) => allRewardRoutes.findIndex((_r) => _r.isEqual(r)) !== index)
       ? currentRoute
       : null;
   }
@@ -345,7 +337,7 @@ export class Staking extends IEntity {
     this.resetExistingRoutes();
 
     newRewardRoutes.forEach((newRoute) => {
-      const existingRoute = this.rewardRoutes.find((_r) => _r.isEqual(newRoute));
+      const existingRoute = this.rewardRoutes.find((r) => r.isEqual(newRoute));
 
       if (existingRoute) {
         existingRoute.updateRoute(newRoute.label, newRoute.rewardPercent);
