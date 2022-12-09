@@ -62,8 +62,6 @@ export class StakingWithdrawalService {
     await this.kycCheck.check(userId, walletId);
 
     const staking = await this.authorize.authorize(userId, stakingId);
-    if (staking.strategy === StakingStrategy.LIQUIDITY_MINING)
-      throw new NotImplementedException(`Withdrawals are not allowed for strategy ${staking.strategy}`);
 
     const withdrawal = this.factory.createWithdrawalDraft(staking, dto);
 
