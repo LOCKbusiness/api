@@ -1,3 +1,4 @@
+import { Lock } from 'src/shared/lock';
 import { BadRequestException, Injectable, NotImplementedException, UnauthorizedException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
@@ -24,6 +25,8 @@ import { Config, Process } from 'src/config/config';
 
 @Injectable()
 export class StakingWithdrawalService {
+  private readonly lock = new Lock(1800);
+
   constructor(
     private readonly stakingRepo: StakingRepository,
     private readonly withdrawalRepo: WithdrawalRepository,
@@ -34,7 +37,7 @@ export class StakingWithdrawalService {
     private readonly deFiChainService: StakingDeFiChainService,
   ) {}
 
-  //*** PUBLIC API ***//
+  // --- PUBLIC API --- //
 
   async getWithdrawals(dateFrom: Date = new Date(0), dateTo: Date = new Date()): Promise<TransactionDto[]> {
     const withdrawals = await this.withdrawalRepo.find({
@@ -134,17 +137,6 @@ export class StakingWithdrawalService {
     return WithdrawalDraftOutputDtoMapper.entityToDto(withdrawal);
   }
 
-  async executeWithdrawal(withdrawalId: number): Promise<void> {
-    // payout
-    let withdrawal = await this.withdrawalRepo.findOne(withdrawalId, { relations: ['staking'] });
-    const txId = await this.deFiChainService.sendWithdrawal(withdrawal);
-
-    // update
-    withdrawal = await this.withdrawalRepo.findOne(withdrawalId);
-    withdrawal.payoutWithdrawal(txId);
-    await this.withdrawalRepo.save(withdrawal);
-  }
-
   async getDraftWithdrawals(userId: number, walletId: number, stakingId: number): Promise<WithdrawalDraftOutputDto[]> {
     await this.kycCheck.check(userId, walletId);
 
@@ -163,7 +155,30 @@ export class StakingWithdrawalService {
     return this.withdrawalRepo.getPending().then((ws) => ws.map(WithdrawalOutputDtoMapper.entityToDto));
   }
 
-  //*** JOBS ***//
+  // --- JOBS --- //
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async doWithdrawals() {
+    if (Config.processDisabled(Process.STAKING_WITHDRAWAL)) return;
+    if (!this.lock.acquire()) return;
+
+    try {
+      const withdrawals = await this.getPendingWithdrawals();
+
+      const possibleWithdrawals = await this.deFiChainService.getPossibleWithdrawals(withdrawals);
+      if (possibleWithdrawals.length <= 0) return;
+
+      await Promise.all(
+        possibleWithdrawals.map((w) =>
+          this.payoutWithdrawal(w.id).catch((e) => console.error(`Failed to payout withdrawal ${w.id}:`, e)),
+        ),
+      );
+    } catch (e) {
+      console.error('Exception during withdrawals cronjob:', e);
+    }
+
+    this.lock.release();
+  }
 
   @Cron(CronExpression.EVERY_MINUTE)
   async checkWithdrawalCompletion(): Promise<void> {
@@ -186,12 +201,23 @@ export class StakingWithdrawalService {
     }
   }
 
-  //*** HELPER METHOD ***//
+  // --- HELPER METHODS --- //
 
   private verifySignature(signature: string, withdrawal: Withdrawal, withdrawalAddress: WalletBlockchainAddress): void {
     const isValid = this.cryptoService.verifySignature(withdrawal.signMessage, withdrawalAddress.address, signature);
 
     if (!isValid) throw new UnauthorizedException();
+  }
+
+  private async payoutWithdrawal(withdrawalId: number): Promise<void> {
+    // payout
+    let withdrawal = await this.withdrawalRepo.findOne(withdrawalId, { relations: ['staking'] });
+    const txId = await this.deFiChainService.sendWithdrawal(withdrawal);
+
+    // update
+    withdrawal = await this.withdrawalRepo.findOne(withdrawalId);
+    withdrawal.payoutWithdrawal(txId);
+    await this.withdrawalRepo.save(withdrawal);
   }
 
   private async checkPayingOutWithdrawals(stakingId: number): Promise<void> {

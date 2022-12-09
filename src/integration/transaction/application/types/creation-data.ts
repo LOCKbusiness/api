@@ -1,6 +1,7 @@
 import BigNumber from 'bignumber.js';
 import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/domain/enums';
 import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
+import { AssetType } from 'src/shared/models/asset/asset.entity';
 
 export interface WalletBaseData {
   ownerWallet: string;
@@ -26,10 +27,20 @@ export interface ResignMasternodeData extends WalletBaseData {
   masternode: Masternode;
 }
 
-export interface SendFromLiqToCustomerData {
+export interface SendWithdrawalData {
   to: string;
   amount: BigNumber;
   withdrawalId: number;
+  type: AssetType;
+}
+
+export interface SendCoinWithdrawalData extends SendWithdrawalData {
+  type: AssetType.COIN;
+}
+
+export interface SendTokenWithdrawalData extends SendWithdrawalData {
+  type: AssetType.TOKEN;
+  tokenId: number;
 }
 
 export interface SplitData {

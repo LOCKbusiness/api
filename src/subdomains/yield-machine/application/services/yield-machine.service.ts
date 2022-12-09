@@ -66,7 +66,7 @@ export class YieldMachineService {
   }
 
   private async executeEmergencyFor(vault: Vault, logId: string): Promise<string[]> {
-    let tokens = await this.whaleClient.getBalances(vault.address);
+    let tokens = await this.whaleClient.getTokenBalances(vault.address);
 
     // remove liquidity mining pool tokens to have pair token A and pair token B available
     const amountToRemoveFromPool = this.amountOf(vault.blockchainPairId, tokens);
@@ -79,7 +79,7 @@ export class YieldMachineService {
     await this.whaleClient.waitForTx(removePoolTx);
 
     // pay back as many pair token A tokens as possible
-    tokens = await this.whaleClient.getBalances(vault.address);
+    tokens = await this.whaleClient.getTokenBalances(vault.address);
     const savingTxs: Promise<string>[] = [];
     const amountToPayback = this.amountOf(vault.blockchainPairTokenAId, tokens);
     if (amountToPayback) {
