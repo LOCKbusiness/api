@@ -322,5 +322,19 @@
     "headers": [],
     "params": [],
     "tests": []
+  },
+  {
+    "_id": "6d864281-3be0-4c8c-a730-4d02f7d43ea1",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "471a4574-a59a-48ec-8397-8643551fcf44",
+    "name": "get vaults",
+    "url": "{{url}}/v1/yield-machine/vaults",
+    "method": "GET",
+    "sortNum": 210000,
+    "created": "2022-12-10T10:04:36.490Z",
+    "modified": "2022-12-10T10:04:47.771Z",
+    "headers": [],
+    "params": [],
+    "tests": []
   }
 ]

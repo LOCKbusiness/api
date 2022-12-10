@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
@@ -17,5 +17,11 @@ export class YieldMachineController {
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   createTransaction(@Body() dto: TransactionInputDto): Promise<string> {
     return this.yieldMachineService.create(dto);
+  }
+
+  @Get('vaults')
+  @ApiExcludeEndpoint()
+  getVaults(): Promise<string[]> {
+    return this.yieldMachineService.getVaults();
   }
 }
