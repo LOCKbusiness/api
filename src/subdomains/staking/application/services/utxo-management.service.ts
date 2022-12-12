@@ -33,9 +33,9 @@ export class UtxoManagementService {
       await this.checkUtxos();
     } catch (e) {
       console.error('Exception during utxo-management cronjob:', e);
+    } finally {
+      this.lockUtxoManagement.release();
     }
-
-    this.lockUtxoManagement.release();
   }
 
   async checkUtxos(): Promise<void> {

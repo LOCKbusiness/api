@@ -39,9 +39,9 @@ export class LiquidityManagementService {
       await this.checkLiquidity();
     } catch (e) {
       console.error('Exception during masternodes cronjob:', e);
+    } finally {
+      this.lock.release();
     }
-
-    this.lock.release();
   }
 
   // --- LIQUIDITY MANAGEMENT --- //
