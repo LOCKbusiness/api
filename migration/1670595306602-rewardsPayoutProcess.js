@@ -11,6 +11,8 @@ module.exports = class rewardsPayoutProcess1670595306602 {
         await queryRunner.query(`EXEC sp_rename "staking_blockchain_address", "reservable_blockchain_address"`);
         await queryRunner.query(`EXEC sp_rename "reservable_blockchain_address.address", "addressAddress"`);
         await queryRunner.query(`EXEC sp_rename "reservable_blockchain_address.blockchain", "addressBlockchain"`);
+        await queryRunner.query(`ALTER TABLE "reservable_blockchain_address" ALTER COLUMN "addressAddress" nvarchar(255)`);
+        await queryRunner.query(`ALTER TABLE "reservable_blockchain_address" ALTER COLUMN "addressBlockchain" nvarchar(255)`);
         await queryRunner.query(`CREATE TABLE "blockchain_address_reservation" ("id" int NOT NULL IDENTITY(1,1), "updated" datetime2 NOT NULL CONSTRAINT "DF_92a84bd806bf9c13214d94d03fd" DEFAULT getdate(), "created" datetime2 NOT NULL CONSTRAINT "DF_7cf3acea981b0ea0774726a9979" DEFAULT getdate(), "purpose" nvarchar(255) NOT NULL, "addressId" int NOT NULL, CONSTRAINT "PK_36f2e85d14521304a7cc3cf436f" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE UNIQUE INDEX "REL_6d58c447bc27d427a79b8b98c7" ON "blockchain_address_reservation" ("addressId") WHERE "addressId" IS NOT NULL`);
         await queryRunner.query(`DROP INDEX "IDX_4fa2ccadaf1c5a89ae163087d0" ON "reward"`);
@@ -150,6 +152,8 @@ module.exports = class rewardsPayoutProcess1670595306602 {
         await queryRunner.query(`CREATE UNIQUE INDEX "IDX_4fa2ccadaf1c5a89ae163087d0" ON "reward" ("stakingId", "reinvestTxId") `);
         await queryRunner.query(`DROP INDEX "REL_6d58c447bc27d427a79b8b98c7" ON "blockchain_address_reservation"`);
         await queryRunner.query(`DROP TABLE "blockchain_address_reservation"`);
+        await queryRunner.query(`ALTER TABLE "reservable_blockchain_address" ALTER COLUMN "addressBlockchain" nvarchar(255) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "reservable_blockchain_address" ALTER COLUMN "addressAddress" nvarchar(255) NOT NULL`);
         await queryRunner.query(`EXEC sp_rename "reservable_blockchain_address.addressBlockchain", "blockchain"`);
         await queryRunner.query(`EXEC sp_rename "reservable_blockchain_address.addressAddress", "address"`);
         await queryRunner.query(`EXEC sp_rename "reservable_blockchain_address", "staking_blockchain_address"`);
