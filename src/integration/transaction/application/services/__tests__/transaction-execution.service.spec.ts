@@ -15,7 +15,9 @@ import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
 import { Config } from 'src/config/config';
 import { createDefaultMasternode } from 'src/integration/masternode/domain/entities/__mocks__/masternode.entity.mock';
 import { TransactionType } from 'src/integration/transaction/domain/enums';
+import { AssetType } from 'src/shared/models/asset/asset.entity';
 import { TestUtil } from 'src/shared/__tests__/test-util';
+import { SendCoinWithdrawalData } from '../../types/creation-data';
 import { TransactionCacheService } from '../transaction-cache.service';
 import { TransactionExecutionService } from '../transaction-execution.service';
 import { TransactionService } from '../transaction.service';
@@ -175,9 +177,10 @@ describe('TransactionExecutionService', () => {
   it('should create raw tx, request sign message, sign and broadcast for withdrawal', async () => {
     Setup.Withdrawal();
 
-    const withdrawal = {
+    const withdrawal: SendCoinWithdrawalData = {
       withdrawalId: 37,
       amount: new BigNumber(5.3456),
+      type: AssetType.COIN,
       to: 'user-address',
     };
     const txId = await service.sendWithdrawal(withdrawal);
@@ -205,9 +208,10 @@ describe('TransactionExecutionService', () => {
   it('should not create raw tx for withdrawal from cache', async () => {
     Setup.WithdrawalCache();
 
-    const withdrawal = {
+    const withdrawal: SendCoinWithdrawalData = {
       withdrawalId: 37,
       amount: new BigNumber(5.3456),
+      type: AssetType.COIN,
       to: 'user-address',
     };
     const txId = await service.sendWithdrawal(withdrawal);
@@ -300,9 +304,10 @@ describe('TransactionExecutionService', () => {
   it('should not unlock UTXOs on withdrawal fail', async () => {
     Setup.WithdrawalFail();
 
-    const withdrawal = {
+    const withdrawal: SendCoinWithdrawalData = {
       withdrawalId: 37,
       amount: new BigNumber(5.3456),
+      type: AssetType.COIN,
       to: 'user-address',
     };
     await expect(service.sendWithdrawal(withdrawal)).rejects.toBe('Error');

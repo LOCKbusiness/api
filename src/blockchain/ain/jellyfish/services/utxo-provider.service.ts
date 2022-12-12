@@ -12,7 +12,6 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Lock } from 'src/shared/lock';
 import { UtxoSizePriority } from '../domain/enums';
 import { UtxoInformation } from '../domain/entities/utxo-information';
-import { UtxoStatistics } from '../domain/entities/utxo-statistics';
 import { UtxoConfig } from '../domain/entities/utxo-config';
 
 interface AddressUnspent extends JellyfishAddressUnspent {
@@ -51,9 +50,9 @@ export class UtxoProviderService {
       }
     } catch (e) {
       console.error('Exception during unlocking utxos cronjob:', e);
+    } finally {
+      this.lockUtxo.release();
     }
-
-    this.lockUtxo.release();
   }
 
   unlockSpentBasedOn(prevouts: Prevout[], address: string): void {
@@ -70,15 +69,6 @@ export class UtxoProviderService {
     console.info(
       `unlock ${address}: spent ${Array.from(this.spent.get(address) ?? []).map((blocked) => blocked.unspent.id)}`,
     );
-  }
-
-  async getStatistics(address: string): Promise<UtxoStatistics> {
-    const unspent = await this.retrieveUnspent(address);
-    const quantity = unspent?.length ?? 0;
-    const sortedUnspent = unspent?.sort(UtxoProviderService.orderDescending);
-    const biggest = new BigNumber(sortedUnspent?.[0]?.vout.value);
-
-    return { quantity, biggest };
   }
 
   async addressHasUtxoExactAmount(address: string, amount: BigNumber): Promise<boolean> {
@@ -119,6 +109,10 @@ export class UtxoProviderService {
         }),
       ),
     );
+  }
+
+  async retrieveAllUnspent(address: string): Promise<AddressUnspent[]> {
+    return this.retrieveUnspent(address);
   }
 
   // --- HELPER METHODS --- //
@@ -241,7 +235,7 @@ export class UtxoProviderService {
     return new BigNumber(a.vout.value).minus(new BigNumber(b.vout.value)).toNumber();
   }
 
-  private static orderDescending(a: AddressUnspent, b: AddressUnspent): number {
+  static orderDescending(a: AddressUnspent, b: AddressUnspent): number {
     return new BigNumber(b.vout.value).minus(new BigNumber(a.vout.value)).toNumber();
   }
 
@@ -257,7 +251,6 @@ export class UtxoProviderService {
         vout: item.vout.n,
         value: new BigNumber(item.vout.value),
         script: {
-          // TODO(fuxingloh): needs to refactor once jellyfish refactor this.
           stack: toOPCodes(SmartBuffer.fromBuffer(Buffer.from(item.script.hex, 'hex'))),
         },
         tokenId: item.vout.tokenId ?? 0x00,

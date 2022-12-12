@@ -159,6 +159,28 @@ export class StakingService {
 
   //*** JOBS ***//
 
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async updateBalances(): Promise<void> {
+    try {
+      const stakingIds = await this.repository
+        .createQueryBuilder('staking')
+        .select('staking.id', 'id')
+        .where('staking.stageOneBalance != staking.balance')
+        .orWhere('staking.stageTwoBalance != staking.balance')
+        .getRawMany<{ id: number }>();
+
+      for (const { id } of stakingIds) {
+        try {
+          await this.updateBalance(id);
+        } catch (e) {
+          console.error(`Failed to update balance of staking ${id}:`, e);
+        }
+      }
+    } catch (e) {
+      console.error('Exception during balance update:', e);
+    }
+  }
+
   @Cron(CronExpression.EVERY_MINUTE)
   async calculateFiatReferenceAmounts(): Promise<void> {
     if (!this.lock.acquire()) return;

@@ -1,5 +1,6 @@
 import { ApiPagedResponse, WhaleApiClient } from '@defichain/whale-api-client';
-import { AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
+import { AddressToken, AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
+import { LoanVaultActive, LoanVaultState } from '@defichain/whale-api-client/dist/api/loan';
 import { TokenData } from '@defichain/whale-api-client/dist/api/tokens';
 import { Transaction, TransactionVin } from '@defichain/whale-api-client/dist/api/transactions';
 import BigNumber from 'bignumber.js';
@@ -17,8 +18,18 @@ export class WhaleClient {
     return new WhaleApiClient(GetConfig().whale);
   }
 
-  async getUTXOBalance(address: string): Promise<BigNumber> {
+  async getUtxoBalance(address: string): Promise<BigNumber> {
     return this.client.address.getBalance(address).then(BigNumber);
+  }
+
+  async getTokenBalances(address: string): Promise<AddressToken[]> {
+    return await this.getAll(() => this.client.address.listToken(address));
+  }
+
+  async getTokenBalance(address: string, token: string): Promise<BigNumber> {
+    return this.getTokenBalances(address)
+      .then((tb) => tb.find((b) => b.symbol === token)?.amount ?? 0)
+      .then(BigNumber);
   }
 
   async getBlockHeight(): Promise<number> {
@@ -31,6 +42,12 @@ export class WhaleClient {
 
   async getAllTokens(): Promise<TokenData[]> {
     return await this.getAll(() => this.client.tokens.list(200));
+  }
+
+  async getVault(vaultId: string): Promise<LoanVaultActive> {
+    const vault = await this.client.loan.getVault(vaultId);
+    if (vault.state === LoanVaultState.IN_LIQUIDATION) return undefined;
+    return vault;
   }
 
   async sendRaw(hex: string): Promise<string> {

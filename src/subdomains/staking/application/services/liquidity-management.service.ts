@@ -12,74 +12,44 @@ import { Masternode } from 'src/integration/masternode/domain/entities/masternod
 import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
-import { UtxoProviderService } from 'src/blockchain/ain/jellyfish/services/utxo-provider.service';
 import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/domain/enums';
 
 @Injectable()
 export class LiquidityManagementService {
-  private readonly lockWithdrawals = new Lock(1800);
-  private readonly lockMasternodes = new Lock(1800);
-  private readonly lockUtxoManagement = new Lock(1800);
+  private readonly lock = new Lock(1800);
 
   private client: WhaleClient;
-
-  private masternodeChange = {
-    count: 0,
-    updated: new Date(),
-  };
 
   constructor(
     private readonly masternodeService: MasternodeService,
     private readonly withdrawalService: StakingWithdrawalService,
     private readonly transactionExecutionService: TransactionExecutionService,
-    private readonly utxoProviderService: UtxoProviderService,
     whaleService: WhaleService,
   ) {
     whaleService.getClient().subscribe((c) => (this.client = c));
   }
 
   @Cron(CronExpression.EVERY_MINUTE)
-  async doWithdrawalsTasks() {
+  async doTasks() {
     if (Config.processDisabled(Process.STAKING_LIQUIDITY_MANAGEMENT)) return;
-    if (!this.lockWithdrawals.acquire()) return;
-
-    try {
-      await this.prepareWithdrawals();
-    } catch (e) {
-      console.error('Exception during withdrawals cronjob:', e);
-    }
-
-    this.lockWithdrawals.release();
-  }
-
-  @Cron(CronExpression.EVERY_MINUTE)
-  async doMasternodesTasks() {
-    if (Config.processDisabled(Process.STAKING_LIQUIDITY_MANAGEMENT)) return;
-    if (!this.lockMasternodes.acquire()) return;
+    if (!this.lock.acquire()) return;
 
     try {
       await this.checkMasternodesInProcess();
       await this.checkLiquidity();
     } catch (e) {
       console.error('Exception during masternodes cronjob:', e);
+    } finally {
+      this.lock.release();
     }
-
-    this.lockMasternodes.release();
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
-  async doUtxoManagement() {
-    if (Config.processDisabled(Process.STAKING_LIQUIDITY_MANAGEMENT)) return;
-    if (!this.lockUtxoManagement.acquire()) return;
+  // --- LIQUIDITY MANAGEMENT --- //
 
-    try {
-      await this.checkUtxos();
-    } catch (e) {
-      console.error('Exception during utxo-management cronjob:', e);
-    }
-
-    this.lockUtxoManagement.release();
-  }
+  private masternodeChange = {
+    count: 0,
+    updated: new Date(),
+  };
 
   async checkLiquidity(): Promise<void> {
     const excessiveLiquidity = await this.getExcessiveLiquidity();
@@ -124,7 +94,7 @@ export class LiquidityManagementService {
   }
 
   private async getCurrentLiquidity(): Promise<{ available: BigNumber; incoming: BigNumber }> {
-    const balance = await this.client.getUTXOBalance(Config.staking.liquidity.address);
+    const balance = await this.client.getUtxoBalance(Config.staking.liquidity.address);
 
     const pendingWithdrawals = await this.withdrawalService.getPendingWithdrawals();
     const pendingWithdrawalAmount = new BigNumber(Util.sumObj(pendingWithdrawals, 'amount'));
@@ -136,6 +106,7 @@ export class LiquidityManagementService {
   }
 
   // --- MASTERNODES ---- //
+
   private async checkMasternodesInProcess(): Promise<void> {
     const allInProcessMasternodes = await this.masternodeService.getAllWithStates([
       MasternodeState.ENABLING,
@@ -203,55 +174,6 @@ export class LiquidityManagementService {
     );
   }
 
-  // --- WITHDRAWALS --- //
-  async prepareWithdrawals(): Promise<void> {
-    const balance = await this.client.getUTXOBalance(Config.staking.liquidity.address);
-    const withdrawals = await this.withdrawalService.getPendingWithdrawals();
-
-    const sortedWithdrawals = withdrawals.sort((a, b) => a.amount - b.amount);
-
-    // determine possible withdrawals
-    const possibleWithdrawals = [];
-    let withdrawalSum = 0;
-    for (const withdrawal of sortedWithdrawals) {
-      withdrawalSum += withdrawal.amount;
-      if (balance.minus(1).lt(withdrawalSum)) break;
-
-      possibleWithdrawals.push(withdrawal);
-    }
-
-    if (possibleWithdrawals.length <= 0) return;
-
-    // prepare
-    await Promise.all(
-      possibleWithdrawals.map((w) =>
-        this.withdrawalService
-          .executeWithdrawal(w.id)
-          .catch((e) => console.error(`Failed to prepare withdrawal ${w.id}:`, e)),
-      ),
-    );
-  }
-
-  // --- UTXO MANAGEMENT --- //
-  async checkUtxos(): Promise<void> {
-    const liqBalance = await this.client.getUTXOBalance(Config.staking.liquidity.address);
-    if (liqBalance.lt(Config.utxo.minOperateValue)) throw new Error('Too low liquidity to operate');
-
-    const utxoStatistics = await this.utxoProviderService.getStatistics(Config.staking.liquidity.address);
-    if (utxoStatistics.quantity < Config.utxo.amount.min && utxoStatistics.biggest.gte(Config.utxo.minSplitValue)) {
-      await this.transactionExecutionService.splitBiggestUtxo({
-        address: Config.staking.liquidity.address,
-        split: Config.utxo.split,
-      });
-    } else if (utxoStatistics.quantity > Config.utxo.amount.max) {
-      await this.transactionExecutionService.mergeSmallestUtxos({
-        address: Config.staking.liquidity.address,
-        merge: Config.utxo.merge,
-      });
-    }
-  }
-
-  // --- HELPER METHODS --- //
   private getProcessFunctionsFor(state: MasternodeState): {
     txFunc: (masternode: Masternode) => Promise<string>;
     updateFunc: (masternode: Masternode, txId: string) => Promise<void>;
@@ -355,7 +277,7 @@ export class LiquidityManagementService {
       case MasternodeState.MOVING_COLLATERAL:
         return {
           txFunc: (masternode: Masternode) => {
-            return this.client.getUTXOBalance(masternode.owner).then((balance) => balance.toString());
+            return this.client.getUtxoBalance(masternode.owner).then((balance) => balance.toString());
           },
           updateFunc: (masternode: Masternode, balance: string) => {
             if (new BigNumber(balance).gt(0)) return;
