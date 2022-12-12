@@ -8,7 +8,7 @@ module.exports = class rewardsPayoutProcess1670595306602 {
         await queryRunner.query(`CREATE TABLE "liquidity_order" ("id" int NOT NULL IDENTITY(1,1), "updated" datetime2 NOT NULL CONSTRAINT "DF_2d6c7dd38f16a6639f1cc1055b1" DEFAULT getdate(), "created" datetime2 NOT NULL CONSTRAINT "DF_94004684697b3e7fa669db48d61" DEFAULT getdate(), "type" nvarchar(256) NOT NULL, "context" nvarchar(256) NOT NULL, "correlationId" nvarchar(256) NOT NULL, "chain" nvarchar(256) NOT NULL, "referenceAmount" float NOT NULL, "targetAmount" float, "isReady" bit NOT NULL CONSTRAINT "DF_95177a5e9e0bbabd4fc518ae4aa" DEFAULT 0, "isComplete" bit NOT NULL CONSTRAINT "DF_86b8a58b1cf8411d757e33fb1bd" DEFAULT 0, "swapAmount" float, "strategy" nvarchar(256), "txId" nvarchar(256), "purchasedAmount" float, "feeAmount" float, "referenceAssetId" int, "targetAssetId" int, "swapAssetId" int, "feeAssetId" int, CONSTRAINT "PK_ea07253c1548457d31400c38459" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "reward_batch" ("id" int NOT NULL IDENTITY(1,1), "updated" datetime2 NOT NULL CONSTRAINT "DF_f576fc7953d18a5bf66db4a346c" DEFAULT getdate(), "created" datetime2 NOT NULL CONSTRAINT "DF_bdf982e1b6f0f934e455d9524e2" DEFAULT getdate(), "outputReferenceAmount" float, "targetAmount" float, "status" nvarchar(256), "outputReferenceAssetId" int, "targetAssetId" int, CONSTRAINT "PK_4235dd892f8137b769baf02f203" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "reward_route" ("id" int NOT NULL IDENTITY(1,1), "updated" datetime2 NOT NULL CONSTRAINT "DF_e5ea530f6d2aba0ef394e5934cc" DEFAULT getdate(), "created" datetime2 NOT NULL CONSTRAINT "DF_8c1ea6b7a4ff4169a9b080d8157" DEFAULT getdate(), "label" nvarchar(255), "rewardPercent" float NOT NULL, "stakingId" int NOT NULL, "targetAssetId" int NOT NULL, "targetAddressAddress" nvarchar(255), "targetAddressBlockchain" nvarchar(255), CONSTRAINT "PK_7353d46d165a8b59668702d299a" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`EXEC sp_rename "pay_in_blockchain_address", "reservable_blockchain_address"`);
+        await queryRunner.query(`EXEC sp_rename "staking_blockchain_address", "reservable_blockchain_address"`);
         await queryRunner.query(`EXEC sp_rename "reservable_blockchain_address.address", "addressAddress"`);
         await queryRunner.query(`EXEC sp_rename "reservable_blockchain_address.blockchain", "addressBlockchain"`);
         await queryRunner.query(`CREATE TABLE "blockchain_address_reservation" ("id" int NOT NULL IDENTITY(1,1), "updated" datetime2 NOT NULL CONSTRAINT "DF_92a84bd806bf9c13214d94d03fd" DEFAULT getdate(), "created" datetime2 NOT NULL CONSTRAINT "DF_7cf3acea981b0ea0774726a9979" DEFAULT getdate(), "purpose" nvarchar(255) NOT NULL, "addressId" int NOT NULL, CONSTRAINT "PK_36f2e85d14521304a7cc3cf436f" PRIMARY KEY ("id"))`);
@@ -36,7 +36,10 @@ module.exports = class rewardsPayoutProcess1670595306602 {
         await queryRunner.query(`ALTER TABLE "staking" ADD "withdrawalAddressBlockchain" nvarchar(255)`);
         await queryRunner.query(`ALTER TABLE "wallet" ADD "addressAddress" nvarchar(255)`);
         await queryRunner.query(`ALTER TABLE "wallet" ADD "addressBlockchain" nvarchar(255)`);
-        // -> scripts go here
+        await queryRunner.query(`UPDATE "pay_in" SET "pay_in.addressAddress" = "pay_in_blockchain_address.address", "pay_in.addressBlockchain" = "pay_in_blockchain_address.blockchain" FROM "pay_in" LEFT JOIN "pay_in_blockchain_address" ON "pay_in.addressId" = "pay_in_blockchain_address.id" WHERE "pay_in.addressId" IS NOT NULL`);
+        await queryRunner.query(`UPDATE "staking" SET "staking.depositAddressAddress" = "reservable_blockchain_address.address", "staking.depositAddressBlockchain" = "reservable_blockchain_address.blockchain" FROM "staking" LEFT JOIN "reservable_blockchain_address" ON "staking.depositAddressId" = "reservable_blockchain_address.id" WHERE "staking.depositAddressId" IS NOT NULL`);
+        await queryRunner.query(`UPDATE "staking" SET "staking.withdrawalAddressAddress" = "wallet_blockchain_address.address", "staking.withdrawalAddressBlockchain" = "wallet_blockchain_address.blockchain" FROM "staking" LEFT JOIN "wallet_blockchain_address" ON "staking.withdrawalAddressId" = "wallet_blockchain_address.id" WHERE "staking.withdrawalAddressId" IS NOT NULL`);
+        await queryRunner.query(`UPDATE "wallet" SET "wallet.addressAddress" = "wallet_blockchain_address.address", "wallet.addressBlockchain" = "wallet_blockchain_address.blockchain" FROM "wallet" LEFT JOIN "wallet_blockchain_address" ON "wallet.addressId" = "wallet_blockchain_address.id" WHERE "wallet.addressId" IS NOT NULL`);
         await queryRunner.query(`ALTER TABLE "pay_in" DROP CONSTRAINT "FK_ff308aed6880ce0b4a1d5db7b75"`);
         await queryRunner.query(`ALTER TABLE "staking" DROP CONSTRAINT "FK_fc6daf1ef14aec38b2ea6b255dc"`);
         await queryRunner.query(`ALTER TABLE "staking" DROP CONSTRAINT "FK_50625d70cdee34360977267127f"`);
@@ -114,9 +117,13 @@ module.exports = class rewardsPayoutProcess1670595306602 {
         await queryRunner.query(`ALTER TABLE "wallet" ADD CONSTRAINT "FK_088b89ec2a02c3b4482f3ac9af3" FOREIGN KEY ("addressId") REFERENCES "wallet_blockchain_address"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "staking" ADD CONSTRAINT "FK_c9d49e5d1625ce208e33846b2b6" FOREIGN KEY ("rewardsPayoutAddressId") REFERENCES "wallet_blockchain_address"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "staking" ADD CONSTRAINT "FK_50625d70cdee34360977267127f" FOREIGN KEY ("withdrawalAddressId") REFERENCES "wallet_blockchain_address"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "staking" ADD CONSTRAINT "FK_fc6daf1ef14aec38b2ea6b255dc" FOREIGN KEY ("depositAddressId") REFERENCES "staking_blockchain_address"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "staking" ADD CONSTRAINT "FK_fc6daf1ef14aec38b2ea6b255dc" FOREIGN KEY ("depositAddressId") REFERENCES "reservable_blockchain_address"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "pay_in" ADD CONSTRAINT "FK_ff308aed6880ce0b4a1d5db7b75" FOREIGN KEY ("addressId") REFERENCES "pay_in_blockchain_address"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        // reverse scripts go here IF NEEDED
+        await queryRunner.query(`UPDATE "wallet" SET "wallet.addressId" = "wallet_blockchain_address.id" FROM "wallet" LEFT JOIN "wallet_blockchain_address" ON "wallet.addressAddress" = "wallet_blockchain_address.address" AND "wallet.addressBlockchain" = "wallet_blockchain_address.blockchain" WHERE "wallet.addressAddress" IS NOT NULL`);
+        await queryRunner.query(`UPDATE "staking" SET "staking.withdrawalAddressId" = "wallet_blockchain_address.id" FROM "staking" LEFT JOIN "wallet_blockchain_address" ON "staking.withdrawalAddressAddress" = "wallet_blockchain_address.address" AND "staking.withdrawalAddressBlockchain" = "wallet_blockchain_address.blockchain" WHERE "staking.withdrawalAddressAddress" IS NOT NULL`);
+        await queryRunner.query(`UPDATE "staking" SET "staking.rewardsPayoutAddressId" = "staking.withdrawalAddressId" FROM "staking"`);
+        await queryRunner.query(`UPDATE "staking" SET "staking.depositAddressId" = "reservable_blockchain_address.id" FROM "staking" LEFT JOIN "reservable_blockchain_address" ON "staking.depositAddressAddress" = "reservable_blockchain_address.address" AND "staking.depositAddressBlockchain" = "reservable_blockchain_address.blockchain" WHERE "staking.depositAddressAddress" IS NOT NULL`);
+        await queryRunner.query(`UPDATE "pay_in" SET "pay_in.addressId" = "pay_in_blockchain_address.id" FROM "pay_in" LEFT JOIN "pay_in_blockchain_address" ON "pay_in.addressAddress" = "pay_in_blockchain_address.address" AND "pay_in.addressBlockchain" = "pay_in_blockchain_address.blockchain" WHERE "pay_in.addressAddress" IS NOT NULL`);
         await queryRunner.query(`ALTER TABLE "wallet" DROP COLUMN "addressBlockchain"`);
         await queryRunner.query(`ALTER TABLE "wallet" DROP COLUMN "addressAddress"`);
         await queryRunner.query(`ALTER TABLE "staking" DROP COLUMN "withdrawalAddressBlockchain"`);
@@ -144,7 +151,7 @@ module.exports = class rewardsPayoutProcess1670595306602 {
         await queryRunner.query(`DROP TABLE "blockchain_address_reservation"`);
         await queryRunner.query(`EXEC sp_rename "reservable_blockchain_address.addressBlockchain", "blockchain"`);
         await queryRunner.query(`EXEC sp_rename "reservable_blockchain_address.addressAddress", "address"`);
-        await queryRunner.query(`EXEC sp_rename "reservable_blockchain_address", "pay_in_blockchain_address"`);
+        await queryRunner.query(`EXEC sp_rename "reservable_blockchain_address", "staking_blockchain_address"`);
         await queryRunner.query(`DROP TABLE "reward_route"`);
         await queryRunner.query(`DROP TABLE "reward_batch"`);
         await queryRunner.query(`DROP TABLE "liquidity_order"`);
