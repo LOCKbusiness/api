@@ -17,6 +17,7 @@ import { StakingRepository } from '../repositories/staking.repository';
 import { StakingStrategyValidator } from '../validators/staking-strategy.validator';
 import { ReservableBlockchainAddressService } from '../../../address-pool/application/services/reservable-blockchain-address.service';
 import { BlockchainAddressReservationPurpose } from 'src/subdomains/address-pool/domain/enums';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class StakingService {
@@ -142,6 +143,30 @@ export class StakingService {
     staking.updateBalance();
 
     await this.repository.save(staking);
+  }
+
+  //*** JOBS ***//
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async updateBalances(): Promise<void> {
+    try {
+      const stakingIds = await this.repository
+        .createQueryBuilder('staking')
+        .select('staking.id', 'id')
+        .where('staking.stageOneBalance != staking.balance')
+        .orWhere('staking.stageTwoBalance != staking.balance')
+        .getRawMany<{ id: number }>();
+
+      for (const { id } of stakingIds) {
+        try {
+          await this.updateBalance(id);
+        } catch (e) {
+          console.error(`Failed to update balance of staking ${id}:`, e);
+        }
+      }
+    } catch (e) {
+      console.error('Exception during balance update:', e);
+    }
   }
 
   //*** HELPER METHODS ***//

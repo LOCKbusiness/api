@@ -13,7 +13,6 @@ import {
   ResignMasternodeData,
   SendTokenData,
   SendFromLiqData,
-  SendFromLiqToCustomerData,
   SendToLiqData,
   SplitData,
   DepositToVaultData,
@@ -23,6 +22,8 @@ import {
   AddPoolLiquidityData,
   RemovePoolLiquidityData,
   CompositeSwapData,
+  SendTokenWithdrawalData,
+  SendCoinWithdrawalData,
 } from '../types/creation-data';
 import { TransactionService } from './transaction.service';
 import { WIF } from '@defichain/jellyfish-crypto';
@@ -31,6 +32,7 @@ import { TransactionType } from '../../domain/enums';
 import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/domain/enums';
 import { RawTxService } from 'src/blockchain/ain/jellyfish/services/raw-tx.service';
 import { TransactionCacheService } from './transaction-cache.service';
+import { AssetType } from 'src/shared/models/asset/asset.entity';
 
 @Injectable()
 export class TransactionExecutionService {
@@ -80,17 +82,27 @@ export class TransactionExecutionService {
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.SEND_TO_LIQ));
   }
 
-  async sendWithdrawal(data: SendFromLiqToCustomerData): Promise<string> {
+  async sendWithdrawal(data: SendCoinWithdrawalData | SendTokenWithdrawalData): Promise<string> {
+    const config = data.type === AssetType.TOKEN ? Config.yieldMachine.liquidity : Config.staking.liquidity;
+
     const rawTx = await this.useCache(TransactionType.WITHDRAWAL, data.withdrawalId.toString(), () =>
-      this.rawTxService.Utxo.sendWithChange(
-        Config.staking.liquidity.address,
-        data.to,
-        data.amount,
-        UtxoSizePriority.FITTING,
-      ),
+      data.type === AssetType.TOKEN
+        ? this.rawTxService.Account.send(config.address, data.to, data.tokenId, data.amount)
+        : this.rawTxService.Utxo.sendWithChange(config.address, data.to, data.amount, UtxoSizePriority.FITTING),
     );
-    console.info(`Send from liq to customer tx ${rawTx.id}`);
-    return this.signAndBroadcast(rawTx, { id: data.withdrawalId, type: TransactionType.WITHDRAWAL }, false);
+
+    console.info(`Send withdrawal tx ${rawTx.id}`);
+    return this.signAndBroadcast(
+      rawTx,
+      {
+        id: data.withdrawalId,
+        ...this.createPayloadFor(
+          { ownerWallet: config.wallet, accountIndex: config.account },
+          TransactionType.WITHDRAWAL,
+        ),
+      },
+      false,
+    );
   }
 
   async splitBiggestUtxo(data: SplitData): Promise<string> {

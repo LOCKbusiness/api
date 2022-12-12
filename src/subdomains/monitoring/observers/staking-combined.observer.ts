@@ -74,7 +74,7 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
       },
     });
     const addresses = [...activeMasternodes.map((m) => m.owner), Config.staking.liquidity.address];
-    const balance = await Promise.all(addresses.map((a) => this.client.getUTXOBalance(a).then((b) => +b)));
+    const balance = await Promise.all(addresses.map((a) => this.client.getUtxoBalance(a).then((b) => +b)));
     const actual = Util.sum(balance);
 
     // calculate database balance

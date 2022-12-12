@@ -39,11 +39,11 @@ export class StakingDeFiChainService {
     this.wallet = this.jellyfishService.createWallet(Config.payIn.forward.phrase);
   }
 
-  // --- PUBLIC API --- //
   async checkSync(): Promise<void> {
     await this.inputClient.checkSync();
   }
 
+  // --- DEPOSITS --- //
   async forwardDeposit(
     sourceAddress: string,
     amount: number,
@@ -58,26 +58,6 @@ export class StakingDeFiChainService {
     }
   }
 
-  async sendWithdrawal(withdrawal: Withdrawal): Promise<string> {
-    return this.transactionExecutionService.sendWithdrawal({
-      to: withdrawal.staking.withdrawalAddress.address,
-      amount: new BigNumber(withdrawal.amount),
-      withdrawalId: withdrawal.id,
-    });
-  }
-
-  async getSourceAddresses(txId: string): Promise<string[]> {
-    const vins = await this.whaleClient.getTxVins(txId);
-    return vins.map((vin) => fromScriptHex(vin.vout.script.hex, Config.network as NetworkName).address);
-  }
-
-  async isWithdrawalTxComplete(withdrawalTxId: string): Promise<boolean> {
-    const transaction = await this.whaleClient.getTx(withdrawalTxId);
-
-    return transaction && transaction.block.hash != null;
-  }
-
-  // --- FORWARDING HELPERS --- //
   private async forwardMasternodeDeposit(address: string, amount: number): Promise<string> {
     const forwardToLiq = await this.rawTxService.Utxo.forward(
       address,
@@ -141,5 +121,54 @@ export class StakingDeFiChainService {
       await this.rawTxService.unlockUtxosOf(rawTx);
       throw e;
     }
+  }
+
+  // --- WITHDRAWALS --- //
+  async getPossibleWithdrawals(withdrawals: Withdrawal[]): Promise<Withdrawal[]> {
+    const dfiBalance = await this.whaleClient.getUtxoBalance(Config.staking.liquidity.address);
+    const dusdBalance = await this.whaleClient.getTokenBalance(Config.yieldMachine.liquidity.address, 'DUSD');
+
+    return [
+      ...this.getPossibleWithdrawalsFor(dfiBalance, 'DFI', withdrawals),
+      ...this.getPossibleWithdrawalsFor(dusdBalance, 'DUSD', withdrawals),
+    ];
+  }
+
+  private getPossibleWithdrawalsFor(balance: BigNumber, assetName: string, withdrawals: Withdrawal[]): Withdrawal[] {
+    const sortedWithdrawals = withdrawals.filter((w) => w.asset.name === assetName).sort((a, b) => a.amount - b.amount);
+
+    const possibleWithdrawals = [];
+    let withdrawalSum = 0;
+    for (const withdrawal of sortedWithdrawals) {
+      withdrawalSum += withdrawal.amount;
+      if (balance.minus(1).lt(withdrawalSum)) break;
+
+      possibleWithdrawals.push(withdrawal);
+    }
+
+    return possibleWithdrawals;
+  }
+
+  async sendWithdrawal(withdrawal: Withdrawal): Promise<string> {
+    const token = await this.tokenProviderService.get(withdrawal.asset.name);
+
+    return this.transactionExecutionService.sendWithdrawal({
+      to: withdrawal.staking.withdrawalAddress.address,
+      amount: new BigNumber(withdrawal.amount),
+      type: withdrawal.asset.type,
+      tokenId: +token?.id,
+      withdrawalId: withdrawal.id,
+    });
+  }
+
+  async getSourceAddresses(txId: string): Promise<string[]> {
+    const vins = await this.whaleClient.getTxVins(txId);
+    return vins.map((vin) => fromScriptHex(vin.vout.script.hex, Config.network as NetworkName).address);
+  }
+
+  async isWithdrawalTxComplete(withdrawalTxId: string): Promise<boolean> {
+    const transaction = await this.whaleClient.getTx(withdrawalTxId);
+
+    return transaction && transaction.block.hash != null;
   }
 }

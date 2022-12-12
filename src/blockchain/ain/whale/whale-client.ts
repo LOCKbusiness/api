@@ -18,12 +18,18 @@ export class WhaleClient {
     return new WhaleApiClient(GetConfig().whale);
   }
 
-  async getUTXOBalance(address: string): Promise<BigNumber> {
+  async getUtxoBalance(address: string): Promise<BigNumber> {
     return this.client.address.getBalance(address).then(BigNumber);
   }
 
-  async getBalances(address: string): Promise<AddressToken[]> {
+  async getTokenBalances(address: string): Promise<AddressToken[]> {
     return await this.getAll(() => this.client.address.listToken(address));
+  }
+
+  async getTokenBalance(address: string, token: string): Promise<BigNumber> {
+    return this.getTokenBalances(address)
+      .then((tb) => tb.find((b) => b.symbol === token)?.amount ?? 0)
+      .then(BigNumber);
   }
 
   async getBlockHeight(): Promise<number> {

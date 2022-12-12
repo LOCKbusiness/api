@@ -50,9 +50,9 @@ export class UtxoProviderService {
       }
     } catch (e) {
       console.error('Exception during unlocking utxos cronjob:', e);
+    } finally {
+      this.lockUtxo.release();
     }
-
-    this.lockUtxo.release();
   }
 
   unlockSpentBasedOn(prevouts: Prevout[], address: string): void {

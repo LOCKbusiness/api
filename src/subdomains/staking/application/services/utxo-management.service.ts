@@ -33,13 +33,13 @@ export class UtxoManagementService {
       await this.checkUtxos();
     } catch (e) {
       console.error('Exception during utxo-management cronjob:', e);
+    } finally {
+      this.lockUtxoManagement.release();
     }
-
-    this.lockUtxoManagement.release();
   }
 
   async checkUtxos(): Promise<void> {
-    const liqBalance = await this.client.getUTXOBalance(Config.staking.liquidity.address);
+    const liqBalance = await this.client.getUtxoBalance(Config.staking.liquidity.address);
     if (liqBalance.lt(Config.utxo.minOperateValue)) {
       console.log('Too low liquidity to operate');
       return;

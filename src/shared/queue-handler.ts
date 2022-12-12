@@ -51,8 +51,8 @@ export class QueueHandler {
       while (this.queue.length > 0) {
         await this.queue.shift().doWork();
       }
-    } catch {}
-
-    this.lock.release();
+    } finally {
+      this.lock.release();
+    }
   }
 }
