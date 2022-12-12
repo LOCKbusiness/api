@@ -355,5 +355,24 @@
     "headers": [],
     "params": [],
     "tests": []
+  },
+  {
+    "_id": "806381ca-9b22-4349-8e7e-905b296983bb",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "1386d368-b3e9-4903-a2cb-e21d7c02bee4",
+    "name": "Create",
+    "url": "{{url}}/v1/staking/1/reward",
+    "method": "POST",
+    "sortNum": 230000,
+    "created": "2022-12-12T14:48:49.041Z",
+    "modified": "2022-12-12T15:08:19.628Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"referenceAssetId\": 1,\n  \"inputReferenceAmount\": 1,\n  \"outputReferenceAmount\": 1,\n  \"feePercent\": 1,\n  \"feeAmount\": 0.1,\n  \"rewardRouteId\": 1,\n  \"status\": \"Confirmed\"\n}",
+      "form": []
+    },
+    "tests": []
   }
 ]

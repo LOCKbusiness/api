@@ -40,7 +40,18 @@ export class StakingFactory {
   }
 
   async createReward(staking: Staking, dto: CreateRewardDto): Promise<Reward> {
-    const { referenceAssetId, inputReferenceAmount, outputReferenceAmount, feePercent, feeAmount, rewardRouteId } = dto;
+    const {
+      referenceAssetId,
+      inputReferenceAmount,
+      outputReferenceAmount,
+      feePercent,
+      feeAmount,
+      rewardRouteId,
+      status,
+      targetAmount,
+      txId,
+      outputDate,
+    } = dto;
 
     const referenceAsset = await this.assetService.getAssetById(referenceAssetId);
     const rewardRoute = await this.rewardRouteRepo.findOne(rewardRouteId);
@@ -65,6 +76,10 @@ export class StakingFactory {
       feePercent,
       feeAmount,
       rewardRoute,
+      status,
+      targetAmount,
+      txId,
+      outputDate,
     );
   }
 

@@ -78,10 +78,14 @@ export class Reward extends IEntity {
     feePercent: number,
     feeAmount: number,
     rewardRoute: RewardRoute,
+    status?: RewardStatus,
+    targetAmount?: number,
+    txId?: string,
+    outputDate?: Date,
   ): Reward {
     const reward = new Reward();
 
-    reward.status = RewardStatus.CREATED;
+    reward.status = status ?? RewardStatus.CREATED;
     reward.staking = staking;
     reward.referenceAsset = referenceAsset;
     reward.inputReferenceAmount = inputReferenceAmount;
@@ -89,6 +93,10 @@ export class Reward extends IEntity {
     reward.feePercent = feePercent;
     reward.feeAmount = feeAmount;
     reward.rewardRoute = rewardRoute;
+
+    reward.targetAmount = targetAmount;
+    reward.txId = txId;
+    reward.outputDate = outputDate;
 
     reward.isReinvest = rewardRoute.targetAddress.isEqual(staking.depositAddress);
 
