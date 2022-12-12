@@ -162,6 +162,7 @@ export class StakingWithdrawalService {
 
     try {
       const withdrawals = await this.getPendingWithdrawals();
+      if (withdrawals.length <= 0) return;
 
       const possibleWithdrawals = await this.deFiChainService.getPossibleWithdrawals(withdrawals);
       if (possibleWithdrawals.length <= 0) return;
@@ -173,9 +174,9 @@ export class StakingWithdrawalService {
       );
     } catch (e) {
       console.error('Exception during withdrawals cronjob:', e);
+    } finally {
+      this.lock.release();
     }
-
-    this.lock.release();
   }
 
   @Cron(CronExpression.EVERY_MINUTE)

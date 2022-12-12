@@ -41,28 +41,33 @@ export class YieldMachineService {
   @Cron(CronExpression.EVERY_5_MINUTES)
   async checkVaultsForEmergency() {
     if (Config.processDisabled(Process.UTXO_MANAGEMENT)) return;
-
     if (!this.emergencyVaultCheckLock.acquire()) return;
 
-    const vaults = await this.vaultService.getAll();
-    const vaultInfos = await Promise.all(vaults.filter((v) => v.vault).map((v) => this.whaleClient.getVault(v.vault)));
-    const allEmergencyProcesses: Promise<unknown>[] = [];
-    for (const vault of vaultInfos) {
-      const dbVault = vaults.find((v) => v.vault === vault.vaultId);
-      if (dbVault.emergencyCollateralRatio > +vault.collateralRatio) {
-        console.info(`starting emergency payback for ${dbVault.vault} on ${dbVault.address}`);
-        const logId = `${dbVault.address} (${dbVault.vault})`;
-        allEmergencyProcesses.push(
-          this.executeEmergencyFor(dbVault, logId).catch((e) =>
-            console.error(`Exception during vault emergency check for ${logId}:`, e),
-          ),
-        );
+    try {
+      const vaults = await this.vaultService.getAll();
+      const vaultInfos = await Promise.all(
+        vaults.filter((v) => v.vault).map((v) => this.whaleClient.getVault(v.vault)),
+      );
+      const allEmergencyProcesses: Promise<unknown>[] = [];
+      for (const vault of vaultInfos) {
+        const dbVault = vaults.find((v) => v.vault === vault.vaultId);
+        if (dbVault.emergencyCollateralRatio > +vault.collateralRatio) {
+          console.info(`starting emergency payback for ${dbVault.vault} on ${dbVault.address}`);
+          const logId = `${dbVault.address} (${dbVault.vault})`;
+          allEmergencyProcesses.push(
+            this.executeEmergencyFor(dbVault, logId).catch((e) =>
+              console.error(`Exception during vault emergency check for ${logId}:`, e),
+            ),
+          );
+        }
       }
+      await Promise.all(allEmergencyProcesses);
+      console.info(`finished emergency check`);
+    } catch (e) {
+      console.error('Exception during vault emergency check:', e);
+    } finally {
+      this.emergencyVaultCheckLock.release();
     }
-    await Promise.all(allEmergencyProcesses);
-    console.info(`finished emergency check`);
-
-    this.emergencyVaultCheckLock.release();
   }
 
   private async executeEmergencyFor(vault: Vault, logId: string): Promise<string[]> {
