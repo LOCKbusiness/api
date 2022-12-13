@@ -71,7 +71,7 @@ export class MasternodeService {
     if (Config.processDisabled(Process.MASTERNODE)) return;
 
     const masternodeWithoutBlocks = await this.repository.find({
-      where: { firstBlockFound: IsNull(), creationHash: Not(IsNull()) },
+      where: { state: Not(MasternodeState.RESIGNED), firstBlockFound: IsNull(), creationHash: Not(IsNull()) },
     });
     for (const masternode of masternodeWithoutBlocks) {
       try {
