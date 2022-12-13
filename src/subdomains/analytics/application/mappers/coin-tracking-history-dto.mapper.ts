@@ -60,8 +60,8 @@ export class CoinTrackingHistoryDtoMapper {
         buyAsset: this.getAssetSymbolCT(c.rewardRoute.targetAsset),
         sellAmount: null,
         sellAsset: null,
-        fee: c.feeAmount != 0 ? c.feeAmount : null,
-        feeAsset: c.feeAmount != 0 ? this.getAssetSymbolCT(c.rewardRoute.targetAsset) : null,
+        fee: c.feePercent != 0 ? (c.targetAmount * c.feePercent) / (1 - c.feePercent) : null,
+        feeAsset: c.feePercent != 0 ? this.getAssetSymbolCT(c.rewardRoute.targetAsset) : null,
         exchange: 'LOCK.space Staking',
         tradeGroup: c.staking.strategy === StakingStrategy.LIQUIDITY_MINING ? null : 'Staking',
         comment:
