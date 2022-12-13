@@ -10,6 +10,7 @@ export enum Process {
   STAKING_DEPOSIT = 'StakingDeposit',
   STAKING_WITHDRAWAL = 'StakingWithdrawal',
   STAKING_LIQUIDITY_MANAGEMENT = 'StakingLiquidityManagement',
+  STAKING_REWARD_PAYOUT = 'StakingRewardPayout',
   MASTERNODE = 'Masternode',
   TRANSACTION = 'Transaction',
   ANALYTICS = 'Analytics',
