@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { Config, Process } from 'src/config/config';
 import { Lock } from 'src/shared/lock';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { SettingService } from 'src/shared/services/setting.service';
@@ -71,6 +72,7 @@ export class StakingRewardService {
 
   @Cron(CronExpression.EVERY_MINUTE)
   async processRewards(): Promise<void> {
+    if (Config.processDisabled(Process.STAKING_REWARD_PAYOUT)) return;
     if ((await this.settingService.get('reward-payout')) !== 'on') return;
     if (!this.lock.acquire()) return;
 
