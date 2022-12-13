@@ -49,12 +49,12 @@ export class ChainReportHistoryDtoMapper {
           c.staking.strategy === StakingStrategy.LIQUIDITY_MINING
             ? ChainReportTransactionType.LM
             : ChainReportTransactionType.STAKING,
-        inputAmount: c.inputReferenceAmount,
-        inputAsset: this.getAssetSymbolChainReport(c.referenceAsset),
+        inputAmount: c.targetAmount,
+        inputAsset: this.getAssetSymbolChainReport(c.rewardRoute.targetAsset),
         outputAmount: null,
         outputAsset: null,
-        feeAmount: null,
-        feeAsset: null,
+        feeAmount: c.feeAmount != 0 ? c.feeAmount : null,
+        feeAsset: c.feeAmount != 0 ? this.getAssetSymbolChainReport(c.rewardRoute.targetAsset) : null,
         txId: c.txId,
         description:
           c.staking.strategy === StakingStrategy.LIQUIDITY_MINING ? 'LOCK Yield Machine Reward' : 'LOCK Staking Reward',
