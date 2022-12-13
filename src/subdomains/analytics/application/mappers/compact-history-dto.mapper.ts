@@ -14,6 +14,10 @@ export class CompactHistoryDtoMapper {
     [WithdrawalStatus.PAYING_OUT]: CompactHistoryStatus.PENDING,
     [WithdrawalStatus.CONFIRMED]: CompactHistoryStatus.CONFIRMED,
     [WithdrawalStatus.FAILED]: CompactHistoryStatus.FAILED,
+    [RewardStatus.CREATED]: null,
+    [RewardStatus.PAUSED]: CompactHistoryStatus.PENDING,
+    [RewardStatus.PREPARATION_PENDING]: CompactHistoryStatus.PENDING,
+    [RewardStatus.PREPARATION_CONFIRMED]: CompactHistoryStatus.PENDING,
   };
 
   static mapStakingDeposits(deposits: Deposit[]): CompactHistoryDto[] {
@@ -56,15 +60,15 @@ export class CompactHistoryDtoMapper {
     return rewards
       .map((c) => ({
         type: HistoryTransactionType.REWARD,
-        inputAmount: c.amount,
-        inputAsset: c.asset.name,
+        inputAmount: c.inputReferenceAmount,
+        inputAsset: c.referenceAsset.name,
         outputAmount: null,
         outputAsset: null,
         amountInEur: c.amountEur,
         amountInChf: c.amountChf,
         amountInUsd: c.amountUsd,
-        txId: c.reinvestTxId,
-        date: c.reinvestOutputDate ?? c.updated,
+        txId: c.txId,
+        date: c.outputDate ?? c.updated,
         status: this.CompactStatusMapper[c.status],
       }))
       .filter((c) => c.status != null);

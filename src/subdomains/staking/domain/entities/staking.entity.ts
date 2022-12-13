@@ -2,17 +2,17 @@ import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { Deposit } from './deposit.entity';
 import { Reward } from './reward.entity';
 import { Withdrawal } from './withdrawal.entity';
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { IEntity } from 'src/shared/models/entity';
 import { DepositStatus, RewardStatus, StakingStatus, StakingStrategy, WithdrawalStatus } from '../enums';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Util } from 'src/shared/util';
-import { StakingBlockchainAddress } from './staking-blockchain-address.entity';
-import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wallet-blockchain-address.entity';
 import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Price } from 'src/shared/models/price';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { AssetQuery } from 'src/shared/models/asset/asset.service';
+import { RewardRoute } from './reward-route.entity';
+import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 
 export interface StakingType {
   asset: Asset;
@@ -47,21 +47,20 @@ export class Staking extends IEntity {
   @Column({ type: 'float', nullable: false, default: 0 })
   stageTwoBalance: number;
 
-  @OneToOne(() => StakingBlockchainAddress, { eager: true, nullable: false })
-  @JoinColumn()
-  depositAddress: StakingBlockchainAddress;
+  @Column(() => BlockchainAddress)
+  depositAddress: BlockchainAddress;
 
   @OneToMany(() => Deposit, (deposit) => deposit.staking, { eager: true, cascade: true })
   deposits: Deposit[];
 
-  @ManyToOne(() => WalletBlockchainAddress, { eager: true, nullable: false })
-  withdrawalAddress: WalletBlockchainAddress;
+  @Column(() => BlockchainAddress)
+  withdrawalAddress: BlockchainAddress;
 
   @OneToMany(() => Withdrawal, (withdrawal) => withdrawal.staking, { eager: true, cascade: true })
   withdrawals: Withdrawal[];
 
-  @ManyToOne(() => WalletBlockchainAddress, { eager: true, nullable: false })
-  rewardsPayoutAddress: WalletBlockchainAddress;
+  @OneToMany(() => RewardRoute, (route) => route.staking, { eager: true, cascade: true })
+  rewardRoutes: RewardRoute[];
 
   @OneToMany(() => Reward, (reward) => reward.staking, { cascade: true })
   rewards: Reward[];
@@ -77,8 +76,8 @@ export class Staking extends IEntity {
   static create(
     userId: number,
     { asset, strategy }: StakingType,
-    depositAddress: StakingBlockchainAddress,
-    withdrawalAddress: WalletBlockchainAddress,
+    depositAddress: BlockchainAddress,
+    withdrawalAddress: BlockchainAddress,
   ): Staking {
     const staking = new Staking();
 
@@ -90,13 +89,17 @@ export class Staking extends IEntity {
 
     staking.depositAddress = depositAddress;
     staking.withdrawalAddress = withdrawalAddress;
-    staking.rewardsPayoutAddress = withdrawalAddress;
+    staking.rewardRoutes = [this.createDefaultRewardRoute(staking, asset, depositAddress)];
 
     staking.deposits = [];
     staking.withdrawals = [];
     staking.rewards = [];
 
     return staking;
+  }
+
+  static createDefaultRewardRoute(staking: Staking, asset: Asset, depositAddress: BlockchainAddress): RewardRoute {
+    return RewardRoute.create(staking, 'Reinvest', 1, asset, depositAddress);
   }
 
   //*** PUBLIC API ***//
@@ -187,6 +190,15 @@ export class Staking extends IEntity {
     return this;
   }
 
+  setRewardRoutes(newRewardRoutes: RewardRoute[]): this {
+    this.validateRewardDistribution(newRewardRoutes);
+    this.validateDuplicatedRoutes(newRewardRoutes);
+
+    this.updateRewardRoutes(newRewardRoutes);
+
+    return this;
+  }
+
   setStakingFee(feePercent: number): this {
     this.fee = feePercent;
 
@@ -195,16 +207,6 @@ export class Staking extends IEntity {
 
   verifyUserAddresses(addresses: string[]): boolean {
     return addresses.every((a) => a === this.withdrawalAddress.address);
-  }
-
-  calculateFiatReferences(prices: Price[]): this {
-    const deposits = this.getDepositsWithoutFiatReferences();
-    const withdrawals = this.getWithdrawalsWithoutFiatReferences();
-
-    deposits.forEach((d) => d.calculateFiatReferences(prices));
-    withdrawals.forEach((w) => w.calculateFiatReferences(prices));
-
-    return this;
   }
 
   updateBalance(): number {
@@ -264,13 +266,6 @@ export class Staking extends IEntity {
     return this.getDepositsByStatus(DepositStatus.PENDING);
   }
 
-  getDepositsWithoutFiatReferences(): Deposit[] {
-    return this.deposits.filter(
-      (d) =>
-        (d.amountChf == null || d.amountEur == null || d.amountUsd == null) && d.status === DepositStatus.CONFIRMED,
-    );
-  }
-
   getUnconfirmedDepositsAmount(): number {
     const unconfirmedDeposits = this.getDepositsByStatus([DepositStatus.OPEN, DepositStatus.PENDING]);
 
@@ -289,11 +284,8 @@ export class Staking extends IEntity {
     return this.getWithdrawalsByStatus(WithdrawalStatus.PAYING_OUT);
   }
 
-  getWithdrawalsWithoutFiatReferences(): Withdrawal[] {
-    return this.withdrawals.filter(
-      (w) =>
-        (w.amountChf == null || w.amountEur == null || w.amountUsd == null) && w.status === WithdrawalStatus.CONFIRMED,
-    );
+  getActiveRewardRoutes(): RewardRoute[] {
+    return this.rewardRoutes.filter((r) => r.rewardPercent !== 0);
   }
 
   //*** HELPER STATIC METHODS ***//
@@ -316,11 +308,61 @@ export class Staking extends IEntity {
 
   private updateRewardBalance(): number {
     const confirmedRewards = this.getRewardsByStatus(RewardStatus.CONFIRMED);
-    const confirmedRewardsAmount = Util.sumObj(confirmedRewards, 'amount');
+    const confirmedRewardsAmount = Util.sumObj(confirmedRewards, 'inputReferenceAmount');
 
     this.rewardsAmount = confirmedRewardsAmount;
 
     return this.rewardsAmount;
+  }
+
+  private validateRewardDistribution(newRewardRoutes: RewardRoute[]): void {
+    const totalDistribution = Util.sumObj<RewardRoute>(newRewardRoutes, 'rewardPercent');
+
+    if (totalDistribution !== 1) {
+      throw new BadRequestException(
+        `Cannot create reward strategy. Total reward distribution must be 100%, instead distributed total of ${Util.round(
+          totalDistribution * 100,
+          2,
+        )}%`,
+      );
+    }
+  }
+
+  private validateDuplicatedRoutes(newRewardRoutes: RewardRoute[]): void {
+    newRewardRoutes.forEach((route) => {
+      const duplicatedRoute = this.findDuplicatedRoute(route, newRewardRoutes);
+
+      if (duplicatedRoute) {
+        throw new BadRequestException(
+          `Cannot create reward strategy. Provided duplicated route for asset ${duplicatedRoute.targetAsset.name} and address ${duplicatedRoute.targetAddress.address}`,
+        );
+      }
+    });
+  }
+
+  private findDuplicatedRoute(currentRoute: RewardRoute, allRewardRoutes: RewardRoute[]): RewardRoute | null {
+    return allRewardRoutes.some((r, index) => allRewardRoutes.findIndex((_r) => _r.isEqual(r)) !== index)
+      ? currentRoute
+      : null;
+  }
+
+  private updateRewardRoutes(newRewardRoutes: RewardRoute[]): void {
+    this.resetExistingRoutes();
+
+    newRewardRoutes.forEach((newRoute) => {
+      const existingRoute = this.rewardRoutes.find((r) => r.isEqual(newRoute));
+
+      if (existingRoute) {
+        existingRoute.updateRoute(newRoute.label, newRoute.rewardPercent);
+        return;
+      }
+
+      this.rewardRoutes.push(newRoute);
+    });
+  }
+
+  private resetExistingRoutes(): void {
+    this.rewardRoutes.forEach((route) => (route.rewardPercent = 0));
   }
 
   private isEnoughBalanceForWithdrawal(withdrawal: Withdrawal): boolean {

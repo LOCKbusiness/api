@@ -10,8 +10,8 @@ import { UserService } from './user.service';
 import { WalletProviderService } from './wallet-provider.service';
 import { WalletProvider } from '../../domain/entities/wallet-provider.entity';
 import { WalletDetailedDto } from '../dto/wallet-detailed.dto';
-import { WalletBlockchainAddress } from '../../domain/entities/wallet-blockchain-address.entity';
 import { SignUpDto } from '../dto/sign-up.dto';
+import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 
 @Injectable()
 export class WalletService {
@@ -33,7 +33,7 @@ export class WalletService {
   async getByAddress(address: string, needsRelation = false): Promise<Wallet> {
     return this.walletRepo.findOne({
       where: { address: { address } },
-      relations: needsRelation ? ['address', 'user', 'walletProvider'] : ['address'],
+      relations: needsRelation ? ['user', 'walletProvider'] : [],
     });
   }
 
@@ -47,7 +47,7 @@ export class WalletService {
     return wallet.user.kycId;
   }
   async createWallet(dto: SignUpDto, userIp: string, user?: User): Promise<Wallet> {
-    const walletAddress = WalletBlockchainAddress.create(dto.address, dto.blockchain);
+    const walletAddress = BlockchainAddress.create(dto.address, dto.blockchain);
     const wallet = this.walletRepo.create({
       signature: dto.signature,
       address: walletAddress,

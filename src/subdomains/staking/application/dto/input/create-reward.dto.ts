@@ -1,41 +1,57 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDate, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsDate, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { RewardStatus } from 'src/subdomains/staking/domain/enums';
 
 export class CreateRewardDto {
   @ApiProperty()
   @IsNotEmpty()
+  @IsInt()
+  referenceAssetId: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
   @IsNumber()
-  amount: number;
+  inputReferenceAmount: number;
 
   @ApiProperty()
   @IsNotEmpty()
+  @IsNumber()
+  outputReferenceAmount: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsNumber()
+  feePercent: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsNumber()
+  feeAmount: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsInt()
+  rewardRouteId: number;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsEnum(RewardStatus)
+  status?: RewardStatus;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsNumber()
+  targetAmount?: number;
+
+  @ApiProperty()
+  @IsOptional()
   @IsString()
-  reinvestTxId: string;
+  txId?: string;
 
   @ApiProperty()
-  @IsNotEmpty()
+  @IsOptional()
   @IsDate()
   @Type(() => Date)
-  reinvestOutputDate: Date;
-
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsNumber()
-  fee: number;
-
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsNumber()
-  amountEur: number;
-
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsNumber()
-  amountUsd: number;
-
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsNumber()
-  amountChf: number;
+  outputDate?: Date;
 }
