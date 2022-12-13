@@ -38,6 +38,13 @@ export class UserService {
       .getOne();
   }
 
+  async getUserByAddressOrThrow(address: string): Promise<User> {
+    const user = await this.getUserByAddress(address);
+    if (!user) throw new NotFoundException('User not found');
+
+    return user;
+  }
+
   async getAllUser(): Promise<User[]> {
     return await this.userRepo.find();
   }

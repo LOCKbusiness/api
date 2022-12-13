@@ -1,15 +1,17 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { StakingService } from 'src/subdomains/staking/application/services/staking.service';
+import { DepositRepository } from 'src/subdomains/staking/application/repositories/deposit.repository';
+import { RewardRepository } from 'src/subdomains/staking/application/repositories/reward.repository';
+import { WithdrawalRepository } from 'src/subdomains/staking/application/repositories/withdrawal.repository';
 import { Deposit } from 'src/subdomains/staking/domain/entities/deposit.entity';
 import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
 import { Withdrawal } from 'src/subdomains/staking/domain/entities/withdrawal.entity';
 import { DbQueryDto } from 'src/subdomains/support/application/dto/db-query.dto';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
-import { getConnection } from 'typeorm';
+import { getConnection, getCustomRepository } from 'typeorm';
 
 @Injectable()
 export class SupportService {
-  constructor(private readonly userService: UserService, private readonly stakingService: StakingService) {}
+  constructor(private readonly userService: UserService) {}
 
   async getRawData(query: DbQueryDto): Promise<{ keys: any; values: any }> {
     const id = query.min ? +query.min : 1;
@@ -48,11 +50,9 @@ export class SupportService {
     const user = await this.userService.getUser(userId);
     if (!user) throw new NotFoundException('User not found');
 
-    const stakingEntities = await this.stakingService.getStakingsByUserId(userId);
-
-    const deposits = stakingEntities.reduce((prev, curr) => prev.concat(curr.deposits), [] as Deposit[]);
-    const withdrawals = stakingEntities.reduce((prev, curr) => prev.concat(curr.withdrawals), [] as Withdrawal[]);
-    const rewards = stakingEntities.reduce((prev, curr) => prev.concat(curr.rewards), [] as Reward[]);
+    const deposits = await getCustomRepository(DepositRepository).getByUserId(userId);
+    const withdrawals = await getCustomRepository(WithdrawalRepository).getByUserId(userId);
+    const rewards = await getCustomRepository(RewardRepository).getByUserId(userId);
 
     return {
       staking: {

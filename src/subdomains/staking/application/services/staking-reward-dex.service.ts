@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { Config } from 'src/config/config';
-import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { LiquidityOrderContext } from 'src/subdomains/dex/entities/liquidity-order.entity';
 import { LiquidityOrderNotReadyException } from 'src/subdomains/dex/exceptions/liquidity-order-not-ready.exception';
 import { NotEnoughLiquidityException } from 'src/subdomains/dex/exceptions/not-enough-liquidity.exception';
@@ -31,7 +30,7 @@ export class StakingRewardDexService {
   }
 
   async prepareDfiToken(): Promise<void> {
-    const dfiAmount = await this.getDfiAmountForNewRewards();
+    const dfiAmount = await this.rewardRepo.getDfiAmountForNewRewards();
 
     if (!dfiAmount) return;
 
@@ -74,21 +73,9 @@ export class StakingRewardDexService {
 
   //*** HELPER METHODS ***//
 
-  private async getDfiAmountForNewRewards(): Promise<number> {
-    return this.rewardRepo
-      .createQueryBuilder('reward')
-      .leftJoin('reward.referenceAsset', 'referenceAsset')
-      .select('SUM(outputReferenceAmount)', 'amount')
-      .where('status = :status', { status: RewardStatus.CREATED })
-      .andWhere('referenceAsset.name = :name', { name: 'DFI' })
-      .andWhere('referenceAsset.blockchain = :blockchain', { blockchain: Blockchain.DEFICHAIN })
-      .getRawOne<{ amount: number }>()
-      .then((r) => r.amount);
-  }
-
   private async designateRewardsPreparation(): Promise<void> {
     await this.rewardRepo
-      .createQueryBuilder('reward')
+      .createQueryBuilder('rewards')
       .update(Reward)
       .set({ status: RewardStatus.PREPARATION_PENDING })
       .where('status = :status', { status: RewardStatus.CREATED })
@@ -104,7 +91,7 @@ export class StakingRewardDexService {
 
   private async confirmRewardsForProcessing(): Promise<void> {
     await this.rewardRepo
-      .createQueryBuilder('reward')
+      .createQueryBuilder('rewards')
       .update(Reward)
       .set({ status: RewardStatus.PREPARATION_CONFIRMED })
       .where('status = :status', { status: RewardStatus.PREPARATION_PENDING })
@@ -113,7 +100,7 @@ export class StakingRewardDexService {
 
   private async pauseRewards(): Promise<void> {
     await this.rewardRepo
-      .createQueryBuilder('reward')
+      .createQueryBuilder('rewards')
       .update(Reward)
       .set({ status: RewardStatus.PAUSED })
       .where('status = :status', { status: RewardStatus.PREPARATION_PENDING })

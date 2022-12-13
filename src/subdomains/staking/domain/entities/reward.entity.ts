@@ -17,7 +17,7 @@ export class Reward extends IEntity {
   @ManyToOne(() => RewardBatch, (batch) => batch.rewards, { eager: true, nullable: true })
   batch: RewardBatch;
 
-  @ManyToOne(() => Staking, (staking) => staking.rewards, { nullable: false })
+  @ManyToOne(() => Staking, { eager: true, nullable: false })
   staking: Staking;
 
   @Column({ nullable: false })

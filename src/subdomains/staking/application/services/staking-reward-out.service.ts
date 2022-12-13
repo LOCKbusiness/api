@@ -11,6 +11,7 @@ import { Reward } from '../../domain/entities/reward.entity';
 import { RewardStatus } from '../../domain/enums';
 import { RewardBatchRepository } from '../repositories/reward-batch.repository';
 import { RewardRepository } from '../repositories/reward.repository';
+import { StakingService } from './staking.service';
 
 @Injectable()
 export class StakingRewardOutService {
@@ -19,6 +20,7 @@ export class StakingRewardOutService {
     private readonly rewardBatchRepo: RewardBatchRepository,
     private readonly dexService: DexService,
     private readonly payoutService: PayoutService,
+    private readonly stakingService: StakingService,
   ) {}
 
   async payoutRewards(): Promise<void> {
@@ -107,6 +109,7 @@ export class StakingRewardOutService {
 
         if (isComplete) {
           r.complete(payoutTxId);
+          await this.stakingService.updateRewardsAmountConcurrently(r.staking.id);
           await this.rewardRepo.save(r);
         }
       } catch (e) {
