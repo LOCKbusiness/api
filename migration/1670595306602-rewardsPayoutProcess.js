@@ -20,8 +20,7 @@ module.exports = class rewardsPayoutProcess1670595306602 {
         await queryRunner.query(`DROP INDEX "REL_088b89ec2a02c3b4482f3ac9af" ON "wallet"`);
         await queryRunner.query(`CREATE UNIQUE INDEX "IDX_27f6d316b762c45ed6c95d036a" ON "reward_route" ("stakingId", "targetAddressAddress", "targetAddressBlockchain", "targetAssetId") `);
         await queryRunner.query(`ALTER TABLE "reward" DROP CONSTRAINT "DF_903071fa6f845566a03224c6555"`);
-        await queryRunner.query(`EXEC sp_rename "reward.amount", "outputReferenceAmount"`);
-        await queryRunner.query(`ALTER TABLE "reward" ADD CONSTRAINT "DF_f32f6405e6d248c9689959d7fe1" DEFAULT 0 FOR "outputReferenceAmount"`);
+        await queryRunner.query(`EXEC sp_rename "reward.amount", "targetAmount"`);
         await queryRunner.query(`EXEC sp_rename "reward.reinvestTxId", "txId"`);
         await queryRunner.query(`EXEC sp_rename "reward.reinvestOutputDate", "outputDate"`);
         await queryRunner.query(`ALTER TABLE "reward" DROP CONSTRAINT "FK_a2fb1646b57d3986fa6d97d0429"`);
@@ -56,7 +55,7 @@ module.exports = class rewardsPayoutProcess1670595306602 {
         await queryRunner.query(`ALTER TABLE "wallet" DROP COLUMN "addressId"`);
         await queryRunner.query(`ALTER TABLE "reward" ADD "inputReferenceAmount" float NOT NULL CONSTRAINT "DF_fe478d1da983dbe39737e9104a1" DEFAULT 0`);
         await queryRunner.query(`ALTER TABLE "reward" ADD "feePercent" float NOT NULL CONSTRAINT "DF_40ceee0f23d664ef1850a78f083" DEFAULT 0`);
-        await queryRunner.query(`ALTER TABLE "reward" ADD "targetAmount" float`);
+        await queryRunner.query(`ALTER TABLE "reward" ADD "outputReferenceAmount" float NOT NULL CONSTRAINT "DF_f32f6405e6d248c9689959d7fe1" DEFAULT 0`);
         await queryRunner.query(`ALTER TABLE "reward" ADD "isReinvest" bit`);
         await queryRunner.query(`ALTER TABLE "reward" ADD "batchId" int`);
         await queryRunner.query(`ALTER TABLE "reward" ADD "rewardRouteId" int`);
@@ -108,7 +107,8 @@ module.exports = class rewardsPayoutProcess1670595306602 {
         await queryRunner.query(`ALTER TABLE "reward" DROP COLUMN "rewardRouteId"`);
         await queryRunner.query(`ALTER TABLE "reward" DROP COLUMN "batchId"`);
         await queryRunner.query(`ALTER TABLE "reward" DROP COLUMN "isReinvest"`);
-        await queryRunner.query(`ALTER TABLE "reward" DROP COLUMN "targetAmount"`);
+        await queryRunner.query(`ALTER TABLE "reward" DROP CONSTRAINT "DF_f32f6405e6d248c9689959d7fe1"`);
+        await queryRunner.query(`ALTER TABLE "reward" DROP COLUMN "outputReferenceAmount"`);
         await queryRunner.query(`ALTER TABLE "reward" DROP CONSTRAINT "DF_40ceee0f23d664ef1850a78f083"`);
         await queryRunner.query(`ALTER TABLE "reward" DROP COLUMN "feePercent"`);
         await queryRunner.query(`ALTER TABLE "reward" DROP CONSTRAINT "DF_fe478d1da983dbe39737e9104a1"`);
@@ -144,8 +144,7 @@ module.exports = class rewardsPayoutProcess1670595306602 {
         await queryRunner.query(`ALTER TABLE "reward" ADD CONSTRAINT "FK_a2fb1646b57d3986fa6d97d0429" FOREIGN KEY ("assetId") REFERENCES "asset"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`EXEC sp_rename "reward.outputDate", "reinvestOutputDate"`);
         await queryRunner.query(`EXEC sp_rename "reward.txId", "reinvestTxId"`);
-        await queryRunner.query(`ALTER TABLE "reward" DROP CONSTRAINT "DF_f32f6405e6d248c9689959d7fe1"`);
-        await queryRunner.query(`EXEC sp_rename "reward.outputReferenceAmount", "amount"`);
+        await queryRunner.query(`EXEC sp_rename "reward.targetAmount", "amount"`);
         await queryRunner.query(`ALTER TABLE "reward" ADD CONSTRAINT "DF_903071fa6f845566a03224c6555" DEFAULT 0 FOR "amount"`);
         await queryRunner.query(`DROP INDEX "IDX_27f6d316b762c45ed6c95d036a" ON "reward_route"`);
         await queryRunner.query(`CREATE UNIQUE INDEX "REL_088b89ec2a02c3b4482f3ac9af" ON "wallet" ("addressId") WHERE ([addressId] IS NOT NULL)`);

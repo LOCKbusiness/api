@@ -96,7 +96,7 @@ export class StakingRewardDexService {
   }
 
   private async swapDfiToken(dfiAmount: number): Promise<void> {
-    const swapTxId = await this.#rewClient.toToken(Config.blockchain.default.rew.address, dfiAmount);
+    const swapTxId = await this.#rewClient.toToken(Config.blockchain.default.rew.stakingAddress, dfiAmount);
     console.log(`Preparing DFI Reward payout process. Swapped ${dfiAmount} utxo to DFI token. SwapTxId: ${swapTxId}`);
 
     await this.#rewClient.waitForTx(swapTxId);

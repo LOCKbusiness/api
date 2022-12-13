@@ -132,7 +132,7 @@ export class Configuration {
       rew: {
         active: process.env.NODE_REW_URL_ACTIVE,
         passive: process.env.NODE_REW_URL_PASSIVE,
-        address: process.env.REW_WALLET_ADDRESS,
+        stakingAddress: process.env.REW_STAKING_ADDRESS,
       },
       maxPrice: 1000000,
     },

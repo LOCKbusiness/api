@@ -75,9 +75,9 @@ export class DexDeFiChainService {
 
     try {
       return await this.#dexClient.compositeSwap(
-        Config.blockchain.default.rew.address,
+        Config.blockchain.default.rew.stakingAddress,
         swapAsset.name,
-        Config.blockchain.default.rew.address,
+        Config.blockchain.default.rew.stakingAddress,
         targetAsset.name,
         swapAmount,
         [],
@@ -95,20 +95,20 @@ export class DexDeFiChainService {
   }
 
   async sellDfiCoin(amount: number): Promise<string> {
-    return this.#dexClient.toToken(Config.blockchain.default.rew.address, amount);
+    return this.#dexClient.toToken(Config.blockchain.default.rew.stakingAddress, amount);
   }
 
   async addPoolLiquidity(poolPair: [string, string]): Promise<string> {
-    return this.#dexClient.addPoolLiquidity(Config.blockchain.default.rew.address, poolPair);
+    return this.#dexClient.addPoolLiquidity(Config.blockchain.default.rew.stakingAddress, poolPair);
   }
 
   async transferLiquidity(addressTo: string, asset: string, amount: number): Promise<string> {
-    return this.#dexClient.sendToken(Config.blockchain.default.rew.address, addressTo, asset, amount);
+    return this.#dexClient.sendToken(Config.blockchain.default.rew.stakingAddress, addressTo, asset, amount);
   }
 
   async transferMinimalUtxo(address: string): Promise<string> {
     return this.#dexClient.sendToken(
-      Config.blockchain.default.rew.address,
+      Config.blockchain.default.rew.stakingAddress,
       address,
       'DFI',
       Config.payIn.min.DeFiChain.DFI / 2,
@@ -125,7 +125,7 @@ export class DexDeFiChainService {
     const historyEntry = await this.deFiChainUtil.getHistoryEntryForTx(
       txId,
       this.#dexClient,
-      Config.blockchain.default.rew.address,
+      Config.blockchain.default.rew.stakingAddress,
     );
 
     if (!historyEntry) {
@@ -187,7 +187,7 @@ export class DexDeFiChainService {
     const availableAmount = await this.deFiChainUtil.getAvailableTokenAmount(
       asset.name,
       this.#dexClient,
-      Config.blockchain.default.rew.address,
+      Config.blockchain.default.rew.stakingAddress,
     );
 
     return Util.round(availableAmount - pendingAmount, 8);
