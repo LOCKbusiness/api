@@ -23,6 +23,7 @@ export class StakingOutputDtoMapper {
     dto.pendingDeposits = unconfirmedDepositsAmount;
     dto.pendingWithdrawals = pendingWithdrawalsAmount;
     dto.rewardRoutes = staking.activeRewardRoutes.map(RewardRouteOutputDtoMapper.entityToDto);
+    dto.rewardsAmount = staking.rewardsAmount;
 
     return dto;
   }

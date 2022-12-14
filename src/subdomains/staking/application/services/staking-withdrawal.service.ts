@@ -68,7 +68,6 @@ export class StakingWithdrawalService {
     const withdrawal = this.factory.createWithdrawalDraft(staking, dto);
 
     const pendingWithdrawalsAmount = await this.withdrawalRepo.getInProgressAmount(stakingId);
-    // TODO -> make balance check certain, make transactional?
     staking.checkWithdrawalDraftOrThrow(withdrawal, pendingWithdrawalsAmount);
 
     try {
@@ -116,7 +115,6 @@ export class StakingWithdrawalService {
     }
 
     const pendingWithdrawalsAmount = await this.withdrawalRepo.getInProgressAmount(stakingId);
-    // TODO -> make balance check certain, make transactional?
     staking.checkBalanceForWithdrawalOrThrow(withdrawal, pendingWithdrawalsAmount);
     withdrawal.signWithdrawal(dto.signature);
 
@@ -142,7 +140,6 @@ export class StakingWithdrawalService {
     withdrawal.changeAmount(dto.amount, staking);
 
     const pendingWithdrawalsAmount = await this.withdrawalRepo.getInProgressAmount(stakingId);
-    // TODO -> make balance check certain, make transactional?
     staking.checkBalanceForWithdrawalOrThrow(withdrawal, pendingWithdrawalsAmount);
 
     await this.withdrawalRepo.save(withdrawal);

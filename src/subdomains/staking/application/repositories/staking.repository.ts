@@ -15,7 +15,6 @@ export class StakingRepository extends Repository<Staking> {
     return Util.retry(async () => {
       const staking = await update();
 
-      // TODO -> check if response type is correct
       await this.createQueryBuilder('staking')
         .setLock('optimistic', staking.updated)
         .update(Staking)

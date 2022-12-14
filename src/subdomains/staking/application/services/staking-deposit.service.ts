@@ -73,8 +73,6 @@ export class StakingDepositService {
 
     await this.depositRepository.save(deposit);
 
-    // TODO -> verify if we need to return staking DTO all the time
-    // TODO -> or saving directly on staking -> will increase concurrency issues risks
     const amounts = await this.repository.getUnconfirmedDepositsAndWithdrawalsAmounts(stakingId);
 
     return StakingOutputDtoMapper.entityToDto(staking, amounts.withdrawals, amounts.deposits);

@@ -20,6 +20,8 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { RewardRepository } from '../repositories/reward.repository';
 import { DepositRepository } from '../repositories/deposit.repository';
 import { WithdrawalRepository } from '../repositories/withdrawal.repository';
+import { getCustomRepository } from 'typeorm';
+import { UserRepository } from 'src/subdomains/user/application/repositories/user.repository';
 
 @Injectable()
 export class StakingService {
@@ -77,7 +79,7 @@ export class StakingService {
   }
 
   async getStakingsByUserAddress(address: string): Promise<Staking[]> {
-    const user = await this.userService.getUserByAddress(address);
+    const user = await getCustomRepository(UserRepository).getUserByAddress(address);
     if (!user) throw new NotFoundException('User not found');
     return await this.repository.getByUserId(user.id);
   }
@@ -131,12 +133,7 @@ export class StakingService {
   }
 
   async updateRewardsAmountConcurrently(stakingId: number): Promise<Staking> {
-    function timeout(ms) {
-      return new Promise((resolve) => setTimeout(resolve, ms));
-    }
-
     const updateRewardsAmount = async () => {
-      console.log('Update try');
       /**
        * @warning
        * staking re-fetching needs to be included into update in order to get newer version on retry
@@ -144,9 +141,6 @@ export class StakingService {
        */
       const staking = await this.repository.findOne(stakingId);
       if (!staking) throw new NotFoundException('Staking not found');
-      console.log('before timeout');
-      await timeout(15000);
-      console.log('after timeout');
 
       staking.updateRewardsAmount(await this.rewardRepository.getRewardsAmount(staking.id));
 
