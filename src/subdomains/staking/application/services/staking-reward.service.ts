@@ -39,7 +39,7 @@ export class StakingRewardService {
 
   //*** PUBLIC API ***//
 
-  async createReward(stakingId: number, dto: CreateRewardDto): Promise<StakingOutputDto> {
+  async createReward(stakingId: number, dto: CreateRewardDto): Promise<void> {
     let staking = await this.repository.findOne(stakingId);
     if (!staking) throw new NotFoundException('Staking not found');
 
@@ -50,10 +50,6 @@ export class StakingRewardService {
     if (reward.status === RewardStatus.CONFIRMED) {
       staking = await this.stakingService.updateRewardsAmountConcurrently(stakingId);
     }
-
-    const amounts = await this.repository.getUnconfirmedDepositsAndWithdrawalsAmounts(stakingId);
-
-    return StakingOutputDtoMapper.entityToDto(staking, amounts.withdrawals, amounts.deposits);
   }
 
   async setRewardRoutes(userId: number, stakingId: number, dtos: CreateRewardRouteDto[]): Promise<StakingOutputDto> {
