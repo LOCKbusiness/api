@@ -114,40 +114,22 @@ export class StakingService {
     await this.repository.save(staking);
   }
 
-  async updateStakingBalanceConcurrently(stakingId: number): Promise<Staking> {
-    const updateStakingBalance = async () => {
-      /**
-       * @warning
-       * staking re-fetching needs to be included into update in order to get newer version on retry
-       * and decrease a chance of concurrency issues
-       */
-      const staking = await this.repository.findOne(stakingId);
-      if (!staking) throw new NotFoundException('Staking not found');
+  async updateStakingBalance(stakingId: number): Promise<Staking> {
+    const staking = await this.repository.findOne(stakingId);
+    if (!staking) throw new NotFoundException('Staking not found');
 
-      staking.updateBalance(await this.repository.getBalances(staking.id));
+    staking.updateBalance(await this.repository.getBalances(staking.id));
 
-      return staking;
-    };
-
-    return this.repository.updateConcurrently(updateStakingBalance);
+    return this.repository.save(staking);
   }
 
-  async updateRewardsAmountConcurrently(stakingId: number): Promise<Staking> {
-    const updateRewardsAmount = async () => {
-      /**
-       * @warning
-       * staking re-fetching needs to be included into update in order to get newer version on retry
-       * and decrease a chance of concurrency issues
-       */
-      const staking = await this.repository.findOne(stakingId);
-      if (!staking) throw new NotFoundException('Staking not found');
+  async updateRewardsAmount(stakingId: number): Promise<Staking> {
+    const staking = await this.repository.findOne(stakingId);
+    if (!staking) throw new NotFoundException('Staking not found');
 
-      staking.updateRewardsAmount(await this.rewardRepository.getRewardsAmount(staking.id));
+    staking.updateRewardsAmount(await this.rewardRepository.getRewardsAmount(staking.id));
 
-      return staking;
-    };
-
-    return this.repository.updateConcurrently(updateRewardsAmount);
+    return this.repository.save(staking);
   }
 
   //*** JOBS ***//
@@ -164,7 +146,7 @@ export class StakingService {
 
       for (const { id } of stakingIds) {
         try {
-          await this.updateStakingBalanceConcurrently(id);
+          await this.updateStakingBalance(id);
         } catch (e) {
           console.error(`Failed to update balance of staking ${id}:`, e);
         }

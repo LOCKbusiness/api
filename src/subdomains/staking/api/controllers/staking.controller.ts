@@ -47,6 +47,6 @@ export class StakingController {
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async updateBalance(@Param('id') stakingId: string): Promise<void> {
-    await this.stakingService.updateStakingBalanceConcurrently(+stakingId);
+    await this.stakingService.updateStakingBalance(+stakingId);
   }
 }

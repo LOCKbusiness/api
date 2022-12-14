@@ -48,7 +48,7 @@ export class StakingRewardService {
     await this.rewardRepository.save(reward);
 
     if (reward.status === RewardStatus.CONFIRMED) {
-      staking = await this.stakingService.updateRewardsAmountConcurrently(stakingId);
+      staking = await this.stakingService.updateRewardsAmount(stakingId);
     }
   }
 

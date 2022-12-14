@@ -141,7 +141,7 @@ export class StakingDepositService {
          * potential case of updateStakingBalance failure is tolerated
          */
         await this.depositRepository.save(deposit);
-        await this.stakingService.updateStakingBalanceConcurrently(stakingId);
+        await this.stakingService.updateStakingBalance(stakingId);
       } catch (e) {
         console.error(`Failed to forward deposit ${deposit.id}:`, e);
       }

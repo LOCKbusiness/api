@@ -233,7 +233,7 @@ export class StakingWithdrawalService {
         if (await this.isWithdrawalComplete(withdrawal)) {
           withdrawal.confirmWithdrawal();
           await this.withdrawalRepo.save(withdrawal);
-          await this.stakingService.updateStakingBalanceConcurrently(stakingId);
+          await this.stakingService.updateStakingBalance(stakingId);
         }
       } catch (e) {
         console.error(`Error trying to confirm withdrawal. ID: ${withdrawal.id}`, e);

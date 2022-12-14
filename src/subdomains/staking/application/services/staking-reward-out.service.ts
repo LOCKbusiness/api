@@ -109,7 +109,7 @@ export class StakingRewardOutService {
 
         if (isComplete) {
           r.complete(payoutTxId);
-          await this.stakingService.updateRewardsAmountConcurrently(r.staking.id);
+          await this.stakingService.updateRewardsAmount(r.staking.id);
           await this.rewardRepo.save(r);
         }
       } catch (e) {

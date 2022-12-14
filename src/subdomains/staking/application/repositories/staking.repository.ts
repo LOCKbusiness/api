@@ -11,23 +11,6 @@ export interface StakingBalances {
 }
 @EntityRepository(Staking)
 export class StakingRepository extends Repository<Staking> {
-  async updateConcurrently(update: () => Promise<Staking>): Promise<Staking> {
-    return Util.retry(async () => {
-      const staking = await update();
-
-      await this.createQueryBuilder('staking')
-        .setLock('optimistic', staking.updated)
-        .update(Staking)
-        // .set({ ...staking })
-        .set({ rewardsAmount: staking.rewardsAmount })
-        .where('id = :id', { id: staking.id })
-        .execute();
-      // .then((response) => response.raw[0])
-
-      return this.findOne({ id: staking.id });
-    }, 3);
-  }
-
   async getBalances(stakingId: number): Promise<StakingBalances> {
     /**
      * @warning
