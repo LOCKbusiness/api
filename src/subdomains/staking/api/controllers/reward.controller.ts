@@ -16,6 +16,6 @@ export class RewardController {
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async createReward(@Param('stakingId') stakingId: string, @Body() dto: CreateRewardDto): Promise<void> {
-    return this.stakingRewardService.createReward(+stakingId, dto);
+    await this.stakingRewardService.createReward(+stakingId, dto);
   }
 }
