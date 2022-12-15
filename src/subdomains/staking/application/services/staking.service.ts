@@ -58,11 +58,9 @@ export class StakingService {
 
     const existingStaking = await this.repository.findOne({ userId, asset, strategy });
     if (existingStaking) {
-      const staking = await this.authorize.authorize(userId, existingStaking.id);
+      const amounts = await this.getUnconfirmedDepositsAndWithdrawalsAmounts(existingStaking.id);
 
-      const amounts = await this.getUnconfirmedDepositsAndWithdrawalsAmounts(staking.id);
-
-      return StakingOutputDtoMapper.entityToDto(staking, amounts.withdrawals, amounts.deposits);
+      return StakingOutputDtoMapper.entityToDto(existingStaking, amounts.withdrawals, amounts.deposits);
     }
 
     return StakingOutputDtoMapper.entityToDto(await this.createStaking(userId, walletId, { asset, strategy }), 0, 0);
