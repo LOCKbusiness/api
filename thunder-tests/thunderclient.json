@@ -374,5 +374,24 @@
       "form": []
     },
     "tests": []
+  },
+  {
+    "_id": "77e2b096-b8f6-4059-8ce7-01bed4e4a8bd",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "e8091201-306b-4cbc-aafa-2215ba675a65",
+    "name": "Update fee",
+    "url": "{{url}}/v1/staking/1/staking-fee",
+    "method": "PATCH",
+    "sortNum": 210000,
+    "created": "2022-12-15T08:09:00.185Z",
+    "modified": "2022-12-15T08:09:38.745Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"feePercent\": 0.01\n}",
+      "form": []
+    },
+    "tests": []
   }
 ]
