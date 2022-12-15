@@ -4,6 +4,8 @@ import { Config, Process } from 'src/config/config';
 import { Lock } from 'src/shared/lock';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { SettingService } from 'src/shared/services/setting.service';
+import { Staking } from '../../domain/entities/staking.entity';
+import { RewardStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { CreateRewardRouteDto } from '../dto/input/create-reward-route.dto';
 import { CreateRewardDto } from '../dto/input/create-reward.dto';
@@ -12,10 +14,12 @@ import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
 import { RewardRouteOutputDtoMapper } from '../mappers/reward-route-output-dto.mapper';
 import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
+import { RewardRepository } from '../repositories/reward.repository';
 import { StakingRepository } from '../repositories/staking.repository';
 import { StakingRewardBatchService } from './staking-reward-batch.service';
 import { StakingRewardDexService } from './staking-reward-dex.service';
 import { StakingRewardOutService } from './staking-reward-out.service';
+import { StakingService } from './staking.service';
 
 @Injectable()
 export class StakingRewardService {
@@ -25,26 +29,32 @@ export class StakingRewardService {
     private readonly authorize: StakingAuthorizeService,
     private readonly factory: StakingFactory,
     private readonly repository: StakingRepository,
+    private readonly rewardRepository: RewardRepository,
     private readonly batchService: StakingRewardBatchService,
     private readonly dexService: StakingRewardDexService,
     private readonly outService: StakingRewardOutService,
     private readonly settingService: SettingService,
     private readonly assetService: AssetService,
+    private readonly stakingService: StakingService,
   ) {}
 
   //*** PUBLIC API ***//
 
-  async createReward(stakingId: number, dto: CreateRewardDto): Promise<StakingOutputDto> {
-    const staking = await this.repository.findOne(stakingId, { relations: ['rewards'] });
+  async createReward(stakingId: number, dto: CreateRewardDto): Promise<void> {
+    const staking = await this.repository.findOne(stakingId);
     if (!staking) throw new NotFoundException('Staking not found');
 
     const reward = await this.factory.createReward(staking, dto);
 
-    staking.addReward(reward);
+    await this.rewardRepository.save(reward);
 
-    await this.repository.save(staking);
-
-    return StakingOutputDtoMapper.entityToDto(staking);
+    if (reward.status === RewardStatus.CONFIRMED) {
+      /**
+       * @note
+       * potential case of updateRewardsAmount failure is tolerated
+       */
+      await this.stakingService.updateRewardsAmount(stakingId);
+    }
   }
 
   async setRewardRoutes(userId: number, stakingId: number, dtos: CreateRewardRouteDto[]): Promise<StakingOutputDto> {
@@ -54,18 +64,26 @@ export class StakingRewardService {
     const supportedAssets = await this.assetService.getAllAssets();
     const rewardRoutes = dtos.map((dto) => this.factory.createRewardRoute(staking, dto, supportedAssets));
 
-    staking.setRewardRoutes(rewardRoutes);
+    const updatedStaking = await this.repository.saveWithLock(
+      stakingId,
+      (staking: Staking) => staking.setRewardRoutes(rewardRoutes),
+      [
+        ['entity.asset', 'asset'],
+        ['entity.rewardRoutes', 'rewardRoutes'],
+        ['rewardRoutes.targetAsset', 'targetAsset'],
+      ],
+    );
 
-    await this.repository.save(staking);
+    const amounts = await this.stakingService.getUnconfirmedDepositsAndWithdrawalsAmounts(stakingId);
 
-    return StakingOutputDtoMapper.entityToDto(staking);
+    return StakingOutputDtoMapper.entityToDto(updatedStaking, amounts.withdrawals, amounts.deposits);
   }
 
   async getRewardRoutes(userId: number, stakingId: number): Promise<RewardRouteOutputDto[]> {
     const staking = await this.authorize.authorize(userId, stakingId);
     if (!staking) throw new NotFoundException('Staking not found');
 
-    return staking.getActiveRewardRoutes().map(RewardRouteOutputDtoMapper.entityToDto);
+    return staking.activeRewardRoutes.map(RewardRouteOutputDtoMapper.entityToDto);
   }
 
   //*** JOBS ***//

@@ -6,9 +6,10 @@ import { Masternode } from 'src/integration/masternode/domain/entities/masternod
 import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { HttpService } from 'src/shared/services/http.service';
 import { Util } from 'src/shared/util';
-import { StakingService } from 'src/subdomains/staking/application/services/staking.service';
+import { StakingRepository } from 'src/subdomains/staking/application/repositories/staking.repository';
 import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
+import { getCustomRepository } from 'typeorm';
 import { CfpResultDto } from '../dto/cfp-result.dto';
 import { CfpSignMessageDto } from '../dto/cfp-sign-message.dto';
 import { CfpDto, CfpInfo } from '../dto/cfp.dto';
@@ -21,7 +22,6 @@ export class VotingService {
 
   constructor(
     private readonly userService: UserService,
-    private readonly stakingService: StakingService,
     private readonly masternodeService: MasternodeService,
     private readonly http: HttpService,
   ) {}
@@ -123,7 +123,7 @@ export class VotingService {
   }
 
   private async getDfiStakingBalanceFor(userId: number): Promise<number> {
-    const stakings = await this.stakingService.getStakingsByUserId(userId, {
+    const stakings = await getCustomRepository(StakingRepository).getByUserId(userId, {
       asset: { name: 'DFI', type: AssetType.COIN } as Asset,
       strategy: StakingStrategy.MASTERNODE,
     });

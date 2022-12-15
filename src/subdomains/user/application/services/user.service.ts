@@ -3,7 +3,7 @@ import { Config } from 'src/config/config';
 import { User } from '../../domain/entities/user.entity';
 import { KycStatus } from '../../domain/enums';
 import { UserRepository } from '../repositories/user.repository';
-import { getCustomRepository, IsNull, Not } from 'typeorm';
+import { IsNull, Not } from 'typeorm';
 import { Votes } from 'src/subdomains/voting/application/dto/votes.dto';
 import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 
@@ -30,12 +30,11 @@ export class UserService {
     return this.userRepo.findOne({ where: { kycId } });
   }
 
-  async getUserByAddress(address: string): Promise<User> {
-    return await getCustomRepository(UserRepository)
-      .createQueryBuilder('user')
-      .innerJoin('user.wallets', 'wallets')
-      .where('wallets.addressAddress = :address', { address })
-      .getOne();
+  async getUserByAddressOrThrow(address: string): Promise<User> {
+    const user = await this.userRepo.getByAddress(address);
+    if (!user) throw new NotFoundException('User not found');
+
+    return user;
   }
 
   async getAllUser(): Promise<User[]> {

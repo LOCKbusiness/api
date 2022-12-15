@@ -38,4 +38,7 @@ export class StakingOutputDto {
 
   @ApiProperty({ type: RewardRouteOutputDto, isArray: true })
   rewardRoutes: RewardRouteOutputDto[];
+
+  @ApiProperty()
+  rewardsAmount: number;
 }
