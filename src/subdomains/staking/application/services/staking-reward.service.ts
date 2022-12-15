@@ -64,13 +64,19 @@ export class StakingRewardService {
     const supportedAssets = await this.assetService.getAllAssets();
     const rewardRoutes = dtos.map((dto) => this.factory.createRewardRoute(staking, dto, supportedAssets));
 
-    const update = (staking: Staking) => staking.setRewardRoutes(rewardRoutes);
-
-    await this.repository.saveWithLock(stakingId, update);
+    const updatedStaking = await this.repository.saveWithLock(
+      stakingId,
+      (staking: Staking) => staking.setRewardRoutes(rewardRoutes),
+      [
+        ['entity.asset', 'asset'],
+        ['entity.rewardRoutes', 'rewardRoutes'],
+        ['rewardRoutes.targetAsset', 'targetAsset'],
+      ],
+    );
 
     const amounts = await this.stakingService.getUnconfirmedDepositsAndWithdrawalsAmounts(stakingId);
 
-    return StakingOutputDtoMapper.entityToDto(staking, amounts.withdrawals, amounts.deposits);
+    return StakingOutputDtoMapper.entityToDto(updatedStaking, amounts.withdrawals, amounts.deposits);
   }
 
   async getRewardRoutes(userId: number, stakingId: number): Promise<RewardRouteOutputDto[]> {

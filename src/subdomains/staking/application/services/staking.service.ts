@@ -118,25 +118,19 @@ export class StakingService {
   }
 
   async setStakingFee(stakingId: number, { feePercent }: SetStakingFeeDto): Promise<void> {
-    const update = (staking: Staking) => staking.setStakingFee(feePercent);
-
-    await this.repository.saveWithLock(stakingId, update);
+    await this.repository.saveWithLock(stakingId, (staking: Staking) => staking.setStakingFee(feePercent));
   }
 
   async updateStakingBalance(stakingId: number): Promise<Staking> {
-    const update = async (staking: Staking) => {
-      return staking.updateBalance(await this.getBalances(staking.id));
-    };
-
-    return this.repository.saveWithLock(stakingId, update);
+    return this.repository.saveWithLock(stakingId, async (staking: Staking) =>
+      staking.updateBalance(await this.getBalances(staking.id)),
+    );
   }
 
   async updateRewardsAmount(stakingId: number): Promise<Staking> {
-    const update = async (staking: Staking) => {
-      return staking.updateRewardsAmount(await this.rewardRepository.getRewardsAmount(staking.id));
-    };
-
-    return this.repository.saveWithLock(stakingId, update);
+    return this.repository.saveWithLock(stakingId, async (staking: Staking) =>
+      staking.updateRewardsAmount(await this.rewardRepository.getRewardsAmount(staking.id)),
+    );
   }
 
   //*** JOBS ***//

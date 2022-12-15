@@ -204,9 +204,8 @@ export class StakingDepositService {
           await this.createOrUpdateDeposit(staking, payIn);
         } else {
           console.error(`Invalid first pay in, staking ${staking.id} is blocked`);
-          const update = (staking: Staking) => staking.block();
 
-          await this.repository.saveWithLock(staking.id, update);
+          await this.repository.saveWithLock(staking.id, (staking: Staking) => staking.block());
         }
 
         await this.payInService.acknowledgePayIn(payIn, PayInPurpose.STAKING);

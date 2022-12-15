@@ -135,8 +135,8 @@ export class StakingWithdrawalService {
 
   async getWithdrawals(dateFrom: Date = new Date(0), dateTo: Date = new Date()): Promise<TransactionDto[]> {
     const withdrawals = await this.withdrawalRepo.find({
-      relations: ['asset'],
-      where: { outputDate: Between(dateFrom, dateTo), status: WithdrawalStatus.CONFIRMED },
+      outputDate: Between(dateFrom, dateTo),
+      status: WithdrawalStatus.CONFIRMED,
     });
 
     return withdrawals.map((v) => ({
