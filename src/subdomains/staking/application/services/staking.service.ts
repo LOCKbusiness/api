@@ -122,30 +122,25 @@ export class StakingService {
   }
 
   async setStakingFee(stakingId: number, { feePercent }: SetStakingFeeDto): Promise<void> {
-    const staking = await this.repository.findOne(stakingId);
-    if (!staking) throw new NotFoundException('Staking not found');
+    const update = (staking: Staking) => staking.setStakingFee(feePercent);
 
-    staking.setStakingFee(feePercent);
-
-    await this.repository.save(staking);
+    await this.repository.saveWithLock(stakingId, update);
   }
 
   async updateStakingBalance(stakingId: number): Promise<Staking> {
-    const staking = await this.repository.findOne(stakingId);
-    if (!staking) throw new NotFoundException('Staking not found');
+    const update = async (staking: Staking) => {
+      return staking.updateBalance(await this.getBalances(staking.id));
+    };
 
-    staking.updateBalance(await this.getBalances(staking.id));
-
-    return this.repository.save(staking);
+    return this.repository.saveWithLock(stakingId, update);
   }
 
   async updateRewardsAmount(stakingId: number): Promise<Staking> {
-    const staking = await this.repository.findOne(stakingId);
-    if (!staking) throw new NotFoundException('Staking not found');
+    const update = async (staking: Staking) => {
+      return staking.updateRewardsAmount(await this.rewardRepository.getRewardsAmount(staking.id));
+    };
 
-    staking.updateRewardsAmount(await this.rewardRepository.getRewardsAmount(staking.id));
-
-    return this.repository.save(staking);
+    return this.repository.saveWithLock(stakingId, update);
   }
 
   //*** JOBS ***//
@@ -181,7 +176,7 @@ export class StakingService {
 
     const staking = await this.factory.createStaking(userId, type, depositAddress, withdrawalAddress);
 
-    return this.repository.save(staking);
+    return this.repository.insert(staking);
   }
 
   private async getBalances(stakingId: number): Promise<StakingBalances> {

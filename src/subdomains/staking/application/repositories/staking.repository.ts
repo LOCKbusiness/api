@@ -1,8 +1,9 @@
-import { EntityRepository, Repository } from 'typeorm';
+import { LockedRepository } from 'src/shared/repositories/locked.repository';
+import { EntityRepository } from 'typeorm';
 import { Staking, StakingType } from '../../domain/entities/staking.entity';
 
 @EntityRepository(Staking)
-export class StakingRepository extends Repository<Staking> {
+export class StakingRepository extends LockedRepository<Staking> {
   async getByUserId(userId: number, type?: StakingType): Promise<Staking[]> {
     return this.find({ userId, ...type });
   }
