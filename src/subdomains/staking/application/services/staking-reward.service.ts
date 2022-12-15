@@ -48,6 +48,10 @@ export class StakingRewardService {
     await this.rewardRepository.save(reward);
 
     if (reward.status === RewardStatus.CONFIRMED) {
+      /**
+       * @note
+       * potential case of updateRewardsAmount failure is tolerated
+       */
       await this.stakingService.updateRewardsAmount(stakingId);
     }
   }
@@ -63,7 +67,7 @@ export class StakingRewardService {
 
     await this.repository.save(staking);
 
-    const amounts = await this.repository.getUnconfirmedDepositsAndWithdrawalsAmounts(stakingId);
+    const amounts = await this.stakingService.getUnconfirmedDepositsAndWithdrawalsAmounts(stakingId);
 
     return StakingOutputDtoMapper.entityToDto(staking, amounts.withdrawals, amounts.deposits);
   }

@@ -75,7 +75,7 @@ export class StakingRewardDexService {
 
   private async designateRewardsPreparation(): Promise<void> {
     await this.rewardRepo
-      .createQueryBuilder('rewards')
+      .createQueryBuilder('reward')
       .update(Reward)
       .set({ status: RewardStatus.PREPARATION_PENDING })
       .where('status = :status', { status: RewardStatus.CREATED })
@@ -91,7 +91,7 @@ export class StakingRewardDexService {
 
   private async confirmRewardsForProcessing(): Promise<void> {
     await this.rewardRepo
-      .createQueryBuilder('rewards')
+      .createQueryBuilder('reward')
       .update(Reward)
       .set({ status: RewardStatus.PREPARATION_CONFIRMED })
       .where('status = :status', { status: RewardStatus.PREPARATION_PENDING })
@@ -100,7 +100,7 @@ export class StakingRewardDexService {
 
   private async pauseRewards(): Promise<void> {
     await this.rewardRepo
-      .createQueryBuilder('rewards')
+      .createQueryBuilder('reward')
       .update(Reward)
       .set({ status: RewardStatus.PAUSED })
       .where('status = :status', { status: RewardStatus.PREPARATION_PENDING })

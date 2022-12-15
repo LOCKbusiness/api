@@ -1,5 +1,5 @@
 import { Lock } from 'src/shared/lock';
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
@@ -40,20 +40,6 @@ export class StakingWithdrawalService {
   ) {}
 
   // --- PUBLIC API --- //
-
-  async getWithdrawals(dateFrom: Date = new Date(0), dateTo: Date = new Date()): Promise<TransactionDto[]> {
-    const withdrawals = await this.withdrawalRepo.find({
-      relations: ['asset'],
-      where: { outputDate: Between(dateFrom, dateTo), status: WithdrawalStatus.CONFIRMED },
-    });
-
-    return withdrawals.map((v) => ({
-      id: v.id,
-      date: v.outputDate,
-      amount: v.amount,
-      asset: v.asset.displayName,
-    }));
-  }
 
   async createWithdrawalDraft(
     userId: number,
@@ -101,7 +87,7 @@ export class StakingWithdrawalService {
     await this.kycCheck.check(userId, walletId);
 
     const staking = await this.authorize.authorize(userId, stakingId);
-    const withdrawal = await this.withdrawalRepo.getByIdOrThrow(withdrawalId);
+    const withdrawal = await this.getByIdOrThrow(withdrawalId);
 
     try {
       this.verifySignature(dto.signature, withdrawal, withdrawal.staking.withdrawalAddress);
@@ -118,9 +104,9 @@ export class StakingWithdrawalService {
     staking.checkBalanceForWithdrawalOrThrow(withdrawal, pendingWithdrawalsAmount);
     withdrawal.signWithdrawal(dto.signature);
 
-    await this.stakingRepo.save(staking);
+    await this.withdrawalRepo.save(withdrawal);
 
-    const amounts = await this.stakingRepo.getUnconfirmedDepositsAndWithdrawalsAmounts(stakingId);
+    const amounts = await this.stakingService.getUnconfirmedDepositsAndWithdrawalsAmounts(stakingId);
 
     return StakingOutputDtoMapper.entityToDto(staking, amounts.withdrawals, amounts.deposits);
   }
@@ -135,7 +121,7 @@ export class StakingWithdrawalService {
     await this.kycCheck.check(userId, walletId);
 
     const staking = await this.authorize.authorize(userId, stakingId);
-    const withdrawal = await this.withdrawalRepo.getByIdOrThrow(withdrawalId);
+    const withdrawal = await this.getByIdOrThrow(withdrawalId);
 
     withdrawal.changeAmount(dto.amount, staking);
 
@@ -145,6 +131,28 @@ export class StakingWithdrawalService {
     await this.withdrawalRepo.save(withdrawal);
 
     return WithdrawalDraftOutputDtoMapper.entityToDto(withdrawal);
+  }
+
+  async getWithdrawals(dateFrom: Date = new Date(0), dateTo: Date = new Date()): Promise<TransactionDto[]> {
+    const withdrawals = await this.withdrawalRepo.find({
+      relations: ['asset'],
+      where: { outputDate: Between(dateFrom, dateTo), status: WithdrawalStatus.CONFIRMED },
+    });
+
+    return withdrawals.map((v) => ({
+      id: v.id,
+      date: v.outputDate,
+      amount: v.amount,
+      asset: v.asset.displayName,
+    }));
+  }
+
+  async getByIdOrThrow(withdrawalId: number): Promise<Withdrawal> {
+    const withdrawal = await this.withdrawalRepo.findOne({ id: withdrawalId });
+
+    if (!withdrawal) throw new NotFoundException('Withdrawal not found');
+
+    return withdrawal;
   }
 
   async getDraftWithdrawals(userId: number, walletId: number, stakingId: number): Promise<WithdrawalDraftOutputDto[]> {
@@ -225,13 +233,17 @@ export class StakingWithdrawalService {
   }
 
   private async checkPayingOutWithdrawals(stakingId: number): Promise<void> {
-    await this.stakingRepo.findOne(stakingId);
     const withdrawals = await this.withdrawalRepo.getPayingOut(stakingId);
 
     for (const withdrawal of withdrawals) {
       try {
         if (await this.isWithdrawalComplete(withdrawal)) {
           withdrawal.confirmWithdrawal();
+
+          /**
+           * @note
+           * potential case of updateStakingBalance failure is tolerated
+           */
           await this.withdrawalRepo.save(withdrawal);
           await this.stakingService.updateStakingBalance(stakingId);
         }

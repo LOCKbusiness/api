@@ -73,7 +73,7 @@ export class StakingDepositService {
 
     await this.depositRepository.save(deposit);
 
-    const amounts = await this.repository.getUnconfirmedDepositsAndWithdrawalsAmounts(stakingId);
+    const amounts = await this.stakingService.getUnconfirmedDepositsAndWithdrawalsAmounts(stakingId);
 
     return StakingOutputDtoMapper.entityToDto(staking, amounts.withdrawals, amounts.deposits);
   }
@@ -205,9 +205,10 @@ export class StakingDepositService {
         } else {
           console.error(`Invalid first pay in, staking ${staking.id} is blocked`);
           staking.block();
+
+          await this.repository.save(staking);
         }
 
-        await this.repository.save(staking);
         await this.payInService.acknowledgePayIn(payIn, PayInPurpose.STAKING);
       } catch (e) {
         console.error(`Failed to process deposit input ${payIn.id}:`, e);
@@ -226,11 +227,11 @@ export class StakingDepositService {
       (await this.createNewDeposit(staking, payIn));
 
     deposit.updatePreCreatedDeposit(payIn.txId, payIn.amount);
+
+    await this.depositRepository.save(deposit);
   }
 
   private async createNewDeposit(staking: Staking, payIn: PayIn): Promise<Deposit> {
-    const newDeposit = this.factory.createDeposit(staking, { amount: payIn.amount, txId: payIn.txId });
-
-    return this.depositRepository.save(newDeposit);
+    return this.factory.createDeposit(staking, { amount: payIn.amount, txId: payIn.txId });
   }
 }

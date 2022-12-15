@@ -20,9 +20,12 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { RewardRepository } from '../repositories/reward.repository';
 import { DepositRepository } from '../repositories/deposit.repository';
 import { WithdrawalRepository } from '../repositories/withdrawal.repository';
-import { getCustomRepository } from 'typeorm';
-import { UserRepository } from 'src/subdomains/user/application/repositories/user.repository';
 
+export interface StakingBalances {
+  currentBalance: number;
+  stageOneBalance: number;
+  stageTwoBalance: number;
+}
 @Injectable()
 export class StakingService {
   constructor(
@@ -57,7 +60,7 @@ export class StakingService {
     if (existingStaking) {
       const staking = await this.authorize.authorize(userId, existingStaking.id);
 
-      const amounts = await this.repository.getUnconfirmedDepositsAndWithdrawalsAmounts(staking.id);
+      const amounts = await this.getUnconfirmedDepositsAndWithdrawalsAmounts(staking.id);
 
       return StakingOutputDtoMapper.entityToDto(staking, amounts.withdrawals, amounts.deposits);
     }
@@ -79,8 +82,8 @@ export class StakingService {
   }
 
   async getStakingsByUserAddress(address: string): Promise<Staking[]> {
-    const user = await getCustomRepository(UserRepository).getUserByAddress(address);
-    if (!user) throw new NotFoundException('User not found');
+    const user = await this.userService.getUserByAddressOrThrow(address);
+
     return await this.repository.getByUserId(user.id);
   }
 
@@ -99,10 +102,23 @@ export class StakingService {
     return Util.avg(balances);
   }
 
-  async getAverageRewards({ asset, strategy }: StakingType, dateFrom: Date, dateTo: Date): Promise<number> {
-    const rewardVolume = await this.rewardRepository.getAllRewardsAmountForCondition(asset, strategy, dateFrom, dateTo);
+  async getAverageRewards(type: StakingType, dateFrom: Date, dateTo: Date): Promise<number> {
+    const rewardVolume = await this.rewardRepository.getAllRewardsAmountForCondition(type, dateFrom, dateTo);
 
     return rewardVolume / Util.daysDiff(dateFrom, dateTo);
+  }
+
+  /**
+   * @warning
+   * Assuming that deposits and withdrawals are in same asset as staking
+   */
+  async getUnconfirmedDepositsAndWithdrawalsAmounts(
+    stakingId: number,
+  ): Promise<{ deposits: number; withdrawals: number }> {
+    const deposits = await this.depositRepository.getInProgressAmount(stakingId);
+    const withdrawals = await this.withdrawalRepository.getInProgressAmount(stakingId);
+
+    return { deposits, withdrawals };
   }
 
   async setStakingFee(stakingId: number, { feePercent }: SetStakingFeeDto): Promise<void> {
@@ -118,7 +134,7 @@ export class StakingService {
     const staking = await this.repository.findOne(stakingId);
     if (!staking) throw new NotFoundException('Staking not found');
 
-    staking.updateBalance(await this.repository.getBalances(staking.id));
+    staking.updateBalance(await this.getBalances(staking.id));
 
     return this.repository.save(staking);
   }
@@ -168,6 +184,25 @@ export class StakingService {
     return this.repository.save(staking);
   }
 
+  private async getBalances(stakingId: number): Promise<StakingBalances> {
+    /**
+     * @warning
+     * Assuming that deposits and withdrawals are in same asset as staking
+     */
+    const deposits = await this.depositRepository.getConfirmedAmount(stakingId);
+    const withdrawals = await this.withdrawalRepository.getConfirmedAmount(stakingId);
+    const stageOneDeposits = await this.depositRepository.getConfirmedStageOneAmount(stakingId);
+    const stageTwoDeposits = await this.depositRepository.getConfirmedStageTwoAmount(stakingId);
+
+    const currentBalance = Util.round(deposits - withdrawals, 8);
+
+    return {
+      currentBalance,
+      stageOneBalance: Math.max(0, Util.round(currentBalance - stageOneDeposits, 8)),
+      stageTwoBalance: Math.max(0, Util.round(currentBalance - stageTwoDeposits, 8)),
+    };
+  }
+
   private async getPreviousTotalBalance(type: StakingType, currentBalance: number, date: Date): Promise<number> {
     const depositsFromDate = (await this.getTotalDepositsSince(type, date)) ?? 0;
     const withdrawalsFromDate = (await this.getTotalWithdrawalsSince(type, date)) ?? 0;
@@ -175,11 +210,11 @@ export class StakingService {
     return currentBalance - depositsFromDate + withdrawalsFromDate;
   }
 
-  private async getTotalDepositsSince({ asset, strategy }: StakingType, date: Date): Promise<number> {
-    return this.depositRepository.getTotalConfirmedAmountSince(asset, strategy, date);
+  private async getTotalDepositsSince(type: StakingType, date: Date): Promise<number> {
+    return this.depositRepository.getTotalConfirmedAmountSince(type, date);
   }
 
-  private async getTotalWithdrawalsSince({ asset, strategy }: StakingType, date: Date): Promise<number> {
-    return this.withdrawalRepository.getTotalConfirmedAmountSince(asset, strategy, date);
+  private async getTotalWithdrawalsSince(type: StakingType, date: Date): Promise<number> {
+    return this.withdrawalRepository.getTotalConfirmedAmountSince(type, date);
   }
 }

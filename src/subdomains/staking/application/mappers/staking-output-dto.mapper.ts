@@ -19,7 +19,7 @@ export class StakingOutputDtoMapper {
     dto.minimalStake = Config.staking.minimalStake;
     dto.minimalDeposit = Config.payIn.min.DeFiChain[staking.asset.name];
     dto.fee = staking.fee ?? Config.staking.defaultFee;
-    dto.balance = staking._balance;
+    dto.balance = staking.balance;
     dto.pendingDeposits = unconfirmedDepositsAmount;
     dto.pendingWithdrawals = pendingWithdrawalsAmount;
     dto.rewardRoutes = staking.activeRewardRoutes.map(RewardRouteOutputDtoMapper.entityToDto);

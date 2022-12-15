@@ -1,8 +1,8 @@
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { Asset } from 'src/shared/models/asset/asset.entity';
 import { EntityRepository, Repository } from 'typeorm';
 import { Reward } from '../../domain/entities/reward.entity';
-import { RewardStatus, StakingStrategy } from '../../domain/enums';
+import { StakingType } from '../../domain/entities/staking.entity';
+import { RewardStatus } from '../../domain/enums';
 
 @EntityRepository(Reward)
 export class RewardRepository extends Repository<Reward> {
@@ -15,7 +15,7 @@ export class RewardRepository extends Repository<Reward> {
   }
 
   async getRewardsAmount(stakingId: number): Promise<number> {
-    return this.createQueryBuilder('rewards')
+    return this.createQueryBuilder('reward')
       .select('SUM(outputReferenceAmount)', 'amount')
       .where('stakingId = :stakingId', { stakingId })
       .andWhere('status = :status', { status: RewardStatus.CONFIRMED })
@@ -24,24 +24,24 @@ export class RewardRepository extends Repository<Reward> {
   }
 
   async getAllRewardsAmountForCondition(
-    asset: Asset,
-    strategy: StakingStrategy,
+    { asset, strategy }: StakingType,
     dateFrom: Date,
     dateTo: Date,
   ): Promise<number> {
-    return this.createQueryBuilder('rewards')
-      .leftJoin('rewards.staking', 'staking')
+    return this.createQueryBuilder('reward')
+      .leftJoin('reward.staking', 'staking')
       .select('SUM(amount)', 'rewardVolume')
       .where('staking.assetId = :id', { id: asset.id })
+      .andWhere('status = :status', { status: RewardStatus.CONFIRMED })
       .andWhere('staking.strategy = :strategy', { strategy })
-      .andWhere('rewards.reinvestOutputDate BETWEEN :dateFrom AND :dateTo', { dateFrom, dateTo })
+      .andWhere('reward.outputDate BETWEEN :dateFrom AND :dateTo', { dateFrom, dateTo })
       .getRawOne<{ rewardVolume: number }>()
       .then((r) => r.rewardVolume);
   }
 
   async getDfiAmountForNewRewards(): Promise<number> {
-    return this.createQueryBuilder('rewards')
-      .leftJoin('rewards.referenceAsset', 'referenceAsset')
+    return this.createQueryBuilder('reward')
+      .leftJoin('reward.referenceAsset', 'referenceAsset')
       .select('SUM(outputReferenceAmount)', 'amount')
       .where('status = :status', { status: RewardStatus.CREATED })
       .andWhere('referenceAsset.name = :name', { name: 'DFI' })

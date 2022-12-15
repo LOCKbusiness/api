@@ -11,7 +11,7 @@ import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { AssetQuery } from 'src/shared/models/asset/asset.service';
 import { RewardRoute } from './reward-route.entity';
 import { BlockchainAddress } from 'src/shared/models/blockchain-address';
-import { StakingBalances } from '../../application/repositories/staking.repository';
+import { StakingBalances } from '../../application/services/staking.service';
 
 export interface StakingType {
   asset: Asset;
@@ -144,10 +144,6 @@ export class Staking extends IEntity {
   }
 
   //*** GETTERS ***//
-
-  get _balance(): number {
-    return this.balance;
-  }
 
   get isBlocked(): boolean {
     return this.status === StakingStatus.BLOCKED;
