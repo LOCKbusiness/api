@@ -170,13 +170,12 @@ export class StakingService {
   //*** HELPER METHODS ***//
 
   private async createStaking(userId: number, walletId: number, type: StakingType): Promise<Staking> {
-    // retry (in case of deposit address conflict)
     const depositAddress = await this.addressService.getAvailableAddress(BlockchainAddressReservationPurpose.STAKING);
     const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
 
     const staking = await this.factory.createStaking(userId, type, depositAddress, withdrawalAddress);
 
-    return this.repository.insert(staking);
+    return this.repository.save(staking);
   }
 
   private async getBalances(stakingId: number): Promise<StakingBalances> {

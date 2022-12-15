@@ -14,6 +14,7 @@ export class ReservableBlockchainAddressService {
   ) {}
 
   async getAvailableAddress(purpose: BlockchainAddressReservationPurpose): Promise<ReservableBlockchainAddress> {
+    // retry (in case of deposit address conflict)
     return Util.retry(async () => {
       const address = await this.addressRepo
         .createQueryBuilder('address')
