@@ -30,7 +30,7 @@ export class RewardRepository extends Repository<Reward> {
   ): Promise<number> {
     return this.createQueryBuilder('reward')
       .leftJoin('reward.staking', 'staking')
-      .select('SUM(amount)', 'rewardVolume')
+      .select('SUM(outputReferenceAmount)', 'rewardVolume')
       .where('staking.assetId = :id', { id: asset.id })
       .andWhere('status = :status', { status: RewardStatus.CONFIRMED })
       .andWhere('staking.strategy = :strategy', { strategy })
