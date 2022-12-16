@@ -67,11 +67,7 @@ export class StakingRewardService {
     const updatedStaking = await this.repository.saveWithLock(
       stakingId,
       (staking: Staking) => staking.setRewardRoutes(rewardRoutes),
-      [
-        ['entity.asset', 'asset'],
-        ['entity.rewardRoutes', 'rewardRoutes'],
-        ['rewardRoutes.targetAsset', 'targetAsset'],
-      ],
+      ['asset', 'rewardRoutes', 'rewardRoutes.targetAsset'],
     );
 
     const amounts = await this.stakingService.getUnconfirmedDepositsAndWithdrawalsAmounts(stakingId);
