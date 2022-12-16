@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Config, Process } from 'src/config/config';
 import { MasternodeService } from 'src/integration/masternode/application/services/masternode.service';
@@ -17,7 +17,7 @@ import { StakingRepository } from 'src/subdomains/staking/application/repositori
 import { getCustomRepository } from 'typeorm';
 
 @Injectable()
-export class StakingAnalyticsService {
+export class StakingAnalyticsService implements OnModuleInit {
   constructor(
     private readonly repository: StakingAnalyticsRepository,
     private readonly stakingService: StakingService,
