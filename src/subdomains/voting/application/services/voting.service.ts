@@ -15,7 +15,7 @@ import { CfpResultDto } from '../dto/cfp-result.dto';
 import { CfpSignMessageDto } from '../dto/cfp-sign-message.dto';
 import { CfpDto, CfpInfo } from '../dto/cfp.dto';
 import { Distribution } from '../dto/distribution.dto';
-import { Vote, Votes } from '../dto/votes.dto';
+import { Vote } from '../dto/votes.dto';
 
 @Injectable()
 export class VotingService implements OnModuleInit {
