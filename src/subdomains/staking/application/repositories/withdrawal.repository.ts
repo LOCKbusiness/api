@@ -43,7 +43,7 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
       .where('stakingId = :stakingId', { stakingId })
       .andWhere('status = :status', { status: WithdrawalStatus.CONFIRMED })
       .getRawOne<{ amount: number }>()
-      .then((r) => r.amount);
+      .then((r) => r.amount ?? 0);
   }
 
   async getTotalConfirmedAmountSince({ asset, strategy }: StakingType, date: Date): Promise<number> {
@@ -55,7 +55,7 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
       .andWhere('withdrawal.status = :status', { status: WithdrawalStatus.CONFIRMED })
       .andWhere('withdrawal.created >= :date', { date })
       .getRawOne<{ amount: number }>()
-      .then((b) => b.amount);
+      .then((b) => b.amount ?? 0);
   }
 
   async getInProgressAmount(stakingId: number): Promise<number> {
@@ -67,6 +67,6 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
         payingOut: WithdrawalStatus.PAYING_OUT,
       })
       .getRawOne<{ amount: number }>()
-      .then((r) => r.amount);
+      .then((r) => r.amount ?? 0);
   }
 }

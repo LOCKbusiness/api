@@ -40,7 +40,7 @@ export class DepositRepository extends Repository<Deposit> {
       .where('stakingId = :stakingId', { stakingId })
       .andWhere('status = :status', { status: DepositStatus.CONFIRMED })
       .getRawOne<{ amount: number }>()
-      .then((r) => r.amount);
+      .then((r) => r.amount ?? 0);
   }
 
   async getConfirmedStageOneAmount(stakingId: number): Promise<number> {
@@ -50,7 +50,7 @@ export class DepositRepository extends Repository<Deposit> {
       .andWhere('status = :status', { status: DepositStatus.CONFIRMED })
       .andWhere('created >= :date', { date: Util.daysBefore(2) })
       .getRawOne<{ amount: number }>()
-      .then((r) => r.amount);
+      .then((r) => r.amount ?? 0);
   }
 
   async getConfirmedStageTwoAmount(stakingId: number): Promise<number> {
@@ -60,7 +60,7 @@ export class DepositRepository extends Repository<Deposit> {
       .andWhere('status = :status', { status: DepositStatus.CONFIRMED })
       .andWhere('created >= :date', { date: Util.daysBefore(6) })
       .getRawOne<{ amount: number }>()
-      .then((r) => r.amount);
+      .then((r) => r.amount ?? 0);
   }
 
   async getInProgressAmount(stakingId: number): Promise<number> {
@@ -69,7 +69,7 @@ export class DepositRepository extends Repository<Deposit> {
       .where('stakingId = :stakingId', { stakingId })
       .andWhere('status IN (:pending, :open)', { pending: DepositStatus.PENDING, open: DepositStatus.OPEN })
       .getRawOne<{ amount: number }>()
-      .then((r) => r.amount);
+      .then((r) => r.amount ?? 0);
   }
 
   async getTotalConfirmedAmountSince({ asset, strategy }: StakingType, date: Date): Promise<number> {
@@ -81,6 +81,6 @@ export class DepositRepository extends Repository<Deposit> {
       .andWhere('deposit.status = :status', { status: DepositStatus.CONFIRMED })
       .andWhere('deposit.created >= :date', { date })
       .getRawOne<{ amount: number }>()
-      .then((b) => b.amount);
+      .then((b) => b.amount ?? 0);
   }
 }
