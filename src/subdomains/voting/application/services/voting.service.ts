@@ -3,10 +3,11 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Config, Process } from 'src/config/config';
 import { MasternodeService } from 'src/integration/masternode/application/services/masternode.service';
 import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
-import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
+import { AssetType } from 'src/shared/models/asset/asset.entity';
 import { HttpService } from 'src/shared/services/http.service';
 import { Util } from 'src/shared/util';
 import { StakingRepository } from 'src/subdomains/staking/application/repositories/staking.repository';
+import { Staking } from 'src/subdomains/staking/domain/entities/staking.entity';
 import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { getCustomRepository } from 'typeorm';
@@ -98,12 +99,15 @@ export class VotingService implements OnModuleInit {
       (prev, curr) => ({ ...prev, [curr.id]: { yes: 0, no: 0, neutral: 0 } }),
       {},
     );
+    const stakings = await getCustomRepository(StakingRepository).getByType({
+      asset: { name: 'DFI', type: AssetType.COIN },
+      strategy: StakingStrategy.MASTERNODE,
+    });
 
     for (const user of userWithVotes) {
-      const votes: Votes = JSON.parse(user.votes);
-      const stakingBalance = await this.getDfiStakingBalanceFor(user.id);
+      const stakingBalance = this.getDfiStakingBalanceFor(user.id, stakings);
 
-      for (const [cfpId, vote] of Object.entries(votes)) {
+      for (const [cfpId, vote] of Object.entries(user.vote)) {
         if (dfiDistribution[+cfpId]) dfiDistribution[+cfpId][vote.toLowerCase()] += stakingBalance;
       }
     }
@@ -122,12 +126,11 @@ export class VotingService implements OnModuleInit {
     });
   }
 
-  private async getDfiStakingBalanceFor(userId: number): Promise<number> {
-    const stakings = await getCustomRepository(StakingRepository).getByUserId(userId, {
-      asset: { name: 'DFI', type: AssetType.COIN } as Asset,
-      strategy: StakingStrategy.MASTERNODE,
-    });
-    return stakings.reduce((a, s) => a + s.balance, 0);
+  private getDfiStakingBalanceFor(userId: number, stakings: Staking[]): number {
+    return Util.sumObj(
+      stakings.filter((s) => s.userId === userId),
+      'balance',
+    );
   }
 
   // --- CFP HELPERS --- //

@@ -34,9 +34,8 @@ export class StakingAnalyticsService implements OnModuleInit {
     blockchain,
   }: StakingAnalyticsQuery): Promise<StakingAnalyticsOutputDto> {
     const assetSpec = StakingStrategyValidator.validate(strategy, asset, blockchain);
-    const type = await this.getStakingType(assetSpec, strategy);
 
-    const analytics = await this.repository.findOne(type);
+    const analytics = await this.repository.getByType({ asset: assetSpec, strategy });
     if (!analytics) throw new NotFoundException();
 
     return StakingAnalyticsOutputDtoMapper.entityToDto(analytics);
@@ -60,7 +59,7 @@ export class StakingAnalyticsService implements OnModuleInit {
         const averageBalance = await this.stakingService.getAverageStakingBalance(type, dateFrom, dateTo);
         const averageRewards = await this.stakingService.getAverageRewards(type, dateFrom, dateTo);
 
-        const analytics = (await this.repository.findOne(type)) ?? this.repository.create(type);
+        const analytics = (await this.repository.getByType(type)) ?? this.repository.create(type);
 
         // get TVL and operator count
         const tvl = await getCustomRepository(StakingRepository).getCurrentTotalStakingBalance(type);

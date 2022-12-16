@@ -393,5 +393,19 @@
       "form": []
     },
     "tests": []
+  },
+  {
+    "_id": "22e996c4-762b-4f00-8ad0-86b7579ffd52",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "969a0f3a-dfb3-41de-91d7-e66d8a8aa795",
+    "name": "Get sign messages",
+    "url": "{{url}}/v1/voting/sign-messages",
+    "method": "GET",
+    "sortNum": 240000,
+    "created": "2022-12-16T00:26:52.758Z",
+    "modified": "2022-12-16T00:27:14.623Z",
+    "headers": [],
+    "params": [],
+    "tests": []
   }
 ]

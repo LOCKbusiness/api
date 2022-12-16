@@ -63,7 +63,7 @@ export class UserService {
   // --- VOTES --- //
 
   async getVotes(id: number): Promise<Votes> {
-    return this.userRepo.findOne({ id }, { select: ['id', 'votes'] }).then((u) => (u.votes ? JSON.parse(u.votes) : {}));
+    return this.userRepo.findOne({ id }, { select: ['id', 'votes'] }).then((u) => u.vote);
   }
 
   async updateVotes(id: number, votes: Votes): Promise<Votes> {

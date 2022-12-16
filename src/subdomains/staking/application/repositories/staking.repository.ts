@@ -1,11 +1,15 @@
 import { LockedRepository } from 'src/shared/repositories/locked.repository';
-import { EntityRepository } from 'typeorm';
+import { DeepPartial, EntityRepository } from 'typeorm';
 import { Staking, StakingType } from '../../domain/entities/staking.entity';
 
 @EntityRepository(Staking)
 export class StakingRepository extends LockedRepository<Staking> {
-  async getByUserId(userId: number, type?: StakingType): Promise<Staking[]> {
-    return this.find({ userId, ...type });
+  async getByType(type: DeepPartial<StakingType>): Promise<Staking[]> {
+    return this.find({ where: type, relations: ['asset'] });
+  }
+
+  async getByUserId(userId: number, type?: DeepPartial<StakingType>): Promise<Staking[]> {
+    return this.find({ where: { userId, ...type }, relations: ['asset'] });
   }
 
   async getByDepositAddress(depositAddress: string): Promise<Staking[]> {
