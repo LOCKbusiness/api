@@ -3,11 +3,7 @@ import { EntityManager, Repository } from 'typeorm';
 
 export abstract class LockedRepository<T> extends Repository<T> {
   async updateWithLock(id: number, update: Partial<T>, relations: string[] = []): Promise<T> {
-    return await this.manager.transaction(async (manager) => {
-      const entity = await this.getOrThrow(manager, id, relations);
-      const updatedEntity = Object.assign(entity, update);
-      return await manager.save(updatedEntity);
-    });
+    return this.saveWithLock(id, (staking) => Object.assign(staking, update), relations);
   }
 
   async saveWithLock(
