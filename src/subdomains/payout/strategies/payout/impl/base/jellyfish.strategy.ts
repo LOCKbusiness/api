@@ -1,5 +1,7 @@
+import { NoTransactionIdException } from 'src/blockchain/ain/exceptions/no-transaction-id.exception';
 import { MailContext, MailType } from 'src/integration/notification/enums';
 import { NotificationService } from 'src/integration/notification/services/notification.service';
+import { SettingService } from 'src/shared/services/setting.service';
 import { Util } from 'src/shared/util';
 import { PayoutGroup, PayoutJellyfishService } from 'src/subdomains/payout/services/base/payout-jellyfish.service';
 import { PayoutOrder, PayoutOrderContext } from '../../../../entities/payout-order.entity';
@@ -11,6 +13,7 @@ export abstract class JellyfishStrategy extends PayoutStrategy {
     protected readonly notificationService: NotificationService,
     protected readonly payoutOrderRepo: PayoutOrderRepository,
     protected readonly jellyfishService: PayoutJellyfishService,
+    protected readonly settingService: SettingService,
   ) {
     super();
   }
@@ -107,6 +110,12 @@ export abstract class JellyfishStrategy extends PayoutStrategy {
       console.error(`Error on sending ${outputAssetName} for payout. Order ID(s): ${orders.map((o) => o.id)}`, e);
 
       if (e.message.includes('timeout')) throw e;
+      if (
+        e instanceof NoTransactionIdException &&
+        (await this.settingService.get('retry-payout-when-no-transaction-id')) !== 'on'
+      ) {
+        throw e;
+      }
 
       await this.rollbackPayoutDesignation(orders);
     }

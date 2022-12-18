@@ -6,7 +6,11 @@ import { WithdrawalStatus } from '../../domain/enums';
 @EntityRepository(Withdrawal)
 export class WithdrawalRepository extends Repository<Withdrawal> {
   async getAllPending(): Promise<Withdrawal[]> {
-    return this.find({ where: { status: WithdrawalStatus.PENDING } });
+    /**
+     * @note
+     * relations are needed for #find(...) even though field is eager
+     */
+    return this.find({ where: { status: WithdrawalStatus.PENDING }, relations: ['staking'] });
   }
 
   async getPending(stakingId: number): Promise<Withdrawal[]> {
@@ -22,19 +26,37 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
   }
 
   async getByStatuses(statuses: WithdrawalStatus[], stakingId: number): Promise<Withdrawal[]> {
-    return this.find({ status: In(statuses), staking: { id: stakingId } });
+    /**
+     * @note
+     * relations are needed for #find(...) even though field is eager
+     */
+    return this.find({ where: { status: In(statuses), staking: { id: stakingId } }, relations: ['staking'] });
   }
 
   async getByUserId(userId: number): Promise<Withdrawal[]> {
-    return this.find({ staking: { userId } });
+    /**
+     * @note
+     * relations are needed for #find(...) even though field is eager
+     */
+    return this.find({ where: { staking: { userId } }, relations: ['staking'] });
   }
 
   async getByDepositAddress(depositAddress: string): Promise<Withdrawal[]> {
-    return this.find({ staking: { depositAddress: { address: depositAddress } } });
+    /**
+     * @note
+     * relations are needed for #find(...) even though field is eager
+     */
+    return this.find({ where: { staking: { depositAddress: { address: depositAddress } } }, relations: ['staking'] });
   }
 
   async getStakingIdsForPayingOut(): Promise<number[]> {
-    return this.find({ status: WithdrawalStatus.PAYING_OUT }).then((s) => s.map((i) => i.staking.id));
+    /**
+     * @note
+     * relations are needed for #find(...) even though field is eager
+     */
+    return this.find({ where: { status: WithdrawalStatus.PAYING_OUT }, relations: ['staking'] }).then((s) =>
+      s.map((i) => i.staking.id),
+    );
   }
 
   async getConfirmedAmount(stakingId: number): Promise<number> {

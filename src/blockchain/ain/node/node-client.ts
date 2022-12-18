@@ -9,6 +9,7 @@ import { Config } from 'src/config/config';
 import { QueueHandler } from 'src/shared/queue-handler';
 import { HttpService } from 'src/shared/services/http.service';
 import { Util } from 'src/shared/util';
+import { EnsureTxIdOrThrow } from '../decorators/ensure-txid-or-throw.decorator';
 
 export enum NodeCommand {
   UNLOCK = 'walletpassphrase',
@@ -77,6 +78,7 @@ export class NodeClient {
     return this.callNode((c) => c.wallet.getTransaction(txId));
   }
 
+  @EnsureTxIdOrThrow()
   async sendUtxoToMany(payload: { addressTo: string; amount: number }[]): Promise<string> {
     if (payload.length > 100) {
       throw new Error('Too many addresses in one transaction batch, allowed max 100 for UTXO');

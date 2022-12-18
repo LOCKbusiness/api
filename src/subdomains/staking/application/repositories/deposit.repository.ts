@@ -15,7 +15,11 @@ export class DepositRepository extends Repository<Deposit> {
   }
 
   async getByStatuses(statuses: DepositStatus[], stakingId: number): Promise<Deposit[]> {
-    return this.find({ status: In(statuses), staking: { id: stakingId } });
+    /**
+     * @note
+     * relations are needed for #find(...) even though field is eager
+     */
+    return this.find({ where: { status: In(statuses), staking: { id: stakingId } }, relations: ['staking'] });
   }
 
   async getByPayInTxId(stakingId: number, payInTxId: string): Promise<Deposit> {
@@ -23,11 +27,19 @@ export class DepositRepository extends Repository<Deposit> {
   }
 
   async getByUserId(userId: number): Promise<Deposit[]> {
-    return this.find({ staking: { userId } });
+    /**
+     * @note
+     * relations are needed for #find(...) even though field is eager
+     */
+    return this.find({ where: { staking: { userId } }, relations: ['staking'] });
   }
 
   async getByDepositAddress(depositAddress: string): Promise<Deposit[]> {
-    return this.find({ staking: { depositAddress: { address: depositAddress } } });
+    /**
+     * @note
+     * relations are needed for #find(...) even though field is eager
+     */
+    return this.find({ where: { staking: { depositAddress: { address: depositAddress } } }, relations: ['staking'] });
   }
 
   async getStakingIdsForPending(): Promise<number[]> {

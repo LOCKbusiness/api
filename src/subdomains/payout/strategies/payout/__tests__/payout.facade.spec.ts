@@ -24,6 +24,7 @@ describe('PayoutStrategiesFacade', () => {
       mock<PayoutDeFiChainService>(),
       mock<PayoutOrderRepository>(),
       mock<AssetService>(),
+      mock<SettingService>(),
     );
     deFiChainToken = new DeFiChainTokenStrategy(
       mock<NotificationService>(),
