@@ -4,7 +4,6 @@ import { Config, Process } from 'src/config/config';
 import { Lock } from 'src/shared/lock';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { SettingService } from 'src/shared/services/setting.service';
-import { Staking } from '../../domain/entities/staking.entity';
 import { RewardStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { CreateRewardRouteDto } from '../dto/input/create-reward-route.dto';
@@ -66,12 +65,8 @@ export class StakingRewardService {
 
     const updatedStaking = await this.repository.saveWithLock(
       stakingId,
-      (staking: Staking) => staking.setRewardRoutes(rewardRoutes),
-      [
-        ['entity.asset', 'asset'],
-        ['entity.rewardRoutes', 'rewardRoutes'],
-        ['rewardRoutes.targetAsset', 'targetAsset'],
-      ],
+      (staking) => staking.setRewardRoutes(rewardRoutes),
+      ['asset', 'rewardRoutes', 'rewardRoutes.targetAsset'],
     );
 
     const amounts = await this.stakingService.getUnconfirmedDepositsAndWithdrawalsAmounts(stakingId);

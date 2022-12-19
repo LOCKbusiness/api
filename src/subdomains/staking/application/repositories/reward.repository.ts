@@ -20,7 +20,7 @@ export class RewardRepository extends Repository<Reward> {
       .where('stakingId = :stakingId', { stakingId })
       .andWhere('status = :status', { status: RewardStatus.CONFIRMED })
       .getRawOne<{ amount: number }>()
-      .then((r) => r.amount);
+      .then((r) => r.amount ?? 0);
   }
 
   async getAllRewardsAmountForCondition(
@@ -30,13 +30,13 @@ export class RewardRepository extends Repository<Reward> {
   ): Promise<number> {
     return this.createQueryBuilder('reward')
       .leftJoin('reward.staking', 'staking')
-      .select('SUM(outputReferenceAmount)', 'rewardVolume')
+      .select('SUM(outputReferenceAmount)', 'amount')
       .where('staking.assetId = :id', { id: asset.id })
       .andWhere('reward.status = :status', { status: RewardStatus.CONFIRMED })
       .andWhere('staking.strategy = :strategy', { strategy })
       .andWhere('reward.outputDate BETWEEN :dateFrom AND :dateTo', { dateFrom, dateTo })
-      .getRawOne<{ rewardVolume: number }>()
-      .then((r) => r.rewardVolume);
+      .getRawOne<{ amount: number }>()
+      .then((r) => r.amount ?? 0);
   }
 
   async getDfiAmountForNewRewards(): Promise<number> {
@@ -47,6 +47,6 @@ export class RewardRepository extends Repository<Reward> {
       .andWhere('referenceAsset.name = :name', { name: 'DFI' })
       .andWhere('referenceAsset.blockchain = :blockchain', { blockchain: Blockchain.DEFICHAIN })
       .getRawOne<{ amount: number }>()
-      .then((r) => r.amount);
+      .then((r) => r.amount ?? 0);
   }
 }

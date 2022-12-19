@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Config, Process } from 'src/config/config';
 import { MasternodeService } from 'src/integration/masternode/application/services/masternode.service';
@@ -17,7 +17,7 @@ import { StakingRepository } from 'src/subdomains/staking/application/repositori
 import { getCustomRepository } from 'typeorm';
 
 @Injectable()
-export class StakingAnalyticsService {
+export class StakingAnalyticsService implements OnModuleInit {
   constructor(
     private readonly repository: StakingAnalyticsRepository,
     private readonly stakingService: StakingService,
@@ -34,9 +34,8 @@ export class StakingAnalyticsService {
     blockchain,
   }: StakingAnalyticsQuery): Promise<StakingAnalyticsOutputDto> {
     const assetSpec = StakingStrategyValidator.validate(strategy, asset, blockchain);
-    const type = await this.getStakingType(assetSpec, strategy);
 
-    const analytics = await this.repository.findOne(type);
+    const analytics = await this.repository.getByType({ asset: assetSpec, strategy });
     if (!analytics) throw new NotFoundException();
 
     return StakingAnalyticsOutputDtoMapper.entityToDto(analytics);
@@ -60,7 +59,7 @@ export class StakingAnalyticsService {
         const averageBalance = await this.stakingService.getAverageStakingBalance(type, dateFrom, dateTo);
         const averageRewards = await this.stakingService.getAverageRewards(type, dateFrom, dateTo);
 
-        const analytics = (await this.repository.findOne(type)) ?? this.repository.create(type);
+        const analytics = (await this.repository.getByType(type)) ?? this.repository.create(type);
 
         // get TVL and operator count
         const tvl = await getCustomRepository(StakingRepository).getCurrentTotalStakingBalance(type);

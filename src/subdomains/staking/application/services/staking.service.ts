@@ -118,17 +118,17 @@ export class StakingService {
   }
 
   async setStakingFee(stakingId: number, { feePercent }: SetStakingFeeDto): Promise<void> {
-    await this.repository.saveWithLock(stakingId, (staking: Staking) => staking.setStakingFee(feePercent));
+    await this.repository.saveWithLock(stakingId, (staking) => staking.setStakingFee(feePercent));
   }
 
   async updateStakingBalance(stakingId: number): Promise<Staking> {
-    return this.repository.saveWithLock(stakingId, async (staking: Staking) =>
+    return this.repository.saveWithLock(stakingId, async (staking) =>
       staking.updateBalance(await this.getBalances(staking.id)),
     );
   }
 
   async updateRewardsAmount(stakingId: number): Promise<Staking> {
-    return this.repository.saveWithLock(stakingId, async (staking: Staking) =>
+    return this.repository.saveWithLock(stakingId, async (staking) =>
       staking.updateRewardsAmount(await this.rewardRepository.getRewardsAmount(staking.id)),
     );
   }
