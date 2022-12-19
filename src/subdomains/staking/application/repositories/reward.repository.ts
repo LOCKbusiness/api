@@ -7,11 +7,19 @@ import { RewardStatus } from '../../domain/enums';
 @EntityRepository(Reward)
 export class RewardRepository extends Repository<Reward> {
   async getByUserId(userId: number): Promise<Reward[]> {
-    return this.find({ staking: { userId } });
+    /**
+     * @note
+     * relations are needed for #find(...) even though field is eager
+     */
+    return this.find({ where: { staking: { userId } }, relations: ['staking'] });
   }
 
   async getByDepositAddress(depositAddress: string): Promise<Reward[]> {
-    return this.find({ staking: { depositAddress: { address: depositAddress } } });
+    /**
+     * @note
+     * relations are needed for #find(...) even though field is eager
+     */
+    return this.find({ where: { staking: { depositAddress: { address: depositAddress } } }, relations: ['staking'] });
   }
 
   async getRewardsAmount(stakingId: number): Promise<number> {

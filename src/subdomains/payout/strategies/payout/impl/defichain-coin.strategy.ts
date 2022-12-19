@@ -8,6 +8,7 @@ import { AssetService } from 'src/shared/models/asset/asset.service';
 import { FeeResult } from '../../../interfaces';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { NotificationService } from 'src/integration/notification/services/notification.service';
+import { SettingService } from 'src/shared/services/setting.service';
 
 @Injectable()
 export class DeFiChainCoinStrategy extends JellyfishStrategy {
@@ -16,8 +17,9 @@ export class DeFiChainCoinStrategy extends JellyfishStrategy {
     protected readonly deFiChainService: PayoutDeFiChainService,
     protected readonly payoutOrderRepo: PayoutOrderRepository,
     protected readonly assetService: AssetService,
+    protected readonly settingService: SettingService,
   ) {
-    super(notificationService, payoutOrderRepo, deFiChainService);
+    super(notificationService, payoutOrderRepo, deFiChainService, settingService);
   }
 
   async estimateFee(_quantityOfTransactions: number): Promise<FeeResult> {

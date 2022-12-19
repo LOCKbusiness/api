@@ -21,9 +21,9 @@ export class DeFiChainTokenStrategy extends JellyfishStrategy {
     protected readonly jellyfishService: PayoutDeFiChainService,
     protected readonly payoutOrderRepo: PayoutOrderRepository,
     protected readonly assetService: AssetService,
-    private readonly settingService: SettingService,
+    protected readonly settingService: SettingService,
   ) {
-    super(notificationService, payoutOrderRepo, jellyfishService);
+    super(notificationService, payoutOrderRepo, jellyfishService, settingService);
   }
 
   async estimateFee(_quantityOfTransactions: number): Promise<FeeResult> {

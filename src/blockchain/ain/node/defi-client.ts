@@ -2,6 +2,7 @@ import { BigNumber } from '@defichain/jellyfish-api-core';
 import { AccountHistory, AccountResult, UTXO as SpendUTXO } from '@defichain/jellyfish-api-core/dist/category/account';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { HttpService } from 'src/shared/services/http.service';
+import { EnsureTxIdOrThrow } from '../decorators/ensure-txid-or-throw.decorator';
 import { NodeClient, NodeCommand, NodeMode } from './node-client';
 
 export class DeFiClient extends NodeClient {
@@ -34,6 +35,7 @@ export class DeFiClient extends NodeClient {
     return this.chain === 'testnet' ? 0.00000192 : 0.00000132;
   }
 
+  @EnsureTxIdOrThrow()
   async sendUtxo(addressFrom: string, addressTo: string, amount: number): Promise<string> {
     return this.callNode(
       (c) => c.call(NodeCommand.SEND_UTXO, [addressFrom, addressTo, this.roundAmount(amount)], 'number'),
@@ -41,6 +43,7 @@ export class DeFiClient extends NodeClient {
     );
   }
 
+  @EnsureTxIdOrThrow()
   async sendCompleteUtxo(addressFrom: string, addressTo: string, amount: number): Promise<string> {
     return this.callNode(
       (c) =>
@@ -53,6 +56,7 @@ export class DeFiClient extends NodeClient {
     );
   }
 
+  @EnsureTxIdOrThrow()
   async toUtxo(addressFrom: string, addressTo: string, amount: number, utxos?: SpendUTXO[]): Promise<string> {
     return this.callNode(
       (c) => c.account.accountToUtxos(addressFrom, { [addressTo]: `${this.roundAmount(amount)}@DFI` }, { utxos }),
@@ -86,6 +90,7 @@ export class DeFiClient extends NodeClient {
     ).then((r: string) => this.parseAmount(r).amount);
   }
 
+  @EnsureTxIdOrThrow()
   async compositeSwap(
     addressFrom: string,
     tokenFrom: string,
@@ -112,10 +117,12 @@ export class DeFiClient extends NodeClient {
     );
   }
 
+  @EnsureTxIdOrThrow()
   async addPoolLiquidity(address: string, assetsPair: [string, string]): Promise<string> {
     return this.callNode((c) => c.poolpair.addPoolLiquidity({ [address]: assetsPair }, address), true);
   }
 
+  @EnsureTxIdOrThrow()
   async sendToken(
     addressFrom: string,
     addressTo: string,
@@ -132,6 +139,7 @@ export class DeFiClient extends NodeClient {
         );
   }
 
+  @EnsureTxIdOrThrow()
   async sendTokenToMany(
     addressFrom: string,
     token: string,
@@ -147,6 +155,7 @@ export class DeFiClient extends NodeClient {
     return this.callNode((c) => c.account.accountToAccount(addressFrom, batch, { utxos }), true);
   }
 
+  @EnsureTxIdOrThrow()
   async toToken(address: string, amount: number, utxos?: SpendUTXO[]): Promise<string> {
     return this.callNode(
       (c) => c.account.utxosToAccount({ [address]: `${this.roundAmount(amount)}@DFI` }, utxos),
@@ -155,6 +164,7 @@ export class DeFiClient extends NodeClient {
   }
 
   // raw tx
+  @EnsureTxIdOrThrow()
   async signAndSend(hex: string): Promise<string> {
     const signedTx = await this.signTx(hex);
     return this.sendRawTx(signedTx.hex);

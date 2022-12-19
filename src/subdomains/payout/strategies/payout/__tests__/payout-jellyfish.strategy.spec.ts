@@ -2,6 +2,7 @@ import { mock } from 'jest-mock-extended';
 import { NotificationService } from 'src/integration/notification/services/notification.service';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { createCustomAsset } from 'src/shared/models/asset/__mocks__/asset.entity.mock';
+import { SettingService } from 'src/shared/services/setting.service';
 import { PayoutOrder, PayoutOrderContext, PayoutOrderStatus } from '../../../entities/payout-order.entity';
 import {
   createCustomPayoutOrder,
@@ -18,6 +19,7 @@ describe('PayoutJellyfishStrategy', () => {
   let notificationService: NotificationService;
   let payoutOrderRepo: PayoutOrderRepository;
   let defichainService: PayoutDeFiChainService;
+  let settingService: SettingService;
 
   let repoSaveSpy: jest.SpyInstance;
   let sendErrorMailSpy: jest.SpyInstance;
@@ -26,11 +28,17 @@ describe('PayoutJellyfishStrategy', () => {
     notificationService = mock<NotificationService>();
     payoutOrderRepo = mock<PayoutOrderRepository>();
     defichainService = mock<PayoutDeFiChainService>();
+    settingService = mock<SettingService>();
 
     repoSaveSpy = jest.spyOn(payoutOrderRepo, 'save');
     sendErrorMailSpy = jest.spyOn(notificationService, 'sendMail');
 
-    strategy = new PayoutJellyfishStrategyWrapper(notificationService, payoutOrderRepo, defichainService);
+    strategy = new PayoutJellyfishStrategyWrapper(
+      notificationService,
+      payoutOrderRepo,
+      defichainService,
+      settingService,
+    );
   });
 
   afterEach(() => {
@@ -281,8 +289,9 @@ class PayoutJellyfishStrategyWrapper extends JellyfishStrategy {
     notificationService: NotificationService,
     payoutOrderRepo: PayoutOrderRepository,
     defichainService: PayoutDeFiChainService,
+    settingService: SettingService,
   ) {
-    super(notificationService, payoutOrderRepo, defichainService);
+    super(notificationService, payoutOrderRepo, defichainService, settingService);
   }
 
   protected doPayoutForContext(): Promise<void> {
