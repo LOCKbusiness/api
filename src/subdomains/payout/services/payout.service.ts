@@ -16,7 +16,7 @@ import { NotificationService } from 'src/integration/notification/services/notif
 
 @Injectable()
 export class PayoutService {
-  private readonly processOrdersLock = new Lock(1800);
+  private readonly processOrdersLock = new Lock(7200);
 
   constructor(
     private readonly payoutStrategies: PayoutStrategiesFacade,
@@ -83,12 +83,14 @@ export class PayoutService {
   async processOrders(): Promise<void> {
     if (!this.processOrdersLock.acquire()) return;
 
-    await this.checkExistingOrders();
-    await this.prepareNewOrders();
-    await this.payoutOrders();
-    await this.processFailedOrders();
-
-    this.processOrdersLock.release();
+    try {
+      await this.checkExistingOrders();
+      await this.prepareNewOrders();
+      await this.payoutOrders();
+      await this.processFailedOrders();
+    } finally {
+      this.processOrdersLock.release();
+    }
   }
 
   //*** HELPER METHODS ***//
