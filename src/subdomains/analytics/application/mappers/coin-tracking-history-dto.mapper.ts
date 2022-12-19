@@ -56,18 +56,18 @@ export class CoinTrackingHistoryDtoMapper {
           c.staking.strategy === StakingStrategy.LIQUIDITY_MINING
             ? CoinTrackingTransactionType.REWARD_BONUS
             : CoinTrackingTransactionType.STAKING,
-        buyAmount: c.amount,
-        buyAsset: this.getAssetSymbolCT(c.asset),
+        buyAmount: c.targetAmount,
+        buyAsset: this.getAssetSymbolCT(c.rewardRoute.targetAsset),
         sellAmount: null,
         sellAsset: null,
-        fee: null,
-        feeAsset: null,
+        fee: c.feePercent != 0 ? (c.targetAmount * c.feePercent) / (1 - c.feePercent) : null,
+        feeAsset: c.feePercent != 0 ? this.getAssetSymbolCT(c.rewardRoute.targetAsset) : null,
         exchange: 'LOCK.space Staking',
         tradeGroup: c.staking.strategy === StakingStrategy.LIQUIDITY_MINING ? null : 'Staking',
         comment:
           c.staking.strategy === StakingStrategy.LIQUIDITY_MINING ? 'LOCK Yield Machine Reward' : 'LOCK Staking Reward',
-        date: c.reinvestOutputDate ?? c.updated,
-        txId: c.reinvestTxId,
+        txId: c.txId,
+        date: c.outputDate ?? c.updated,
         buyValueInEur: c.amountEur,
         sellValueInEur: null,
       }));

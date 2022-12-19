@@ -11,4 +11,6 @@ export enum MailType {
 
 export enum MailContext {
   STAKING = 'Staking',
+  DEX = 'Dex',
+  PAYOUT = 'Payout',
 }

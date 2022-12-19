@@ -10,6 +10,7 @@ export enum Process {
   STAKING_DEPOSIT = 'StakingDeposit',
   STAKING_WITHDRAWAL = 'StakingWithdrawal',
   STAKING_LIQUIDITY_MANAGEMENT = 'StakingLiquidityManagement',
+  STAKING_REWARD_PAYOUT = 'StakingRewardPayout',
   MASTERNODE = 'Masternode',
   TRANSACTION = 'Transaction',
   ANALYTICS = 'Analytics',
@@ -132,6 +133,7 @@ export class Configuration {
       rew: {
         active: process.env.NODE_REW_URL_ACTIVE,
         passive: process.env.NODE_REW_URL_PASSIVE,
+        stakingAddress: process.env.REW_STAKING_ADDRESS,
       },
       maxPrice: 1000000,
     },

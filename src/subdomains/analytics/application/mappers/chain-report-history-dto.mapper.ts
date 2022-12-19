@@ -44,18 +44,18 @@ export class ChainReportHistoryDtoMapper {
     return rewards
       .filter((c) => c.status === RewardStatus.CONFIRMED)
       .map((c) => ({
-        timestamp: c.reinvestOutputDate ?? c.updated,
+        timestamp: c.outputDate ?? c.updated,
         transactionType:
           c.staking.strategy === StakingStrategy.LIQUIDITY_MINING
             ? ChainReportTransactionType.LM
             : ChainReportTransactionType.STAKING,
-        inputAmount: c.amount,
-        inputAsset: this.getAssetSymbolChainReport(c.asset),
+        inputAmount: c.targetAmount,
+        inputAsset: this.getAssetSymbolChainReport(c.rewardRoute.targetAsset),
         outputAmount: null,
         outputAsset: null,
-        feeAmount: null,
-        feeAsset: null,
-        txId: c.reinvestTxId,
+        feeAmount: c.feePercent != 0 ? (c.targetAmount * c.feePercent) / (1 - c.feePercent) : null,
+        feeAsset: c.feePercent != 0 ? this.getAssetSymbolChainReport(c.rewardRoute.targetAsset) : null,
+        txId: c.txId,
         description:
           c.staking.strategy === StakingStrategy.LIQUIDITY_MINING ? 'LOCK Yield Machine Reward' : 'LOCK Staking Reward',
       }));

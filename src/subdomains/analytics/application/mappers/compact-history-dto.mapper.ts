@@ -14,6 +14,10 @@ export class CompactHistoryDtoMapper {
     [WithdrawalStatus.PAYING_OUT]: CompactHistoryStatus.PENDING,
     [WithdrawalStatus.CONFIRMED]: CompactHistoryStatus.CONFIRMED,
     [WithdrawalStatus.FAILED]: CompactHistoryStatus.FAILED,
+    [RewardStatus.CREATED]: null,
+    [RewardStatus.PAUSED]: CompactHistoryStatus.PENDING,
+    [RewardStatus.PREPARATION_PENDING]: CompactHistoryStatus.PENDING,
+    [RewardStatus.PREPARATION_CONFIRMED]: CompactHistoryStatus.PENDING,
   };
 
   static mapStakingDeposits(deposits: Deposit[]): CompactHistoryDto[] {
@@ -24,6 +28,8 @@ export class CompactHistoryDtoMapper {
         inputAsset: c.asset.name,
         outputAmount: null,
         outputAsset: null,
+        feeAmount: null,
+        feeAsset: null,
         amountInEur: c.amountEur,
         amountInChf: c.amountChf,
         amountInUsd: c.amountUsd,
@@ -42,6 +48,8 @@ export class CompactHistoryDtoMapper {
         inputAsset: null,
         outputAmount: c.amount,
         outputAsset: c.asset.name,
+        feeAmount: null,
+        feeAsset: null,
         amountInEur: c.amountEur,
         amountInChf: c.amountChf,
         amountInUsd: c.amountUsd,
@@ -56,15 +64,17 @@ export class CompactHistoryDtoMapper {
     return rewards
       .map((c) => ({
         type: HistoryTransactionType.REWARD,
-        inputAmount: c.amount,
-        inputAsset: c.asset.name,
+        inputAmount: c.targetAmount,
+        inputAsset: c.rewardRoute.targetAsset.name,
         outputAmount: null,
         outputAsset: null,
+        feeAmount: c.feePercent != 0 ? (c.targetAmount * c.feePercent) / (1 - c.feePercent) : null,
+        feeAsset: c.feePercent != 0 ? c.rewardRoute.targetAsset.name : null,
         amountInEur: c.amountEur,
         amountInChf: c.amountChf,
         amountInUsd: c.amountUsd,
-        txId: c.reinvestTxId,
-        date: c.reinvestOutputDate ?? c.updated,
+        txId: c.txId,
+        date: c.outputDate ?? c.updated,
         status: this.CompactStatusMapper[c.status],
       }))
       .filter((c) => c.status != null);

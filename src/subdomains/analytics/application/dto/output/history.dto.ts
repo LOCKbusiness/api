@@ -26,6 +26,12 @@ export class HistoryBaseDto {
   outputAsset: string;
 
   @ApiPropertyOptional()
+  feeAmount: number;
+
+  @ApiPropertyOptional()
+  feeAsset: string;
+
+  @ApiPropertyOptional()
   amountInEur: number;
 
   @ApiPropertyOptional()

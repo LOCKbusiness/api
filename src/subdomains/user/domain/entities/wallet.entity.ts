@@ -1,15 +1,14 @@
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
+import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 import { IEntity } from 'src/shared/models/entity';
 import { User } from 'src/subdomains/user/domain/entities/user.entity';
-import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
-import { WalletBlockchainAddress } from './wallet-blockchain-address.entity';
+import { Column, Entity, ManyToOne } from 'typeorm';
 import { WalletProvider } from './wallet-provider.entity';
 
 @Entity()
 export class Wallet extends IEntity {
-  @OneToOne(() => WalletBlockchainAddress, { eager: true, nullable: false, cascade: true })
-  @JoinColumn()
-  address: WalletBlockchainAddress;
+  @Column(() => BlockchainAddress)
+  address: BlockchainAddress;
 
   @Column()
   signature: string;

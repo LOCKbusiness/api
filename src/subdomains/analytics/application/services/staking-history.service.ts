@@ -1,17 +1,20 @@
 import { Injectable, NotFoundException, StreamableFile } from '@nestjs/common';
 import { Readable } from 'stream';
-import { StakingService } from 'src/subdomains/staking/application/services/staking.service';
 import { HistoryTransactionType, CompactHistoryDto } from '../dto/output/history.dto';
 import { Deposit } from 'src/subdomains/staking/domain/entities/deposit.entity';
 import { Withdrawal } from 'src/subdomains/staking/domain/entities/withdrawal.entity';
 import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
 import { CoinTrackingCsvHistoryDto, CoinTrackingTransactionType } from '../dto/output/coin-tracking-history.dto';
-import { Staking } from 'src/subdomains/staking/domain/entities/staking.entity';
 import { Util } from 'src/shared/util';
 import { CompactHistoryDtoMapper } from '../mappers/compact-history-dto.mapper';
 import { CoinTrackingHistoryDtoMapper } from '../mappers/coin-tracking-history-dto.mapper';
 import { ChainReportCsvHistoryDto, ChainReportTransactionType } from '../dto/output/chain-report-history.dto';
 import { ChainReportHistoryDtoMapper } from '../mappers/chain-report-history-dto.mapper';
+import { UserService } from 'src/subdomains/user/application/services/user.service';
+import { RewardRepository } from 'src/subdomains/staking/application/repositories/reward.repository';
+import { WithdrawalRepository } from 'src/subdomains/staking/application/repositories/withdrawal.repository';
+import { DepositRepository } from 'src/subdomains/staking/application/repositories/deposit.repository';
+import { getCustomRepository } from 'typeorm';
 
 export type HistoryDto<T> = T extends ExportType.COMPACT
   ? CompactHistoryDto
@@ -27,7 +30,7 @@ export enum ExportType {
 
 @Injectable()
 export class StakingHistoryService {
-  constructor(private readonly stakingService: StakingService) {}
+  constructor(private readonly userService: UserService) {}
 
   async getHistoryCsv(userAddress: string, depositAddress: string, exportType: ExportType): Promise<StreamableFile> {
     const tx = await this.getHistory(userAddress, depositAddress, exportType);
@@ -42,13 +45,11 @@ export class StakingHistoryService {
     depositAddress: string,
     exportFormat: T,
   ): Promise<HistoryDto<T>[]> {
-    const stakingEntities = await this.getStakingEntitiesByAddress(userAddress, depositAddress);
-    const deposits = stakingEntities.reduce((prev, curr) => prev.concat(curr.deposits), [] as Deposit[]);
-    const withdrawals = stakingEntities.reduce((prev, curr) => prev.concat(curr.withdrawals), [] as Withdrawal[]);
-    const rewards = stakingEntities.reduce(
-      (prev, curr) => prev.concat(curr.rewards.map((r) => Object.assign(r, { staking: curr }))),
-      [] as Reward[],
-    );
+    const userId = userAddress ? (await this.userService.getUserByAddressOrThrow(userAddress)).id : null;
+
+    const deposits = await this.getDepositsByUserOrAddress(userId, depositAddress);
+    const withdrawals = await this.getWithdrawalsByUserOrAddress(userId, depositAddress);
+    const rewards = await this.getRewardsByUserOrAddress(userId, depositAddress);
 
     switch (exportFormat) {
       case ExportType.COIN_TRACKING:
@@ -61,10 +62,22 @@ export class StakingHistoryService {
   }
 
   // --- HELPER METHODS --- //
-  private async getStakingEntitiesByAddress(userAddress: string, depositAddress: string): Promise<Staking[]> {
-    return userAddress
-      ? await this.stakingService.getStakingsByUserAddress(userAddress)
-      : await this.stakingService.getStakingsByDepositAddress(depositAddress);
+  private async getDepositsByUserOrAddress(userId: number, depositAddress: string): Promise<Deposit[]> {
+    return userId
+      ? await getCustomRepository(DepositRepository).getByUserId(userId)
+      : await getCustomRepository(DepositRepository).getByDepositAddress(depositAddress);
+  }
+
+  private async getWithdrawalsByUserOrAddress(userId: number, depositAddress: string): Promise<Withdrawal[]> {
+    return userId
+      ? await getCustomRepository(WithdrawalRepository).getByUserId(userId)
+      : await getCustomRepository(WithdrawalRepository).getByDepositAddress(depositAddress);
+  }
+
+  private async getRewardsByUserOrAddress(userId: number, depositAddress: string): Promise<Reward[]> {
+    return userId
+      ? await getCustomRepository(RewardRepository).getByUserId(userId)
+      : await getCustomRepository(RewardRepository).getByDepositAddress(depositAddress);
   }
 
   private getHistoryCT(deposits: Deposit[], withdrawals: Withdrawal[], rewards: Reward[]): CoinTrackingCsvHistoryDto[] {

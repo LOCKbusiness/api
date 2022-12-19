@@ -1,18 +1,17 @@
 import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
-import { Deposit } from './deposit.entity';
-import { Reward } from './reward.entity';
 import { Withdrawal } from './withdrawal.entity';
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { IEntity } from 'src/shared/models/entity';
-import { DepositStatus, RewardStatus, StakingStatus, StakingStrategy, WithdrawalStatus } from '../enums';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { StakingStatus, StakingStrategy, WithdrawalStatus } from '../enums';
+import { BadRequestException } from '@nestjs/common';
 import { Util } from 'src/shared/util';
-import { StakingBlockchainAddress } from './staking-blockchain-address.entity';
-import { WalletBlockchainAddress } from 'src/subdomains/user/domain/entities/wallet-blockchain-address.entity';
 import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Price } from 'src/shared/models/price';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { AssetQuery } from 'src/shared/models/asset/asset.service';
+import { RewardRoute } from './reward-route.entity';
+import { BlockchainAddress } from 'src/shared/models/blockchain-address';
+import { StakingBalances } from '../../application/services/staking.service';
 
 export interface StakingType {
   asset: Asset;
@@ -47,24 +46,14 @@ export class Staking extends IEntity {
   @Column({ type: 'float', nullable: false, default: 0 })
   stageTwoBalance: number;
 
-  @OneToOne(() => StakingBlockchainAddress, { eager: true, nullable: false })
-  @JoinColumn()
-  depositAddress: StakingBlockchainAddress;
+  @Column(() => BlockchainAddress)
+  depositAddress: BlockchainAddress;
 
-  @OneToMany(() => Deposit, (deposit) => deposit.staking, { eager: true, cascade: true })
-  deposits: Deposit[];
+  @Column(() => BlockchainAddress)
+  withdrawalAddress: BlockchainAddress;
 
-  @ManyToOne(() => WalletBlockchainAddress, { eager: true, nullable: false })
-  withdrawalAddress: WalletBlockchainAddress;
-
-  @OneToMany(() => Withdrawal, (withdrawal) => withdrawal.staking, { eager: true, cascade: true })
-  withdrawals: Withdrawal[];
-
-  @ManyToOne(() => WalletBlockchainAddress, { eager: true, nullable: false })
-  rewardsPayoutAddress: WalletBlockchainAddress;
-
-  @OneToMany(() => Reward, (reward) => reward.staking, { cascade: true })
-  rewards: Reward[];
+  @OneToMany(() => RewardRoute, (route) => route.staking, { eager: true, cascade: true })
+  rewardRoutes: RewardRoute[];
 
   @Column({ type: 'float', nullable: false, default: 0 })
   rewardsAmount: number;
@@ -77,8 +66,8 @@ export class Staking extends IEntity {
   static create(
     userId: number,
     { asset, strategy }: StakingType,
-    depositAddress: StakingBlockchainAddress,
-    withdrawalAddress: WalletBlockchainAddress,
+    depositAddress: BlockchainAddress,
+    withdrawalAddress: BlockchainAddress,
   ): Staking {
     const staking = new Staking();
 
@@ -90,13 +79,13 @@ export class Staking extends IEntity {
 
     staking.depositAddress = depositAddress;
     staking.withdrawalAddress = withdrawalAddress;
-    staking.rewardsPayoutAddress = withdrawalAddress;
-
-    staking.deposits = [];
-    staking.withdrawals = [];
-    staking.rewards = [];
+    staking.rewardRoutes = [this.createDefaultRewardRoute(staking, asset, depositAddress)];
 
     return staking;
+  }
+
+  static createDefaultRewardRoute(staking: Staking, asset: Asset, depositAddress: BlockchainAddress): RewardRoute {
+    return RewardRoute.create(staking, 'Reinvest', 1, asset, depositAddress);
   }
 
   //*** PUBLIC API ***//
@@ -107,82 +96,39 @@ export class Staking extends IEntity {
     return this;
   }
 
-  addDeposit(deposit: Deposit): this {
-    if (!this.deposits) this.deposits = [];
-
-    if (this.status === StakingStatus.BLOCKED) throw new BadRequestException('Staking is blocked');
-
-    this.deposits.push(deposit);
-    this.updateBalance();
+  updateBalance({ currentBalance, stageOneBalance, stageTwoBalance }: StakingBalances): this {
+    this.balance = currentBalance;
+    this.stageOneBalance = stageOneBalance;
+    this.stageTwoBalance = stageTwoBalance;
 
     return this;
   }
 
-  confirmDeposit(depositId: string, forwardTxId: string): this {
-    this.status = StakingStatus.ACTIVE;
-
-    const deposit = this.getDeposit(depositId);
-
-    deposit.confirmDeposit(forwardTxId);
-    this.updateBalance();
+  updateRewardsAmount(rewardsAmount: number): this {
+    this.rewardsAmount = rewardsAmount;
 
     return this;
   }
 
-  addWithdrawalDraft(withdrawal: Withdrawal): this {
-    if (!this.withdrawals) this.withdrawals = [];
+  checkWithdrawalDraftOrThrow(withdrawal: Withdrawal, inProgressWithdrawalsAmount: number): void {
     if (this.status !== StakingStatus.ACTIVE) throw new BadRequestException('Staking is inactive');
     if (withdrawal.status !== WithdrawalStatus.DRAFT) throw new BadRequestException('Cannot add non-Draft Withdrawals');
 
     // restrict creation of draft in case of insufficient balance, does not protect from parallel creation.
-    if (!this.isEnoughBalanceForWithdrawal(withdrawal)) {
+    this.checkBalanceForWithdrawalOrThrow(withdrawal, inProgressWithdrawalsAmount);
+  }
+
+  checkBalanceForWithdrawalOrThrow(withdrawal: Withdrawal, inProgressWithdrawalsAmount: number): void {
+    if (!this.isEnoughBalanceForWithdrawal(withdrawal, inProgressWithdrawalsAmount)) {
       throw new BadRequestException('Not sufficient staking balance to proceed with Withdrawal');
     }
-
-    this.withdrawals.push(withdrawal);
-
-    return this;
   }
 
-  signWithdrawal(withdrawalId: number, signature: string): this {
-    const withdrawal = this.getWithdrawal(withdrawalId);
+  setRewardRoutes(newRewardRoutes: RewardRoute[]): this {
+    this.validateRewardDistribution(newRewardRoutes);
+    this.validateDuplicatedRoutes(newRewardRoutes);
 
-    // double check balance before sending out
-    if (!this.isEnoughBalanceForWithdrawal(withdrawal)) {
-      throw new BadRequestException('Not sufficient staking balance to proceed with signing Withdrawal');
-    }
-
-    withdrawal.signWithdrawal(signature);
-
-    return this;
-  }
-
-  changeWithdrawalAmount(withdrawalId: number, amount: number): this {
-    const withdrawal = this.getWithdrawal(withdrawalId);
-
-    withdrawal.changeAmount(amount, this);
-
-    if (!this.isEnoughBalanceForWithdrawal(withdrawal)) {
-      throw new BadRequestException('Not sufficient staking balance to proceed with signing Withdrawal');
-    }
-
-    return this;
-  }
-
-  confirmWithdrawal(withdrawalId: number): this {
-    const withdrawal = this.getWithdrawal(withdrawalId);
-
-    withdrawal.confirmWithdrawal();
-    this.updateBalance();
-
-    return this;
-  }
-
-  addReward(reward: Reward): this {
-    if (!this.rewards) this.rewards = [];
-
-    this.rewards.push(reward);
-    this.updateRewardBalance();
+    this.updateRewardRoutes(newRewardRoutes);
 
     return this;
   }
@@ -197,103 +143,14 @@ export class Staking extends IEntity {
     return addresses.every((a) => a === this.withdrawalAddress.address);
   }
 
-  calculateFiatReferences(prices: Price[]): this {
-    const deposits = this.getDepositsWithoutFiatReferences();
-    const withdrawals = this.getWithdrawalsWithoutFiatReferences();
-
-    deposits.forEach((d) => d.calculateFiatReferences(prices));
-    withdrawals.forEach((w) => w.calculateFiatReferences(prices));
-
-    return this;
-  }
-
-  updateBalance(): number {
-    const confirmedDeposits = this.getDepositsByStatus(DepositStatus.CONFIRMED);
-    const confirmedWithdrawals = this.getWithdrawalsByStatus(WithdrawalStatus.CONFIRMED);
-
-    const confirmedDepositsAmount = Util.sumObj(confirmedDeposits, 'amount');
-    const confirmedWithdrawalsAmount = Util.sumObj(confirmedWithdrawals, 'amount');
-
-    this.balance = Util.round(confirmedDepositsAmount - confirmedWithdrawalsAmount, 8);
-
-    // staged balances (staked more than xxx days)
-    const stageOneDeposits = confirmedDeposits.filter((d) => Util.daysDiff(d.created, new Date()) < 2);
-    this.stageOneBalance = Math.max(0, Util.round(this.balance - Util.sumObj(stageOneDeposits, 'amount'), 8));
-
-    const stageTwoDeposits = confirmedDeposits.filter((d) => Util.daysDiff(d.created, new Date()) < 6);
-    this.stageTwoBalance = Math.max(0, Util.round(this.balance - Util.sumObj(stageTwoDeposits, 'amount'), 8));
-
-    return this.balance;
-  }
-
   //*** GETTERS ***//
 
-  getWithdrawal(withdrawalId: number): Withdrawal {
-    const withdraw = this.withdrawals.find((w) => w.id === withdrawalId);
-
-    if (!withdraw) throw new NotFoundException('Withdrawal not found');
-
-    return withdraw;
+  get isBlocked(): boolean {
+    return this.status === StakingStatus.BLOCKED;
   }
 
-  getDraftWithdrawals(): Withdrawal[] {
-    return this.withdrawals.filter((w) => w.status === WithdrawalStatus.DRAFT);
-  }
-
-  getDeposit(depositId: string): Deposit {
-    const deposit = this.deposits.find((w) => w.id === parseInt(depositId));
-
-    if (!deposit) throw new NotFoundException('Deposit not found');
-
-    return deposit;
-  }
-
-  getDepositByPayInTxId(payInTxId: string): Deposit {
-    return this.deposits.find((w) => w.payInTxId === payInTxId);
-  }
-
-  getBalance(): number {
-    return this.balance;
-  }
-
-  getConfirmedDeposits(): Deposit[] {
-    return this.getDepositsByStatus(DepositStatus.CONFIRMED);
-  }
-
-  getPendingDeposits(): Deposit[] {
-    return this.getDepositsByStatus(DepositStatus.PENDING);
-  }
-
-  getDepositsWithoutFiatReferences(): Deposit[] {
-    return this.deposits.filter(
-      (d) =>
-        (d.amountChf == null || d.amountEur == null || d.amountUsd == null) && d.status === DepositStatus.CONFIRMED,
-    );
-  }
-
-  getUnconfirmedDepositsAmount(): number {
-    const unconfirmedDeposits = this.getDepositsByStatus([DepositStatus.OPEN, DepositStatus.PENDING]);
-
-    return Util.sum(unconfirmedDeposits.map((d) => d.amount));
-  }
-
-  getPendingWithdrawalsAmount(): number {
-    return this.getInProgressWithdrawalsAmount();
-  }
-
-  getPendingWithdrawals(): Withdrawal[] {
-    return this.getWithdrawalsByStatus(WithdrawalStatus.PENDING);
-  }
-
-  getPayingOutWithdrawals(): Withdrawal[] {
-    return this.getWithdrawalsByStatus(WithdrawalStatus.PAYING_OUT);
-  }
-
-  getWithdrawalsWithoutFiatReferences(): Withdrawal[] {
-    return this.withdrawals.filter(
-      (w) =>
-        (w.amountChf == null || w.amountEur == null || w.amountUsd == null) && w.status === WithdrawalStatus.CONFIRMED,
-    );
+  get activeRewardRoutes(): RewardRoute[] {
+    return this.rewardRoutes.filter((r) => r.rewardPercent !== 0);
   }
 
   //*** HELPER STATIC METHODS ***//
@@ -314,36 +171,59 @@ export class Staking extends IEntity {
 
   //*** HELPER METHODS ***//
 
-  private updateRewardBalance(): number {
-    const confirmedRewards = this.getRewardsByStatus(RewardStatus.CONFIRMED);
-    const confirmedRewardsAmount = Util.sumObj(confirmedRewards, 'amount');
+  private validateRewardDistribution(newRewardRoutes: RewardRoute[]): void {
+    const totalDistribution = Util.sumObj<RewardRoute>(newRewardRoutes, 'rewardPercent');
 
-    this.rewardsAmount = confirmedRewardsAmount;
-
-    return this.rewardsAmount;
+    if (totalDistribution !== 1) {
+      throw new BadRequestException(
+        `Cannot create reward strategy. Total reward distribution must be 100%, instead distributed total of ${Util.round(
+          totalDistribution * 100,
+          2,
+        )}%`,
+      );
+    }
   }
 
-  private isEnoughBalanceForWithdrawal(withdrawal: Withdrawal): boolean {
-    const currentBalance = this.balance - this.getInProgressWithdrawalsAmount();
+  private validateDuplicatedRoutes(newRewardRoutes: RewardRoute[]): void {
+    newRewardRoutes.forEach((route) => {
+      const duplicatedRoute = this.findDuplicatedRoute(route, newRewardRoutes);
+
+      if (duplicatedRoute) {
+        throw new BadRequestException(
+          `Cannot create reward strategy. Provided duplicated route for asset ${duplicatedRoute.targetAsset.name} and address ${duplicatedRoute.targetAddress.address}`,
+        );
+      }
+    });
+  }
+
+  private findDuplicatedRoute(currentRoute: RewardRoute, allRewardRoutes: RewardRoute[]): RewardRoute | null {
+    return allRewardRoutes.some((r, index) => allRewardRoutes.findIndex((_r) => _r.isEqual(r)) !== index)
+      ? currentRoute
+      : null;
+  }
+
+  private updateRewardRoutes(newRewardRoutes: RewardRoute[]): void {
+    this.resetExistingRoutes();
+
+    newRewardRoutes.forEach((newRoute) => {
+      const existingRoute = this.rewardRoutes.find((r) => r.isEqual(newRoute));
+
+      if (existingRoute) {
+        existingRoute.updateRoute(newRoute.label, newRoute.rewardPercent);
+        return;
+      }
+
+      this.rewardRoutes.push(newRoute);
+    });
+  }
+
+  private resetExistingRoutes(): void {
+    this.rewardRoutes.forEach((route) => (route.rewardPercent = 0));
+  }
+
+  private isEnoughBalanceForWithdrawal(withdrawal: Withdrawal, inProgressWithdrawalsAmount: number): boolean {
+    const currentBalance = this.balance - inProgressWithdrawalsAmount;
 
     return currentBalance >= withdrawal.amount;
-  }
-
-  private getInProgressWithdrawalsAmount(): number {
-    const withdrawals = this.getWithdrawalsByStatus([WithdrawalStatus.PENDING, WithdrawalStatus.PAYING_OUT]);
-
-    return Util.sumObj(withdrawals, 'amount');
-  }
-
-  private getDepositsByStatus(status: DepositStatus | DepositStatus[]): Deposit[] {
-    return this.deposits.filter((d) => status.includes(d.status));
-  }
-
-  private getWithdrawalsByStatus(status: WithdrawalStatus | WithdrawalStatus[]): Withdrawal[] {
-    return this.withdrawals.filter((w) => status.includes(w.status));
-  }
-
-  private getRewardsByStatus(status: RewardStatus): Reward[] {
-    return this.rewards.filter((r) => r.status === status);
   }
 }
