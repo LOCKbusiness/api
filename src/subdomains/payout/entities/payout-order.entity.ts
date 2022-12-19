@@ -1,3 +1,4 @@
+import { NoTransactionIdException } from 'src/blockchain/ain/exceptions/no-transaction-id.exception';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { IEntity } from 'src/shared/models/entity';
@@ -99,6 +100,8 @@ export class PayoutOrder extends IEntity {
   }
 
   pendingPayout(payoutTxId: string) {
+    if (!payoutTxId) throw new NoTransactionIdException('No payoutTxId provided to PayoutOrder #pendingPayout(...)');
+
     this.payoutTxId = payoutTxId;
     this.status = PayoutOrderStatus.PAYOUT_PENDING;
 
