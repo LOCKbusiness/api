@@ -118,6 +118,12 @@ export abstract class JellyfishStrategy extends PayoutStrategy {
       }
 
       await this.rollbackPayoutDesignation(orders);
+
+      /**
+       * @note
+       * rollback abort the current send process
+       */
+      return;
     }
 
     for (const order of orders) {
