@@ -95,6 +95,12 @@ export class Staking extends IEntity {
 
   //*** PUBLIC API ***//
 
+  activate(): this {
+    this.status = StakingStatus.ACTIVE;
+
+    return this;
+  }
+
   block(): this {
     this.status = StakingStatus.BLOCKED;
 
