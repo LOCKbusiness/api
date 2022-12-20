@@ -125,10 +125,7 @@ export class StakingDepositService {
     await this.processPendingDepositsInBatches(LiquidityMining);
   }
 
-  private splitStakingRefsByStrategy(refs: StakingReference[]): {
-    [StakingStrategy.LIQUIDITY_MINING]: StakingReference[];
-    [StakingStrategy.MASTERNODE]: StakingReference[];
-  } {
+  private splitStakingRefsByStrategy(refs: StakingReference[]): { [s in StakingStrategy]: StakingReference[] } {
     return {
       [StakingStrategy.LIQUIDITY_MINING]: refs.filter((s) => s.strategy === StakingStrategy.LIQUIDITY_MINING),
       [StakingStrategy.MASTERNODE]: refs.filter((s) => s.strategy === StakingStrategy.MASTERNODE),
@@ -136,7 +133,7 @@ export class StakingDepositService {
   }
 
   private async processPendingDepositsInBatches(refs: StakingReference[], batchSize = 50): Promise<void> {
-    return Util.doInBatches<StakingReference>(
+    return Util.doInBatches(
       refs,
       async (batch: StakingReference[]) =>
         await Promise.all(batch.map((ref) => this.processPendingDepositsForStaking(ref.id))),
