@@ -1,7 +1,7 @@
 import { Util } from 'src/shared/util';
 import { EntityRepository, In, Repository } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
-import { StakingType } from '../../domain/entities/staking.entity';
+import { StakingReference, StakingType } from '../../domain/entities/staking.entity';
 import { DepositStatus } from '../../domain/enums';
 
 @EntityRepository(Deposit)
@@ -42,8 +42,10 @@ export class DepositRepository extends Repository<Deposit> {
     return this.find({ where: { staking: { depositAddress: { address: depositAddress } } }, relations: ['staking'] });
   }
 
-  async getStakingIdsForPending(): Promise<number[]> {
-    return this.find({ status: DepositStatus.PENDING }).then((s) => s.map((i) => i.staking.id));
+  async getStakingReferencesForPending(): Promise<StakingReference[]> {
+    return this.find({ status: DepositStatus.PENDING }).then((d) =>
+      d.map(({ staking: s }) => ({ id: s.id, strategy: s.strategy })),
+    );
   }
 
   async getConfirmedAmount(stakingId: number): Promise<number> {

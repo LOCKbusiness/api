@@ -138,6 +138,13 @@ export class Util {
     });
   }
 
+  static async doInBatches<T>(list: T[], action: (batch: T[]) => Promise<unknown>, batchSize: number): Promise<void> {
+    do {
+      const batch = list.splice(0, batchSize);
+      await action(batch);
+    } while (list.length > 0);
+  }
+
   static async delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
