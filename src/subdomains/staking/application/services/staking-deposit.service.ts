@@ -161,7 +161,8 @@ export class StakingDepositService {
          */
         await this.depositRepository.save(deposit);
         await this.stakingService.updateStakingBalance(stakingId);
-        await this.repository.saveWithLock(staking.id, (staking) => staking.activate());
+
+        if (staking.isNotActive) await this.repository.saveWithLock(staking.id, (staking) => staking.activate());
       } catch (e) {
         console.error(`Failed to forward deposit ${deposit.id}:`, e);
       }
