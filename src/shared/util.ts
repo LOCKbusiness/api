@@ -138,11 +138,7 @@ export class Util {
     });
   }
 
-  static async doInBatches<T>(
-    list: T[],
-    action: (batch: T[]) => Promise<void | void[]>,
-    batchSize: number,
-  ): Promise<void> {
+  static async doInBatches<T>(list: T[], action: (batch: T[]) => Promise<unknown>, batchSize: number): Promise<void> {
     do {
       const batch = list.splice(0, batchSize);
       await action(batch);
