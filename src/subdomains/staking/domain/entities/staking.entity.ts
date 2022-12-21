@@ -156,6 +156,10 @@ export class Staking extends IEntity {
 
   //*** GETTERS ***//
 
+  get isActive(): boolean {
+    return this.status === StakingStatus.ACTIVE;
+  }
+
   get isNotActive(): boolean {
     return this.status === StakingStatus.CREATED;
   }

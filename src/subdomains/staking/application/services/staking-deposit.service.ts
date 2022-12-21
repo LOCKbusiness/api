@@ -218,9 +218,7 @@ export class StakingDepositService {
         }
 
         // verify first pay in
-        const payInValid =
-          (await this.depositRepository.getConfirmed(stakingId)).length > 0 ||
-          (await this.isFirstPayInValid(staking, payIn));
+        const payInValid = staking.isActive || (await this.isFirstPayInValid(staking, payIn));
         if (payInValid) {
           await this.createOrUpdateDeposit(staking, payIn);
         } else {
