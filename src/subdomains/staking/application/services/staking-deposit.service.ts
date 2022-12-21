@@ -11,7 +11,7 @@ import { PayIn, PayInPurpose } from 'src/subdomains/payin/domain/entities/payin.
 import { Between, LessThan } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Staking, StakingReference } from '../../domain/entities/staking.entity';
-import { DepositStatus, StakingStatus, StakingStrategy } from '../../domain/enums';
+import { DepositStatus, StakingStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingDeFiChainService } from '../../infrastructure/staking-defichain.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
@@ -119,17 +119,11 @@ export class StakingDepositService {
 
     const stakingRefsWithPendingDeposits = await this.depositRepository.getStakingReferencesForPending();
 
-    const { Masternode, LiquidityMining } = this.splitStakingRefsByStrategy(stakingRefsWithPendingDeposits);
+    const groupedStakingRefs = Util.groupBy(stakingRefsWithPendingDeposits, 'strategy');
 
-    await this.processPendingDepositsInBatches(Masternode);
-    await this.processPendingDepositsInBatches(LiquidityMining);
-  }
-
-  private splitStakingRefsByStrategy(refs: StakingReference[]): { [s in StakingStrategy]: StakingReference[] } {
-    return {
-      [StakingStrategy.LIQUIDITY_MINING]: refs.filter((s) => s.strategy === StakingStrategy.LIQUIDITY_MINING),
-      [StakingStrategy.MASTERNODE]: refs.filter((s) => s.strategy === StakingStrategy.MASTERNODE),
-    };
+    for (const [_, refs] of groupedStakingRefs) {
+      await this.processPendingDepositsInBatches(refs);
+    }
   }
 
   private async processPendingDepositsInBatches(refs: StakingReference[], batchSize = 50): Promise<void> {
