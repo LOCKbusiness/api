@@ -5,7 +5,9 @@ import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { Staking } from './staking.entity';
 
 @Entity()
-@Index(['staking', 'targetAddress.address', 'targetAddress.blockchain', 'targetAsset'], { unique: true })
+@Index((r: RewardRoute) => [r.staking, r.targetAddress.address, r.targetAddress.blockchain, r.targetAsset], {
+  unique: true,
+})
 export class RewardRoute extends IEntity {
   @ManyToOne(() => Staking, (staking) => staking.rewardRoutes, { nullable: false })
   staking: Staking;

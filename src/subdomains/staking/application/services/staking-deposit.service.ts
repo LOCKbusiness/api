@@ -11,7 +11,7 @@ import { PayIn, PayInPurpose } from 'src/subdomains/payin/domain/entities/payin.
 import { Between, LessThan } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Staking, StakingReference } from '../../domain/entities/staking.entity';
-import { DepositStatus, StakingStatus, StakingStrategy } from '../../domain/enums';
+import { DepositStatus, StakingStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingDeFiChainService } from '../../infrastructure/staking-defichain.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
@@ -119,17 +119,11 @@ export class StakingDepositService {
 
     const stakingRefsWithPendingDeposits = await this.depositRepository.getStakingReferencesForPending();
 
-    const { Masternode, LiquidityMining } = this.splitStakingRefsByStrategy(stakingRefsWithPendingDeposits);
+    const groupedStakingRefs = Util.groupBy(stakingRefsWithPendingDeposits, 'strategy');
 
-    await this.processPendingDepositsInBatches(Masternode);
-    await this.processPendingDepositsInBatches(LiquidityMining);
-  }
-
-  private splitStakingRefsByStrategy(refs: StakingReference[]): { [s in StakingStrategy]: StakingReference[] } {
-    return {
-      [StakingStrategy.LIQUIDITY_MINING]: refs.filter((s) => s.strategy === StakingStrategy.LIQUIDITY_MINING),
-      [StakingStrategy.MASTERNODE]: refs.filter((s) => s.strategy === StakingStrategy.MASTERNODE),
-    };
+    for (const [_, refs] of groupedStakingRefs) {
+      await this.processPendingDepositsInBatches(refs);
+    }
   }
 
   private async processPendingDepositsInBatches(refs: StakingReference[], batchSize = 50): Promise<void> {
@@ -161,6 +155,8 @@ export class StakingDepositService {
          */
         await this.depositRepository.save(deposit);
         await this.stakingService.updateStakingBalance(stakingId);
+
+        if (staking.isNotActive) await this.repository.saveWithLock(staking.id, (staking) => staking.activate());
       } catch (e) {
         console.error(`Failed to forward deposit ${deposit.id}:`, e);
       }
@@ -216,9 +212,7 @@ export class StakingDepositService {
         }
 
         // verify first pay in
-        const payInValid =
-          (await this.depositRepository.getConfirmed(stakingId)).length > 0 ||
-          (await this.isFirstPayInValid(staking, payIn));
+        const payInValid = staking.isActive || (await this.isFirstPayInValid(staking, payIn));
         if (payInValid) {
           await this.createOrUpdateDeposit(staking, payIn);
         } else {

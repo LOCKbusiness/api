@@ -10,7 +10,7 @@ import { RewardRoute } from './reward-route.entity';
 import { Staking } from './staking.entity';
 
 @Entity()
-@Index(['staking', 'txId'], { unique: true, where: `txId IS NOT NULL` })
+@Index((r: Reward) => [r.staking, r.txId], { unique: true, where: `txId IS NOT NULL` })
 export class Reward extends IEntity {
   //*** CREATION ***//
 
