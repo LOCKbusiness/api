@@ -43,9 +43,9 @@ export class DepositRepository extends Repository<Deposit> {
   }
 
   async getStakingReferencesForPending(): Promise<StakingReference[]> {
-    return this.find({ status: DepositStatus.PENDING }).then((d) =>
-      d.map(({ staking: s }) => ({ id: s.id, strategy: s.strategy })),
-    );
+    return this.find({ status: DepositStatus.PENDING })
+      .then((d) => d.map(({ staking: s }) => ({ id: s.id, strategy: s.strategy })))
+      .then((refs) => refs.filter((r1, i, a) => a.findIndex((r2) => r1.id === r2.id) === i));
   }
 
   async getConfirmedAmount(stakingId: number): Promise<number> {
