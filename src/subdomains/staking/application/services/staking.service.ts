@@ -19,6 +19,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { RewardRepository } from '../repositories/reward.repository';
 import { DepositRepository } from '../repositories/deposit.repository';
 import { WithdrawalRepository } from '../repositories/withdrawal.repository';
+import { EntityManager } from 'typeorm';
 
 export interface StakingBalances {
   currentBalance: number;
@@ -122,14 +123,14 @@ export class StakingService {
   }
 
   async updateStakingBalance(stakingId: number): Promise<Staking> {
-    return this.repository.saveWithLock(stakingId, async (staking) =>
-      staking.updateBalance(await this.getBalances(staking.id)),
+    return this.repository.saveWithLock(stakingId, async (staking, manager) =>
+      staking.updateBalance(await this.getBalances(manager, staking.id)),
     );
   }
 
   async updateRewardsAmount(stakingId: number): Promise<Staking> {
-    return this.repository.saveWithLock(stakingId, async (staking) =>
-      staking.updateRewardsAmount(await this.rewardRepository.getRewardsAmount(staking.id)),
+    return this.repository.saveWithLock(stakingId, async (staking, manager) =>
+      staking.updateRewardsAmount(await manager.getCustomRepository(RewardRepository).getRewardsAmount(staking.id)),
     );
   }
 
@@ -168,15 +169,15 @@ export class StakingService {
     return this.repository.save(staking);
   }
 
-  private async getBalances(stakingId: number): Promise<StakingBalances> {
+  private async getBalances(manager: EntityManager, stakingId: number): Promise<StakingBalances> {
     /**
      * @warning
      * Assuming that deposits and withdrawals are in same asset as staking
      */
-    const deposits = await this.depositRepository.getConfirmedAmount(stakingId);
-    const withdrawals = await this.withdrawalRepository.getConfirmedAmount(stakingId);
-    const stageOneDeposits = await this.depositRepository.getConfirmedStageOneAmount(stakingId);
-    const stageTwoDeposits = await this.depositRepository.getConfirmedStageTwoAmount(stakingId);
+    const deposits = await manager.getCustomRepository(DepositRepository).getConfirmedAmount(stakingId);
+    const withdrawals = await manager.getCustomRepository(WithdrawalRepository).getConfirmedAmount(stakingId);
+    const stageOneDeposits = await manager.getCustomRepository(DepositRepository).getConfirmedStageOneAmount(stakingId);
+    const stageTwoDeposits = await manager.getCustomRepository(DepositRepository).getConfirmedStageTwoAmount(stakingId);
 
     const currentBalance = Util.round(deposits - withdrawals, 8);
 
