@@ -6,6 +6,10 @@ export abstract class LockedRepository<T> extends Repository<T> {
     return this.saveWithLock(id, (staking) => Object.assign(staking, update), relations);
   }
 
+  /**
+   * @warning
+   *  To avoid deadlocks, use the manager to do DB calls during the update
+   */
   async saveWithLock(
     id: number,
     update: (entity: T, manager: EntityManager) => T | Promise<T>,
@@ -19,7 +23,7 @@ export abstract class LockedRepository<T> extends Repository<T> {
   }
 
   private async getOrThrow(manager: EntityManager, id: number, relations: string[]): Promise<T> {
-    const query = manager.createQueryBuilder(this.target, 'entity');
+    const query = manager.createQueryBuilder(this.target, 'entity').setLock('pessimistic_write');
 
     relations.forEach((r) => query.leftJoinAndSelect(...this.relationToJoin(r)));
 
