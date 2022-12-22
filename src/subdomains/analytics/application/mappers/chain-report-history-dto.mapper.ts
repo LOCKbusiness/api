@@ -62,6 +62,6 @@ export class ChainReportHistoryDtoMapper {
   }
 
   private static getAssetSymbolChainReport(asset: Asset): string {
-    return asset.category === AssetCategory.CRYPTO ? asset.name : `d${asset.name}`;
+    return asset.name === 'DUSD' || asset.category === AssetCategory.CRYPTO ? asset.name : `d${asset.name}`;
   }
 }
