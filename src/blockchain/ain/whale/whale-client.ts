@@ -1,6 +1,6 @@
 import { ApiPagedResponse, WhaleApiClient } from '@defichain/whale-api-client';
 import { AddressToken, AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
-import { LoanVaultActive, LoanVaultState } from '@defichain/whale-api-client/dist/api/loan';
+import { CollateralToken, LoanVaultActive, LoanVaultState } from '@defichain/whale-api-client/dist/api/loan';
 import { TokenData } from '@defichain/whale-api-client/dist/api/tokens';
 import { Transaction, TransactionVin } from '@defichain/whale-api-client/dist/api/transactions';
 import BigNumber from 'bignumber.js';
@@ -42,6 +42,10 @@ export class WhaleClient {
 
   async getAllTokens(): Promise<TokenData[]> {
     return await this.getAll(() => this.client.tokens.list(200));
+  }
+
+  async getAllCollateralTokens(): Promise<CollateralToken[]> {
+    return await this.getAll(() => this.client.loan.listCollateralToken(200));
   }
 
   async getVault(vaultId: string): Promise<LoanVaultActive> {

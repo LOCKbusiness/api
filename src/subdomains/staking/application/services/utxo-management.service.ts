@@ -26,7 +26,7 @@ export class UtxoManagementService {
 
   @Cron(CronExpression.EVERY_MINUTE)
   async doUtxoManagement() {
-    if (Config.processDisabled(Process.STAKING_LIQUIDITY_MANAGEMENT)) return;
+    if (Config.processDisabled(Process.UTXO_MANAGEMENT)) return;
     if (!this.lockUtxoManagement.acquire()) return;
 
     try {
