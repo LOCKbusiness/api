@@ -5,10 +5,10 @@ export interface Subscriber<T> {
   timer: NodeJS.Timeout;
 }
 
-export class AsyncMap<T> {
-  private readonly subscribers = new Map<string, Subscriber<T>>();
+export class AsyncMap<K, T> {
+  private readonly subscribers = new Map<K, Subscriber<T>>();
 
-  public wait(id: string, timeout: number): Promise<T> {
+  public wait(id: K, timeout: number): Promise<T> {
     const existing = this.subscribers.get(id);
     if (existing) return existing.promise;
 
@@ -25,11 +25,11 @@ export class AsyncMap<T> {
     return promise;
   }
 
-  public get(): string[] {
+  public get(): K[] {
     return Array.from(this.subscribers.keys());
   }
 
-  public resolve(id: string, value: T) {
+  public resolve(id: K, value: T) {
     const subscriber = this.subscribers.get(id);
     if (subscriber) {
       subscriber.resolve(value);
@@ -38,7 +38,7 @@ export class AsyncMap<T> {
     }
   }
 
-  public reject(id: string, reason: string) {
+  public reject(id: K, reason: string) {
     const subscriber = this.subscribers.get(id);
     if (subscriber) {
       subscriber.reject(new Error(reason));

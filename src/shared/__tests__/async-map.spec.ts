@@ -1,7 +1,7 @@
 import { AsyncMap } from '../async-map';
 
 describe('AsyncMap', () => {
-  let map: AsyncMap<{ result: number }>;
+  let map: AsyncMap<string, { result: number }>;
 
   beforeEach(async () => {
     map = new AsyncMap();
