@@ -111,10 +111,6 @@ export class YieldMachineService {
     return tokens.find((token) => +token.id === tokenId)?.amount;
   }
 
-  async getVaults(): Promise<string[]> {
-    return this.vaultService.getAll().then((vaults) => vaults.map((v) => v.vault).filter((vaultId) => vaultId != null));
-  }
-
   async create({ command, parameters }: TransactionInput): Promise<string> {
     const isSendFromLiq =
       command === TransactionCommand.ACCOUNT_TO_ACCOUNT && parameters.from === Config.yieldMachine.liquidity.address;
