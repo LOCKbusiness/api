@@ -88,6 +88,11 @@ import { UtxoManagementService } from './application/services/utxo-management.se
     LiquidityManagementService,
     UtxoManagementService,
   ],
-  exports: [StakingService, StakingDepositService, StakingWithdrawalService],
+  exports: [
+    StakingService,
+    StakingDepositService,
+    StakingWithdrawalService,
+    { provide: PRICE_PROVIDER, useClass: CoinGeckoService },
+  ],
 })
 export class StakingModule {}
