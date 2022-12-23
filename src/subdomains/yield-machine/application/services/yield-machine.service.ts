@@ -1,15 +1,10 @@
-import { AddressToken } from '@defichain/whale-api-client/dist/api/address';
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import BigNumber from 'bignumber.js';
 import { TokenProviderService } from 'src/blockchain/ain/whale/token-provider.service';
-import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
-import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
-import { Config, Process } from 'src/config/config';
+import { Config } from 'src/config/config';
 import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
 import { VaultService } from 'src/integration/vault/application/services/vault.service';
 import { Vault } from 'src/integration/vault/domain/entities/vault.entity';
-import { Lock } from 'src/shared/lock';
 import { TransactionCommand } from '../../domain/enums';
 import {
   AddPoolLiquidityParameters,
@@ -26,95 +21,11 @@ import {
 
 @Injectable()
 export class YieldMachineService {
-  private readonly emergencyVaultCheckLock = new Lock(600);
-
-  private whaleClient: WhaleClient;
   constructor(
     private readonly transactionExecutionService: TransactionExecutionService,
     private readonly vaultService: VaultService,
     private readonly tokenProviderService: TokenProviderService,
-    readonly whaleService: WhaleService,
-  ) {
-    whaleService.getClient().subscribe((client) => (this.whaleClient = client));
-  }
-
-  @Cron(CronExpression.EVERY_5_MINUTES)
-  async checkVaultsForEmergency() {
-    if (Config.processDisabled(Process.UTXO_MANAGEMENT)) return;
-    if (!this.emergencyVaultCheckLock.acquire()) return;
-
-    try {
-      const vaults = await this.vaultService.getAll();
-      const vaultInfos = await Promise.all(
-        vaults.filter((v) => v.vault).map((v) => this.whaleClient.getVault(v.vault)),
-      );
-      const allEmergencyProcesses: Promise<unknown>[] = [];
-      for (const vault of vaultInfos) {
-        const dbVault = vaults.find((v) => v.vault === vault.vaultId);
-        if (dbVault.emergencyCollateralRatio > +vault.collateralRatio) {
-          console.info(`starting emergency payback for ${dbVault.vault} on ${dbVault.address}`);
-          const logId = `${dbVault.address} (${dbVault.vault})`;
-          allEmergencyProcesses.push(
-            this.executeEmergencyFor(dbVault, logId).catch((e) =>
-              console.error(`Exception during vault emergency check for ${logId}:`, e),
-            ),
-          );
-        }
-      }
-      await Promise.all(allEmergencyProcesses);
-      console.info(`finished emergency check`);
-    } catch (e) {
-      console.error('Exception during vault emergency check:', e);
-    } finally {
-      this.emergencyVaultCheckLock.release();
-    }
-  }
-
-  private async executeEmergencyFor(vault: Vault, logId: string): Promise<string[]> {
-    let tokens = await this.whaleClient.getTokenBalances(vault.address);
-
-    // remove liquidity mining pool tokens to have pair token A and pair token B available
-    const amountToRemoveFromPool = this.amountOf(vault.blockchainPairId, tokens);
-    if (!amountToRemoveFromPool) throw new Error(`${logId}: No pool liquidity found for vault: ${vault.vault}`);
-    console.info(`${logId}: Removing ${amountToRemoveFromPool} of pool ${vault.blockchainPairId}`);
-    const removePoolTx = await this.removePoolLiquidity(vault, {
-      amount: +amountToRemoveFromPool,
-      address: vault.address,
-    });
-    await this.whaleClient.waitForTx(removePoolTx);
-
-    // pay back as many pair token A tokens as possible
-    tokens = await this.whaleClient.getTokenBalances(vault.address);
-    const savingTxs: Promise<string>[] = [];
-    const amountToPayback = this.amountOf(vault.blockchainPairTokenAId, tokens);
-    if (amountToPayback) {
-      console.info(`${logId}: Paying back ${amountToPayback} of ${vault.blockchainPairTokenAId}`);
-      const paybackTx = await this.paybackLoan(vault, {
-        amount: +amountToPayback,
-        address: vault.address,
-        vault: vault.vault,
-      });
-      savingTxs.push(this.whaleClient.waitForTx(paybackTx));
-    }
-
-    // deposit as many pair token B tokens as possible
-    const amountToDeposit = this.amountOf(vault.blockchainPairTokenBId, tokens);
-    if (amountToDeposit) {
-      console.info(`${logId}: Depositing ${amountToDeposit} of ${vault.blockchainPairTokenBId}`);
-      const depositTx = await this.depositToVault(vault, {
-        amount: +amountToDeposit,
-        address: vault.address,
-        vault: vault.vault,
-      });
-      savingTxs.push(this.whaleClient.waitForTx(depositTx));
-    }
-
-    return Promise.all(savingTxs);
-  }
-
-  private amountOf(tokenId: number, tokens: AddressToken[]): string {
-    return tokens.find((token) => +token.id === tokenId)?.amount;
-  }
+  ) {}
 
   async create({ command, parameters }: TransactionInput): Promise<string> {
     const isSendFromLiq =
@@ -193,7 +104,7 @@ export class YieldMachineService {
     });
   }
 
-  private depositToVault(vault: Vault, parameters: DepositToVaultParameters): Promise<string> {
+  depositToVault(vault: Vault, parameters: DepositToVaultParameters): Promise<string> {
     return this.transactionExecutionService.depositToVault({
       from: vault.address,
       vault: vault.vault,
@@ -226,7 +137,7 @@ export class YieldMachineService {
     });
   }
 
-  private paybackLoan(vault: Vault, parameters: PaybackLoanParameters): Promise<string> {
+  paybackLoan(vault: Vault, parameters: PaybackLoanParameters): Promise<string> {
     return this.transactionExecutionService.paybackLoan({
       from: vault.address,
       vault: vault.vault,
@@ -253,7 +164,7 @@ export class YieldMachineService {
     });
   }
 
-  private removePoolLiquidity(vault: Vault, parameters: RemovePoolLiquidityParameters): Promise<string> {
+  removePoolLiquidity(vault: Vault, parameters: RemovePoolLiquidityParameters): Promise<string> {
     return this.transactionExecutionService.removePoolLiquidity({
       from: vault.address,
       token: vault.blockchainPairId,
