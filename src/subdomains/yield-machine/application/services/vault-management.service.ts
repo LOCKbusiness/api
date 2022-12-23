@@ -22,7 +22,6 @@ export class VaultManagementService {
     readonly whaleService: WhaleService,
   ) {
     whaleService.getClient().subscribe((client) => (this.whaleClient = client));
-    this.checkVaultsForEmergency();
   }
 
   @Cron(CronExpression.EVERY_5_MINUTES)
@@ -40,6 +39,7 @@ export class VaultManagementService {
       for (const vault of vaultInfos) {
         const dbVault = vaults.find((v) => v.vault === vault.vaultId);
         const nextCollateralRatio = this.calculateNextCollateralRatio(vault, collateralTokens);
+        console.log(nextCollateralRatio.toString());
         const collateralRatioToUse = nextCollateralRatio
           ? Math.min(+vault.collateralRatio, nextCollateralRatio.toNumber())
           : +vault.collateralRatio;
@@ -112,7 +112,7 @@ export class VaultManagementService {
     vault: LoanVaultActive,
     collateralTokens: CollateralToken[],
   ): BigNumber | undefined {
-    const nextLoan = this.nextLoanFor(vault);
+    const nextLoan = this.nextLoanValueFor(vault);
     if (nextLoan.lte(0)) return undefined;
     return this.nextCollateralValue(vault, collateralTokens)
       .dividedBy(nextLoan)
@@ -120,22 +120,21 @@ export class VaultManagementService {
       .decimalPlaces(2, BigNumber.ROUND_FLOOR);
   }
 
-  private nextLoanFor(vault: LoanVaultActive): BigNumber {
-    let nextLoan = new BigNumber(0);
-    vault.loanAmounts.forEach((loan) => {
-      nextLoan = nextLoan.plus(new BigNumber(loan.amount).multipliedBy(loan.activePrice?.next?.amount ?? 1));
-    });
-    return nextLoan;
+  private nextLoanValueFor(vault: LoanVaultActive): BigNumber {
+    return BigNumber.sum.apply(
+      null,
+      vault.loanAmounts.map((loan) => new BigNumber(loan.amount).multipliedBy(loan.activePrice?.next?.amount ?? 1)),
+    );
   }
 
   private nextCollateralValue(vault: LoanVaultActive, collateralTokens: CollateralToken[]): BigNumber {
-    let nextCollateral = new BigNumber(0);
-    vault.collateralAmounts.forEach((collateral) => {
-      const collValue = new BigNumber(collateralTokens?.find((token) => token.token.id == collateral.id)?.factor ?? 1)
-        .multipliedBy(collateral.activePrice?.next?.amount ?? 1)
-        .multipliedBy(collateral.amount);
-      nextCollateral = nextCollateral.plus(collValue);
-    });
-    return nextCollateral;
+    return BigNumber.sum.apply(
+      null,
+      vault.collateralAmounts.map((collateral) =>
+        new BigNumber(collateralTokens?.find((token) => token.token.id == collateral.id)?.factor ?? 1)
+          .multipliedBy(collateral.activePrice?.next?.amount ?? 1)
+          .multipliedBy(collateral.amount),
+      ),
+    );
   }
 }
