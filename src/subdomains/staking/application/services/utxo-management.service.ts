@@ -26,16 +26,16 @@ export class UtxoManagementService {
 
   @Cron(CronExpression.EVERY_MINUTE)
   async doUtxoManagement() {
-    if (Config.processDisabled(Process.STAKING_LIQUIDITY_MANAGEMENT)) return;
+    if (Config.processDisabled(Process.UTXO_MANAGEMENT)) return;
     if (!this.lockUtxoManagement.acquire()) return;
 
     try {
       await this.checkUtxos();
     } catch (e) {
       console.error('Exception during utxo-management cronjob:', e);
+    } finally {
+      this.lockUtxoManagement.release();
     }
-
-    this.lockUtxoManagement.release();
   }
 
   async checkUtxos(): Promise<void> {

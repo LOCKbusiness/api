@@ -22,6 +22,7 @@ param nodeAllowAllIps bool
 param nodePassword string
 @secure()
 param nodeWalletPassword string
+param rewStakingAddress string
 
 param nodeServicePlanSkuName string
 param nodeServicePlanSkuTier string
@@ -317,6 +318,10 @@ resource apiAppService 'Microsoft.Web/sites@2018-11-01' = if (env != 'loc') {
         {
           name: 'NODE_WALLET_PASSWORD'
           value: nodeWalletPassword
+        }
+        {
+          name: 'REW_STAKING_ADDRESS'
+          value: rewStakingAddress
         }
         {
           name: 'NODE_INP_URL_ACTIVE'

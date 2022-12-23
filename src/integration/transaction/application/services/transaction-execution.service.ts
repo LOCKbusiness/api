@@ -83,18 +83,26 @@ export class TransactionExecutionService {
   }
 
   async sendWithdrawal(data: SendCoinWithdrawalData | SendTokenWithdrawalData): Promise<string> {
+    const config = data.type === AssetType.TOKEN ? Config.yieldMachine.liquidity : Config.staking.liquidity;
+
     const rawTx = await this.useCache(TransactionType.WITHDRAWAL, data.withdrawalId.toString(), () =>
       data.type === AssetType.TOKEN
-        ? this.rawTxService.Account.send(Config.yieldMachine.liquidity.address, data.to, data.tokenId, data.amount)
-        : this.rawTxService.Utxo.sendWithChange(
-            Config.staking.liquidity.address,
-            data.to,
-            data.amount,
-            UtxoSizePriority.FITTING,
-          ),
+        ? this.rawTxService.Account.send(config.address, data.to, data.tokenId, data.amount)
+        : this.rawTxService.Utxo.sendWithChange(config.address, data.to, data.amount, UtxoSizePriority.FITTING),
     );
+
     console.info(`Send withdrawal tx ${rawTx.id}`);
-    return this.signAndBroadcast(rawTx, { id: data.withdrawalId, type: TransactionType.WITHDRAWAL }, false);
+    return this.signAndBroadcast(
+      rawTx,
+      {
+        id: data.withdrawalId,
+        ...this.createPayloadFor(
+          { ownerWallet: config.wallet, accountIndex: config.account },
+          TransactionType.WITHDRAWAL,
+        ),
+      },
+      false,
+    );
   }
 
   async splitBiggestUtxo(data: SplitData): Promise<string> {

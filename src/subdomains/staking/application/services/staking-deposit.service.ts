@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
@@ -10,7 +10,7 @@ import { PayInService } from 'src/subdomains/payin/application/services/payin.se
 import { PayIn, PayInPurpose } from 'src/subdomains/payin/domain/entities/payin.entity';
 import { Between, LessThan } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
-import { Staking } from '../../domain/entities/staking.entity';
+import { Staking, StakingReference } from '../../domain/entities/staking.entity';
 import { DepositStatus, StakingStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingDeFiChainService } from '../../infrastructure/staking-defichain.service';
@@ -21,6 +21,7 @@ import { StakingFactory } from '../factories/staking.factory';
 import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
 import { DepositRepository } from '../repositories/deposit.repository';
 import { StakingRepository } from '../repositories/staking.repository';
+import { StakingService } from './staking.service';
 
 @Injectable()
 export class StakingDepositService {
@@ -35,6 +36,7 @@ export class StakingDepositService {
     private readonly deFiChainStakingService: StakingDeFiChainService,
     private readonly payInService: PayInService,
     private readonly depositRepository: DepositRepository,
+    private readonly stakingService: StakingService,
     whaleService: WhaleService,
   ) {
     whaleService.getClient().subscribe((client) => (this.whaleClient = client));
@@ -65,14 +67,15 @@ export class StakingDepositService {
     await this.kycCheck.check(userId, walletId);
 
     const staking = await this.authorize.authorize(userId, stakingId);
+    if (staking.isBlocked) throw new BadRequestException('Staking is blocked');
 
     const deposit = this.factory.createDeposit(staking, dto);
 
-    staking.addDeposit(deposit);
+    await this.depositRepository.save(deposit);
 
-    await this.repository.save(staking);
+    const amounts = await this.stakingService.getUnconfirmedDepositsAndWithdrawalsAmounts(stakingId);
 
-    return StakingOutputDtoMapper.entityToDto(staking);
+    return StakingOutputDtoMapper.entityToDto(staking, amounts.withdrawals, amounts.deposits);
   }
 
   //*** JOBS ***//
@@ -114,20 +117,27 @@ export class StakingDepositService {
   private async forwardDepositsToStaking(): Promise<void> {
     await this.deFiChainStakingService.checkSync();
 
-    // not querying Stakings, because eager query is not supported, thus unsafe to fetch entire entity
-    const stakingIdsWithPendingDeposits = await this.repository
-      .createQueryBuilder('staking')
-      .leftJoin('staking.deposits', 'deposits')
-      .where('deposits.status = :status', { status: DepositStatus.PENDING })
-      .getMany()
-      .then((s) => s.map((i) => i.id));
+    const stakingRefsWithPendingDeposits = await this.depositRepository.getStakingReferencesForPending();
 
-    await Promise.all(stakingIdsWithPendingDeposits.map((id) => this.processPendingDepositsForStaking(id)));
+    const groupedStakingRefs = Util.groupBy(stakingRefsWithPendingDeposits, 'strategy');
+
+    for (const [_, refs] of groupedStakingRefs) {
+      await this.processPendingDepositsInBatches(refs);
+    }
+  }
+
+  private async processPendingDepositsInBatches(refs: StakingReference[], batchSize = 50): Promise<void> {
+    return Util.doInBatches(
+      refs,
+      async (batch: StakingReference[]) =>
+        await Promise.all(batch.map((ref) => this.processPendingDepositsForStaking(ref.id))),
+      batchSize,
+    );
   }
 
   private async processPendingDepositsForStaking(stakingId: number): Promise<void> {
     const staking = await this.repository.findOne(stakingId);
-    const deposits = staking.getPendingDeposits();
+    const deposits = await this.depositRepository.getPending(stakingId);
 
     for (const deposit of deposits) {
       try {
@@ -137,9 +147,16 @@ export class StakingDepositService {
           deposit.asset,
           staking.strategy,
         );
-        staking.confirmDeposit(deposit.id.toString(), txId);
+        deposit.confirmDeposit(txId);
 
-        await this.repository.save(staking);
+        /**
+         * @note
+         * potential case of updateStakingBalance failure is tolerated
+         */
+        await this.depositRepository.save(deposit);
+        await this.stakingService.updateStakingBalance(stakingId);
+
+        if (staking.isNotActive) await this.repository.saveWithLock(staking.id, (staking) => staking.activate());
       } catch (e) {
         console.error(`Failed to forward deposit ${deposit.id}:`, e);
       }
@@ -160,8 +177,7 @@ export class StakingDepositService {
   private async filterStakingPayIns(allPayIns: PayIn[]): Promise<PayIn[]> {
     const stakingAddresses = await this.repository
       .createQueryBuilder('staking')
-      .leftJoin('staking.depositAddress', 'depositAddress')
-      .select('depositAddress.address', 'address')
+      .select('depositAddressAddress', 'address')
       .where('staking.status != :status', { status: StakingStatus.BLOCKED })
       .getRawMany<{ address: string }>()
       .then((a) => a.map((a) => a.address));
@@ -196,15 +212,15 @@ export class StakingDepositService {
         }
 
         // verify first pay in
-        const payInValid = staking.getConfirmedDeposits().length > 0 || (await this.isFirstPayInValid(staking, payIn));
+        const payInValid = staking.isActive || (await this.isFirstPayInValid(staking, payIn));
         if (payInValid) {
-          this.createOrUpdateDeposit(staking, payIn);
+          await this.createOrUpdateDeposit(staking, payIn);
         } else {
           console.error(`Invalid first pay in, staking ${staking.id} is blocked`);
-          staking.block();
+
+          await this.repository.saveWithLock(staking.id, (staking: Staking) => staking.block());
         }
 
-        await this.repository.save(staking);
         await this.payInService.acknowledgePayIn(payIn, PayInPurpose.STAKING);
       } catch (e) {
         console.error(`Failed to process deposit input ${payIn.id}:`, e);
@@ -217,17 +233,17 @@ export class StakingDepositService {
     return staking.verifyUserAddresses(addresses);
   }
 
-  private createOrUpdateDeposit(staking: Staking, payIn: PayIn): void {
-    const deposit = staking.getDepositByPayInTxId(payIn.txId) ?? this.createNewDeposit(staking, payIn);
+  private async createOrUpdateDeposit(staking: Staking, payIn: PayIn): Promise<void> {
+    const deposit =
+      (await this.depositRepository.getByPayInTxId(staking.id, payIn.txId)) ??
+      (await this.createNewDeposit(staking, payIn));
 
     deposit.updatePreCreatedDeposit(payIn.txId, payIn.amount);
+
+    await this.depositRepository.save(deposit);
   }
 
-  private createNewDeposit(staking: Staking, payIn: PayIn): Deposit {
-    const newDeposit = this.factory.createDeposit(staking, { amount: payIn.amount, txId: payIn.txId });
-
-    staking.addDeposit(newDeposit);
-
-    return newDeposit;
+  private async createNewDeposit(staking: Staking, payIn: PayIn): Promise<Deposit> {
+    return this.factory.createDeposit(staking, { amount: payIn.amount, txId: payIn.txId });
   }
 }

@@ -9,6 +9,7 @@ import { Config } from 'src/config/config';
 import { QueueHandler } from 'src/shared/queue-handler';
 import { HttpService } from 'src/shared/services/http.service';
 import { Util } from 'src/shared/util';
+import { EnsureTxIdOrThrow } from '../decorators/ensure-txid-or-throw.decorator';
 
 export enum NodeCommand {
   UNLOCK = 'walletpassphrase',
@@ -75,6 +76,17 @@ export class NodeClient {
   async getTx(txId: string): Promise<InWalletTransaction> {
     if (!txId) throw new Error('TxId is undefined');
     return this.callNode((c) => c.wallet.getTransaction(txId));
+  }
+
+  @EnsureTxIdOrThrow()
+  async sendUtxoToMany(payload: { addressTo: string; amount: number }[]): Promise<string> {
+    if (payload.length > 100) {
+      throw new Error('Too many addresses in one transaction batch, allowed max 100 for UTXO');
+    }
+
+    const batch = payload.reduce((acc, p) => ({ ...acc, [p.addressTo]: `${p.amount}` }), {});
+
+    return this.callNode((c) => c.wallet.sendMany(batch), true);
   }
 
   async getMasternodeInfo(id: string): Promise<MasternodeInfo> {

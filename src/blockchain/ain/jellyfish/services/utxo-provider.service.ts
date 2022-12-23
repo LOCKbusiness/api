@@ -50,9 +50,9 @@ export class UtxoProviderService {
       }
     } catch (e) {
       console.error('Exception during unlocking utxos cronjob:', e);
+    } finally {
+      this.lockUtxo.release();
     }
-
-    this.lockUtxo.release();
   }
 
   unlockSpentBasedOn(prevouts: Prevout[], address: string): void {
@@ -149,6 +149,7 @@ export class UtxoProviderService {
     const currentUnspent = await this.whaleClient
       .getAllUnspent(address)
       .then((unspent) => unspent.map((u) => ({ ...u, id: UtxoProviderService.idForUnspent(u) })));
+    console.info(`update ${address}: current unspent ${currentUnspent.map((unspent) => unspent.id)}`);
     this.unspent.set(
       address,
       currentUnspent.filter(

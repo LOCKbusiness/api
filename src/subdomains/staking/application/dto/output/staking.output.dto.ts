@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { StakingStatus, StakingStrategy } from 'src/subdomains/staking/domain/enums';
+import { RewardRouteOutputDto } from './reward-route.output.dto';
 
 export class StakingOutputDto {
   @ApiProperty()
@@ -34,4 +35,10 @@ export class StakingOutputDto {
 
   @ApiProperty()
   pendingWithdrawals: number;
+
+  @ApiProperty({ type: RewardRouteOutputDto, isArray: true })
+  rewardRoutes: RewardRouteOutputDto[];
+
+  @ApiProperty()
+  rewardsAmount: number;
 }

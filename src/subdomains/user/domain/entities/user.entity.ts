@@ -1,4 +1,5 @@
 import { IEntity } from 'src/shared/models/entity';
+import { Votes } from 'src/subdomains/voting/application/dto/votes.dto';
 import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { KycStatus } from '../enums';
 import { KycCompleted, KycFulfills } from '../utils';
@@ -58,5 +59,9 @@ export class User extends IEntity {
 
   hasAtLeast(minKyc: KycStatus): boolean {
     return KycFulfills(this.kycStatus, minKyc);
+  }
+
+  get vote(): Votes {
+    return this.votes ? JSON.parse(this.votes) : {};
   }
 }

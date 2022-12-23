@@ -261,7 +261,7 @@
     "method": "GET",
     "sortNum": 190000,
     "created": "2022-11-09T15:22:48.310Z",
-    "modified": "2022-11-09T21:37:54.801Z",
+    "modified": "2022-12-09T10:07:18.874Z",
     "headers": [],
     "params": [
       {
@@ -310,6 +310,39 @@
     "tests": []
   },
   {
+    "_id": "92c768f9-4912-420f-8f23-9eade162ddb4",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "2755f99f-d1e0-4ce5-a0f7-9fd0eb7979c0",
+    "name": "Set Reward Routes",
+    "url": "{{url}}/v1/staking/22/reward-routes",
+    "method": "PUT",
+    "sortNum": 210000,
+    "created": "2022-12-05T11:45:05.532Z",
+    "modified": "2022-12-09T10:20:11.741Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "[\n  {\n    \"label\": \"ETH route\",\n    \"rewardPercent\": 1,\n    \"targetAsset\": \"ETH\",\n    \"targetAddress\": \"tar_address\",\n    \"targetBlockchain\": \"DeFiChain\"\n  },\n  {\n    \"label\": \"DUSD route 2\",\n    \"rewardPercent\": 0,\n    \"targetAsset\": \"DUSD\",\n    \"targetAddress\": \"tar_address\",\n    \"targetBlockchain\": \"DeFiChain\"\n  }\n]",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "3638817d-2959-430e-a66a-db7405531ad9",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "2755f99f-d1e0-4ce5-a0f7-9fd0eb7979c0",
+    "name": "Get Reward Routes",
+    "url": "{{url}}/v1/staking/22/reward-routes",
+    "method": "GET",
+    "sortNum": 220000,
+    "created": "2022-12-05T11:45:19.601Z",
+    "modified": "2022-12-09T10:18:04.525Z",
+    "headers": [],
+    "params": [],
+    "tests": []
+  },
+  {
     "_id": "1a700037-eb18-4608-9aa6-4dbc2af5afcf",
     "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
     "containerId": "e8091201-306b-4cbc-aafa-2215ba675a65",
@@ -324,15 +357,53 @@
     "tests": []
   },
   {
-    "_id": "6d864281-3be0-4c8c-a730-4d02f7d43ea1",
+    "_id": "806381ca-9b22-4349-8e7e-905b296983bb",
     "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
-    "containerId": "471a4574-a59a-48ec-8397-8643551fcf44",
-    "name": "get vaults",
-    "url": "{{url}}/v1/yield-machine/vaults",
-    "method": "GET",
+    "containerId": "1386d368-b3e9-4903-a2cb-e21d7c02bee4",
+    "name": "Create",
+    "url": "{{url}}/v1/staking/1/reward",
+    "method": "POST",
+    "sortNum": 230000,
+    "created": "2022-12-12T14:48:49.041Z",
+    "modified": "2022-12-12T15:08:19.628Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"referenceAssetId\": 1,\n  \"inputReferenceAmount\": 1,\n  \"outputReferenceAmount\": 1,\n  \"feePercent\": 1,\n  \"feeAmount\": 0.1,\n  \"rewardRouteId\": 1,\n  \"status\": \"Confirmed\"\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "77e2b096-b8f6-4059-8ce7-01bed4e4a8bd",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "e8091201-306b-4cbc-aafa-2215ba675a65",
+    "name": "Update fee",
+    "url": "{{url}}/v1/staking/1/staking-fee",
+    "method": "PATCH",
     "sortNum": 210000,
-    "created": "2022-12-10T10:04:36.490Z",
-    "modified": "2022-12-10T10:04:47.771Z",
+    "created": "2022-12-15T08:09:00.185Z",
+    "modified": "2022-12-15T08:09:38.745Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"feePercent\": 0.01\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "22e996c4-762b-4f00-8ad0-86b7579ffd52",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "969a0f3a-dfb3-41de-91d7-e66d8a8aa795",
+    "name": "Get sign messages",
+    "url": "{{url}}/v1/voting/sign-messages",
+    "method": "GET",
+    "sortNum": 240000,
+    "created": "2022-12-16T00:26:52.758Z",
+    "modified": "2022-12-16T00:27:14.623Z",
     "headers": [],
     "params": [],
     "tests": []

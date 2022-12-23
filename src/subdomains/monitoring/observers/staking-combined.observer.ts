@@ -6,10 +6,11 @@ import { Config, Process } from 'src/config/config';
 import { MasternodeRepository } from 'src/integration/masternode/application/repositories/masternode.repository';
 import { Util } from 'src/shared/util';
 import { DepositRepository } from 'src/subdomains/staking/application/repositories/deposit.repository';
-import { StakingBlockchainAddressRepository } from 'src/subdomains/staking/application/repositories/staking-blockchain-address.repository';
+import { RewardRepository } from 'src/subdomains/staking/application/repositories/reward.repository';
+import { ReservableBlockchainAddressRepository } from 'src/subdomains/address-pool/application/repositories/reservable-blockchain-address.repository';
 import { StakingRepository } from 'src/subdomains/staking/application/repositories/staking.repository';
 import { WithdrawalRepository } from 'src/subdomains/staking/application/repositories/withdrawal.repository';
-import { DepositStatus, MasternodeState, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
+import { DepositStatus, MasternodeState, StakingStrategy, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
 import { getCustomRepository, In, IsNull, Not } from 'typeorm';
 import { MonitoringService } from '../application/services/monitoring.service';
 import { MetricObserver } from '../metric.observer';
@@ -20,7 +21,12 @@ interface StakingData {
   freeDepositAddresses: number;
   openDeposits: number;
   openWithdrawals: number;
+  lastOutputDates: LastOutputDates;
 }
+
+type LastOutputDates = {
+  [k in StakingStrategy]?: Date;
+};
 
 @Injectable()
 export class StakingCombinedObserver extends MetricObserver<StakingData> {
@@ -54,15 +60,16 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
       freeOperators: await getCustomRepository(MasternodeRepository).count({
         where: { creationHash: IsNull() },
       }),
-      freeDepositAddresses: await getCustomRepository(StakingBlockchainAddressRepository)
+      freeDepositAddresses: await getCustomRepository(ReservableBlockchainAddressRepository)
         .createQueryBuilder('address')
-        .leftJoin('address.staking', 'staking')
-        .where('staking.id IS NULL')
+        .leftJoin('address.reservation', 'reservation')
+        .where('reservation.id IS NULL')
         .getCount(),
       openDeposits: await getCustomRepository(DepositRepository).count({ where: { status: DepositStatus.PENDING } }),
       openWithdrawals: await getCustomRepository(WithdrawalRepository).count({
         where: { status: In([WithdrawalStatus.PENDING, WithdrawalStatus.PAYING_OUT]) },
       }),
+      lastOutputDates: await this.getLastOutputDates(),
     };
   }
 
@@ -98,5 +105,25 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
     // calculate difference
     const difference = Util.round(actual - should, Config.defaultVolumeDecimal);
     return { actual, should, difference };
+  }
+
+  private async getLastOutputDates(): Promise<LastOutputDates> {
+    const lastOutputDates: LastOutputDates = {};
+
+    for (const strategy of Object.values(StakingStrategy)) {
+      lastOutputDates[strategy] = await this.getLastOutputDate(strategy);
+    }
+
+    return lastOutputDates;
+  }
+
+  private async getLastOutputDate(strategy: StakingStrategy): Promise<Date> {
+    return await getCustomRepository(RewardRepository)
+      .findOne({
+        order: { outputDate: 'DESC' },
+        where: { staking: { strategy } },
+        relations: ['staking'],
+      })
+      .then((b) => b?.outputDate);
   }
 }

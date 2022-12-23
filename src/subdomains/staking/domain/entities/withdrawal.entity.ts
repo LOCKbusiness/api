@@ -10,7 +10,7 @@ import { WithdrawalStatus } from '../enums';
 import { Staking } from './staking.entity';
 
 @Entity()
-@Index(['staking', 'status'], { unique: true, where: `status = '${WithdrawalStatus.DRAFT}'` })
+@Index((w: Withdrawal) => [w.staking, w.status], { unique: true, where: `status = '${WithdrawalStatus.DRAFT}'` })
 export class Withdrawal extends IEntity {
   @Column({ nullable: true })
   signMessage: string;
@@ -18,7 +18,7 @@ export class Withdrawal extends IEntity {
   @Column({ nullable: true })
   signature: string;
 
-  @ManyToOne(() => Staking, (staking) => staking.withdrawals, { nullable: false })
+  @ManyToOne(() => Staking, { eager: true, nullable: false })
   staking: Staking;
 
   @Column({ nullable: false })

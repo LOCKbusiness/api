@@ -41,6 +41,9 @@
     "nodeWalletPassword": {
       "value": "xxx"
     },
+    "rewStakingAddress": {
+      "value": "xxx"
+    },
     "apiSignAddress": {
       "value": "xxx"
     },

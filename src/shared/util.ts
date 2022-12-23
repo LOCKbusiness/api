@@ -22,6 +22,10 @@ export class Util {
     return this.sum(list.map((i) => i[key] as unknown as number));
   }
 
+  static minObj<T>(list: T[], key: KeyType<T, number>): number {
+    return Math.min(...list.map((i) => i[key] as unknown as number));
+  }
+
   static avg(list: number[]): number {
     return this.sum(list) / list.length;
   }
@@ -132,6 +136,13 @@ export class Util {
       clearTimeout(timer);
       return resolve(result);
     });
+  }
+
+  static async doInBatches<T>(list: T[], action: (batch: T[]) => Promise<unknown>, batchSize: number): Promise<void> {
+    do {
+      const batch = list.splice(0, batchSize);
+      await action(batch);
+    } while (list.length > 0);
   }
 
   static async delay(ms: number): Promise<void> {
