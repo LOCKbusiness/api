@@ -121,16 +121,14 @@ export class VaultManagementService {
   }
 
   private nextLoanValueFor(vault: LoanVaultActive): BigNumber {
-    return BigNumber.sum.apply(
-      null,
-      vault.loanAmounts.map((loan) => new BigNumber(loan.amount).multipliedBy(loan.activePrice?.next?.amount ?? 1)),
+    return BigNumber.sum(
+      ...vault.loanAmounts.map((loan) => new BigNumber(loan.amount).multipliedBy(loan.activePrice?.next?.amount ?? 1)),
     );
   }
 
   private nextCollateralValue(vault: LoanVaultActive, collateralTokens: CollateralToken[]): BigNumber {
-    return BigNumber.sum.apply(
-      null,
-      vault.collateralAmounts.map((collateral) =>
+    return BigNumber.sum(
+      ...vault.collateralAmounts.map((collateral) =>
         new BigNumber(collateralTokens?.find((token) => token.token.id == collateral.id)?.factor ?? 1)
           .multipliedBy(collateral.activePrice?.next?.amount ?? 1)
           .multipliedBy(collateral.amount),
