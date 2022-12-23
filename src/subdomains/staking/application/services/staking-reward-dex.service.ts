@@ -30,13 +30,13 @@ export class StakingRewardDexService {
   }
 
   async prepareDfiToken(): Promise<void> {
+    await this.designateRewardsPreparation();
+
     const dfiAmount = await this.rewardRepo.getDfiAmountForNewRewards();
 
     if (!dfiAmount) return;
 
     console.log(`Preparing DFI reward process in amount of ${dfiAmount} DFI`);
-
-    await this.designateRewardsPreparation();
 
     try {
       await this.swapDfiToken(dfiAmount);
