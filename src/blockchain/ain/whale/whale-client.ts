@@ -3,15 +3,19 @@ import { AddressToken, AddressUnspent } from '@defichain/whale-api-client/dist/a
 import { CollateralToken, LoanVaultActive, LoanVaultState } from '@defichain/whale-api-client/dist/api/loan';
 import { TokenData } from '@defichain/whale-api-client/dist/api/tokens';
 import { Transaction, TransactionVin } from '@defichain/whale-api-client/dist/api/transactions';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import BigNumber from 'bignumber.js';
 import { GetConfig } from 'src/config/config';
-import { Util } from 'src/shared/util';
+import { AsyncMap } from 'src/shared/async-map';
 
 export class WhaleClient {
   private readonly client: WhaleApiClient;
+  private readonly transactions = new AsyncMap<string>();
 
-  constructor() {
-    this.client = this.createWhaleClient();
+  private currentBlock = 0;
+
+  constructor(client?: WhaleApiClient) {
+    this.client = client ?? this.createWhaleClient();
   }
 
   private createWhaleClient(): WhaleApiClient {
@@ -59,21 +63,7 @@ export class WhaleClient {
   }
 
   async waitForTx(txId: string, timeout = 600000): Promise<string> {
-    const tx = await Util.poll(
-      () => this.client.transactions.get(txId),
-      (t) => t !== undefined,
-      5000,
-      timeout,
-      true,
-    );
-
-    if (tx) {
-      // wait for Ocean to settle
-      await Util.delay(5000);
-      return tx.id;
-    }
-
-    throw new Error(`Wait for TX ${txId} timed out`);
+    return await this.transactions.wait(txId, timeout);
   }
 
   async getTx(txId: string): Promise<Transaction> {
@@ -84,6 +74,7 @@ export class WhaleClient {
     return await this.client.transactions.getVins(txId);
   }
 
+  // --- HELPER METHODS --- //
   private async getAll<T>(method: () => Promise<ApiPagedResponse<T>>): Promise<T[]> {
     const batches = [await method()];
     while (batches[batches.length - 1].hasNext) {
@@ -95,5 +86,20 @@ export class WhaleClient {
     }
 
     return batches.reduce((prev, curr) => prev.concat(curr), [] as T[]);
+  }
+
+  @Cron(CronExpression.EVERY_5_SECONDS)
+  async pollTransactions() {
+    const currentBlock = await this.getBlockHeight();
+    if (currentBlock > this.currentBlock) {
+      this.currentBlock = currentBlock;
+
+      for (const txId of this.transactions.get()) {
+        const tx: Transaction = await this.getTx(txId).catch(() => undefined);
+        if (tx) {
+          this.transactions.resolve(txId, tx.id);
+        }
+      }
+    }
   }
 }
