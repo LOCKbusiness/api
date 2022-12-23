@@ -7,10 +7,13 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import BigNumber from 'bignumber.js';
 import { GetConfig } from 'src/config/config';
 import { AsyncMap } from 'src/shared/async-map';
+import { Lock } from 'src/shared/lock';
+import { Util } from 'src/shared/util';
 
 export class WhaleClient {
   private readonly client: WhaleApiClient;
-  private readonly transactions = new AsyncMap<string>();
+  private readonly transactions = new AsyncMap<string, string>();
+  private readonly txLock = new Lock(300);
 
   private currentBlock = 0;
 
@@ -90,16 +93,30 @@ export class WhaleClient {
 
   @Cron(CronExpression.EVERY_5_SECONDS)
   async pollTransactions() {
-    const currentBlock = await this.getBlockHeight();
-    if (currentBlock > this.currentBlock) {
-      this.currentBlock = currentBlock;
+    if (!this.txLock.acquire()) return;
 
-      for (const txId of this.transactions.get()) {
-        const tx: Transaction = await this.getTx(txId).catch(() => undefined);
-        if (tx) {
-          this.transactions.resolve(txId, tx.id);
-        }
+    try {
+      const currentBlock = await this.getBlockHeight();
+      if (currentBlock > this.currentBlock) {
+        this.currentBlock = currentBlock;
+
+        await Util.doInBatches(
+          this.transactions.get(),
+          (txIds) => Promise.all(txIds.map((tx) => this.checkTx(tx))),
+          10,
+        );
       }
+    } catch (e) {
+      console.error('Exception during transaction polling:', e);
+    } finally {
+      this.txLock.release();
+    }
+  }
+
+  private async checkTx(txId: string) {
+    const tx: Transaction = await this.getTx(txId).catch(() => undefined);
+    if (tx) {
+      this.transactions.resolve(txId, tx.id);
     }
   }
 }

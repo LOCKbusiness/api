@@ -13,7 +13,7 @@ import { AsyncMap } from 'src/shared/async-map';
 
 @Injectable()
 export class TransactionService {
-  private readonly transactions = new AsyncMap<string>();
+  private readonly transactions = new AsyncMap<string, string>();
 
   private client: WhaleClient;
 
