@@ -39,7 +39,6 @@ export class VaultManagementService {
       for (const vault of vaultInfos) {
         const dbVault = vaults.find((v) => v.vault === vault.vaultId);
         const nextCollateralRatio = this.calculateNextCollateralRatio(vault, collateralTokens);
-        console.log(nextCollateralRatio.toString());
         const collateralRatioToUse = nextCollateralRatio
           ? Math.min(+vault.collateralRatio, nextCollateralRatio.toNumber())
           : +vault.collateralRatio;
