@@ -208,12 +208,6 @@ export class Configuration {
     merge: 100, // UTXO
   };
 
-  priceProviders = {
-    coinGecko: {
-      baseUrl: 'https://api.coingecko.com/api/v3',
-    },
-  };
-
   masternode = {
     collateral: 20000,
     fee: 10,
