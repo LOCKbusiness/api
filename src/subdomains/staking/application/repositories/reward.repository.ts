@@ -51,7 +51,7 @@ export class RewardRepository extends Repository<Reward> {
     return this.createQueryBuilder('reward')
       .leftJoin('reward.referenceAsset', 'referenceAsset')
       .select('SUM(outputReferenceAmount)', 'amount')
-      .where('reward.status = :status', { status: RewardStatus.CREATED })
+      .where('reward.status = :status', { status: RewardStatus.PREPARATION_PENDING })
       .andWhere('referenceAsset.name = :name', { name: 'DFI' })
       .andWhere('referenceAsset.blockchain = :blockchain', { blockchain: Blockchain.DEFICHAIN })
       .getRawOne<{ amount: number }>()
