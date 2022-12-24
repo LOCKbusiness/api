@@ -66,8 +66,8 @@ export class CoinTrackingHistoryDtoMapper {
         tradeGroup: c.staking.strategy === StakingStrategy.LIQUIDITY_MINING ? null : 'Staking',
         comment:
           c.staking.strategy === StakingStrategy.LIQUIDITY_MINING ? 'LOCK Yield Machine Reward' : 'LOCK Staking Reward',
-        txId: c.txId,
         date: c.outputDate ?? c.updated,
+        txId: c.txId,
         buyValueInEur: c.amountEur,
         sellValueInEur: null,
       }));

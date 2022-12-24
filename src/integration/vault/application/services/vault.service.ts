@@ -19,6 +19,12 @@ export class VaultService {
     return this.getAll().then((vaults) => vaults.map((v) => v.address));
   }
 
+  async getAllIds(): Promise<string[]> {
+    return this.getAll()
+      .then((vaults) => vaults.map((v) => v.vault))
+      .then((ids) => ids.filter((id) => id));
+  }
+
   async getAll(): Promise<Vault[]> {
     return this.repository.find();
   }
