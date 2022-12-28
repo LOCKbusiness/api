@@ -19,7 +19,7 @@ type AccountHistory = Omit<JellyAccountHistory & HistoryAmount & { assetType: As
 export class PayInDeFiChainService {
   private client: DeFiClient;
 
-  private readonly utxoTxTypes = ['receive', 'AccountToUtxos'];
+  private readonly utxoTxTypes = ['receive', 'AccountToUtxos', 'blockReward'];
   private readonly tokenTxTypes = [
     'AccountToAccount',
     'AnyAccountsToAccounts',
