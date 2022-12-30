@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
 
 export enum ExportDataType {
   CSV = 'csv',
@@ -23,4 +24,16 @@ export class HistoryQuery {
   @IsOptional()
   @IsEnum(ExportDataType)
   type: ExportDataType = ExportDataType.CSV;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  from?: Date;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  to?: Date;
 }

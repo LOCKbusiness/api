@@ -1,5 +1,5 @@
 import { Util } from 'src/shared/util';
-import { EntityRepository, In, Repository } from 'typeorm';
+import { Between, EntityRepository, In, Repository } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { StakingReference, StakingType } from '../../domain/entities/staking.entity';
 import { DepositStatus } from '../../domain/enums';
@@ -26,20 +26,37 @@ export class DepositRepository extends Repository<Deposit> {
     return this.findOne({ staking: { id: stakingId }, payInTxId });
   }
 
-  async getByUserId(userId: number): Promise<Deposit[]> {
+  async getByUserId(userId: number, dateFrom?: Date, dateTo?: Date): Promise<Deposit[]> {
     /**
      * @note
      * relations are needed for #find(...) even though field is eager
      */
-    return this.find({ where: { staking: { userId } }, relations: ['staking'] });
+    return this.find({
+      where:
+        dateFrom || dateTo
+          ? { staking: { userId }, created: Between(dateFrom ?? new Date(0), dateTo ?? new Date()) }
+          : { staking: { userId } },
+      relations: ['staking'],
+    });
   }
 
-  async getByDepositAddress(depositAddress: string): Promise<Deposit[]> {
+  async getByDepositAddress(depositAddress: string, dateFrom?: Date, dateTo?: Date): Promise<Deposit[]> {
     /**
      * @note
      * relations are needed for #find(...) even though field is eager
      */
-    return this.find({ where: { staking: { depositAddress: { address: depositAddress } } }, relations: ['staking'] });
+    return this.find({
+      where:
+        dateFrom || dateTo
+          ? {
+              staking: { depositAddress: { address: depositAddress } },
+              created: Between(dateFrom ?? new Date(0), dateTo ?? new Date()),
+            }
+          : {
+              staking: { depositAddress: { address: depositAddress } },
+            },
+      relations: ['staking'],
+    });
   }
 
   async getStakingReferencesForPending(): Promise<StakingReference[]> {

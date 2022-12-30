@@ -50,7 +50,7 @@ export class HistoryController {
   ): Promise<HistoryDto<T>[] | StreamableFile> {
     switch (query.type) {
       case ExportDataType.CSV:
-        const csvFile = await this.historyService.getHistoryCsv(query.userAddress, query.depositAddress, exportType);
+        const csvFile = await this.historyService.getHistoryCsv(query, exportType);
 
         res.set({
           'Content-Type': 'text/csv',
@@ -59,7 +59,7 @@ export class HistoryController {
         return csvFile;
 
       case ExportDataType.JSON:
-        return await this.historyService.getHistory(query.userAddress, query.depositAddress, exportType);
+        return await this.historyService.getHistory(query, exportType);
     }
   }
 }

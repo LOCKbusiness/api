@@ -1,25 +1,35 @@
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { EntityRepository, Repository } from 'typeorm';
+import { Between, EntityRepository, Repository } from 'typeorm';
 import { Reward } from '../../domain/entities/reward.entity';
 import { StakingType } from '../../domain/entities/staking.entity';
 import { RewardStatus } from '../../domain/enums';
 
 @EntityRepository(Reward)
 export class RewardRepository extends Repository<Reward> {
-  async getByUserId(userId: number): Promise<Reward[]> {
+  async getByUserId(userId: number, dateFrom?: Date, dateTo?: Date): Promise<Reward[]> {
     /**
      * @note
      * relations are needed for #find(...) even though field is eager
      */
-    return this.find({ where: { staking: { userId } }, relations: ['staking'] });
+    return this.find({
+      where:
+        dateFrom || dateTo ? { staking: { userId }, outputDate: Between(dateFrom, dateTo) } : { staking: { userId } },
+      relations: ['staking'],
+    });
   }
 
-  async getByDepositAddress(depositAddress: string): Promise<Reward[]> {
+  async getByDepositAddress(depositAddress: string, dateFrom?: Date, dateTo?: Date): Promise<Reward[]> {
     /**
      * @note
      * relations are needed for #find(...) even though field is eager
      */
-    return this.find({ where: { staking: { depositAddress: { address: depositAddress } } }, relations: ['staking'] });
+    return this.find({
+      where:
+        dateFrom || dateTo
+          ? { staking: { depositAddress: { address: depositAddress } }, outputDate: Between(dateFrom, dateTo) }
+          : { staking: { depositAddress: { address: depositAddress } } },
+      relations: ['staking'],
+    });
   }
 
   async getRewardsAmount(stakingId: number): Promise<number> {
