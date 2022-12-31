@@ -1,4 +1,4 @@
-import { Between, EntityRepository, In, Repository } from 'typeorm';
+import { Between, EntityRepository, FindOperator, In, Repository } from 'typeorm';
 import { StakingType } from '../../domain/entities/staking.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { WithdrawalStatus } from '../../domain/enums';
@@ -39,8 +39,7 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
      * relations are needed for #find(...) even though field is eager
      */
     return this.find({
-      where:
-        dateFrom || dateTo ? { staking: { userId }, outputDate: Between(dateFrom, dateTo) } : { staking: { userId } },
+      where: { staking: { userId }, ...this.dateQuery(dateFrom, dateTo) },
       relations: ['staking'],
     });
   }
@@ -51,10 +50,7 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
      * relations are needed for #find(...) even though field is eager
      */
     return this.find({
-      where:
-        dateFrom || dateTo
-          ? { staking: { depositAddress: { address: depositAddress } }, outputDate: Between(dateFrom, dateTo) }
-          : { staking: { depositAddress: { address: depositAddress } } },
+      where: { staking: { depositAddress: { address: depositAddress } }, ...this.dateQuery(dateFrom, dateTo) },
       relations: ['staking'],
     });
   }
@@ -100,5 +96,9 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
       })
       .getRawOne<{ amount: number }>()
       .then((r) => r.amount ?? 0);
+  }
+
+  private dateQuery(from?: Date, to?: Date): { outputDate: FindOperator<Date> } | undefined {
+    return from || to ? { outputDate: Between(from ?? new Date(0), to ?? new Date()) } : undefined;
   }
 }

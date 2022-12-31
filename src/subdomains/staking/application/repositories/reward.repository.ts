@@ -1,5 +1,5 @@
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { Between, EntityRepository, Repository } from 'typeorm';
+import { Between, EntityRepository, FindOperator, Repository } from 'typeorm';
 import { Reward } from '../../domain/entities/reward.entity';
 import { StakingType } from '../../domain/entities/staking.entity';
 import { RewardStatus } from '../../domain/enums';
@@ -12,8 +12,7 @@ export class RewardRepository extends Repository<Reward> {
      * relations are needed for #find(...) even though field is eager
      */
     return this.find({
-      where:
-        dateFrom || dateTo ? { staking: { userId }, outputDate: Between(dateFrom, dateTo) } : { staking: { userId } },
+      where: { staking: { userId }, ...this.dateQuery(dateFrom, dateTo) },
       relations: ['staking'],
     });
   }
@@ -24,12 +23,13 @@ export class RewardRepository extends Repository<Reward> {
      * relations are needed for #find(...) even though field is eager
      */
     return this.find({
-      where:
-        dateFrom || dateTo
-          ? { staking: { depositAddress: { address: depositAddress } }, outputDate: Between(dateFrom, dateTo) }
-          : { staking: { depositAddress: { address: depositAddress } } },
+      where: { staking: { depositAddress: { address: depositAddress } }, ...this.dateQuery(dateFrom, dateTo) },
       relations: ['staking'],
     });
+  }
+
+  private dateQuery(from?: Date, to?: Date): { outputDate: FindOperator<Date> } | undefined {
+    return from || to ? { outputDate: Between(from ?? new Date(0), to ?? new Date()) } : undefined;
   }
 
   async getRewardsAmount(stakingId: number): Promise<number> {

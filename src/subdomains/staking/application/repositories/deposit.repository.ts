@@ -1,5 +1,5 @@
 import { Util } from 'src/shared/util';
-import { Between, EntityRepository, In, Repository } from 'typeorm';
+import { Between, EntityRepository, FindOperator, In, Repository } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { StakingReference, StakingType } from '../../domain/entities/staking.entity';
 import { DepositStatus } from '../../domain/enums';
@@ -32,10 +32,7 @@ export class DepositRepository extends Repository<Deposit> {
      * relations are needed for #find(...) even though field is eager
      */
     return this.find({
-      where:
-        dateFrom || dateTo
-          ? { staking: { userId }, created: Between(dateFrom ?? new Date(0), dateTo ?? new Date()) }
-          : { staking: { userId } },
+      where: { staking: { userId }, ...this.dateQuery(dateFrom, dateTo) },
       relations: ['staking'],
     });
   }
@@ -46,15 +43,10 @@ export class DepositRepository extends Repository<Deposit> {
      * relations are needed for #find(...) even though field is eager
      */
     return this.find({
-      where:
-        dateFrom || dateTo
-          ? {
-              staking: { depositAddress: { address: depositAddress } },
-              created: Between(dateFrom ?? new Date(0), dateTo ?? new Date()),
-            }
-          : {
-              staking: { depositAddress: { address: depositAddress } },
-            },
+      where: {
+        staking: { depositAddress: { address: depositAddress } },
+        ...this.dateQuery(dateFrom, dateTo),
+      },
       relations: ['staking'],
     });
   }
@@ -113,5 +105,9 @@ export class DepositRepository extends Repository<Deposit> {
       .andWhere('deposit.created >= :date', { date })
       .getRawOne<{ amount: number }>()
       .then((b) => b.amount ?? 0);
+  }
+
+  private dateQuery(from?: Date, to?: Date): { created: FindOperator<Date> } | undefined {
+    return from || to ? { created: Between(from ?? new Date(0), to ?? new Date()) } : undefined;
   }
 }
