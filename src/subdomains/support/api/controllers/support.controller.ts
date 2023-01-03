@@ -1,5 +1,5 @@
 import { Controller, UseGuards, Get, Query } from '@nestjs/common';
-import { Post } from '@nestjs/common/decorators';
+import { Body, Post } from '@nestjs/common/decorators';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
@@ -30,7 +30,7 @@ export class SupportController {
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.SUPPORT))
   async getRawData(
-    @Query()
+    @Body()
     query: DbQueryDto,
   ): Promise<{ keys: string[]; values: any }> {
     return await this.supportService.getRawData(query);
