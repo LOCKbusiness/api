@@ -62,8 +62,8 @@ export class StakingHistoryService {
   private async getDepositsByUserOrAddress(
     userId: number,
     depositAddress: string,
-    dateFrom: Date,
-    dateTo: Date,
+    dateFrom?: Date,
+    dateTo?: Date,
   ): Promise<Deposit[]> {
     return userId
       ? await getCustomRepository(DepositRepository).getByUserId(userId, dateFrom, dateTo)
@@ -73,8 +73,8 @@ export class StakingHistoryService {
   private async getWithdrawalsByUserOrAddress(
     userId: number,
     depositAddress: string,
-    dateFrom: Date,
-    dateTo: Date,
+    dateFrom?: Date,
+    dateTo?: Date,
   ): Promise<Withdrawal[]> {
     return userId
       ? await getCustomRepository(WithdrawalRepository).getByUserId(userId, dateFrom, dateTo)
@@ -84,8 +84,8 @@ export class StakingHistoryService {
   private async getRewardsByUserOrAddress(
     userId: number,
     depositAddress: string,
-    dateFrom: Date,
-    dateTo: Date,
+    dateFrom?: Date,
+    dateTo?: Date,
   ): Promise<Reward[]> {
     return userId
       ? await getCustomRepository(RewardRepository).getByUserId(userId, dateFrom, dateTo)
