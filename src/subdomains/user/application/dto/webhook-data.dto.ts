@@ -1,6 +1,4 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { KycWebhookData } from './kyc-webhook.dto';
-import { PaymentWebhookData } from './payment-webhook.dto';
 
 export enum WebhookType {
   PAYMENT = 'Payment',
@@ -9,18 +7,8 @@ export enum WebhookType {
 }
 
 export class WebhookDto {
-  @IsNotEmpty()
-  @IsString()
   id: string;
-
-  @IsNotEmpty()
-  @IsEnum(WebhookType)
   type: WebhookType;
-
-  @IsNotEmpty()
-  data: KycWebhookData | PaymentWebhookData;
-
-  @IsOptional()
-  @IsString()
+  data: KycWebhookData;
   reason: string;
 }
