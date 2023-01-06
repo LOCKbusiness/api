@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { NodeMode } from 'src/blockchain/ain/node/node-client';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
+import { Lock } from 'src/shared/lock';
 import { Config, Process } from 'src/config/config';
 import { AzureService } from 'src/integration/infrastructure/application/services/azure-service';
 import { MailType } from 'src/integration/notification/enums';
@@ -29,6 +30,8 @@ interface NodeState {
 // --------- //
 @Injectable()
 export class NodeHealthObserver extends MetricObserver<NodePoolState[]> {
+  private readonly lock = new Lock(360);
+
   constructor(
     readonly monitoringService: MonitoringService,
     private readonly nodeService: NodeService,
@@ -41,6 +44,7 @@ export class NodeHealthObserver extends MetricObserver<NodePoolState[]> {
   @Cron(CronExpression.EVERY_MINUTE)
   async fetch(): Promise<NodePoolState[]> {
     if (Config.processDisabled(Process.MONITORING)) return;
+    if (!this.lock.acquire()) return;
 
     try {
       let poolStates = await this.getState();
@@ -51,6 +55,8 @@ export class NodeHealthObserver extends MetricObserver<NodePoolState[]> {
       return poolStates;
     } catch (e) {
       console.error('Exception in node health observer:', e);
+    } finally {
+      this.lock.release();
     }
   }
 
