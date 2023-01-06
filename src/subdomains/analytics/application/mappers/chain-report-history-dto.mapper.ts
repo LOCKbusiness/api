@@ -19,7 +19,10 @@ export class ChainReportHistoryDtoMapper {
         feeAmount: null,
         feeAsset: null,
         txId: c.payInTxId,
-        description: 'LOCK Staking Deposit',
+        description:
+          c.staking.strategy === StakingStrategy.LIQUIDITY_MINING
+            ? 'LOCK Yield Machine Deposit'
+            : 'LOCK Staking Deposit',
       }));
   }
 
@@ -36,7 +39,10 @@ export class ChainReportHistoryDtoMapper {
         feeAmount: null,
         feeAsset: null,
         txId: c.withdrawalTxId,
-        description: 'LOCK Staking Withdrawal',
+        description:
+          c.staking.strategy === StakingStrategy.LIQUIDITY_MINING
+            ? 'LOCK Yield Machine Withdrawal'
+            : 'LOCK Staking Withdrawal',
       }));
   }
 

@@ -17,9 +17,12 @@ export class CoinTrackingHistoryDtoMapper {
         sellAsset: null,
         fee: null,
         feeAsset: null,
-        exchange: 'LOCK.space Staking',
+        exchange: c.staking.strategy === StakingStrategy.LIQUIDITY_MINING ? 'LOCK.space YM' : 'LOCK.space Staking',
         tradeGroup: 'Staking',
-        comment: 'LOCK Staking Deposit',
+        comment:
+          c.staking.strategy === StakingStrategy.LIQUIDITY_MINING
+            ? 'LOCK Yield Machine Deposit'
+            : 'LOCK Staking Deposit',
         date: c.created,
         txId: c.payInTxId,
         buyValueInEur: c.amountEur,
@@ -38,9 +41,12 @@ export class CoinTrackingHistoryDtoMapper {
         sellAsset: this.getAssetSymbolCT(c.asset),
         fee: null,
         feeAsset: null,
-        exchange: 'LOCK.space Staking',
+        exchange: c.staking.strategy === StakingStrategy.LIQUIDITY_MINING ? 'LOCK.space YM' : 'LOCK.space Staking',
         tradeGroup: null,
-        comment: 'LOCK Staking Withdrawal',
+        comment:
+          c.staking.strategy === StakingStrategy.LIQUIDITY_MINING
+            ? 'LOCK Yield Machine Withdrawal'
+            : 'LOCK Staking Withdrawal',
         date: c.outputDate ?? c.updated,
         txId: c.withdrawalTxId,
         buyValueInEur: null,
