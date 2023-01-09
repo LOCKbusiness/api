@@ -17,7 +17,7 @@ class QueueItem<T> {
       };
       this.reject = reject;
     });
-    if (timeout) this.timeout = setTimeout(() => this.reject(new Error('Queue timeout')), timeout);
+    if (timeout) this.timeout = setTimeout(() => this.reject(new Error('Queue timed out')), timeout);
   }
 
   public wait(): Promise<T> {
