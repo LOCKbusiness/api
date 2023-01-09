@@ -16,10 +16,15 @@ import { RewardBatchRepository } from '../repositories/reward-batch.repository';
 import { RewardRepository } from '../repositories/reward.repository';
 import { StakingRewardNotificationService } from './staking-reward-notification.service';
 
+interface DfiSwapSnapshot {
+  txId: string;
+  amount: number;
+}
+
 @Injectable()
 export class StakingRewardDexService {
   #rewClient: DeFiClient;
-  #pendingDfiSwap: { txId: string; amount: number } | null = null;
+  #pendingDfiSwap: DfiSwapSnapshot | null = null;
 
   constructor(
     private readonly rewardRepo: RewardRepository,
@@ -38,7 +43,7 @@ export class StakingRewardDexService {
      */
     await this.checkNodeHealth();
 
-    this.#pendingDfiSwap ? await this.retryUnfinishedPreparation() : await this.startNewPreparation();
+    !this.#pendingDfiSwap ? await this.startNewPreparation() : await this.retryUnfinishedPreparation();
   }
 
   async secureLiquidity(): Promise<void> {
