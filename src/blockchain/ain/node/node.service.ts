@@ -42,8 +42,6 @@ export class NodeService {
   readonly #allNodes: Map<NodeType, Record<NodeMode, NodeClient | null>> = new Map();
   readonly #connectedNodes: Map<NodeType, BehaviorSubject<NodeClient | null>> = new Map();
 
-  private nodeState: NodePoolState[] = [];
-
   constructor(private readonly http: HttpService, private readonly scheduler: SchedulerRegistry) {
     this.initAllNodes();
     this.initConnectedNodes();
