@@ -24,7 +24,7 @@ export class PayInService {
   //*** PUBLIC API ***//
 
   async getNewPayInTransactions(): Promise<PayIn[]> {
-    return this.payInRepository.find({ status: PayInStatus.CREATED });
+    return this.payInRepository.find({ status: PayInStatus.CONFIRMED });
   }
 
   async acknowledgePayIn(payIn: PayIn, purpose: PayInPurpose): Promise<void> {
@@ -51,7 +51,8 @@ export class PayInService {
     if (!this.lock.acquire()) return;
 
     try {
-      await this.processNewPayInTransactions();
+      await this.processNewTransactions();
+      await this.processUnconfirmedTransactions();
     } catch (e) {
       console.error('Exception during DeFiChain pay in checks:', e);
     } finally {
@@ -61,7 +62,17 @@ export class PayInService {
 
   //*** HELPER METHODS ***//
 
-  private async processNewPayInTransactions(): Promise<void> {
+  private async processUnconfirmedTransactions(): Promise<void> {
+    const unconfirmedPayIns = await this.payInRepository.find({ status: PayInStatus.CREATED });
+    const confirmedPayIns = await this.deFiChainService.getConfirmedTransactions(unconfirmedPayIns);
+
+    for (const payIn of confirmedPayIns) {
+      payIn.confirm();
+      await this.payInRepository.save(payIn);
+    }
+  }
+
+  private async processNewTransactions(): Promise<void> {
     const lastCheckedBlockHeight = await this.payInRepository
       .findOne({ order: { blockHeight: 'DESC' } })
       .then((input) => input?.blockHeight ?? 0);

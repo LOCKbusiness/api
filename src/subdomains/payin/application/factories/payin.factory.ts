@@ -6,6 +6,6 @@ import { PayInTransaction } from '../interfaces';
 @Injectable()
 export class PayInFactory {
   createFromTransaction(tx: PayInTransaction, asset: Asset): PayIn {
-    return PayIn.create(tx.address, tx.type, tx.txId, tx.blockHeight, tx.amount, asset);
+    return PayIn.create(tx.address, tx.type, tx.txId, tx.blockHeight, tx.amount, asset, tx.isConfirmed);
   }
 }
