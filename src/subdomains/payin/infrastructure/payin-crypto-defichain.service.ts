@@ -7,6 +7,7 @@ import { PayInTransaction } from '../application/interfaces';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { AssetType } from 'src/shared/models/asset/asset.entity';
 import { BlockchainAddress } from 'src/shared/models/blockchain-address';
+import { PayIn } from '../domain/entities/payin.entity';
 
 interface HistoryAmount {
   amount: number;
@@ -38,6 +39,12 @@ export class PayInDeFiChainService {
     const histories = await this.getNewTransactionsHistorySince(lastHeight);
 
     return this.mapHistoriesToTransactions(histories);
+  }
+
+  async getConfirmedTransactions(unconfirmed: PayIn[]) {
+    const { blocks: currentHeight } = await this.client.checkSync();
+
+    return unconfirmed.filter((u) => u.txType !== 'blockReward' || currentHeight > u.blockHeight + 100);
   }
 
   //*** HELPER METHODS ***//
@@ -89,6 +96,7 @@ export class PayInDeFiChainService {
       amount: h.amount,
       asset: h.asset,
       assetType: h.assetType,
+      isConfirmed: h.type != 'blockReward',
     }));
   }
 

@@ -9,4 +9,5 @@ export interface PayInTransaction {
   amount: number;
   asset: string;
   assetType: AssetType;
+  isConfirmed: boolean;
 }

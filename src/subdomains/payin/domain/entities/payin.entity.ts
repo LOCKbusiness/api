@@ -9,6 +9,7 @@ export enum PayInPurpose {
 
 export enum PayInStatus {
   CREATED = 'Created',
+  CONFIRMED = 'Confirmed',
   ACKNOWLEDGED = 'Acknowledged',
   FAILED = 'Failed',
 }
@@ -51,6 +52,7 @@ export class PayIn extends IEntity {
     blockHeight: number,
     amount: number,
     asset: Asset,
+    isConfirmed: boolean,
   ): PayIn {
     const payIn = new PayIn();
 
@@ -60,9 +62,15 @@ export class PayIn extends IEntity {
     payIn.blockHeight = blockHeight;
     payIn.amount = amount;
     payIn.asset = asset;
-    payIn.status = PayInStatus.CREATED;
+    payIn.status = isConfirmed ? PayInStatus.CONFIRMED : PayInStatus.CREATED;
 
     return payIn;
+  }
+
+  confirm(): this {
+    this.status = PayInStatus.CONFIRMED;
+
+    return this;
   }
 
   acknowledge(purpose: PayInPurpose): this {
