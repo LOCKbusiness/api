@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { Fiat } from 'src/shared/enums/fiat.enum';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { Price } from 'src/shared/models/price';
 import { PriceProvider } from '../application/interfaces';
 import { AssetStakingMetadataRepository } from '../application/repositories/asset-staking-metadata.repository';
 import CoinGeckoClient = require('coingecko-api');
 import { Util } from 'src/shared/util';
+import { Fiat } from 'src/shared/enums/fiat.enum';
+
+enum Currency {
+  BTC = 'BTC',
+}
 
 @Injectable()
 export class CoinGeckoService implements PriceProvider {
@@ -19,7 +23,7 @@ export class CoinGeckoService implements PriceProvider {
   }
 
   // --- FIAT --- //
-  async getFiatPrice(fiat: Fiat, assetId: number): Promise<Price> {
+  async getFiatPrice(fiat: Currency | Fiat, assetId: number): Promise<Price> {
     const { name, coinGeckoId } = await this.getAssetInfo(assetId);
 
     const { data } = await this.client.simple.price({ ids: coinGeckoId, vs_currencies: fiat });
@@ -29,11 +33,11 @@ export class CoinGeckoService implements PriceProvider {
     return Price.create(fiat, name, price);
   }
 
-  async getFiatPriceAt(fiat: Fiat, assetId: number, date: Date): Promise<Price> {
+  async getFiatPriceAt(fiat: Currency | Fiat, assetId: number, date: Date): Promise<Price> {
     return this.getAvgFiatPrice(fiat, assetId, date, Util.hoursAfter(1, date));
   }
 
-  async getAvgFiatPrice(fiat: Fiat, assetId: number, from: Date, to: Date): Promise<Price> {
+  async getAvgFiatPrice(fiat: Currency | Fiat, assetId: number, from: Date, to: Date): Promise<Price> {
     const { name, coinGeckoId } = await this.getAssetInfo(assetId);
 
     const { data } = await this.client.coins.fetchMarketChartRange(coinGeckoId, {
@@ -50,8 +54,8 @@ export class CoinGeckoService implements PriceProvider {
   // --- EXCHANGE --- //
   async getExchangePrice(fromAssetId: number, toAssetId: number): Promise<Price> {
     const prices = await Promise.all([
-      this.getFiatPrice(Fiat.USD, fromAssetId),
-      this.getFiatPrice(Fiat.USD, toAssetId),
+      this.getFiatPrice(Currency.BTC, fromAssetId),
+      this.getFiatPrice(Currency.BTC, toAssetId),
     ]);
 
     return this.joinPrices(...prices);
@@ -59,8 +63,8 @@ export class CoinGeckoService implements PriceProvider {
 
   async getExchangePriceAt(fromAssetId: number, toAssetId: number, date: Date): Promise<Price> {
     const prices = await Promise.all([
-      this.getFiatPriceAt(Fiat.USD, fromAssetId, date),
-      this.getFiatPriceAt(Fiat.USD, toAssetId, date),
+      this.getFiatPriceAt(Currency.BTC, fromAssetId, date),
+      this.getFiatPriceAt(Currency.BTC, toAssetId, date),
     ]);
 
     return this.joinPrices(...prices);
@@ -68,8 +72,8 @@ export class CoinGeckoService implements PriceProvider {
 
   async getAverageExchangePrice(fromAssetId: number, toAssetId: number, from: Date, to: Date): Promise<Price> {
     const prices = await Promise.all([
-      this.getAvgFiatPrice(Fiat.USD, fromAssetId, from, to),
-      this.getAvgFiatPrice(Fiat.USD, toAssetId, from, to),
+      this.getAvgFiatPrice(Currency.BTC, fromAssetId, from, to),
+      this.getAvgFiatPrice(Currency.BTC, toAssetId, from, to),
     ]);
 
     return this.joinPrices(...prices);
