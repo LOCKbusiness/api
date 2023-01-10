@@ -407,5 +407,29 @@
     "headers": [],
     "params": [],
     "tests": []
+  },
+  {
+    "_id": "32d633e7-6bc0-4e73-9341-93c92f2a0b24",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "0a6baf7d-2afd-435f-aa8a-075d6d72d9bb",
+    "name": "Webhook",
+    "url": "{{url}}/v1/dfx",
+    "method": "POST",
+    "sortNum": 250000,
+    "created": "2023-01-10T22:18:12.017Z",
+    "modified": "2023-01-10T22:31:45.069Z",
+    "headers": [
+      {
+        "name": "x-api-key",
+        "value": "abc"
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"id\": \"tf1q4mupss7cdyrl33tp5d0y2jnauz9y9es8nc0m68\",\n  \"type\": \"KycChanged\",\n  \"data\": {\n    \"mail\": \"mail@gmail.com\",\n    \"firstName\": \"Name\",\n    \"lastName\": \"Lastname\",\n    \"street\": \"Strasse\",\n    \"houseNumber\": \"2\",\n    \"city\": \"Ort\",\n    \"zip\": \"1234\",\n    \"phone\": \"+41 1234567890\",\n    \"kycStatus\": \"Full\",\n    \"kycHash\": \"4593D4A9-310F-ED11-BD6E-501AC5BA6EA6\",\n    \"tradingLimit\": {\n      \"limit\": 90000,\n      \"period\": \"Year\"\n    }\n  }\n}",
+      "form": []
+    },
+    "tests": []
   }
 ]

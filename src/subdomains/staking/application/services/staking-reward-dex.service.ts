@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { Config } from 'src/config/config';
+import { TimeoutException } from 'src/shared/exceptions/timeout.exception';
 import { LiquidityOrderContext } from 'src/subdomains/dex/entities/liquidity-order.entity';
 import { LiquidityOrderNotReadyException } from 'src/subdomains/dex/exceptions/liquidity-order-not-ready.exception';
 import { NotEnoughLiquidityException } from 'src/subdomains/dex/exceptions/not-enough-liquidity.exception';
@@ -15,9 +16,15 @@ import { RewardBatchRepository } from '../repositories/reward-batch.repository';
 import { RewardRepository } from '../repositories/reward.repository';
 import { StakingRewardNotificationService } from './staking-reward-notification.service';
 
+interface DfiSwapSnapshot {
+  txId: string;
+  amount: number;
+}
+
 @Injectable()
 export class StakingRewardDexService {
   #rewClient: DeFiClient;
+  #pendingDfiSwap: DfiSwapSnapshot | null = null;
 
   constructor(
     private readonly rewardRepo: RewardRepository,
@@ -30,26 +37,13 @@ export class StakingRewardDexService {
   }
 
   async prepareDfiToken(): Promise<void> {
-    await this.designateRewardsPreparation();
+    /**
+     * @note
+     * abort the whole process if node is unavailable
+     */
+    await this.checkNodeHealth();
 
-    const dfiAmount = await this.rewardRepo.getDfiAmountForNewRewards();
-
-    if (!dfiAmount) return;
-
-    console.log(`Preparing DFI reward process in amount of ${dfiAmount} DFI`);
-
-    try {
-      await this.swapDfiToken(dfiAmount);
-      await this.confirmRewardsForProcessing();
-
-      console.log(`Prepared DFI reward process in amount of ${dfiAmount} DFI`);
-    } catch (e) {
-      const errorMessage = `Error while trying to prepare DFI reward payout of amount ${dfiAmount}`;
-      console.error(errorMessage, e);
-
-      await this.pauseRewards();
-      await this.rewardNotificationService.sendRewardsPausedErrorMail(dfiAmount, errorMessage, e);
-    }
+    !this.#pendingDfiSwap ? await this.startNewPreparation() : await this.retryUnfinishedPreparation();
   }
 
   async secureLiquidity(): Promise<void> {
@@ -73,6 +67,60 @@ export class StakingRewardDexService {
 
   //*** HELPER METHODS ***//
 
+  private async checkNodeHealth(): Promise<void> {
+    await this.#rewClient.checkSync();
+  }
+
+  private async startNewPreparation(): Promise<void> {
+    await this.designateRewardsPreparation();
+
+    const dfiAmount = await this.rewardRepo.getDfiAmountForNewRewards();
+
+    if (!dfiAmount) return;
+
+    console.log(`Preparing DFI reward process in amount of ${dfiAmount} DFI`);
+
+    try {
+      await this.swapDfiToken(dfiAmount);
+      await this.confirmRewardsForProcessing();
+    } catch (e) {
+      const errorMessage = `Error while trying to prepare DFI reward payout of amount ${dfiAmount}`;
+      console.error(errorMessage, e);
+
+      e instanceof TimeoutException
+        ? await this.pauseRewardsAndNotify(errorMessage, e)
+        : console.log(
+            'Retrying DFI preparation due to node exception during utxo-to-token swap or subsequent swap txId check',
+          );
+
+      /**
+       * @note
+       * throwing by default to abort next steps of the payout process
+       */
+      throw e;
+    }
+  }
+
+  private async retryUnfinishedPreparation(): Promise<void> {
+    try {
+      await this.checkPendingSwap();
+      await this.confirmRewardsForProcessing();
+    } catch (e) {
+      const errorMessage = `Error while trying to prepare DFI reward payout (retry failed) of amount ${
+        this.#pendingDfiSwap.amount
+      }`;
+      console.error(errorMessage, e);
+
+      await this.pauseRewardsAndNotify(errorMessage, e);
+
+      /**
+       * @note
+       * throwing by default to abort next steps of the payout process
+       */
+      throw e;
+    }
+  }
+
   private async designateRewardsPreparation(): Promise<void> {
     await this.rewardRepo
       .createQueryBuilder('reward')
@@ -83,10 +131,56 @@ export class StakingRewardDexService {
   }
 
   private async swapDfiToken(dfiAmount: number): Promise<void> {
-    const swapTxId = await this.#rewClient.toToken(Config.blockchain.default.rew.stakingAddress, dfiAmount);
+    let swapTxId: string;
+
+    try {
+      swapTxId = await this.#rewClient.toToken(Config.blockchain.default.rew.stakingAddress, dfiAmount);
+    } catch (e) {
+      /**
+       * @note
+       * will pause the process for given rewards, because 'timeout' error outcome is uncertain
+       */
+      if (e.message.includes('timeout')) {
+        throw new TimeoutException('Swap DFI utxo to token timed out');
+      }
+
+      /**
+       * @note
+       * will result in complete restart of the process
+       */
+      throw e;
+    }
     console.log(`Preparing DFI Reward payout process. Swapped ${dfiAmount} utxo to DFI token. SwapTxId: ${swapTxId}`);
 
+    this.designateDfiSwap(swapTxId, dfiAmount);
+
+    /**
+     * @note
+     * any error will trigger special retry mechanism via ´this.#pendingSwap´ reference
+     */
     await this.#rewClient.waitForTx(swapTxId);
+    console.log(`Prepared DFI reward process in amount of ${dfiAmount} DFI`);
+
+    this.resetDfiSwapReference();
+  }
+
+  private async checkPendingSwap(): Promise<void> {
+    /**
+     * @note
+     * any error will pause the process for given rewards
+     */
+    await this.#rewClient.waitForTx(this.#pendingDfiSwap.txId);
+    console.log(`Prepared DFI reward process in amount of ${this.#pendingDfiSwap.amount} DFI`);
+
+    this.resetDfiSwapReference();
+  }
+
+  private designateDfiSwap(txId: string, amount: number): void {
+    this.#pendingDfiSwap = { txId, amount };
+  }
+
+  private resetDfiSwapReference(): void {
+    this.#pendingDfiSwap = null;
   }
 
   private async confirmRewardsForProcessing(): Promise<void> {
@@ -96,6 +190,13 @@ export class StakingRewardDexService {
       .set({ status: RewardStatus.PREPARATION_CONFIRMED })
       .where('status = :status', { status: RewardStatus.PREPARATION_PENDING })
       .execute();
+  }
+
+  private async pauseRewardsAndNotify(errorMessage: string, error: Error): Promise<void> {
+    await this.pauseRewards();
+    await this.rewardNotificationService.sendRewardsPausedErrorMail(errorMessage, error);
+
+    this.resetDfiSwapReference();
   }
 
   private async pauseRewards(): Promise<void> {

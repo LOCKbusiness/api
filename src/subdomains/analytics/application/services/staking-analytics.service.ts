@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Config, Process } from 'src/config/config';
 import { MasternodeService } from 'src/integration/masternode/application/services/masternode.service';
@@ -15,6 +15,7 @@ import { StakingAnalyticsOutputDtoMapper } from '../mappers/staking-analytics-ou
 import { StakingAnalyticsRepository } from '../repositories/staking-analytics.repository';
 import { StakingRepository } from 'src/subdomains/staking/application/repositories/staking.repository';
 import { getCustomRepository } from 'typeorm';
+import { PRICE_PROVIDER, PriceProvider } from 'src/subdomains/staking/application/interfaces';
 
 @Injectable()
 export class StakingAnalyticsService implements OnModuleInit {
@@ -24,9 +25,10 @@ export class StakingAnalyticsService implements OnModuleInit {
     private readonly masternodeService: MasternodeService,
     private readonly vaultService: VaultService,
     private readonly assetService: AssetService,
+    @Inject(PRICE_PROVIDER) private readonly priceProvider: PriceProvider,
   ) {}
 
-  //*** PUBLIC API ***//
+  // --- PUBLIC API --- //
 
   async getStakingAnalyticsCache({
     strategy,
@@ -41,7 +43,7 @@ export class StakingAnalyticsService implements OnModuleInit {
     return StakingAnalyticsOutputDtoMapper.entityToDto(analytics);
   }
 
-  //*** JOBS ***//
+  // --- JOBS --- //
   onModuleInit() {
     void this.updateStakingAnalytics();
   }
@@ -53,11 +55,19 @@ export class StakingAnalyticsService implements OnModuleInit {
     try {
       const { dateFrom, dateTo } = StakingAnalytics.getAprPeriod();
       const stakingTypes = await this.getStakingTypes();
+      const dfi = await this.assetService.getDfiCoin();
 
       for (const type of stakingTypes) {
         // get APR
         const averageBalance = await this.stakingService.getAverageStakingBalance(type, dateFrom, dateTo);
-        const averageRewards = await this.stakingService.getAverageRewards(type, dateFrom, dateTo);
+        let averageRewards = await this.stakingService.getAverageRewards(type, dateFrom, dateTo);
+
+        // convert to staking asset (rewards are in DFI)
+        if (type.asset.id !== dfi.id) {
+          const { price } = await this.priceProvider.getAverageExchangePrice(dfi.id, type.asset.id, dateFrom, dateTo);
+
+          averageRewards = averageRewards / price;
+        }
 
         const analytics = (await this.repository.getByType(type)) ?? this.repository.create(type);
 

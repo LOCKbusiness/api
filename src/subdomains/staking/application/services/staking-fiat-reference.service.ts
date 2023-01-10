@@ -7,7 +7,7 @@ import { Deposit } from '../../domain/entities/deposit.entity';
 import { Reward } from '../../domain/entities/reward.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { DepositStatus, RewardStatus, WithdrawalStatus } from '../../domain/enums';
-import { FiatPriceProvider, FIAT_PRICE_PROVIDER } from '../interfaces';
+import { PriceProvider, PRICE_PROVIDER } from '../interfaces';
 import { DepositRepository } from '../repositories/deposit.repository';
 import { RewardRepository } from '../repositories/reward.repository';
 import { WithdrawalRepository } from '../repositories/withdrawal.repository';
@@ -20,7 +20,7 @@ export class StakingFiatReferenceService {
     private readonly depositRepo: DepositRepository,
     private readonly withdrawalRepo: WithdrawalRepository,
     private readonly rewardRepo: RewardRepository,
-    @Inject(FIAT_PRICE_PROVIDER) private readonly fiatPriceProvider: FiatPriceProvider,
+    @Inject(PRICE_PROVIDER) private readonly priceProvider: PriceProvider,
   ) {}
 
   //*** JOBS ***//
@@ -92,7 +92,7 @@ export class StakingFiatReferenceService {
     for (const assetId of uniqueAssetIds) {
       for (const fiatName of Object.values(Fiat)) {
         try {
-          const price = await this.fiatPriceProvider.getFiatPrice(fiatName, assetId);
+          const price = await this.priceProvider.getFiatPrice(fiatName, assetId);
 
           prices.push(price);
         } catch (e) {

@@ -4,7 +4,6 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Config } from 'src/config/config';
 import { HttpService } from 'src/shared/services/http.service';
-import { Util } from 'src/shared/util';
 import { DeFiClient } from './defi-client';
 import { NodeClient, NodeMode } from './node-client';
 
@@ -26,11 +25,6 @@ interface NodeCheckResult {
 
 type TypedNodeClient = DeFiClient;
 
-interface NodePoolState {
-  type: NodeType;
-  nodes: NodeState[];
-}
-
 interface NodeState {
   type: NodeType;
   mode: NodeMode;
@@ -42,8 +36,6 @@ interface NodeState {
 export class NodeService {
   readonly #allNodes: Map<NodeType, Record<NodeMode, NodeClient | null>> = new Map();
   readonly #connectedNodes: Map<NodeType, BehaviorSubject<NodeClient | null>> = new Map();
-
-  private nodeState: NodePoolState[] = [];
 
   constructor(private readonly http: HttpService, private readonly scheduler: SchedulerRegistry) {
     this.initAllNodes();
@@ -160,7 +152,8 @@ export class NodeService {
       return { errors: [], info: undefined };
     }
 
-    return Util.retry(() => client.getInfo(), 4, 1000)
+    return client
+      .getInfo()
       .then((info) => this.handleNodeCheckSuccess(info, type, mode))
       .catch(() => this.handleNodeCheckError(type, mode));
   }

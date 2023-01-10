@@ -1,4 +1,4 @@
-import { EntityRepository, In, Repository } from 'typeorm';
+import { Between, EntityRepository, FindOperator, In, Repository } from 'typeorm';
 import { StakingType } from '../../domain/entities/staking.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { WithdrawalStatus } from '../../domain/enums';
@@ -33,20 +33,26 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
     return this.find({ where: { status: In(statuses), staking: { id: stakingId } }, relations: ['staking'] });
   }
 
-  async getByUserId(userId: number): Promise<Withdrawal[]> {
+  async getByUserId(userId: number, dateFrom?: Date, dateTo?: Date): Promise<Withdrawal[]> {
     /**
      * @note
      * relations are needed for #find(...) even though field is eager
      */
-    return this.find({ where: { staking: { userId } }, relations: ['staking'] });
+    return this.find({
+      where: { staking: { userId }, ...this.dateQuery(dateFrom, dateTo) },
+      relations: ['staking'],
+    });
   }
 
-  async getByDepositAddress(depositAddress: string): Promise<Withdrawal[]> {
+  async getByDepositAddress(depositAddress: string, dateFrom?: Date, dateTo?: Date): Promise<Withdrawal[]> {
     /**
      * @note
      * relations are needed for #find(...) even though field is eager
      */
-    return this.find({ where: { staking: { depositAddress: { address: depositAddress } } }, relations: ['staking'] });
+    return this.find({
+      where: { staking: { depositAddress: { address: depositAddress } }, ...this.dateQuery(dateFrom, dateTo) },
+      relations: ['staking'],
+    });
   }
 
   async getStakingIdsForPayingOut(): Promise<number[]> {
@@ -90,5 +96,9 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
       })
       .getRawOne<{ amount: number }>()
       .then((r) => r.amount ?? 0);
+  }
+
+  private dateQuery(from?: Date, to?: Date): { outputDate: FindOperator<Date> } | undefined {
+    return from || to ? { outputDate: Between(from ?? new Date(0), to ?? new Date()) } : undefined;
   }
 }

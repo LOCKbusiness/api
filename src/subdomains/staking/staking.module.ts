@@ -20,7 +20,7 @@ import { StakingAuthorizeService } from './infrastructure/staking-authorize.serv
 import { StakingKycCheckService } from './infrastructure/staking-kyc-check.service';
 import { IntegrationModule } from 'src/integration/integration.module';
 import { CoinGeckoService } from './infrastructure/coin-gecko.service';
-import { FIAT_PRICE_PROVIDER } from './application/interfaces';
+import { PRICE_PROVIDER } from './application/interfaces';
 import { AssetStakingMetadataRepository } from './application/repositories/asset-staking-metadata.repository';
 import { WithdrawalRepository } from './application/repositories/withdrawal.repository';
 import { WithdrawalController } from './api/controllers/withdrawal.controller';
@@ -69,7 +69,7 @@ import { UtxoManagementService } from './application/services/utxo-management.se
   ],
   providers: [
     {
-      provide: FIAT_PRICE_PROVIDER,
+      provide: PRICE_PROVIDER,
       useClass: CoinGeckoService,
     },
     StakingService,
@@ -88,6 +88,11 @@ import { UtxoManagementService } from './application/services/utxo-management.se
     LiquidityManagementService,
     UtxoManagementService,
   ],
-  exports: [StakingService, StakingDepositService, StakingWithdrawalService],
+  exports: [
+    StakingService,
+    StakingDepositService,
+    StakingWithdrawalService,
+    { provide: PRICE_PROVIDER, useClass: CoinGeckoService },
+  ],
 })
 export class StakingModule {}

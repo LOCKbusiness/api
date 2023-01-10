@@ -28,11 +28,16 @@ export class StakingAnalytics extends IEntity {
   //*** PUBLIC API ***//
 
   updateAnalytics(averageBalance: number, averageRewards: number, operatorCount: number, tvl: number): this {
-    this.apr =
-      this.strategy === StakingStrategy.MASTERNODE ? this.calculateApr(averageBalance, averageRewards) : this.apr;
-    this.apy = this.strategy === StakingStrategy.MASTERNODE ? this.calculateApy(this.apr) : this.apy;
+    const apr = this.calculateApr(averageBalance, averageRewards);
+    const apy = this.calculateApy(apr);
+
+    this.apr = this.strategy === StakingStrategy.MASTERNODE ? apr : this.apr;
+    this.apy = this.strategy === StakingStrategy.MASTERNODE ? apy : this.apy;
     this.operatorCount = operatorCount;
     this.tvl = tvl;
+
+    console.log(`Updated analytics for ${this.asset.name} ${this.strategy}: APR: ${apr}%, APY: ${apy}%`);
+
     return this;
   }
 
