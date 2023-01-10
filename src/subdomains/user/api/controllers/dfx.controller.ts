@@ -31,7 +31,7 @@ export class DfxController {
     return { kycId: await this.walletService.getKycIdByAddress(address) };
   }
 
-  @Post('update')
+  @Post()
   @UseGuards(AuthGuard('api-key'))
   @ApiExcludeEndpoint()
   async handoverDfxWebhook(@RealIP() ip: string, @Body() dto: WebhookDto) {
