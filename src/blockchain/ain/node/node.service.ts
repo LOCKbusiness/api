@@ -25,11 +25,6 @@ interface NodeCheckResult {
 
 type TypedNodeClient = DeFiClient;
 
-interface NodePoolState {
-  type: NodeType;
-  nodes: NodeState[];
-}
-
 interface NodeState {
   type: NodeType;
   mode: NodeMode;

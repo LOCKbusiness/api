@@ -38,7 +38,7 @@ export class DfxController {
     this.checkIp(ip, dto.data);
 
     const user = await this.userService.getUserByKycId(dto.id);
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException(`User ${dto.id} not found`);
 
     switch (dto.type) {
       case WebhookType.KYC_CHANGED:
