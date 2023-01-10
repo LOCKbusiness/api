@@ -160,9 +160,9 @@ export class NodeClient {
     );
   }
 
-  private call<T>(call: (client: ApiClient) => Promise<T>, tryCount = 3): Promise<T> {
+  private async call<T>(call: (client: ApiClient) => Promise<T>, tryCount = 3): Promise<T> {
     try {
-      return this.queue.handle(() => call(this.client));
+      return await this.queue.handle(() => call(this.client));
     } catch (e) {
       if (e instanceof SyntaxError && tryCount > 1) {
         console.log('Retrying node call ...');
