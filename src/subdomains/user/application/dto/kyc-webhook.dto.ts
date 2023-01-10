@@ -1,6 +1,6 @@
 import { KycStatus } from '../../domain/enums';
 
-export class KycWebhookData {
+export interface KycWebhookData {
   mail: string;
   firstName: string;
   lastName: string;

@@ -6,7 +6,7 @@ export enum WebhookType {
   KYC_FAILED = 'KycFailed',
 }
 
-export class WebhookDto {
+export interface WebhookDto {
   id: string;
   type: WebhookType;
   data: KycWebhookData;
