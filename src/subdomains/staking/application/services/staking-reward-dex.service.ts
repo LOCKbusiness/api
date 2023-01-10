@@ -106,7 +106,7 @@ export class StakingRewardDexService {
       await this.checkPendingSwap();
       await this.confirmRewardsForProcessing();
     } catch (e) {
-      const errorMessage = `Error while trying to retry/continue preparation of DFI reward payout of amount ${
+      const errorMessage = `Error while trying to prepare DFI reward payout (retry failed) of amount ${
         this.#pendingDfiSwap.amount
       }`;
       console.error(errorMessage, e);
@@ -194,7 +194,7 @@ export class StakingRewardDexService {
 
   private async pauseRewardsAndNotify(errorMessage: string, error: Error): Promise<void> {
     await this.pauseRewards();
-    await this.rewardNotificationService.sendRewardsPausedErrorMail(this.#pendingDfiSwap.amount, errorMessage, error);
+    await this.rewardNotificationService.sendRewardsPausedErrorMail(errorMessage, error);
 
     this.resetDfiSwapReference();
   }
