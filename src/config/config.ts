@@ -186,7 +186,7 @@ export class Configuration {
       wallet: process.env.LIQUIDITY_WALLET_NAME,
       account: +process.env.LIQUIDITY_ACCOUNT_INDEX,
     },
-    aprPeriod: 28, // days
+    aprPeriod: 7, // days
   };
 
   yieldMachine = {
