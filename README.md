@@ -13,7 +13,7 @@ API for LOCK.space international staking service
 - [Voting](#voting)
 - [Integration Example](#integration-example)
 
-## Registration
+### Registration
 
 1. Contact [support](mailto:support@lock.space) to registrate your wallet name
 2. Create an address on selected blockchain (e.g. DeFiChain)
@@ -21,7 +21,7 @@ API for LOCK.space international staking service
 4. Register the user with the [sign-up endpoint](https://api.lock.space/swagger/#/Authentication/AuthController_signUp)
 5. Now you can get your access token (with address & signature) with the [sign-in endpoint](https://api.lock.space/swagger/#/Authentication/AuthController_signIn)
 
-## KYC
+### KYC
 
 Before the user can stake he has to proceed a KYC.
 
@@ -35,17 +35,17 @@ Before the user can stake he has to proceed a KYC.
 
 3.  Check with the [user endpoint](https://api.lock.space/swagger/#/User/UserController_getUser) if KYC is finished (KYC status `Light` or `Full`)
 
-## Staking
+### Staking
 
 - Get the staking deposit address, id, information about fee, balance, min deposit, pending deposits, pending withdrawals etc. with the [staking endpoint](https://api.lock.space/swagger/#/Staking/StakingController_getStaking)
 
-### Deposit
+#### Deposit
 
 1. To deposit you have to send the asset to the deposit address
 
 2. Optional you can create a pending Deposit to improve the UX for the user with the [deposit endpoint](https://api.lock.space/swagger/#/Deposit/DepositController_createDeposit)
 
-### Withdrawal
+#### Withdrawal
 
 1. Create a withdrawal with [withdrawal endpoint](https://api.lock.space/swagger/#/Withdrawal/StakingWithdrawalController_createWithdrawalDraft) to get the id and the signMessage
 
@@ -57,7 +57,7 @@ Before the user can stake he has to proceed a KYC.
 
 3. Sign the withdrawal (with the generated signature) with the [sign endpoint](https://api.lock.space/swagger/#/Withdrawal/StakingWithdrawalController_signWithdrawal)
 
-## Analytics
+### Analytics
 
 - You can get the current APR/APY with the [analytics/staking endpoint](https://api.lock.space/swagger/#/Analytics/StakingAnalyticsController_getStakingAnalytics)
 
@@ -65,12 +65,12 @@ Before the user can stake he has to proceed a KYC.
 
 - You can get a cointracking CSV of transactions (withdrawals, deposits & rewards) with the [CT endpoint](https://api.lock.space/swagger/#/Analytics/HistoryController_getCsvCT)
 
-## Voting
+### Voting
 
 - You can get the user votes with the [voting/votes endpoint](https://api.lock.space/swagger/#/Voting/VotingController_getVotes)
 
 - You can submit the user votes with the [voting/votes endpoint](https://api.lock.space/swagger/#/Voting/VotingController_updateVotes)
 
-## Integration Example
+### Integration Example
 
 - LOCK.space is fully integrated in the [DFX.swiss wallet](https://github.com/DFXswiss/wallet)
