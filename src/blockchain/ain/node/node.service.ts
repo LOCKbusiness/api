@@ -25,13 +25,6 @@ interface NodeCheckResult {
 
 type TypedNodeClient = DeFiClient;
 
-interface NodeState {
-  type: NodeType;
-  mode: NodeMode;
-  isDown: boolean;
-  errors: string[];
-}
-
 @Injectable()
 export class NodeService {
   readonly #allNodes: Map<NodeType, Record<NodeMode, NodeClient | null>> = new Map();
