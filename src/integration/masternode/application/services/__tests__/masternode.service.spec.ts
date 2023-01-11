@@ -49,10 +49,10 @@ describe('MasternodeService', () => {
 
   const Setup = {
     MasternodesToResign: (masternodes: Partial<Masternode & { tms: number[] }>[]) => {
-      jest.spyOn(repository, 'find').mockResolvedValue(masternodes as (Masternode & { tms: number[] })[]);
+      jest.spyOn(repository, 'find').mockResolvedValue(masternodes as Masternode[]);
       jest.spyOn(nodeClient, 'getMasternodeInfo').mockImplementation((id) =>
         Promise.resolve({
-          targetMultipliers: masternodes.find((mn) => mn.creationHash === id)?.tms ?? [0],
+          targetMultipliers: masternodes.find((mn) => mn.creationHash === id)?.tms,
         } as MasternodeInfo),
       );
     },
@@ -69,10 +69,11 @@ describe('MasternodeService', () => {
       { id: 3, creationHash: 'hash3', server: 'serverB', tms: [0] },
       { id: 4, creationHash: 'hash4', server: 'serverA', tms: [1] },
       { id: 5, creationHash: 'hash5', server: 'serverA', tms: [3] },
+      { id: 6, creationHash: 'hash6', server: 'serverA' },
     ]);
 
     const masternodes = await service.getOrderedForResigning();
 
-    expect(masternodes.map((m) => m.id)).toMatchObject([4, 5, 1, 3, 2]);
+    expect(masternodes.map((m) => m.id)).toMatchObject([4, 5, 1, 6, 3, 2]);
   });
 });
