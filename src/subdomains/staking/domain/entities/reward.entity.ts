@@ -3,14 +3,13 @@ import { Asset } from 'src/shared/models/asset/asset.entity';
 import { IEntity } from 'src/shared/models/entity';
 import { Price } from 'src/shared/models/price';
 import { Util } from 'src/shared/util';
-import { Column, Entity, Index, ManyToOne } from 'typeorm';
+import { Column, Entity, ManyToOne } from 'typeorm';
 import { RewardStatus } from '../enums';
 import { RewardBatch } from './reward-batch.entity';
 import { RewardRoute } from './reward-route.entity';
 import { Staking } from './staking.entity';
 
 @Entity()
-@Index((r: Reward) => [r.staking, r.txId], { unique: true, where: `txId IS NOT NULL` })
 export class Reward extends IEntity {
   //*** CREATION ***//
 
