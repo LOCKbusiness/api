@@ -168,16 +168,22 @@ export class MasternodeService {
     ]);
   }
 
-  async getOrderedByTms(): Promise<Masternode[]> {
+  async getOrderedForResigning(): Promise<Masternode[]> {
     const activeMasternodes = await this.getActive();
 
     // get TMS info
     const tmsInfo = await Promise.all(activeMasternodes.map((mn) => this.getMasternodeTms(mn.creationHash)));
 
-    return activeMasternodes.sort(
-      (a, b) =>
-        tmsInfo.find((tms) => tms.hash === a.creationHash).tms - tmsInfo.find((tms) => tms.hash === b.creationHash).tms,
-    );
+    return activeMasternodes.sort((a, b) => {
+      // 1. order by server
+      if (a.server > b.server) return 1;
+      if (a.server < b.server) return -1;
+
+      // 2. order by TMS
+      return (
+        tmsInfo.find((tms) => tms.hash === a.creationHash).tms - tmsInfo.find((tms) => tms.hash === b.creationHash).tms
+      );
+    });
   }
 
   async filterByBlockchainState(masternodes: Masternode[], state: BlockchainMasternodeState): Promise<Masternode[]> {

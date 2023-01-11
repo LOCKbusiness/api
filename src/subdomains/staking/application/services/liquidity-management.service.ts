@@ -145,7 +145,7 @@ export class LiquidityManagementService {
   }
 
   private async startMasternodeResigning(count: number): Promise<void | void[]> {
-    const masternodes = await this.masternodeService.getOrderedByTms();
+    const masternodes = await this.masternodeService.getOrderedForResigning();
     return this.handleMasternodesWithState(masternodes.splice(0, count), MasternodeState.ENABLED);
   }
 
