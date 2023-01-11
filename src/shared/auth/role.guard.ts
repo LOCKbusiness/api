@@ -6,7 +6,8 @@ export class RoleGuard implements CanActivate {
   // additional allowed roles
   private readonly additionalRoles = {
     [WalletRole.USER]: [WalletRole.ADMIN],
-    [WalletRole.SUPPORT]: [WalletRole.ADMIN],
+    [WalletRole.SUPPORT]: [WalletRole.COMPLIANCE, WalletRole.ADMIN],
+    [WalletRole.COMPLIANCE]: [WalletRole.ADMIN],
   };
 
   constructor(private readonly entryRole: WalletRole | WalletRole[]) {}
