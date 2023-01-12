@@ -65,19 +65,9 @@ describe('TransactionExecutionService', () => {
     jest
       .spyOn(nodeService, 'getConnectedNode')
       .mockImplementation(() => new BehaviorSubject(nodeClient).asObservable());
-    // Krysh: jest spyOn property is supported since 29.1.0, we are running 27
-    // therefore this workaround
-    // https://github.com/facebook/jest/issues/9675
-    Object.defineProperty(rawTxService, 'Masternode', {
-      get() {
-        return rawTxMasternode;
-      },
-    });
-    Object.defineProperty(rawTxService, 'Utxo', {
-      get() {
-        return rawTxUtxo;
-      },
-    });
+
+    TestUtil.setProperty(rawTxService, 'Masternode', rawTxMasternode);
+    TestUtil.setProperty(rawTxService, 'Utxo', rawTxUtxo);
 
     const module: TestingModule = await Test.createTestingModule({
       imports: [],
