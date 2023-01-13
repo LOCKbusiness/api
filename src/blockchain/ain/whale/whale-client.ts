@@ -98,13 +98,13 @@ export class WhaleClient {
     try {
       const currentBlock = await this.getBlockHeight();
       if (currentBlock > this.currentBlock) {
-        this.currentBlock = currentBlock;
-
         await Util.doInBatches(
           this.transactions.get(),
           (txIds) => Promise.all(txIds.map((tx) => this.checkTx(tx))),
           10,
         );
+
+        this.currentBlock = currentBlock;
       }
     } catch (e) {
       console.error('Exception during transaction polling:', e);
