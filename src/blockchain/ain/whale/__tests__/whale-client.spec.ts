@@ -5,26 +5,31 @@ import { TokenData, Tokens } from '@defichain/whale-api-client/dist/api/tokens';
 import { TestUtil } from 'src/shared/__tests__/test-util';
 import { Transaction, Transactions } from '@defichain/whale-api-client/dist/api/transactions';
 import { Stats, StatsData } from '@defichain/whale-api-client/dist/api/stats';
+import { SchedulerRegistry } from '@nestjs/schedule';
 
 describe('WhaleClient', () => {
   let client: WhaleClient;
 
+  let scheduler: SchedulerRegistry;
   let apiClient: WhaleApiClient;
   let tokens = createMock<Tokens>();
   let transactions = createMock<Transactions>();
   let stats = createMock<Stats>();
 
   beforeEach(async () => {
+    scheduler = createMock<SchedulerRegistry>();
     apiClient = createMock<WhaleApiClient>();
     tokens = createMock<Tokens>();
     transactions = createMock<Transactions>();
     stats = createMock<Stats>();
 
+    jest.spyOn(scheduler, 'addInterval').mockImplementation((_, interval: NodeJS.Timer) => clearInterval(interval));
+
     TestUtil.setProperty(apiClient, 'tokens', tokens);
     TestUtil.setProperty(apiClient, 'transactions', transactions);
     TestUtil.setProperty(apiClient, 'stats', stats);
 
-    client = new WhaleClient(apiClient);
+    client = new WhaleClient(scheduler, apiClient);
   });
 
   function setupPagedResponse<T>(
@@ -63,7 +68,7 @@ describe('WhaleClient', () => {
     jest.spyOn(stats, 'get').mockResolvedValue({ count: { blocks: 1 } } as StatsData);
     jest.spyOn(transactions, 'get').mockResolvedValue({ id: 'tx-id' } as Transaction);
 
-    setTimeout(() => client.pollTransactions());
+    setTimeout(() => client['pollTransactions']());
 
     const tokenResult = await client.waitForTx('tx-id');
     expect(tokenResult).toEqual('tx-id');
@@ -72,7 +77,7 @@ describe('WhaleClient', () => {
   it('should not poll on same block height', async () => {
     jest.spyOn(stats, 'get').mockResolvedValue({ count: { blocks: 0 } } as StatsData);
 
-    setTimeout(() => client.pollTransactions());
+    setTimeout(() => client['pollTransactions']());
 
     await client.waitForTx('tx-id', 1).catch(() => undefined);
 
@@ -83,7 +88,7 @@ describe('WhaleClient', () => {
     jest.spyOn(stats, 'get').mockResolvedValue({ count: { blocks: 1 } } as StatsData);
     jest.spyOn(transactions, 'get').mockResolvedValue({ id: 'tx-id' } as Transaction);
 
-    setTimeout(() => client.pollTransactions());
+    setTimeout(() => client['pollTransactions']());
 
     const tokenResult = await Promise.all([client.waitForTx('tx-id-1'), client.waitForTx('tx-id-2')]);
     expect(tokenResult).toHaveLength(2);
@@ -93,7 +98,7 @@ describe('WhaleClient', () => {
     jest.spyOn(stats, 'get').mockResolvedValue({ count: { blocks: 1 } } as StatsData);
     jest.spyOn(transactions, 'get').mockResolvedValue({ id: 'tx-id' } as Transaction);
 
-    setTimeout(() => client.pollTransactions());
+    setTimeout(() => client['pollTransactions']());
 
     const tokenResult = await Promise.all([client.waitForTx('tx-id'), client.waitForTx('tx-id')]);
     expect(tokenResult).toHaveLength(2);
@@ -101,5 +106,11 @@ describe('WhaleClient', () => {
 
   it('should throw on timeout', async () => {
     await expect(client.waitForTx('tx-id', 1)).rejects.toThrowError('tx-id timed out');
+  });
+
+  it('should not fetch block height, if no transactions', async () => {
+    await client['pollTransactions']();
+
+    expect(stats.get).toBeCalledTimes(0);
   });
 });

@@ -3,7 +3,7 @@ import { AddressToken, AddressUnspent } from '@defichain/whale-api-client/dist/a
 import { CollateralToken, LoanVaultActive, LoanVaultState } from '@defichain/whale-api-client/dist/api/loan';
 import { TokenData } from '@defichain/whale-api-client/dist/api/tokens';
 import { Transaction, TransactionVin } from '@defichain/whale-api-client/dist/api/transactions';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { SchedulerRegistry } from '@nestjs/schedule';
 import BigNumber from 'bignumber.js';
 import { GetConfig } from 'src/config/config';
 import { AsyncMap } from 'src/shared/async-map';
@@ -17,8 +17,11 @@ export class WhaleClient {
 
   private currentBlock = 0;
 
-  constructor(client?: WhaleApiClient) {
+  constructor(scheduler: SchedulerRegistry, client?: WhaleApiClient) {
     this.client = client ?? this.createWhaleClient();
+
+    const interval = setInterval(() => this.pollTransactions(), 5000);
+    scheduler.addInterval(Util.randomId().toString(), interval);
   }
 
   private createWhaleClient(): WhaleApiClient {
@@ -91,11 +94,12 @@ export class WhaleClient {
     return batches.reduce((prev, curr) => prev.concat(curr), [] as T[]);
   }
 
-  @Cron(CronExpression.EVERY_5_SECONDS)
-  async pollTransactions() {
+  private async pollTransactions() {
     if (!this.txLock.acquire()) return;
 
     try {
+      if (this.transactions.get().length === 0) return;
+
       const currentBlock = await this.getBlockHeight();
       if (currentBlock > this.currentBlock) {
         await Util.doInBatches(
