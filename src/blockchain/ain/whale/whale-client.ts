@@ -102,6 +102,7 @@ export class WhaleClient {
 
       const currentBlock = await this.getBlockHeight();
       if (currentBlock > this.currentBlock) {
+        console.log(`WhaleClient - new block ${currentBlock}`);
         await Util.doInBatches(
           this.transactions.get(),
           (txIds) => Promise.all(txIds.map((tx) => this.checkTx(tx))),
@@ -119,6 +120,7 @@ export class WhaleClient {
 
   private async checkTx(txId: string) {
     const tx: Transaction = await this.getTx(txId).catch(() => undefined);
+    console.log(`WhaleClient - verifying TX ${txId}:`, tx);
     if (tx) {
       this.transactions.resolve(txId, tx.id);
     }
