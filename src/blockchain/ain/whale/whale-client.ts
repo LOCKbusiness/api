@@ -101,6 +101,7 @@ export class WhaleClient {
       if (this.transactions.get().length === 0) return;
 
       const currentBlock = await this.getBlockHeight();
+      console.log(`WhaleClient - current block ${currentBlock}`);
       if (currentBlock > this.currentBlock) {
         console.log(`WhaleClient - new block ${currentBlock}`);
         await Util.doInBatches(
