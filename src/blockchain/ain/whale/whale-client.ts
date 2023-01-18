@@ -3,15 +3,25 @@ import { AddressToken, AddressUnspent } from '@defichain/whale-api-client/dist/a
 import { CollateralToken, LoanVaultActive, LoanVaultState } from '@defichain/whale-api-client/dist/api/loan';
 import { TokenData } from '@defichain/whale-api-client/dist/api/tokens';
 import { Transaction, TransactionVin } from '@defichain/whale-api-client/dist/api/transactions';
+import { SchedulerRegistry } from '@nestjs/schedule';
 import BigNumber from 'bignumber.js';
 import { GetConfig } from 'src/config/config';
+import { AsyncMap } from 'src/shared/async-map';
+import { Lock } from 'src/shared/lock';
 import { Util } from 'src/shared/util';
 
 export class WhaleClient {
   private readonly client: WhaleApiClient;
+  private readonly transactions = new AsyncMap<string, string>();
+  private readonly txLock = new Lock(300);
 
-  constructor() {
-    this.client = this.createWhaleClient();
+  private currentBlock = 0;
+
+  constructor(scheduler: SchedulerRegistry, client?: WhaleApiClient) {
+    this.client = client ?? this.createWhaleClient();
+
+    const interval = setInterval(() => this.pollTransactions(), 5000);
+    scheduler.addInterval(Util.randomId().toString(), interval);
   }
 
   private createWhaleClient(): WhaleApiClient {
@@ -59,21 +69,7 @@ export class WhaleClient {
   }
 
   async waitForTx(txId: string, timeout = 600000): Promise<string> {
-    const tx = await Util.poll(
-      () => this.client.transactions.get(txId),
-      (t) => t !== undefined,
-      5000,
-      timeout,
-      true,
-    );
-
-    if (tx) {
-      // wait for Ocean to settle
-      await Util.delay(5000);
-      return tx.id;
-    }
-
-    throw new Error(`Wait for TX ${txId} timed out`);
+    return await this.transactions.wait(txId, timeout);
   }
 
   async getTx(txId: string): Promise<Transaction> {
@@ -84,6 +80,7 @@ export class WhaleClient {
     return await this.client.transactions.getVins(txId);
   }
 
+  // --- HELPER METHODS --- //
   private async getAll<T>(method: () => Promise<ApiPagedResponse<T>>): Promise<T[]> {
     const batches = [await method()];
     while (batches[batches.length - 1].hasNext) {
@@ -95,5 +92,38 @@ export class WhaleClient {
     }
 
     return batches.reduce((prev, curr) => prev.concat(curr), [] as T[]);
+  }
+
+  private async pollTransactions() {
+    if (!this.txLock.acquire()) return;
+
+    try {
+      if (this.transactions.get().length === 0) return;
+
+      const currentBlock = await this.getBlockHeight();
+      console.log(`WhaleClient - current block ${currentBlock}`);
+      if (currentBlock > this.currentBlock) {
+        console.log(`WhaleClient - new block ${currentBlock}`);
+        await Util.doInBatches(
+          this.transactions.get(),
+          (txIds) => Promise.all(txIds.map((tx) => this.checkTx(tx))),
+          10,
+        );
+
+        this.currentBlock = currentBlock;
+      }
+    } catch (e) {
+      console.error('Exception during transaction polling:', e);
+    } finally {
+      this.txLock.release();
+    }
+  }
+
+  private async checkTx(txId: string) {
+    const tx: Transaction = await this.getTx(txId).catch(() => undefined);
+    console.log(`WhaleClient - verifying TX ${txId}:`, tx);
+    if (tx) {
+      this.transactions.resolve(txId, tx.id);
+    }
   }
 }

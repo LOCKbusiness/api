@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { SchedulerRegistry } from '@nestjs/schedule';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { WhaleClient } from './whale-client';
 
@@ -6,8 +7,8 @@ import { WhaleClient } from './whale-client';
 export class WhaleService {
   readonly #client: BehaviorSubject<WhaleClient>;
 
-  constructor() {
-    this.#client = new BehaviorSubject(new WhaleClient());
+  constructor(scheduler: SchedulerRegistry) {
+    this.#client = new BehaviorSubject(new WhaleClient(scheduler));
   }
 
   getClient(): Observable<WhaleClient> {

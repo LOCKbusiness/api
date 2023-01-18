@@ -2,7 +2,6 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { CTransactionSegWit } from '@defichain/jellyfish-transaction';
 import { RawTxDto } from 'src/blockchain/ain/jellyfish/dto/raw-tx.dto';
 import { TransactionOutputDto } from '../dto/transaction.output.dto';
-import { Transaction } from '../types/transaction';
 import { Transaction as TransactionEntity } from '../../domain/entities/transaction.entity';
 import { SmartBuffer } from 'smart-buffer';
 import { TransactionRepository } from '../repositories/transaction.repository';
@@ -10,16 +9,16 @@ import { Config, Process } from 'src/config/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
+import { AsyncMap } from 'src/shared/async-map';
 
 @Injectable()
 export class TransactionService {
-  private readonly transactions: Map<string, Transaction>;
+  private readonly transactions = new AsyncMap<string, string>();
 
   private client: WhaleClient;
 
   constructor(private readonly repository: TransactionRepository, whaleService: WhaleService) {
     whaleService.getClient().subscribe((c) => (this.client = c));
-    this.transactions = new Map<string, Transaction>();
   }
 
   @Cron(CronExpression.EVERY_10_MINUTES)
@@ -66,9 +65,7 @@ export class TransactionService {
     console.info(`${tx.chainId} invalidated with reason: ${reason}`);
     await this.repository.save(tx.invalidated(reason));
 
-    const txPromise = this.transactions.get(tx.chainId);
-    this.transactions.delete(tx.chainId);
-    txPromise?.invalidated(`${tx.chainId} ${reason}`);
+    this.transactions.reject(tx.chainId, `${tx.chainId} ${reason}`);
   }
 
   async signed(id: string, hex: string) {
@@ -80,9 +77,7 @@ export class TransactionService {
     console.info(`${tx.chainId} signed`);
     await this.repository.save(tx.signed(hex));
 
-    const txPromise = this.transactions.get(tx.chainId);
-    this.transactions.delete(tx.chainId);
-    txPromise?.signed(hex);
+    this.transactions.resolve(tx.chainId, hex);
   }
 
   async sign(rawTx: RawTxDto, signature: string, payload?: any): Promise<string> {
@@ -94,15 +89,8 @@ export class TransactionService {
     const tx = existingTx ? Object.assign(existingTx, newTx) : newTx;
     await this.repository.save(tx);
     console.info(`Added ${id} for signing`);
-    return this.waitForResponse(id);
-  }
 
-  private async waitForResponse(id: string): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-      this.transactions.set(id, { signed: resolve, invalidated: reject });
-
-      setTimeout(() => reject(`${id} timed out`), Config.staking.timeout.signature);
-    });
+    return this.transactions.wait(id, Config.staking.timeout.signature);
   }
 
   private receiveIdFor(rawTx: RawTxDto): string {

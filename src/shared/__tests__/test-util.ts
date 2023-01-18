@@ -7,4 +7,8 @@ export class TestUtil {
     const conf = { ...new Configuration(), ...config } as Configuration;
     return { provide: ConfigService, useValue: new ConfigService(conf) };
   }
+
+  static setProperty<T>(obj: T, propertyName: keyof T, property: any) {
+    Object.defineProperty(obj, propertyName, { get: () => property });
+  }
 }
