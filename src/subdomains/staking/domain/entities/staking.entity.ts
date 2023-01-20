@@ -1,6 +1,6 @@
 import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { Withdrawal } from './withdrawal.entity';
-import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, Index, ManyToOne, OneToMany } from 'typeorm';
 import { IEntity } from 'src/shared/models/entity';
 import { StakingStatus, StakingStrategy, WithdrawalStatus } from '../enums';
 import { BadRequestException } from '@nestjs/common';
@@ -29,6 +29,7 @@ export const StakingTypes: { [key in StakingStrategy]: AssetQuery[] } = {
 };
 
 @Entity()
+@Index((s: Staking) => [s.userId, s.strategy, s.asset], { unique: true })
 export class Staking extends IEntity {
   @Column({ type: 'int', nullable: false })
   userId: number;
