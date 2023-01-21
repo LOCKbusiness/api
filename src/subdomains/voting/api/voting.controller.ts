@@ -9,7 +9,7 @@ import { UserService } from 'src/subdomains/user/application/services/user.servi
 import { CfpResultDto } from '../application/dto/cfp-result.dto';
 import { CfpSignMessageDto } from '../application/dto/cfp-sign-message.dto';
 import { Vote, Votes } from '../application/dto/votes.dto';
-import { VotingService } from '../application/services/voting.service';
+import { CfpUserInfo, VotingService } from '../application/services/voting.service';
 
 @ApiTags('Voting')
 @Controller('voting')
@@ -36,6 +36,12 @@ export class VotingController {
   @ApiOkResponse({ type: CfpResultDto, isArray: true })
   async getCurrentResult(): Promise<CfpResultDto[]> {
     return this.votingService.result;
+  }
+
+  @Get('user-result')
+  @ApiOkResponse({ type: CfpResultDto, isArray: true })
+  async getCurrentUserResult(): Promise<CfpUserInfo[]> {
+    return this.votingService.getVoteDetails();
   }
 
   @Get('sign-messages')

@@ -4,18 +4,32 @@ import { Config, Process } from 'src/config/config';
 import { MasternodeService } from 'src/integration/masternode/application/services/masternode.service';
 import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
 import { AssetType } from 'src/shared/models/asset/asset.entity';
+import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 import { HttpService } from 'src/shared/services/http.service';
 import { Util } from 'src/shared/util';
 import { StakingRepository } from 'src/subdomains/staking/application/repositories/staking.repository';
 import { Staking } from 'src/subdomains/staking/domain/entities/staking.entity';
 import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
+import { User } from 'src/subdomains/user/domain/entities/user.entity';
 import { getCustomRepository } from 'typeorm';
 import { CfpResultDto } from '../dto/cfp-result.dto';
 import { CfpSignMessageDto } from '../dto/cfp-sign-message.dto';
 import { CfpDto, CfpInfo } from '../dto/cfp.dto';
 import { Distribution } from '../dto/distribution.dto';
 import { Vote } from '../dto/votes.dto';
+
+export interface CfpUserVote {
+  id: number;
+  name: string;
+  vote: Vote;
+}
+
+export interface CfpUserInfo {
+  depositAddress: BlockchainAddress;
+  balance: number;
+  votes: CfpUserVote[];
+}
 
 @Injectable()
 export class VotingService implements OnModuleInit {
@@ -48,6 +62,29 @@ export class VotingService implements OnModuleInit {
     } catch (e) {
       console.error(`Exception during voting evaluation:`, e);
     }
+  }
+
+  async getVoteDetails(): Promise<CfpUserInfo[]> {
+    const { cfpList } = await this.getCfpInfos();
+    const userWithVotes = await this.userService.getAllUserWithVotes();
+    const stakings = await getCustomRepository(StakingRepository).getByType({
+      asset: { name: 'DFI', type: AssetType.COIN },
+      strategy: StakingStrategy.MASTERNODE,
+    });
+
+    const cfpUsersInfo: CfpUserInfo[] = [];
+
+    for (const staking of stakings) {
+      const user = userWithVotes.find((user) => user.id === staking.userId);
+
+      cfpUsersInfo.push({
+        depositAddress: staking.depositAddress,
+        balance: staking.balance,
+        votes: user ? this.getUserVotes(user, cfpList) : null,
+      });
+    }
+
+    return cfpUsersInfo;
   }
 
   get result(): CfpResultDto[] {
@@ -131,6 +168,19 @@ export class VotingService implements OnModuleInit {
       stakings.filter((s) => s.userId === userId),
       'balance',
     );
+  }
+
+  private getUserVotes(user: User, cfpList: CfpInfo[]): CfpUserVote[] {
+    const userCfpVotes: CfpUserVote[] = [];
+    for (const [cfpId, vote] of Object.entries(user.vote)) {
+      const cfpName = cfpList.find((cfpInfo) => cfpInfo.id === Number.parseInt(cfpId));
+      userCfpVotes.push({
+        id: Number.parseInt(cfpId),
+        vote: vote,
+        name: cfpName?.name,
+      });
+    }
+    return userCfpVotes;
   }
 
   // --- CFP HELPERS --- //
