@@ -1,5 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';import { StakingDepositService } from 'src/subdomains/staking/application/services/staking-deposit.service';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { StakingDepositService } from 'src/subdomains/staking/application/services/staking-deposit.service';
 import { StakingWithdrawalService } from 'src/subdomains/staking/application/services/staking-withdrawal.service';
 import { StakingAnalyticsQuery } from '../../application/dto/input/staking-analytics-query.dto';
 import { StakingAnalyticsOutputDto } from '../../application/dto/output/staking-analytics.output.dto';
