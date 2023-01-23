@@ -187,7 +187,7 @@ export class MasternodeService {
   }
 
   async getAllOwner(): Promise<string[]> {
-    return await this.getActive().then((masternodes) => masternodes.map((v) => v.owner));
+    return this.repository.find().then((masternodes) => masternodes.map((v) => v.owner));
   }
 
   async filterByBlockchainState(masternodes: Masternode[], state: BlockchainMasternodeState): Promise<Masternode[]> {

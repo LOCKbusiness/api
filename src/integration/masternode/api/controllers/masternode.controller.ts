@@ -12,7 +12,6 @@ export class MasternodeController {
   constructor(private readonly masternodeService: MasternodeService) {}
 
   @Get()
-  @ApiBearerAuth()
   @ApiOkResponse({ type: String, isArray: true })
   async getMasternodes(): Promise<string[]> {
     return await this.masternodeService.getAllOwner();
