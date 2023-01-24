@@ -8,8 +8,9 @@ import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { CfpResultDto } from '../application/dto/cfp-result.dto';
 import { CfpSignMessageDto } from '../application/dto/cfp-sign-message.dto';
+import { CfpVoteDto } from '../application/dto/cfp-vote.dto';
 import { Vote, Votes } from '../application/dto/votes.dto';
-import { CfpUserInfo, VotingService } from '../application/services/voting.service';
+import { VotingService } from '../application/services/voting.service';
 
 @ApiTags('Voting')
 @Controller('voting')
@@ -38,9 +39,9 @@ export class VotingController {
     return this.votingService.result;
   }
 
-  @Get('user-result')
-  @ApiOkResponse({ type: CfpResultDto, isArray: true })
-  async getCurrentUserResult(): Promise<CfpUserInfo[]> {
+  @Get('result/votes')
+  @ApiOkResponse({ type: CfpVoteDto, isArray: true })
+  async getCurrentUserVotes(): Promise<CfpVoteDto[]> {
     return this.votingService.getVoteDetails();
   }
 

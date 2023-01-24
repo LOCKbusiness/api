@@ -4,7 +4,6 @@ import { Config, Process } from 'src/config/config';
 import { MasternodeService } from 'src/integration/masternode/application/services/masternode.service';
 import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
 import { AssetType } from 'src/shared/models/asset/asset.entity';
-import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 import { HttpService } from 'src/shared/services/http.service';
 import { Util } from 'src/shared/util';
 import { StakingRepository } from 'src/subdomains/staking/application/repositories/staking.repository';
@@ -15,21 +14,10 @@ import { User } from 'src/subdomains/user/domain/entities/user.entity';
 import { getCustomRepository } from 'typeorm';
 import { CfpResultDto } from '../dto/cfp-result.dto';
 import { CfpSignMessageDto } from '../dto/cfp-sign-message.dto';
+import { CfpUserVote, CfpVoteDto } from '../dto/cfp-vote.dto';
 import { CfpDto, CfpInfo } from '../dto/cfp.dto';
 import { Distribution } from '../dto/distribution.dto';
 import { Vote } from '../dto/votes.dto';
-
-export interface CfpUserVote {
-  id: number;
-  name: string;
-  vote: Vote;
-}
-
-export interface CfpUserInfo {
-  depositAddress: BlockchainAddress;
-  balance: number;
-  votes: CfpUserVote[];
-}
 
 @Injectable()
 export class VotingService implements OnModuleInit {
@@ -64,7 +52,7 @@ export class VotingService implements OnModuleInit {
     }
   }
 
-  async getVoteDetails(): Promise<CfpUserInfo[]> {
+  async getVoteDetails(): Promise<CfpVoteDto[]> {
     const { cfpList } = await this.getCfpInfos();
     const userWithVotes = await this.userService.getAllUserWithVotes();
     const stakings = await getCustomRepository(StakingRepository).getByType({
@@ -72,15 +60,15 @@ export class VotingService implements OnModuleInit {
       strategy: StakingStrategy.MASTERNODE,
     });
 
-    const cfpUsersInfo: CfpUserInfo[] = [];
+    const cfpUsersInfo: CfpVoteDto[] = [];
 
     for (const staking of stakings) {
       const user = userWithVotes.find((user) => user.id === staking.userId);
 
       cfpUsersInfo.push({
-        depositAddress: staking.depositAddress,
+        depositAddress: staking.depositAddress.address,
         balance: staking.balance,
-        votes: user ? this.getUserVotes(user, cfpList) : null,
+        votes: user ? this.getUserVotes(user, cfpList) : [],
       });
     }
 
