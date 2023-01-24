@@ -6,7 +6,7 @@ import { Util } from 'src/shared/util';
 import { MasternodeService } from 'src/integration/masternode/application/services/masternode.service';
 import { StakingWithdrawalService } from './staking-withdrawal.service';
 import BigNumber from 'bignumber.js';
-import { MasternodeState, MasternodeTimeLock } from '../../domain/enums';
+import { MasternodeState, MasternodeTimeLock, MasternodeVote } from '../../domain/enums';
 import { MasternodeState as BlockchainMasternodeState } from '@defichain/jellyfish-api-core/dist/category/masternode';
 import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
 import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';

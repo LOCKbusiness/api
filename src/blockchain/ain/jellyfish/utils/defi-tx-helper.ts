@@ -1,4 +1,4 @@
-import { MasternodeTimeLock } from 'src/subdomains/staking/domain/enums';
+import { MasternodeTimeLock, MasternodeVote } from 'src/subdomains/staking/domain/enums';
 import {
   OP_CODES,
   OP_DEFI_TX,
@@ -26,6 +26,14 @@ export class DefiTxHelper {
   static resignMasternode(creationTxId: string): OP_DEFI_TX {
     return OP_CODES.OP_DEFI_TX_RESIGN_MASTER_NODE({
       nodeId: creationTxId,
+    });
+  }
+
+  static voteMasternode(creationTxId: string, proposalId: string, voteDecision: MasternodeVote): OP_DEFI_TX {
+    return OP_CODES.OP_DEFI_TX_VOTE({
+      proposalId,
+      masternodeId: creationTxId,
+      voteDecision,
     });
   }
 
