@@ -12,10 +12,8 @@ import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { User } from 'src/subdomains/user/domain/entities/user.entity';
 import { getCustomRepository } from 'typeorm';
-import { CfpResultDto } from '../dto/cfp-result.dto';
 import { CfpSignMessageDto } from '../dto/cfp-sign-message.dto';
-import { CfpUserVote, CfpVoteDto } from '../dto/cfp-vote.dto';
-import { CfpDto, CfpInfo } from '../dto/cfp.dto';
+import { CfpDto, CfpInfo, CfpResultDto, CfpUserVote, CfpVoteDto } from '../dto/cfp.dto';
 import { Distribution } from '../dto/distribution.dto';
 import { Vote } from '../dto/votes.dto';
 
@@ -43,7 +41,7 @@ export class VotingService implements OnModuleInit {
       const distributions = await this.getVoteDistributions(cfpList);
 
       this.currentResults = distributions.map((d) => ({
-        number: d.cfpId,
+        id: d.cfpId,
         name: cfpList.find((c) => c.id === d.cfpId).name,
         result: d.distribution,
       }));
@@ -117,7 +115,7 @@ export class VotingService implements OnModuleInit {
   }
 
   // --- VOTING DISTRIBUTION --- //
-  private async getVoteDistributions(cfpList: CfpInfo[]): Promise<{ cfpId: number; distribution: Distribution }[]> {
+  private async getVoteDistributions(cfpList: CfpInfo[]): Promise<{ cfpId: string; distribution: Distribution }[]> {
     // get the DFI distribution
     const userWithVotes = await this.userService.getAllUserWithVotes();
     const dfiDistribution: { [cfpId: string]: Distribution } = cfpList.reduce(
@@ -141,7 +139,7 @@ export class VotingService implements OnModuleInit {
     return Object.entries(dfiDistribution).map(([cfpId, { yes, no, neutral }]) => {
       const total = Util.sum([yes, no, neutral]);
       return {
-        cfpId: +cfpId,
+        cfpId: cfpId,
         distribution: {
           yes: total ? Util.round(yes / total, 2) : 0,
           no: total ? Util.round(no / total, 2) : 0,
@@ -161,7 +159,7 @@ export class VotingService implements OnModuleInit {
   private getUserVotes(user: User, cfpList: CfpInfo[]): CfpUserVote[] {
     const userCfpVotes: CfpUserVote[] = [];
     for (const cfp of cfpList) {
-      const [cfpId, vote] = Object.entries(user.vote).find(([cfpId, _]) => cfp.id === Number.parseInt(cfpId));
+      const [cfpId, vote] = Object.entries(user.vote).find(([cfpId, _]) => cfp.id === cfpId);
       userCfpVotes.push({
         id: cfpId,
         vote: vote,
@@ -176,7 +174,7 @@ export class VotingService implements OnModuleInit {
     const cfpList = await this.getCurrentCfpList();
     return {
       startDate: new Date(cfpList[0].startDate),
-      cfpList: cfpList.map((cfp) => ({ id: cfp.number, name: cfp.title.split(':')[0] })),
+      cfpList: cfpList.map((cfp) => ({ id: cfp.id, name: cfp.title.split(':')[0] })),
     };
   }
 

@@ -6,9 +6,8 @@ import { JwtPayload } from 'src/shared/auth/jwt-payload.interface';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
-import { CfpResultDto } from '../application/dto/cfp-result.dto';
 import { CfpSignMessageDto } from '../application/dto/cfp-sign-message.dto';
-import { CfpVoteDto } from '../application/dto/cfp-vote.dto';
+import { CfpResultDto, CfpVoteDto } from '../application/dto/cfp.dto';
 import { Vote, Votes } from '../application/dto/votes.dto';
 import { VotingService } from '../application/services/voting.service';
 
