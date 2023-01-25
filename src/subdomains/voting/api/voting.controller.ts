@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, ParseArrayPipe, Post, Put, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiExcludeEndpoint, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { GetJwt } from 'src/shared/auth/get-jwt.decorator';
@@ -7,8 +7,9 @@ import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { CfpResultDto } from '../application/dto/cfp-result.dto';
-import { CfpSignMessageDto } from '../application/dto/cfp-sign-message.dto';
-import { Vote, Votes } from '../application/dto/votes.dto';
+import { CfpVoteDto } from '../application/dto/cfp-vote.dto';
+import { Votes } from '../application/dto/votes.dto';
+import { Vote } from '../domain/enums';
 import { VotingService } from '../application/services/voting.service';
 
 @ApiTags('Voting')
@@ -38,11 +39,20 @@ export class VotingController {
     return this.votingService.result;
   }
 
-  @Get('sign-messages')
+  // --- ADMIN --- //
+  @Get('mn-votes')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.TRANSACTION_SIGNER))
-  async getSignInformation(): Promise<CfpSignMessageDto[]> {
-    return this.votingService.getSignMessages();
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
+  async getMasternodeVotes(): Promise<CfpVoteDto[]> {
+    return this.votingService.getMasternodeVotes();
+  }
+
+  @Post('mn-votes')
+  @ApiBearerAuth()
+  @ApiExcludeEndpoint()
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
+  async createMasternodeVotes(@Body(new ParseArrayPipe({ items: CfpVoteDto })) votes: CfpVoteDto[]): Promise<void> {
+    return this.votingService.createVotes(votes);
   }
 }

@@ -1,5 +1,5 @@
 export interface CfpDto {
-  number: number;
+  number: string;
   title: string;
   type: 'cfp' | 'dfip';
   startDate: string;
@@ -7,6 +7,6 @@ export interface CfpDto {
 }
 
 export interface CfpInfo {
-  id: number;
+  id: string;
   name: string;
 }

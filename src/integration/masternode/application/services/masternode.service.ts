@@ -85,6 +85,10 @@ export class MasternodeService {
   }
 
   // --- PUBLIC METHODS --- //
+  async getAll(): Promise<Masternode[]> {
+    return this.repository.find();
+  }
+
   async getIdleMasternodes(count: number): Promise<Masternode[]> {
     const masternodes = await this.repository.find({
       where: { state: MasternodeState.IDLE },
@@ -187,7 +191,7 @@ export class MasternodeService {
   }
 
   async getAllOwner(): Promise<string[]> {
-    return this.repository.find().then((masternodes) => masternodes.map((v) => v.owner));
+    return this.getAll().then((masternodes) => masternodes.map((v) => v.owner));
   }
 
   async filterByBlockchainState(masternodes: Masternode[], state: BlockchainMasternodeState): Promise<Masternode[]> {

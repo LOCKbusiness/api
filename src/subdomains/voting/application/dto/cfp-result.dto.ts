@@ -3,7 +3,7 @@ import { Distribution } from './distribution.dto';
 
 export class CfpResultDto {
   @ApiProperty()
-  number: number;
+  number: string;
 
   @ApiProperty()
   name: string;
