@@ -160,12 +160,12 @@ export class VotingService implements OnModuleInit {
 
   private getUserVotes(user: User, cfpList: CfpInfo[]): CfpUserVote[] {
     const userCfpVotes: CfpUserVote[] = [];
-    for (const [cfpId, vote] of Object.entries(user.vote)) {
-      const cfpName = cfpList.find((cfpInfo) => cfpInfo.id === Number.parseInt(cfpId));
+    for (const cfp of cfpList) {
+      const [cfpId, vote] = Object.entries(user.vote).find(([cfpId, _]) => cfp.id === Number.parseInt(cfpId));
       userCfpVotes.push({
-        id: Number.parseInt(cfpId),
+        id: cfpId,
         vote: vote,
-        name: cfpName?.name,
+        name: cfp.name,
       });
     }
     return userCfpVotes;

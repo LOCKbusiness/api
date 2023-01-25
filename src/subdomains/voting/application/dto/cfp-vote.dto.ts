@@ -4,7 +4,7 @@ import { Vote } from './votes.dto';
 
 export class CfpUserVote {
   @ApiProperty()
-  id: number;
+  id: string;
 
   @ApiProperty()
   name: string;
