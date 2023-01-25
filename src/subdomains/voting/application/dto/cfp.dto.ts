@@ -3,7 +3,7 @@ import { Distribution } from './distribution.dto';
 import { Vote } from './votes.dto';
 
 export interface CfpDto {
-  id: string;
+  number: string;
   title: string;
   type: 'cfp' | 'dfip';
   startDate: string;
