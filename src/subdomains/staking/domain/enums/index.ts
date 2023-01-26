@@ -55,3 +55,9 @@ export enum StakingStrategy {
   MASTERNODE = 'Masternode',
   LIQUIDITY_MINING = 'LiquidityMining',
 }
+
+export enum MasternodeVote {
+  YES = 0x01,
+  NO = 0x02,
+  NEUTRAL = 0x03,
+}

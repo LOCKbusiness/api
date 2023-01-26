@@ -2,6 +2,7 @@ import BigNumber from 'bignumber.js';
 import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/domain/enums';
 import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
 import { AssetType } from 'src/shared/models/asset/asset.entity';
+import { MasternodeVote } from 'src/subdomains/staking/domain/enums';
 
 export interface WalletBaseData {
   ownerWallet: string;
@@ -25,6 +26,12 @@ export interface CreateMasternodeData extends WalletBaseData {
 
 export interface ResignMasternodeData extends WalletBaseData {
   masternode: Masternode;
+}
+
+export interface VoteMasternodeData extends WalletBaseData {
+  masternode: Masternode;
+  proposalId: string;
+  voteDecision: MasternodeVote;
 }
 
 export interface SendWithdrawalData {

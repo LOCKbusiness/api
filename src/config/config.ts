@@ -213,6 +213,7 @@ export class Configuration {
     fee: 10,
     creationFee: 0.00000232,
     resignFee: 0.00000297,
+    voteFee: { last: 0.00000297, one: 0.00000193 },
   };
 
   get addressFormat(): RegExp {
