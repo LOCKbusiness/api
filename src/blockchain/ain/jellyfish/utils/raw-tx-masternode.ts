@@ -67,7 +67,7 @@ export class RawTxMasternode extends RawTxBase {
   private async voteTx(masternode: Masternode, proposalId: string, voteDecision: MasternodeVote): Promise<RawTxDto> {
     const [, ownerPubKeyHash] = RawTxUtil.parseAddress(masternode.owner);
 
-    const expectedAmount = new BigNumber(Config.masternode.voteFee.single);
+    const expectedAmount = new BigNumber(Config.masternode.voteFee.last);
     const utxo = await this.utxoProvider.provideExactAmount(masternode.owner, expectedAmount);
 
     const vins = RawTxUtil.createVins(utxo.prevouts);
