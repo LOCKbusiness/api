@@ -6,11 +6,12 @@ import { MasternodeController } from './api/controllers/masternode.controller';
 import { MasternodeRepository } from './application/repositories/masternode.repository';
 import { MasternodeOwnerService } from './application/services/masternode-owner.service';
 import { MasternodeService } from './application/services/masternode.service';
+import { Masternode } from './domain/entities/masternode.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([MasternodeRepository]), SharedModule, BlockchainModule],
+  imports: [TypeOrmModule.forFeature([Masternode]), SharedModule, BlockchainModule],
   controllers: [MasternodeController],
-  providers: [MasternodeService, MasternodeOwnerService],
+  providers: [MasternodeRepository, MasternodeService, MasternodeOwnerService],
   exports: [MasternodeService, MasternodeOwnerService],
 })
 export class MasternodeModule {}

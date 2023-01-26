@@ -130,7 +130,7 @@ export class StakingService {
 
   async updateRewardsAmount(stakingId: number): Promise<Staking> {
     return this.repository.saveWithLock(stakingId, async (staking, manager) =>
-      staking.updateRewardsAmount(await manager.getCustomRepository(RewardRepository).getRewardsAmount(staking.id)),
+      staking.updateRewardsAmount(await new RewardRepository(manager).getRewardsAmount(staking.id)),
     );
   }
 
@@ -174,10 +174,10 @@ export class StakingService {
      * @warning
      * Assuming that deposits and withdrawals are in same asset as staking
      */
-    const deposits = await manager.getCustomRepository(DepositRepository).getConfirmedAmount(stakingId);
-    const withdrawals = await manager.getCustomRepository(WithdrawalRepository).getConfirmedAmount(stakingId);
-    const stageOneDeposits = await manager.getCustomRepository(DepositRepository).getConfirmedStageOneAmount(stakingId);
-    const stageTwoDeposits = await manager.getCustomRepository(DepositRepository).getConfirmedStageTwoAmount(stakingId);
+    const deposits = await new DepositRepository(manager).getConfirmedAmount(stakingId);
+    const withdrawals = await new WithdrawalRepository(manager).getConfirmedAmount(stakingId);
+    const stageOneDeposits = await new DepositRepository(manager).getConfirmedStageOneAmount(stakingId);
+    const stageTwoDeposits = await new DepositRepository(manager).getConfirmedStageTwoAmount(stakingId);
 
     const currentBalance = Util.round(deposits - withdrawals, 8);
 

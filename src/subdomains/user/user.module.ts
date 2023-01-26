@@ -10,6 +10,11 @@ import { RefRepository } from './application/repositories/ref-repository';
 import { UserRepository } from './application/repositories/user.repository';
 import { WalletProviderRepository } from './application/repositories/wallet-provider.repository';
 import { WalletRepository } from './application/repositories/wallet.repository';
+import { Country } from './domain/entities/country.entity';
+import { Ref } from './domain/entities/ref.entity';
+import { User } from './domain/entities/user.entity';
+import { WalletProvider } from './domain/entities/wallet-provider.entity';
+import { Wallet } from './domain/entities/wallet.entity';
 import { CountryService } from './application/services/country.service';
 import { GeoLocationService } from './application/services/geo-location.service';
 import { KycService } from './application/services/kyc.service';
@@ -23,19 +28,18 @@ import { DfxController } from './api/controllers/dfx.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      UserRepository,
-      CountryRepository,
-      RefRepository,
-      WalletProviderRepository,
-      WalletRepository,
-    ]),
+    TypeOrmModule.forFeature([User, Country, Ref, WalletProvider, Wallet]),
     SharedModule,
     BlockchainModule,
     NotificationModule,
   ],
   controllers: [UserController, KycController, AuthController, DfxController],
   providers: [
+    CountryRepository,
+    RefRepository,
+    UserRepository,
+    WalletProviderRepository,
+    WalletRepository,
     UserService,
     WalletService,
     CountryService,

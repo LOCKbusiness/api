@@ -1,5 +1,5 @@
-import { Vote } from '../../domain/enums';
+import { VoteDecision } from '../../domain/enums';
 
 export interface Votes {
-  [cfpId: string]: Vote;
+  [cfpId: string]: VoteDecision;
 }

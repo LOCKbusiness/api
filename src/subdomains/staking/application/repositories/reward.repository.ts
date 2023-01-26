@@ -1,11 +1,16 @@
+import { Injectable } from '@nestjs/common';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { Between, EntityRepository, FindOperator, Repository } from 'typeorm';
+import { Between, EntityManager, FindOperator, Repository } from 'typeorm';
 import { Reward } from '../../domain/entities/reward.entity';
 import { StakingType } from '../../domain/entities/staking.entity';
 import { RewardStatus } from '../../domain/enums';
 
-@EntityRepository(Reward)
+@Injectable()
 export class RewardRepository extends Repository<Reward> {
+  constructor(manager: EntityManager) {
+    super(Reward, manager);
+  }
+
   async getByUserId(userId: number, dateFrom?: Date, dateTo?: Date): Promise<Reward[]> {
     /**
      * @note

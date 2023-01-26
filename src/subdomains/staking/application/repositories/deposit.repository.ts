@@ -1,11 +1,16 @@
+import { Injectable } from '@nestjs/common';
 import { Util } from 'src/shared/util';
-import { Between, EntityRepository, FindOperator, In, Repository } from 'typeorm';
+import { Between, EntityManager, FindOperator, In, Repository } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { StakingReference, StakingType } from '../../domain/entities/staking.entity';
 import { DepositStatus } from '../../domain/enums';
 
-@EntityRepository(Deposit)
+@Injectable()
 export class DepositRepository extends Repository<Deposit> {
+  constructor(manager: EntityManager) {
+    super(Deposit, manager);
+  }
+
   async getConfirmed(stakingId: number): Promise<Deposit[]> {
     return this.getByStatuses([DepositStatus.CONFIRMED], stakingId);
   }

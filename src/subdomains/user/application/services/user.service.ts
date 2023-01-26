@@ -10,6 +10,7 @@ import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 @Injectable()
 export class UserService {
   constructor(private readonly userRepo: UserRepository) {}
+
   async createUser(): Promise<User> {
     return await this.userRepo.save({
       language: Config.defaultLanguage,

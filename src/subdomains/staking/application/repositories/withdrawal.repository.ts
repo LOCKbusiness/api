@@ -1,10 +1,15 @@
-import { Between, EntityRepository, FindOperator, In, Repository } from 'typeorm';
+import { Injectable } from '@nestjs/common';
+import { Between, EntityManager, FindOperator, In, Repository } from 'typeorm';
 import { StakingType } from '../../domain/entities/staking.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { WithdrawalStatus } from '../../domain/enums';
 
-@EntityRepository(Withdrawal)
+@Injectable()
 export class WithdrawalRepository extends Repository<Withdrawal> {
+  constructor(manager: EntityManager) {
+    super(Withdrawal, manager);
+  }
+
   async getAllPending(): Promise<Withdrawal[]> {
     /**
      * @note

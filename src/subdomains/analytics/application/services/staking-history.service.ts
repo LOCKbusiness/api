@@ -11,11 +11,8 @@ import { CoinTrackingHistoryDtoMapper } from '../mappers/coin-tracking-history-d
 import { ChainReportCsvHistoryDto, ChainReportTransactionType } from '../dto/output/chain-report-history.dto';
 import { ChainReportHistoryDtoMapper } from '../mappers/chain-report-history-dto.mapper';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
-import { RewardRepository } from 'src/subdomains/staking/application/repositories/reward.repository';
-import { WithdrawalRepository } from 'src/subdomains/staking/application/repositories/withdrawal.repository';
-import { DepositRepository } from 'src/subdomains/staking/application/repositories/deposit.repository';
-import { getCustomRepository } from 'typeorm';
 import { HistoryQuery } from '../dto/input/history-query.dto';
+import { RepositoryFactory } from 'src/shared/repositories/repository.factory';
 
 export type HistoryDto<T> = T extends ExportType.COMPACT
   ? CompactHistoryDto
@@ -31,7 +28,7 @@ export enum ExportType {
 
 @Injectable()
 export class StakingHistoryService {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly repos: RepositoryFactory, private readonly userService: UserService) {}
 
   async getHistoryCsv(query: HistoryQuery, exportType: ExportType): Promise<StreamableFile> {
     const tx = await this.getHistory(query, exportType);
@@ -66,8 +63,8 @@ export class StakingHistoryService {
     dateTo?: Date,
   ): Promise<Deposit[]> {
     return userId
-      ? await getCustomRepository(DepositRepository).getByUserId(userId, dateFrom, dateTo)
-      : await getCustomRepository(DepositRepository).getByDepositAddress(depositAddress, dateFrom, dateTo);
+      ? await this.repos.deposit.getByUserId(userId, dateFrom, dateTo)
+      : await this.repos.deposit.getByDepositAddress(depositAddress, dateFrom, dateTo);
   }
 
   private async getWithdrawalsByUserOrAddress(
@@ -77,8 +74,8 @@ export class StakingHistoryService {
     dateTo?: Date,
   ): Promise<Withdrawal[]> {
     return userId
-      ? await getCustomRepository(WithdrawalRepository).getByUserId(userId, dateFrom, dateTo)
-      : await getCustomRepository(WithdrawalRepository).getByDepositAddress(depositAddress, dateFrom, dateTo);
+      ? await this.repos.withdrawal.getByUserId(userId, dateFrom, dateTo)
+      : await this.repos.withdrawal.getByDepositAddress(depositAddress, dateFrom, dateTo);
   }
 
   private async getRewardsByUserOrAddress(
@@ -88,8 +85,8 @@ export class StakingHistoryService {
     dateTo?: Date,
   ): Promise<Reward[]> {
     return userId
-      ? await getCustomRepository(RewardRepository).getByUserId(userId, dateFrom, dateTo)
-      : await getCustomRepository(RewardRepository).getByDepositAddress(depositAddress, dateFrom, dateTo);
+      ? await this.repos.reward.getByUserId(userId, dateFrom, dateTo)
+      : await this.repos.reward.getByDepositAddress(depositAddress, dateFrom, dateTo);
   }
 
   private getHistoryCT(deposits: Deposit[], withdrawals: Withdrawal[], rewards: Reward[]): CoinTrackingCsvHistoryDto[] {
