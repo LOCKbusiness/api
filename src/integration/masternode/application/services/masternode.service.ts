@@ -191,7 +191,7 @@ export class MasternodeService {
   }
 
   async getAllOwner(): Promise<string[]> {
-    return this.getAll().then((masternodes) => masternodes.map((v) => v.owner));
+    return this.getAll().then((masternodes) => masternodes.map((v) => v.owner).filter((o) => o));
   }
 
   async filterByBlockchainState(masternodes: Masternode[], state: BlockchainMasternodeState): Promise<Masternode[]> {
