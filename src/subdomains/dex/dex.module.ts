@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SharedModule } from 'src/shared/shared.module';
 import { LiquidityOrderFactory } from './factories/liquidity-order.factory';
 import { LiquidityOrderRepository } from './repositories/liquidity-order.repository';
+import { LiquidityOrder } from './entities/liquidity-order.entity';
 import { DexService } from './services/dex.service';
 import { DexDeFiChainService } from './services/dex-defichain.service';
 import { CheckLiquidityStrategies } from './strategies/check-liquidity/check-liquidity.facade';
@@ -21,9 +22,10 @@ import { BlockchainModule } from 'src/blockchain/blockchain.module';
 import { NotificationModule } from 'src/integration/notification/notification.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([LiquidityOrderRepository]), BlockchainModule, NotificationModule, SharedModule],
+  imports: [TypeOrmModule.forFeature([LiquidityOrder]), BlockchainModule, NotificationModule, SharedModule],
   controllers: [DexController],
   providers: [
+    LiquidityOrderRepository,
     DexService,
     LiquidityOrderFactory,
     DexDeFiChainService,

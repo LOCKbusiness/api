@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SharedModule } from 'src/shared/shared.module';
 import { PayoutOrderFactory } from './factories/payout-order.factory';
 import { PayoutOrderRepository } from './repositories/payout-order.repository';
+import { PayoutOrder } from './entities/payout-order.entity';
 import { PayoutDeFiChainService } from './services/payout-defichain.service';
 import { PayoutLogService } from './services/payout-log.service';
 import { PayoutService } from './services/payout.service';
@@ -17,15 +18,10 @@ import { NotificationModule } from 'src/integration/notification/notification.mo
 import { DexModule } from '../dex/dex.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([PayoutOrderRepository]),
-    BlockchainModule,
-    SharedModule,
-    DexModule,
-    NotificationModule,
-  ],
+  imports: [TypeOrmModule.forFeature([PayoutOrder]), BlockchainModule, SharedModule, DexModule, NotificationModule],
   controllers: [PayoutController],
   providers: [
+    PayoutOrderRepository,
     PayoutOrderFactory,
     PayoutLogService,
     PayoutService,

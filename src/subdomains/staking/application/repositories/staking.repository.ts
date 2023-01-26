@@ -1,9 +1,14 @@
+import { Injectable } from '@nestjs/common';
 import { LockedRepository } from 'src/shared/repositories/locked.repository';
-import { EntityRepository, FindOptionsWhere } from 'typeorm';
+import { EntityManager, FindOptionsWhere } from 'typeorm';
 import { Staking, StakingType } from '../../domain/entities/staking.entity';
 
-@EntityRepository(Staking)
+@Injectable()
 export class StakingRepository extends LockedRepository<Staking> {
+  constructor(manager: EntityManager) {
+    super(Staking, manager);
+  }
+
   async getByType(type: FindOptionsWhere<StakingType>): Promise<Staking[]> {
     return this.find({ where: type, relations: ['asset'] });
   }

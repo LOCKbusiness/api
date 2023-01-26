@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Lock } from 'src/shared/lock';
 import { Price } from 'src/shared/models/price';
+import { IsNull } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Reward } from '../../domain/entities/reward.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
@@ -49,9 +50,9 @@ export class StakingFiatReferenceService {
   private async getDepositsWithoutFiatReferences(): Promise<Deposit[]> {
     return this.depositRepo.find({
       where: [
-        { amountChf: null, status: DepositStatus.CONFIRMED },
-        { amountUsd: null, status: DepositStatus.CONFIRMED },
-        { amountEur: null, status: DepositStatus.CONFIRMED },
+        { amountChf: IsNull(), status: DepositStatus.CONFIRMED },
+        { amountUsd: IsNull(), status: DepositStatus.CONFIRMED },
+        { amountEur: IsNull(), status: DepositStatus.CONFIRMED },
       ],
     });
   }
@@ -59,9 +60,9 @@ export class StakingFiatReferenceService {
   private async getWithdrawalsWithoutFiatReferences(): Promise<Withdrawal[]> {
     return this.withdrawalRepo.find({
       where: [
-        { amountChf: null, status: WithdrawalStatus.CONFIRMED },
-        { amountUsd: null, status: WithdrawalStatus.CONFIRMED },
-        { amountEur: null, status: WithdrawalStatus.CONFIRMED },
+        { amountChf: IsNull(), status: WithdrawalStatus.CONFIRMED },
+        { amountUsd: IsNull(), status: WithdrawalStatus.CONFIRMED },
+        { amountEur: IsNull(), status: WithdrawalStatus.CONFIRMED },
       ],
     });
   }
@@ -69,9 +70,9 @@ export class StakingFiatReferenceService {
   private async getRewardsWithoutFiatReferences(): Promise<Reward[]> {
     return this.rewardRepo.find({
       where: [
-        { amountChf: null, status: RewardStatus.CONFIRMED },
-        { amountUsd: null, status: RewardStatus.CONFIRMED },
-        { amountEur: null, status: RewardStatus.CONFIRMED },
+        { amountChf: IsNull(), status: RewardStatus.CONFIRMED },
+        { amountUsd: IsNull(), status: RewardStatus.CONFIRMED },
+        { amountEur: IsNull(), status: RewardStatus.CONFIRMED },
       ],
     });
   }

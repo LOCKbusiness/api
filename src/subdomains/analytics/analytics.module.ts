@@ -9,17 +9,12 @@ import { StakingAnalyticsService } from './application/services/staking-analytic
 import { SharedModule } from 'src/shared/shared.module';
 import { IntegrationModule } from 'src/integration/integration.module';
 import { UserModule } from '../user/user.module';
+import { StakingAnalytics } from './domain/staking-analytics.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([StakingAnalyticsRepository]),
-    IntegrationModule,
-    StakingModule,
-    SharedModule,
-    UserModule,
-  ],
+  imports: [TypeOrmModule.forFeature([StakingAnalytics]), IntegrationModule, StakingModule, SharedModule, UserModule],
   controllers: [StakingAnalyticsController, HistoryController],
-  providers: [StakingAnalyticsService, StakingHistoryService],
+  providers: [StakingAnalyticsRepository, StakingAnalyticsService, StakingHistoryService],
   exports: [],
 })
 export class AnalyticsModule {}

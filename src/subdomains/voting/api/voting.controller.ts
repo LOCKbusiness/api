@@ -9,7 +9,7 @@ import { UserService } from 'src/subdomains/user/application/services/user.servi
 import { CfpMnVoteDto } from '../application/dto/cfp-mn-vote.dto';
 import { CfpResultDto, CfpVotesDto } from '../application/dto/cfp.dto';
 import { Votes } from '../application/dto/votes.dto';
-import { Vote } from '../domain/enums';
+import { VoteDecision } from '../domain/enums';
 import { VotingService } from '../application/services/voting.service';
 
 @ApiTags('Voting')
@@ -20,7 +20,12 @@ export class VotingController {
   @Get('votes')
   @ApiBearerAuth()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  @ApiOkResponse({ schema: { type: 'object', example: { '220': Vote.YES, '221': Vote.NO, '243': Vote.NEUTRAL } } })
+  @ApiOkResponse({
+    schema: {
+      type: 'object',
+      example: { '220': VoteDecision.YES, '221': VoteDecision.NO, '243': VoteDecision.NEUTRAL },
+    },
+  })
   async getVotes(@GetJwt() jwt: JwtPayload): Promise<Votes> {
     return this.userService.getVotes(jwt.userId);
   }
@@ -28,7 +33,12 @@ export class VotingController {
   @Put('votes')
   @ApiBearerAuth()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.USER))
-  @ApiOkResponse({ schema: { type: 'object', example: { '220': Vote.YES, '221': Vote.NO, '243': Vote.NEUTRAL } } })
+  @ApiOkResponse({
+    schema: {
+      type: 'object',
+      example: { '220': VoteDecision.YES, '221': VoteDecision.NO, '243': VoteDecision.NEUTRAL },
+    },
+  })
   async updateVotes(@GetJwt() jwt: JwtPayload, @Body() votes: Votes): Promise<Votes> {
     return this.userService.updateVotes(jwt.userId, votes);
   }

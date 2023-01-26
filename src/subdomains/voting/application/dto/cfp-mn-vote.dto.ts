@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import { IsArray, IsEnum, IsInt, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
-import { Vote } from '../../domain/enums';
+import { VoteDecision } from '../../domain/enums';
 
 export class CfpMnVoteDto {
   @IsNotEmpty()
@@ -27,6 +27,6 @@ export class MnVoteDto {
   address: string;
 
   @IsNotEmpty()
-  @IsEnum(Vote)
-  vote: Vote;
+  @IsEnum(VoteDecision)
+  vote: VoteDecision;
 }

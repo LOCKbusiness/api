@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Vote } from '../../domain/enums';
+import { VoteDecision } from '../../domain/enums';
 import { Distribution } from './distribution.dto';
 
 export interface CfpDto {
@@ -19,8 +19,8 @@ export class CfpInfo {
 }
 
 export class CfpVoteDto extends CfpInfo {
-  @ApiProperty({ enum: Vote })
-  vote: Vote;
+  @ApiProperty({ enum: VoteDecision })
+  vote: VoteDecision;
 }
 
 export class CfpVotesDto {
