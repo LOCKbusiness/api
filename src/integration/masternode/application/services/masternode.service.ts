@@ -186,6 +186,10 @@ export class MasternodeService {
     });
   }
 
+  async getAllOwner(): Promise<string[]> {
+    return this.repository.find().then((masternodes) => masternodes.map((v) => v.owner));
+  }
+
   async filterByBlockchainState(masternodes: Masternode[], state: BlockchainMasternodeState): Promise<Masternode[]> {
     const infos = await Promise.all(masternodes.map((mn) => this.getMasternodeStates(mn.creationHash)));
     return masternodes.filter((mn) => state === infos.find((info) => info.hash === mn.creationHash).state);

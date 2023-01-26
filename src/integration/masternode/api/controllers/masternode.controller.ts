@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExcludeEndpoint, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { MasternodeService } from '../../application/services/masternode.service';
@@ -10,6 +10,12 @@ import { AddMasternodeFee } from '../../application/dto/add-masternode-fee.dto';
 @Controller('masternode')
 export class MasternodeController {
   constructor(private readonly masternodeService: MasternodeService) {}
+
+  @Get()
+  @ApiOkResponse({ type: String, isArray: true })
+  async getMasternodes(): Promise<string[]> {
+    return await this.masternodeService.getAllOwner();
+  }
 
   // --- ADMIN --- //
 
