@@ -10,7 +10,7 @@ export class TransactionRepository extends Repository<Transaction> {
         inBlockchain: false,
         signedHex: Not(IsNull()),
         invalidationReason: IsNull(),
-        updated: LessThan(Util.hourBefore(1).toISOString()),
+        updated: LessThan(Util.hourBefore(1)),
       },
     });
   }

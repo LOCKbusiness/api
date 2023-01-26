@@ -33,7 +33,7 @@ export class PayoutService {
     try {
       const { context, correlationId } = request;
 
-      const existingOrder = await this.payoutOrderRepo.findOne({ context, correlationId });
+      const existingOrder = await this.payoutOrderRepo.findOneBy({ context, correlationId });
 
       if (existingOrder) {
         throw new DuplicatedEntryException(
@@ -58,7 +58,7 @@ export class PayoutService {
     context: PayoutOrderContext,
     correlationId: string,
   ): Promise<{ isComplete: boolean; payoutTxId: string; payoutFee: FeeResult }> {
-    const order = await this.payoutOrderRepo.findOne({ context, correlationId });
+    const order = await this.payoutOrderRepo.findOneBy({ context, correlationId });
     const payoutTxId = order && order.payoutTxId;
     const payoutFee = order && order.payoutFee;
 
@@ -101,7 +101,7 @@ export class PayoutService {
   }
 
   private async checkPreparationCompletion(): Promise<void> {
-    const orders = await this.payoutOrderRepo.find({ status: PayoutOrderStatus.PREPARATION_PENDING });
+    const orders = await this.payoutOrderRepo.findBy({ status: PayoutOrderStatus.PREPARATION_PENDING });
     const confirmedOrders = [];
 
     for (const order of orders) {
@@ -120,7 +120,7 @@ export class PayoutService {
   }
 
   private async checkPayoutCompletion(): Promise<void> {
-    const orders = await this.payoutOrderRepo.find({ status: PayoutOrderStatus.PAYOUT_PENDING });
+    const orders = await this.payoutOrderRepo.findBy({ status: PayoutOrderStatus.PAYOUT_PENDING });
     const confirmedOrders = [];
 
     for (const order of orders) {
@@ -138,7 +138,7 @@ export class PayoutService {
   }
 
   private async prepareNewOrders(): Promise<void> {
-    const orders = await this.payoutOrderRepo.find({ status: PayoutOrderStatus.CREATED });
+    const orders = await this.payoutOrderRepo.findBy({ status: PayoutOrderStatus.CREATED });
     const confirmedOrders = [];
 
     for (const order of orders) {
@@ -156,7 +156,7 @@ export class PayoutService {
   }
 
   private async payoutOrders(): Promise<void> {
-    const orders = await this.payoutOrderRepo.find({ status: PayoutOrderStatus.PREPARATION_CONFIRMED });
+    const orders = await this.payoutOrderRepo.findBy({ status: PayoutOrderStatus.PREPARATION_CONFIRMED });
     const groups = this.groupOrdersByPayoutStrategies(orders);
 
     for (const group of groups.entries()) {
@@ -170,7 +170,7 @@ export class PayoutService {
   }
 
   private async processFailedOrders(): Promise<void> {
-    const orders = await this.payoutOrderRepo.find({ status: PayoutOrderStatus.PAYOUT_DESIGNATED });
+    const orders = await this.payoutOrderRepo.findBy({ status: PayoutOrderStatus.PAYOUT_DESIGNATED });
 
     if (orders.length === 0) return;
 

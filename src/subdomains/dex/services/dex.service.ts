@@ -165,7 +165,7 @@ export class DexService {
     context: LiquidityOrderContext,
     correlationId: string,
   ): Promise<{ isReady: boolean; purchaseTxId: string }> {
-    const order = await this.liquidityOrderRepo.findOne({ context, correlationId });
+    const order = await this.liquidityOrderRepo.findOneBy({ context, correlationId });
 
     const purchaseTxId = order && order.txId;
     const isReady = order && order.isReady;
@@ -177,7 +177,7 @@ export class DexService {
     context: LiquidityOrderContext,
     correlationId: string,
   ): Promise<{ isComplete: boolean; purchaseTxId: string }> {
-    const order = await this.liquidityOrderRepo.findOne({ context, correlationId });
+    const order = await this.liquidityOrderRepo.findOneBy({ context, correlationId });
 
     const purchaseTxId = order && order.txId;
     const isComplete = order && order.isComplete;
@@ -232,7 +232,7 @@ export class DexService {
     if (!this.verifyPurchaseOrdersLock.acquire()) return;
 
     try {
-      const standingOrders = await this.liquidityOrderRepo.find({
+      const standingOrders = await this.liquidityOrderRepo.findBy({
         isReady: false,
         txId: Not(IsNull()),
       });

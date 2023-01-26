@@ -134,7 +134,7 @@ export class StakingWithdrawalService {
   }
 
   async getWithdrawals(dateFrom: Date = new Date(0), dateTo: Date = new Date()): Promise<TransactionDto[]> {
-    const withdrawals = await this.withdrawalRepo.find({
+    const withdrawals = await this.withdrawalRepo.findBy({
       outputDate: Between(dateFrom, dateTo),
       status: WithdrawalStatus.CONFIRMED,
     });
@@ -148,7 +148,7 @@ export class StakingWithdrawalService {
   }
 
   async getByIdOrThrow(withdrawalId: number): Promise<Withdrawal> {
-    const withdrawal = await this.withdrawalRepo.findOne({ id: withdrawalId });
+    const withdrawal = await this.withdrawalRepo.findOneBy({ id: withdrawalId });
 
     if (!withdrawal) throw new NotFoundException('Withdrawal not found');
 
@@ -223,11 +223,11 @@ export class StakingWithdrawalService {
 
   private async payoutWithdrawal(withdrawalId: number): Promise<void> {
     // payout
-    let withdrawal = await this.withdrawalRepo.findOne(withdrawalId);
+    let withdrawal = await this.withdrawalRepo.findOneBy({ id: withdrawalId });
     const txId = await this.deFiChainService.sendWithdrawal(withdrawal);
 
     // update
-    withdrawal = await this.withdrawalRepo.findOne(withdrawalId);
+    withdrawal = await this.withdrawalRepo.findOneBy({ id: withdrawalId });
     withdrawal.payoutWithdrawal(txId);
     await this.withdrawalRepo.save(withdrawal);
   }
