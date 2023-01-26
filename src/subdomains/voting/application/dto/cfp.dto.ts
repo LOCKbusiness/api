@@ -18,7 +18,7 @@ export class CfpInfo {
   name: string;
 }
 
-export class CfpVote extends CfpInfo {
+export class CfpVoteDto extends CfpInfo {
   @ApiProperty({ enum: Vote })
   vote: Vote;
 }
@@ -30,8 +30,8 @@ export class CfpVotesDto {
   @ApiProperty()
   balance: number;
 
-  @ApiProperty({ type: CfpVote, isArray: true })
-  votes: CfpVote[];
+  @ApiProperty({ type: CfpVoteDto, isArray: true })
+  votes: CfpVoteDto[];
 }
 
 export class CfpResultDto extends CfpInfo {

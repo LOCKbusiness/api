@@ -16,7 +16,7 @@ import { getCustomRepository, IsNull } from 'typeorm';
 import { Vote } from '../../domain/enums';
 import { CfpMnVoteDto } from '../dto/cfp-mn-vote.dto';
 import { User } from 'src/subdomains/user/domain/entities/user.entity';
-import { CfpDto, CfpInfo, CfpResultDto, CfpVote, CfpVotesDto } from '../dto/cfp.dto';
+import { CfpDto, CfpInfo, CfpResultDto, CfpVoteDto, CfpVotesDto } from '../dto/cfp.dto';
 import { Distribution } from '../dto/distribution.dto';
 import { VoteRepository } from '../repositories/voting.repository';
 
@@ -56,7 +56,7 @@ export class VotingService implements OnModuleInit {
     }
   }
 
-  async getVoteDetails(): Promise<CfpVotesDto[]> {
+  async getCurrentVotes(): Promise<CfpVotesDto[]> {
     const { cfpList } = await this.getCfpInfos();
     const userWithVotes = await this.userService.getAllUserWithVotes();
     const stakings = await getCustomRepository(StakingRepository).getByType({
@@ -64,19 +64,19 @@ export class VotingService implements OnModuleInit {
       strategy: StakingStrategy.MASTERNODE,
     });
 
-    const cfpUsersInfo: CfpVotesDto[] = [];
+    const cfpVotesList: CfpVotesDto[] = [];
 
     for (const staking of stakings) {
       const user = userWithVotes.find((user) => user.id === staking.userId);
 
-      cfpUsersInfo.push({
+      cfpVotesList.push({
         depositAddress: staking.depositAddress.address,
         balance: staking.balance,
         votes: user ? this.getUserVotes(user, cfpList) : [],
       });
     }
 
-    return cfpUsersInfo;
+    return cfpVotesList;
   }
 
   get result(): CfpResultDto[] {
@@ -210,8 +210,8 @@ export class VotingService implements OnModuleInit {
     );
   }
 
-  private getUserVotes(user: User, cfpList: CfpInfo[]): CfpVote[] {
-    const userCfpVotes: CfpVote[] = [];
+  private getUserVotes(user: User, cfpList: CfpInfo[]): CfpVoteDto[] {
+    const userCfpVotes: CfpVoteDto[] = [];
     for (const cfp of cfpList) {
       const [cfpId, vote] = Object.entries(user.vote).find(([cfpId, _]) => cfp.id === cfpId);
       userCfpVotes.push({

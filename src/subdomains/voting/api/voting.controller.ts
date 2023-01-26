@@ -35,14 +35,14 @@ export class VotingController {
 
   @Get('result')
   @ApiOkResponse({ type: CfpResultDto, isArray: true })
-  async getCurrentResult(): Promise<CfpResultDto[]> {
+  async getCurrentResults(): Promise<CfpResultDto[]> {
     return this.votingService.result;
   }
 
   @Get('result/votes')
   @ApiOkResponse({ type: CfpVotesDto, isArray: true })
-  async getCurrentUserVotes(): Promise<CfpVotesDto[]> {
-    return this.votingService.getVoteDetails();
+  async getCurrentVotes(): Promise<CfpVotesDto[]> {
+    return this.votingService.getCurrentVotes();
   }
 
   // --- ADMIN --- //
