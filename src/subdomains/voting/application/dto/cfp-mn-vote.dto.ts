@@ -2,7 +2,7 @@ import { Type } from 'class-transformer';
 import { IsArray, IsEnum, IsInt, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
 import { Vote } from '../../domain/enums';
 
-export class CfpVoteDto {
+export class CfpMnVoteDto {
   @IsNotEmpty()
   @IsString()
   id: string;
@@ -13,11 +13,11 @@ export class CfpVoteDto {
 
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => VoteDto)
-  votes: VoteDto[];
+  @Type(() => MnVoteDto)
+  votes: MnVoteDto[];
 }
 
-export class VoteDto {
+export class MnVoteDto {
   @IsNotEmpty()
   @IsInt()
   accountIndex: number;

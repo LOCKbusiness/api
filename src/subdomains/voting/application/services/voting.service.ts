@@ -14,9 +14,9 @@ import { MasternodeVote, StakingStrategy } from 'src/subdomains/staking/domain/e
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { getCustomRepository, IsNull } from 'typeorm';
 import { Vote } from '../../domain/enums';
-import { CfpResultDto } from '../dto/cfp-result.dto';
-import { CfpVoteDto } from '../dto/cfp-vote.dto';
-import { CfpDto, CfpInfo } from '../dto/cfp.dto';
+import { CfpMnVoteDto } from '../dto/cfp-mn-vote.dto';
+import { User } from 'src/subdomains/user/domain/entities/user.entity';
+import { CfpDto, CfpInfo, CfpResultDto, CfpVote, CfpVotesDto } from '../dto/cfp.dto';
 import { Distribution } from '../dto/distribution.dto';
 import { VoteRepository } from '../repositories/voting.repository';
 
@@ -47,7 +47,7 @@ export class VotingService implements OnModuleInit {
       const distributions = await this.getVoteDistributions(cfpList);
 
       this.currentResults = distributions.map((d) => ({
-        number: d.cfpId,
+        id: d.cfpId,
         name: cfpList.find((c) => c.id === d.cfpId).name,
         result: d.distribution,
       }));
@@ -56,12 +56,35 @@ export class VotingService implements OnModuleInit {
     }
   }
 
+  async getVoteDetails(): Promise<CfpVotesDto[]> {
+    const { cfpList } = await this.getCfpInfos();
+    const userWithVotes = await this.userService.getAllUserWithVotes();
+    const stakings = await getCustomRepository(StakingRepository).getByType({
+      asset: { name: 'DFI', type: AssetType.COIN },
+      strategy: StakingStrategy.MASTERNODE,
+    });
+
+    const cfpUsersInfo: CfpVotesDto[] = [];
+
+    for (const staking of stakings) {
+      const user = userWithVotes.find((user) => user.id === staking.userId);
+
+      cfpUsersInfo.push({
+        depositAddress: staking.depositAddress.address,
+        balance: staking.balance,
+        votes: user ? this.getUserVotes(user, cfpList) : [],
+      });
+    }
+
+    return cfpUsersInfo;
+  }
+
   get result(): CfpResultDto[] {
     return this.currentResults;
   }
 
   // --- MASTERNODE VOTES --- //
-  async getMasternodeVotes(): Promise<CfpVoteDto[]> {
+  async getMasternodeVotes(): Promise<CfpMnVoteDto[]> {
     const { startDate, cfpList } = await this.getCfpInfos();
     const distributions = await this.getVoteDistributions(cfpList);
     const masternodes = await this.masternodeService.getAllVotersAt(startDate);
@@ -94,7 +117,7 @@ export class VotingService implements OnModuleInit {
     }));
   }
 
-  async createVotes(votes: CfpVoteDto[]): Promise<void> {
+  async createVotes(votes: CfpMnVoteDto[]): Promise<void> {
     const masternodes = await this.masternodeService.getAll();
 
     const entities = votes
@@ -185,6 +208,19 @@ export class VotingService implements OnModuleInit {
       stakings.filter((s) => s.userId === userId),
       'balance',
     );
+  }
+
+  private getUserVotes(user: User, cfpList: CfpInfo[]): CfpVote[] {
+    const userCfpVotes: CfpVote[] = [];
+    for (const cfp of cfpList) {
+      const [cfpId, vote] = Object.entries(user.vote).find(([cfpId, _]) => cfp.id === cfpId);
+      userCfpVotes.push({
+        id: cfpId,
+        vote: vote,
+        name: cfp.name,
+      });
+    }
+    return userCfpVotes;
   }
 
   // --- CFP HELPERS --- //

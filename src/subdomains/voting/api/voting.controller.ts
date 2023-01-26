@@ -6,8 +6,8 @@ import { JwtPayload } from 'src/shared/auth/jwt-payload.interface';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
-import { CfpResultDto } from '../application/dto/cfp-result.dto';
-import { CfpVoteDto } from '../application/dto/cfp-vote.dto';
+import { CfpMnVoteDto } from '../application/dto/cfp-mn-vote.dto';
+import { CfpResultDto, CfpVotesDto } from '../application/dto/cfp.dto';
 import { Votes } from '../application/dto/votes.dto';
 import { Vote } from '../domain/enums';
 import { VotingService } from '../application/services/voting.service';
@@ -39,12 +39,18 @@ export class VotingController {
     return this.votingService.result;
   }
 
+  @Get('result/votes')
+  @ApiOkResponse({ type: CfpVotesDto, isArray: true })
+  async getCurrentUserVotes(): Promise<CfpVotesDto[]> {
+    return this.votingService.getVoteDetails();
+  }
+
   // --- ADMIN --- //
   @Get('mn-votes')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
-  async getMasternodeVotes(): Promise<CfpVoteDto[]> {
+  async getMasternodeVotes(): Promise<CfpMnVoteDto[]> {
     return this.votingService.getMasternodeVotes();
   }
 
@@ -52,7 +58,7 @@ export class VotingController {
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
-  async createMasternodeVotes(@Body(new ParseArrayPipe({ items: CfpVoteDto })) votes: CfpVoteDto[]): Promise<void> {
+  async createMasternodeVotes(@Body(new ParseArrayPipe({ items: CfpMnVoteDto })) votes: CfpMnVoteDto[]): Promise<void> {
     return this.votingService.createVotes(votes);
   }
 }
