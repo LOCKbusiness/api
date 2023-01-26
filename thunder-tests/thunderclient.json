@@ -398,12 +398,12 @@
     "_id": "22e996c4-762b-4f00-8ad0-86b7579ffd52",
     "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
     "containerId": "969a0f3a-dfb3-41de-91d7-e66d8a8aa795",
-    "name": "Get sign messages",
-    "url": "{{url}}/v1/voting/sign-messages",
+    "name": "Get masternode votes",
+    "url": "{{url}}/v1/voting/mn-votes",
     "method": "GET",
     "sortNum": 240000,
     "created": "2022-12-16T00:26:52.758Z",
-    "modified": "2022-12-16T00:27:14.623Z",
+    "modified": "2023-01-25T13:27:38.924Z",
     "headers": [],
     "params": [],
     "tests": []
@@ -428,6 +428,25 @@
     "body": {
       "type": "json",
       "raw": "{\n  \"id\": \"tf1q4mupss7cdyrl33tp5d0y2jnauz9y9es8nc0m68\",\n  \"type\": \"KycChanged\",\n  \"data\": {\n    \"mail\": \"mail@gmail.com\",\n    \"firstName\": \"Name\",\n    \"lastName\": \"Lastname\",\n    \"street\": \"Strasse\",\n    \"houseNumber\": \"2\",\n    \"city\": \"Ort\",\n    \"zip\": \"1234\",\n    \"phone\": \"+41 1234567890\",\n    \"kycStatus\": \"Full\",\n    \"kycHash\": \"4593D4A9-310F-ED11-BD6E-501AC5BA6EA6\",\n    \"tradingLimit\": {\n      \"limit\": 90000,\n      \"period\": \"Year\"\n    }\n  }\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "5736e62a-e3f7-498d-b9c2-77a781220820",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "969a0f3a-dfb3-41de-91d7-e66d8a8aa795",
+    "name": "Create masternode votes",
+    "url": "{{url}}/v1/voting/mn-votes",
+    "method": "POST",
+    "sortNum": 250000,
+    "created": "2023-01-25T13:28:07.688Z",
+    "modified": "2023-01-25T13:38:39.904Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "[\n  {\n    \"id\": \"219\",\n    \"name\": \"DFIP-2211-G\",\n    \"votes\": [\n      {\n        \"accountIndex\": 2,\n        \"address\": \"tf1qmazjq7p2wa73a56gynlc2pkwjhp7c8x0hu5sgh\",\n        \"vote\": \"No\"\n      },\n      {\n        \"accountIndex\": 3,\n        \"address\": \"tf1qdt4lf6utfucscpvpvwg62cmuxmfycu7q09ynfx\",\n        \"vote\": \"No\"\n      }\n    ]\n  },\n  {\n    \"id\": \"227\",\n    \"name\": \"DFIP-2211-A\",\n    \"votes\": [\n      {\n        \"accountIndex\": 2,\n        \"address\": \"tf1qmazjq7p2wa73a56gynlc2pkwjhp7c8x0hu5sgh\",\n        \"vote\": \"Neutral\"\n      },\n      {\n        \"accountIndex\": 3,\n        \"address\": \"tf1qdt4lf6utfucscpvpvwg62cmuxmfycu7q09ynfx\",\n        \"vote\": \"Neutral\"\n      }\n    ]\n  },\n  {\n    \"id\": \"228\",\n    \"name\": \"DFIP-2211-B\",\n    \"votes\": [\n      {\n        \"accountIndex\": 2,\n        \"address\": \"tf1qmazjq7p2wa73a56gynlc2pkwjhp7c8x0hu5sgh\",\n        \"vote\": \"Neutral\"\n      },\n      {\n        \"accountIndex\": 3,\n        \"address\": \"tf1qdt4lf6utfucscpvpvwg62cmuxmfycu7q09ynfx\",\n        \"vote\": \"Neutral\"\n      }\n    ]\n  },\n  {\n    \"id\": \"230\",\n    \"name\": \"DFIP-2211-C\",\n    \"votes\": [\n      {\n        \"accountIndex\": 2,\n        \"address\": \"tf1qmazjq7p2wa73a56gynlc2pkwjhp7c8x0hu5sgh\",\n        \"vote\": \"Neutral\"\n      },\n      {\n        \"accountIndex\": 3,\n        \"address\": \"tf1qdt4lf6utfucscpvpvwg62cmuxmfycu7q09ynfx\",\n        \"vote\": \"Neutral\"\n      }\n    ]\n  },\n  {\n    \"id\": \"233\",\n    \"name\": \"CFP-2211-10\",\n    \"votes\": [\n      {\n        \"accountIndex\": 2,\n        \"address\": \"tf1qmazjq7p2wa73a56gynlc2pkwjhp7c8x0hu5sgh\",\n        \"vote\": \"Neutral\"\n      },\n      {\n        \"accountIndex\": 3,\n        \"address\": \"tf1qdt4lf6utfucscpvpvwg62cmuxmfycu7q09ynfx\",\n        \"vote\": \"Neutral\"\n      }\n    ]\n  },\n  {\n    \"id\": \"236\",\n    \"name\": \"DFIP-2211-D\",\n    \"votes\": [\n      {\n        \"accountIndex\": 2,\n        \"address\": \"tf1qmazjq7p2wa73a56gynlc2pkwjhp7c8x0hu5sgh\",\n        \"vote\": \"Neutral\"\n      },\n      {\n        \"accountIndex\": 3,\n        \"address\": \"tf1qdt4lf6utfucscpvpvwg62cmuxmfycu7q09ynfx\",\n        \"vote\": \"Neutral\"\n      }\n    ]\n  },\n  {\n    \"id\": \"238\",\n    \"name\": \"DFIP-2211-F\",\n    \"votes\": [\n      {\n        \"accountIndex\": 2,\n        \"address\": \"tf1qmazjq7p2wa73a56gynlc2pkwjhp7c8x0hu5sgh\",\n        \"vote\": \"Neutral\"\n      },\n      {\n        \"accountIndex\": 3,\n        \"address\": \"tf1qdt4lf6utfucscpvpvwg62cmuxmfycu7q09ynfx\",\n        \"vote\": \"Neutral\"\n      }\n    ]\n  }\n]",
       "form": []
     },
     "tests": []

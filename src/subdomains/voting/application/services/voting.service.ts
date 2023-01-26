@@ -3,28 +3,34 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Config, Process } from 'src/config/config';
 import { MasternodeService } from 'src/integration/masternode/application/services/masternode.service';
 import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
+import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
+import { Lock } from 'src/shared/lock';
 import { AssetType } from 'src/shared/models/asset/asset.entity';
 import { HttpService } from 'src/shared/services/http.service';
 import { Util } from 'src/shared/util';
 import { StakingRepository } from 'src/subdomains/staking/application/repositories/staking.repository';
 import { Staking } from 'src/subdomains/staking/domain/entities/staking.entity';
-import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
+import { MasternodeVote, StakingStrategy } from 'src/subdomains/staking/domain/enums';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
+import { getCustomRepository, IsNull } from 'typeorm';
+import { Vote } from '../../domain/enums';
+import { CfpMnVoteDto } from '../dto/cfp-mn-vote.dto';
 import { User } from 'src/subdomains/user/domain/entities/user.entity';
-import { getCustomRepository } from 'typeorm';
-import { CfpSignMessageDto } from '../dto/cfp-sign-message.dto';
-import { CfpDto, CfpInfo, CfpResultDto, CfpUserVote, CfpVoteDto } from '../dto/cfp.dto';
+import { CfpDto, CfpInfo, CfpResultDto, CfpVoteDto, CfpVotesDto } from '../dto/cfp.dto';
 import { Distribution } from '../dto/distribution.dto';
-import { Vote } from '../dto/votes.dto';
+import { VoteRepository } from '../repositories/voting.repository';
 
 @Injectable()
 export class VotingService implements OnModuleInit {
   private currentResults: CfpResultDto[] = [];
+  private votingLock = new Lock(86400);
 
   constructor(
+    private readonly voteRepo: VoteRepository,
     private readonly userService: UserService,
     private readonly masternodeService: MasternodeService,
     private readonly http: HttpService,
+    private readonly transactionService: TransactionExecutionService,
   ) {}
 
   // --- CURRENT RESULT --- //
@@ -50,7 +56,7 @@ export class VotingService implements OnModuleInit {
     }
   }
 
-  async getVoteDetails(): Promise<CfpVoteDto[]> {
+  async getCurrentVotes(): Promise<CfpVotesDto[]> {
     const { cfpList } = await this.getCfpInfos();
     const userWithVotes = await this.userService.getAllUserWithVotes();
     const stakings = await getCustomRepository(StakingRepository).getByType({
@@ -58,27 +64,27 @@ export class VotingService implements OnModuleInit {
       strategy: StakingStrategy.MASTERNODE,
     });
 
-    const cfpUsersInfo: CfpVoteDto[] = [];
+    const cfpVotesList: CfpVotesDto[] = [];
 
     for (const staking of stakings) {
       const user = userWithVotes.find((user) => user.id === staking.userId);
 
-      cfpUsersInfo.push({
+      cfpVotesList.push({
         depositAddress: staking.depositAddress.address,
         balance: staking.balance,
         votes: user ? this.getUserVotes(user, cfpList) : [],
       });
     }
 
-    return cfpUsersInfo;
+    return cfpVotesList;
   }
 
   get result(): CfpResultDto[] {
     return this.currentResults;
   }
 
-  // --- SIGN MESSAGES --- //
-  async getSignMessages(): Promise<CfpSignMessageDto[]> {
+  // --- MASTERNODE VOTES --- //
+  async getMasternodeVotes(): Promise<CfpMnVoteDto[]> {
     const { startDate, cfpList } = await this.getCfpInfos();
     const distributions = await this.getVoteDistributions(cfpList);
     const masternodes = await this.masternodeService.getAllVotersAt(startDate);
@@ -86,32 +92,80 @@ export class VotingService implements OnModuleInit {
     // get masternode distribution and signing messages
     const mnCount = masternodes.length;
     return distributions.map(({ cfpId, distribution: { yes, no } }) => {
-      const { name } = cfpList.find((c) => c.id === cfpId);
+      const { id, name } = cfpList.find((c) => c.id === cfpId);
       const tmpMasternodes = [...masternodes];
       const yesMnCount = Math.round(yes * mnCount);
       const noMnCount = Math.round(no * mnCount);
 
       return {
+        id,
         name,
         votes: [
-          ...this.getSignInfos(tmpMasternodes.splice(0, yesMnCount), name, Vote.YES),
-          ...this.getSignInfos(tmpMasternodes.splice(0, noMnCount), name, Vote.NO),
-          ...this.getSignInfos(tmpMasternodes, name, Vote.NEUTRAL),
+          ...this.getVotes(tmpMasternodes.splice(0, yesMnCount), Vote.YES),
+          ...this.getVotes(tmpMasternodes.splice(0, noMnCount), Vote.NO),
+          ...this.getVotes(tmpMasternodes, Vote.NEUTRAL),
         ],
       };
     });
   }
 
-  private getSignInfos(
-    masternodes: Masternode[],
-    name: string,
-    vote: Vote,
-  ): { accountIndex: number; address: string; message: string }[] {
+  private getVotes(masternodes: Masternode[], vote: Vote): { accountIndex: number; address: string; vote: Vote }[] {
     return masternodes.map((mn) => ({
       accountIndex: mn.accountIndex,
       address: mn.owner,
-      message: `${name}-${vote}`.toLowerCase(),
+      vote: vote,
     }));
+  }
+
+  async createVotes(votes: CfpMnVoteDto[]): Promise<void> {
+    const masternodes = await this.masternodeService.getAll();
+
+    const entities = votes
+      .map((cfp) =>
+        cfp.votes.map((v) =>
+          this.voteRepo.create({
+            masternode: masternodes.find((mn) => mn.owner === v.address),
+            proposalId: cfp.id,
+            proposalName: cfp.name,
+            decision: v.vote,
+          }),
+        ),
+      )
+      .reduce((prev, curr) => prev.concat(curr), []);
+
+    for (const entity of entities) {
+      await this.voteRepo.save(entity);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_5_MINUTES)
+  async processPendingVotes() {
+    if (Config.processDisabled(Process.MASTERNODE)) return;
+    if (!this.votingLock.acquire()) return;
+
+    try {
+      const voteMap: { [k in Vote]: MasternodeVote } = {
+        [Vote.NO]: MasternodeVote.NO,
+        [Vote.YES]: MasternodeVote.YES,
+        [Vote.NEUTRAL]: MasternodeVote.NEUTRAL,
+      };
+
+      const pendingVotes = await this.voteRepo.find({ txId: IsNull() });
+      for (const vote of pendingVotes) {
+        const txId = await this.transactionService.voteMasternode({
+          ownerWallet: vote.masternode.ownerWallet,
+          accountIndex: vote.masternode.accountIndex,
+          masternode: vote.masternode,
+          proposalId: vote.proposalId,
+          voteDecision: voteMap[vote.decision],
+        });
+        await this.voteRepo.update(vote.id, { txId });
+      }
+    } catch (e) {
+      console.error(`Exception during vote processing:`, e);
+    } finally {
+      this.votingLock.release();
+    }
   }
 
   // --- VOTING DISTRIBUTION --- //
@@ -156,8 +210,8 @@ export class VotingService implements OnModuleInit {
     );
   }
 
-  private getUserVotes(user: User, cfpList: CfpInfo[]): CfpUserVote[] {
-    const userCfpVotes: CfpUserVote[] = [];
+  private getUserVotes(user: User, cfpList: CfpInfo[]): CfpVoteDto[] {
+    const userCfpVotes: CfpVoteDto[] = [];
     for (const cfp of cfpList) {
       const [cfpId, vote] = Object.entries(user.vote).find(([cfpId, _]) => cfp.id === cfpId);
       userCfpVotes.push({
