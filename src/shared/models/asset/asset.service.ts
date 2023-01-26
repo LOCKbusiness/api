@@ -22,7 +22,7 @@ export class AssetService {
   }
 
   async getAssetById(id: number): Promise<Asset> {
-    return this.assetRepo.findOne(id);
+    return this.assetRepo.findOneBy({ id });
   }
 
   async getAssetByQuery(query: AssetQuery): Promise<Asset> {

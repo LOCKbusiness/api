@@ -150,7 +150,7 @@ export class VotingService implements OnModuleInit {
         [Vote.NEUTRAL]: MasternodeVote.NEUTRAL,
       };
 
-      const pendingVotes = await this.voteRepo.find({ txId: IsNull() });
+      const pendingVotes = await this.voteRepo.findBy({ txId: IsNull() });
       for (const vote of pendingVotes) {
         const txId = await this.transactionService.voteMasternode({
           ownerWallet: vote.masternode.ownerWallet,

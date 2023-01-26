@@ -54,7 +54,7 @@ export class StakingFactory {
     } = dto;
 
     const referenceAsset = await this.assetService.getAssetById(referenceAssetId);
-    const rewardRoute = await this.rewardRouteRepo.findOne(rewardRouteId);
+    const rewardRoute = await this.rewardRouteRepo.findOneBy({ id: rewardRouteId });
 
     if (!referenceAsset) {
       throw new BadRequestException(

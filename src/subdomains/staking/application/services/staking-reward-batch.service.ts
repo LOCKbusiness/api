@@ -93,7 +93,7 @@ export class StakingRewardBatchService {
     for (const batch of batches) {
       const { targetAsset } = batch;
 
-      const existingBatch = await this.rewardBatchRepo.findOne({
+      const existingBatch = await this.rewardBatchRepo.findOneBy({
         targetAsset,
         status: Not(RewardBatchStatus.COMPLETE),
       });

@@ -42,9 +42,6 @@ export class Configuration {
     synchronize: process.env.SQL_SYNCHRONIZE === 'true',
     migrationsRun: process.env.SQL_MIGRATE === 'true',
     migrations: ['migration/*.js'],
-    cli: {
-      migrationsDir: 'migration',
-    },
     connectionTimeout: 30000,
     requestTimeout: 30000,
   };

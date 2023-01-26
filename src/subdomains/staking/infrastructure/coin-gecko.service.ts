@@ -82,7 +82,7 @@ export class CoinGeckoService implements PriceProvider {
   // --- HELPER METHODS --- //
   private async getAssetInfo(assetId: number): Promise<{ name: string; coinGeckoId: string }> {
     const asset = await this.assetService.getAssetById(assetId);
-    const assetStakingMetadata = await this.assetStakingMetadataRepo.findOne({ asset });
+    const assetStakingMetadata = await this.assetStakingMetadataRepo.findOneBy({ asset: { id: assetId } });
     if (!assetStakingMetadata) throw new Error(`No metadata found for asset ${assetId}`);
 
     return { name: asset.name, coinGeckoId: assetStakingMetadata.fiatPriceProviderAssetId };

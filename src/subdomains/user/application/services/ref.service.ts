@@ -15,7 +15,7 @@ export class RefService {
       // registered refs expire after 3 days
       const expirationDate = Util.daysBefore(3);
 
-      const expiredRefs = await this.refRepo.find({ updated: LessThan(expirationDate), origin: IsNull() });
+      const expiredRefs = await this.refRepo.findBy({ updated: LessThan(expirationDate), origin: IsNull() });
       await this.refRepo.remove(expiredRefs);
     } catch (e) {
       console.error('Exception during ref check:', e);

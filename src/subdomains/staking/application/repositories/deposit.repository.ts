@@ -23,7 +23,7 @@ export class DepositRepository extends Repository<Deposit> {
   }
 
   async getByPayInTxId(stakingId: number, payInTxId: string): Promise<Deposit> {
-    return this.findOne({ staking: { id: stakingId }, payInTxId });
+    return this.findOneBy({ staking: { id: stakingId }, payInTxId });
   }
 
   async getByUserId(userId: number, dateFrom?: Date, dateTo?: Date): Promise<Deposit[]> {
@@ -52,7 +52,7 @@ export class DepositRepository extends Repository<Deposit> {
   }
 
   async getStakingReferencesForPending(): Promise<StakingReference[]> {
-    return this.find({ status: DepositStatus.PENDING })
+    return this.findBy({ status: DepositStatus.PENDING })
       .then((d) => d.map(({ staking: s }) => ({ id: s.id, strategy: s.strategy })))
       .then((refs) => refs.filter((r1, i, a) => a.findIndex((r2) => r1.id === r2.id) === i));
   }

@@ -55,7 +55,7 @@ export class StakingService {
     const asset = await this.assetService.getAssetByQuery(assetSpec);
     if (!asset) throw new NotFoundException('Asset not found');
 
-    const existingStaking = await this.repository.findOne({ userId, asset, strategy });
+    const existingStaking = await this.repository.findOneBy({ userId, asset, strategy });
     if (existingStaking) {
       const amounts = await this.getUnconfirmedDepositsAndWithdrawalsAmounts(existingStaking.id);
 
