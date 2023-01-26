@@ -185,7 +185,7 @@ export class VotingService implements OnModuleInit {
       const stakingBalance = this.getDfiStakingBalanceFor(user.id, stakings);
 
       for (const [cfpId, vote] of Object.entries(user.vote)) {
-        if (dfiDistribution[+cfpId]) dfiDistribution[+cfpId][vote.toLowerCase()] += stakingBalance;
+        if (dfiDistribution[cfpId]) dfiDistribution[cfpId][vote.toLowerCase()] += stakingBalance;
       }
     }
 
@@ -211,17 +211,13 @@ export class VotingService implements OnModuleInit {
   }
 
   private getUserVotes(user: User, cfpList: CfpInfo[]): CfpVoteDto[] {
-    const userCfpVotes: CfpVoteDto[] = [];
-    for (const cfp of cfpList) {
-      const userVote = Object.entries(user.vote).find(([cfpId, _]) => cfp.id === cfpId);
-      if (!userVote) continue;
-      userCfpVotes.push({
-        id: cfp.id,
-        vote: userVote[1],
-        name: cfp.name,
-      });
-    }
-    return userCfpVotes;
+    return cfpList
+      .filter((cfp) => this.getUserVote(user, cfp.id))
+      .map((cfp) => ({ id: cfp.id, vote: this.getUserVote(user, cfp.id), name: cfp.name }));
+  }
+
+  private getUserVote(user: User, cfpId: string): Vote | undefined {
+    return Object.entries(user.vote).find(([id, _]) => id === cfpId)?.[1];
   }
 
   // --- CFP HELPERS --- //
