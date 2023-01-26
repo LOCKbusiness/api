@@ -213,10 +213,11 @@ export class VotingService implements OnModuleInit {
   private getUserVotes(user: User, cfpList: CfpInfo[]): CfpVoteDto[] {
     const userCfpVotes: CfpVoteDto[] = [];
     for (const cfp of cfpList) {
-      const [cfpId, vote] = Object.entries(user.vote).find(([cfpId, _]) => cfp.id === cfpId);
+      const userVote = Object.entries(user.vote).find(([cfpId, _]) => cfp.id === cfpId);
+      if (!userVote) continue;
       userCfpVotes.push({
-        id: cfpId,
-        vote: vote,
+        id: cfp.id,
+        vote: userVote[1],
         name: cfp.name,
       });
     }
