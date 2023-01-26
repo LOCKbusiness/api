@@ -24,6 +24,7 @@ import {
   CompositeSwapData,
   SendTokenWithdrawalData,
   SendCoinWithdrawalData,
+  VoteMasternodeData,
 } from '../types/creation-data';
 import { TransactionService } from './transaction.service';
 import { WIF } from '@defichain/jellyfish-crypto';
@@ -63,6 +64,12 @@ export class TransactionExecutionService {
     const rawTx = await this.rawTxService.Masternode.resign(data.masternode);
     console.info(`Resign masternode tx ${rawTx.id}`);
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.RESIGN_MASTERNODE));
+  }
+
+  async voteMasternode(data: VoteMasternodeData): Promise<string> {
+    const rawTx = await this.rawTxService.Masternode.vote(data.masternode, data.proposalId, data.voteDecision);
+    console.info(`Vote masternode tx ${rawTx.id}`);
+    return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.VOTE_MASTERNODE));
   }
 
   async sendFromLiq(data: SendFromLiqData): Promise<string> {

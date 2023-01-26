@@ -2,6 +2,7 @@ export enum TransactionType {
   // staking
   CREATE_MASTERNODE = 'CreateMasternode',
   RESIGN_MASTERNODE = 'ResignMasternode',
+  VOTE_MASTERNODE = 'VoteMasternode',
   SEND_FROM_LIQ = 'SendFromLiq',
   SEND_TO_LIQ = 'SendToLiq',
   WITHDRAWAL = 'Withdrawal',

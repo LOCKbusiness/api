@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Vote } from '../../domain/enums';
 import { Distribution } from './distribution.dto';
-import { Vote } from './votes.dto';
 
 export interface CfpDto {
   number: string;
@@ -18,20 +18,20 @@ export class CfpInfo {
   name: string;
 }
 
-export class CfpUserVote extends CfpInfo {
+export class CfpVoteDto extends CfpInfo {
   @ApiProperty({ enum: Vote })
   vote: Vote;
 }
 
-export class CfpVoteDto {
+export class CfpVotesDto {
   @ApiProperty()
   depositAddress: string;
 
   @ApiProperty()
   balance: number;
 
-  @ApiProperty({ type: CfpUserVote, isArray: true })
-  votes: CfpUserVote[];
+  @ApiProperty({ type: CfpVoteDto, isArray: true })
+  votes: CfpVoteDto[];
 }
 
 export class CfpResultDto extends CfpInfo {
