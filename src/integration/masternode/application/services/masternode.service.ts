@@ -140,7 +140,7 @@ export class MasternodeService {
   }
 
   async getActiveCount(): Promise<number> {
-    return this.repository.count({ where: { creationHash: Not(IsNull()), resignHash: IsNull() } });
+    return this.repository.countBy({ creationHash: Not(IsNull()), resignHash: IsNull() });
   }
 
   async getActive(): Promise<Masternode[]> {
@@ -201,9 +201,7 @@ export class MasternodeService {
 
   // get unpaid fee in DFI
   async getUnpaidFee(): Promise<number> {
-    const unpaidMasternodeFee = await this.repository.count({
-      where: { creationHash: Not(IsNull()), creationFeePaid: false },
-    });
+    const unpaidMasternodeFee = await this.repository.countBy({ creationHash: Not(IsNull()), creationFeePaid: false });
     return unpaidMasternodeFee * Config.masternode.fee;
   }
 

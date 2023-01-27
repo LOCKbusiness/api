@@ -148,7 +148,7 @@ export class DexService {
     context: LiquidityOrderContext,
     correlationId: string,
   ): Promise<LiquidityTransactionResult> {
-    const order = await this.liquidityOrderRepo.findOne({ where: { context, correlationId } });
+    const order = await this.liquidityOrderRepo.findOneBy({ context, correlationId });
 
     if (!order) {
       throw new Error(`Order not found. Context: ${context}. Correlation ID: ${correlationId}.`);
@@ -186,8 +186,11 @@ export class DexService {
   }
 
   async completeOrders(context: LiquidityOrderContext, correlationId: string): Promise<void> {
-    const incompleteOrders = await this.liquidityOrderRepo.find({
-      where: { context, correlationId, isComplete: false, isReady: true },
+    const incompleteOrders = await this.liquidityOrderRepo.findBy({
+      context,
+      correlationId,
+      isComplete: false,
+      isReady: true,
     });
 
     for (const order of incompleteOrders) {
@@ -197,14 +200,12 @@ export class DexService {
   }
 
   async getPendingOrdersCount(asset: Asset): Promise<number> {
-    const pendingOrders = await this.liquidityOrderRepo.find({
-      where: [
-        { targetAsset: asset, isComplete: false },
-        { targetAsset: asset, isReady: false },
-        { swapAsset: asset, isComplete: false },
-        { swapAsset: asset, isReady: false },
-      ],
-    });
+    const pendingOrders = await this.liquidityOrderRepo.findBy([
+      { targetAsset: { id: asset.id }, isComplete: false },
+      { targetAsset: { id: asset.id }, isReady: false },
+      { swapAsset: { id: asset.id }, isComplete: false },
+      { swapAsset: { id: asset.id }, isReady: false },
+    ]);
 
     return pendingOrders.length;
   }

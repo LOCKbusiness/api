@@ -126,7 +126,7 @@ export class DeFiChainPoolPairStrategy extends PurchaseLiquidityStrategy {
     const existingOrder = await this.liquidityOrderRepo.findOneBy({
       context: LiquidityOrderContext.CREATE_POOL_PAIR,
       correlationId: parentOrder.id.toString(),
-      targetAsset: pairAsset,
+      targetAsset: { id: pairAsset.id },
     });
 
     if (existingOrder) return;
