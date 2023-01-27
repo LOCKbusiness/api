@@ -15,10 +15,10 @@ export abstract class LockedRepository<T> extends Repository<T> {
     update: (entity: T, manager: EntityManager) => T | Promise<T>,
     relations: string[] = [],
   ): Promise<T> {
-    return await this.manager.transaction(async (manager) => {
+    return this.manager.transaction(async (manager) => {
       const entity = await this.getOrThrow(manager, id, relations);
       const updatedEntity = await update(entity, manager);
-      return await manager.save(updatedEntity);
+      return manager.save(updatedEntity);
     });
   }
 

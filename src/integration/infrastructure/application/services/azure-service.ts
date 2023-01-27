@@ -15,7 +15,7 @@ export class AzureService {
   public async restartWebApp(name: string, slot?: string) {
     const appName = `app-lock-${name}-${Config.environment}${slot ? `/slots/${slot}` : ''}`;
     const resourceId = this.resourceId('Microsoft.Web/sites', appName);
-    return await this.callApi(`${resourceId}/restart`, 'POST');
+    return this.callApi(`${resourceId}/restart`, 'POST');
   }
 
   // --- HELPER METHODS --- //

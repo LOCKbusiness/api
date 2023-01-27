@@ -81,7 +81,7 @@ export class StakingService {
   async getStakingsByUserAddress(address: string): Promise<Staking[]> {
     const user = await this.userService.getUserByAddressOrThrow(address);
 
-    return await this.repository.getByUserId(user.id);
+    return this.repository.getByUserId(user.id);
   }
 
   async getAverageStakingBalance(type: StakingType, dateFrom: Date, dateTo: Date): Promise<number> {
