@@ -15,6 +15,6 @@ export class CountryService {
   }
 
   async getCountryBySymbol(symbol: string): Promise<Country> {
-    return this.countryRepo.findOne({ where: { symbol } });
+    return this.countryRepo.findOneBy({ symbol });
   }
 }

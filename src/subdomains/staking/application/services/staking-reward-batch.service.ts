@@ -94,7 +94,7 @@ export class StakingRewardBatchService {
       const { targetAsset } = batch;
 
       const existingBatch = await this.rewardBatchRepo.findOneBy({
-        targetAsset,
+        targetAsset: { id: targetAsset.id },
         status: Not(RewardBatchStatus.COMPLETE),
       });
 

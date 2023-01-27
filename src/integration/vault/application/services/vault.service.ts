@@ -8,11 +8,11 @@ export class VaultService {
   constructor(private readonly repository: VaultRepository) {}
 
   async getByAddress(address: string): Promise<Vault> {
-    return this.repository.findOne({ where: { address } });
+    return this.repository.findOneBy({ address });
   }
 
   async getByAddressAndVault(address: string, vault: string): Promise<Vault> {
-    return this.repository.findOne({ where: { address, vault } });
+    return this.repository.findOneBy({ address, vault });
   }
 
   async getAllAddresses(): Promise<string[]> {
@@ -30,6 +30,6 @@ export class VaultService {
   }
 
   async getActiveCount(): Promise<number> {
-    return this.repository.count({ where: { vault: Not(IsNull()) } });
+    return this.repository.countBy({ vault: Not(IsNull()) });
   }
 }

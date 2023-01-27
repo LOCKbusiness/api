@@ -28,7 +28,7 @@ export class UserService {
   }
 
   async getUserByKycId(kycId: string): Promise<User> {
-    return this.userRepo.findOne({ where: { kycId } });
+    return this.userRepo.findOneBy({ kycId });
   }
 
   async getUserByAddressOrThrow(address: string): Promise<User> {
@@ -43,7 +43,7 @@ export class UserService {
   }
 
   async getKycStatus(userId: number): Promise<KycStatus> {
-    const user = await this.userRepo.findOne({ where: { id: userId } });
+    const user = await this.userRepo.findOneBy({ id: userId });
     return user.kycStatus;
   }
 

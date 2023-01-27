@@ -202,7 +202,7 @@ export class StakingDepositService {
   private async processNewDeposits(stakingPairs: [number, PayIn][]): Promise<void> {
     for (const [stakingId, payIn] of stakingPairs) {
       try {
-        const staking = await this.repository.findOne({ where: { id: stakingId } });
+        const staking = await this.repository.findOneBy({ id: stakingId });
 
         // verify asset
         const hasSameAsset = staking.asset.id === payIn.asset.id;

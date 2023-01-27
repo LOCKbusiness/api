@@ -56,17 +56,15 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
   private async getStaking(): Promise<StakingData> {
     return {
       balance: await this.getStakingBalance(),
-      freeOperators: await this.repos.masternode.count({
-        where: { creationHash: IsNull() },
-      }),
+      freeOperators: await this.repos.masternode.countBy({ creationHash: IsNull() }),
       freeDepositAddresses: await this.repos.reservableBlockchainAddress
         .createQueryBuilder('address')
         .leftJoin('address.reservation', 'reservation')
         .where('reservation.id IS NULL')
         .getCount(),
-      openDeposits: await this.repos.deposit.count({ where: { status: DepositStatus.PENDING } }),
-      openWithdrawals: await this.repos.withdrawal.count({
-        where: { status: In([WithdrawalStatus.PENDING, WithdrawalStatus.PAYING_OUT]) },
+      openDeposits: await this.repos.deposit.countBy({ status: DepositStatus.PENDING }),
+      openWithdrawals: await this.repos.withdrawal.countBy({
+        status: In([WithdrawalStatus.PENDING, WithdrawalStatus.PAYING_OUT]),
       }),
       lastOutputDates: await this.getLastOutputDates(),
     };
@@ -74,10 +72,8 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
 
   private async getStakingBalance(): Promise<{ actual: number; should: number; difference: number }> {
     // calculate actual balance
-    const activeMasternodes = await this.repos.masternode.find({
-      where: {
-        state: Not(In([MasternodeState.IDLE, MasternodeState.RESIGNED])),
-      },
+    const activeMasternodes = await this.repos.masternode.findBy({
+      state: Not(In([MasternodeState.IDLE, MasternodeState.RESIGNED])),
     });
     const addresses = [...activeMasternodes.map((m) => m.owner), Config.staking.liquidity.address];
     const balance = await Promise.all(addresses.map((a) => this.client.getUtxoBalance(a).then((b) => +b)));
@@ -93,8 +89,9 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
       .then((b) => b.balance);
 
     // get unpaid masternodes
-    const unpaidMasternodes = await this.repos.masternode.count({
-      where: { creationHash: Not(IsNull()), creationFeePaid: false },
+    const unpaidMasternodes = await this.repos.masternode.countBy({
+      creationHash: Not(IsNull()),
+      creationFeePaid: false,
     });
 
     // calculate should balance (database balance - unpaid creation fees)

@@ -48,33 +48,27 @@ export class StakingFiatReferenceService {
   //*** HELPER METHODS ***//
 
   private async getDepositsWithoutFiatReferences(): Promise<Deposit[]> {
-    return this.depositRepo.find({
-      where: [
-        { amountChf: IsNull(), status: DepositStatus.CONFIRMED },
-        { amountUsd: IsNull(), status: DepositStatus.CONFIRMED },
-        { amountEur: IsNull(), status: DepositStatus.CONFIRMED },
-      ],
-    });
+    return this.depositRepo.findBy([
+      { amountChf: IsNull(), status: DepositStatus.CONFIRMED },
+      { amountUsd: IsNull(), status: DepositStatus.CONFIRMED },
+      { amountEur: IsNull(), status: DepositStatus.CONFIRMED },
+    ]);
   }
 
   private async getWithdrawalsWithoutFiatReferences(): Promise<Withdrawal[]> {
-    return this.withdrawalRepo.find({
-      where: [
-        { amountChf: IsNull(), status: WithdrawalStatus.CONFIRMED },
-        { amountUsd: IsNull(), status: WithdrawalStatus.CONFIRMED },
-        { amountEur: IsNull(), status: WithdrawalStatus.CONFIRMED },
-      ],
-    });
+    return this.withdrawalRepo.findBy([
+      { amountChf: IsNull(), status: WithdrawalStatus.CONFIRMED },
+      { amountUsd: IsNull(), status: WithdrawalStatus.CONFIRMED },
+      { amountEur: IsNull(), status: WithdrawalStatus.CONFIRMED },
+    ]);
   }
 
   private async getRewardsWithoutFiatReferences(): Promise<Reward[]> {
-    return this.rewardRepo.find({
-      where: [
-        { amountChf: IsNull(), status: RewardStatus.CONFIRMED },
-        { amountUsd: IsNull(), status: RewardStatus.CONFIRMED },
-        { amountEur: IsNull(), status: RewardStatus.CONFIRMED },
-      ],
-    });
+    return this.rewardRepo.findBy([
+      { amountChf: IsNull(), status: RewardStatus.CONFIRMED },
+      { amountUsd: IsNull(), status: RewardStatus.CONFIRMED },
+      { amountEur: IsNull(), status: RewardStatus.CONFIRMED },
+    ]);
   }
 
   private defineRelevantAssets(deposits: Deposit[], withdrawals: Withdrawal[], rewards: Reward[]): number[] {
