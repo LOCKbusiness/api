@@ -74,7 +74,7 @@ export class PayInService {
 
   private async processNewTransactions(): Promise<void> {
     const lastCheckedBlockHeight = await this.payInRepository
-      .findOne({ order: { blockHeight: 'DESC' } })
+      .findOne({ where: {}, order: { blockHeight: 'DESC' } })
       .then((input) => input?.blockHeight ?? 0);
 
     const newTransactions = await this.deFiChainService.getNewTransactionsSince(lastCheckedBlockHeight);
