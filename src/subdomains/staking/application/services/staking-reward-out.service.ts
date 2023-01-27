@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { LiquidityOrderContext } from 'src/subdomains/dex/entities/liquidity-order.entity';
 import { DexService } from 'src/subdomains/dex/services/dex.service';
 import { PayoutOrderContext } from 'src/subdomains/payout/entities/payout-order.entity';
-import { DuplicatedEntryException } from 'src/subdomains/payout/exceptions/duplicated-entry.exception';
 import { PayoutRequest } from 'src/subdomains/payout/interfaces';
 import { PayoutService } from 'src/subdomains/payout/services/payout.service';
 import { In } from 'typeorm';
@@ -32,16 +31,17 @@ export class StakingRewardOutService {
       }
 
       for (const batch of batches) {
-        try {
-          await this.checkCompletion(batch);
-        } catch (e) {
-          console.error(`Error on checking pervious payout for a batch ID: ${batch.id}`, e);
-          continue;
-        }
+        if (batch.status === RewardBatchStatus.PAYING_OUT) {
+          try {
+            await this.checkCompletion(batch);
+          } catch (e) {
+            console.error(`Error on checking pervious payout for a batch ID: ${batch.id}`, e);
+            continue;
+          }
 
-        // TODO - refactor process so not rely on DuplicatedEntryException when retrying half-successful batch
-        if (!(batch.status === RewardBatchStatus.SECURED || batch.status === RewardBatchStatus.PAYING_OUT)) {
-          continue;
+          if (batch.status !== RewardBatchStatus.PAYING_OUT) {
+            continue;
+          }
         }
 
         batch.payingOut();
@@ -49,15 +49,11 @@ export class StakingRewardOutService {
 
         const successfulRequests = [];
 
-        for (const reward of batch.rewards) {
+        for (const reward of batch.rewards.filter((r) => r.status === RewardStatus.PREPARATION_CONFIRMED)) {
           try {
             await this.doPayout(reward);
             successfulRequests.push(reward);
           } catch (e) {
-            if (e instanceof DuplicatedEntryException) {
-              continue;
-            }
-
             console.error(`Failed to initiate buy-crypto payout. Transaction ID: ${reward.id}`);
             // continue with next transaction in case payout initiation failed
             continue;
@@ -97,6 +93,9 @@ export class StakingRewardOutService {
     };
 
     await this.payoutService.doPayout(request);
+
+    reward.payingOut();
+    await this.rewardRepo.save(reward);
   }
 
   private async checkCompletion(batch: RewardBatch) {
