@@ -74,12 +74,16 @@ export class StakingRewardOutService {
   //*** HELPER METHODS ***//
 
   private async fetchBatchesForPayout(): Promise<RewardBatch[]> {
+    /**
+     * @note
+     * rewards.rewardRoute relation is required, otherwise the targetAsset is not loaded
+     */
     return this.rewardBatchRepo.find({
       where: {
         // PAYING_OUT batches are fetch for retry in case of failure in previous iteration
         status: In([RewardBatchStatus.SECURED, RewardBatchStatus.PAYING_OUT]),
       },
-      relations: ['rewards'],
+      relations: ['rewards', 'rewards.rewardRoute'],
     });
   }
 
