@@ -24,11 +24,11 @@ export class PayInService {
   //*** PUBLIC API ***//
 
   async getNewPayInTransactions(): Promise<PayIn[]> {
-    return this.payInRepository.find({ status: PayInStatus.CONFIRMED });
+    return this.payInRepository.findBy({ status: PayInStatus.CONFIRMED });
   }
 
   async acknowledgePayIn(payIn: PayIn, purpose: PayInPurpose): Promise<void> {
-    const _payIn = await this.payInRepository.findOne(payIn.id);
+    const _payIn = await this.payInRepository.findOneBy({ id: payIn.id });
 
     _payIn.acknowledge(purpose);
 
@@ -36,7 +36,7 @@ export class PayInService {
   }
 
   async failedPayIn(payIn: PayIn, purpose: PayInPurpose): Promise<void> {
-    const _payIn = await this.payInRepository.findOne(payIn.id);
+    const _payIn = await this.payInRepository.findOneBy({ id: payIn.id });
 
     _payIn.fail(purpose);
 
@@ -63,7 +63,7 @@ export class PayInService {
   //*** HELPER METHODS ***//
 
   private async processUnconfirmedTransactions(): Promise<void> {
-    const unconfirmedPayIns = await this.payInRepository.find({ status: PayInStatus.CREATED });
+    const unconfirmedPayIns = await this.payInRepository.findBy({ status: PayInStatus.CREATED });
     const confirmedPayIns = await this.deFiChainService.getConfirmedTransactions(unconfirmedPayIns);
 
     for (const payIn of confirmedPayIns) {
@@ -74,7 +74,7 @@ export class PayInService {
 
   private async processNewTransactions(): Promise<void> {
     const lastCheckedBlockHeight = await this.payInRepository
-      .findOne({ order: { blockHeight: 'DESC' } })
+      .findOne({ where: {}, order: { blockHeight: 'DESC' } })
       .then((input) => input?.blockHeight ?? 0);
 
     const newTransactions = await this.deFiChainService.getNewTransactionsSince(lastCheckedBlockHeight);

@@ -11,16 +11,18 @@ import { NotificationModule } from 'src/integration/notification/notification.mo
 import { BlockchainModule } from 'src/blockchain/blockchain.module';
 import { StakingExternalObserver } from './observers/staking-external.observer';
 import { InfrastructureModule } from 'src/integration/infrastructure/infrastructure.module';
+import { SystemStateSnapshot } from './domain/entities/system-state-snapshot.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([SystemStateSnapshotRepository]),
+    TypeOrmModule.forFeature([SystemStateSnapshot]),
     SharedModule,
     BlockchainModule,
     NotificationModule,
     InfrastructureModule,
   ],
   providers: [
+    SystemStateSnapshotRepository,
     MonitoringService,
     NodeBalanceObserver,
     NodeHealthObserver,

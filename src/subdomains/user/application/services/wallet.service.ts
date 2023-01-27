@@ -24,7 +24,7 @@ export class WalletService {
   ) {}
 
   async getWalletDto(walletId: number): Promise<WalletDetailedDto> {
-    const wallet = await this.walletRepo.findOne(walletId, { relations: ['user'] });
+    const wallet = await this.walletRepo.findOne({ where: { id: walletId }, relations: ['user'] });
     if (!wallet) throw new NotFoundException('Wallet not found');
 
     return await this.toDto(wallet);

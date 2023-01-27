@@ -13,13 +13,13 @@ import { StakingAnalyticsQuery } from '../dto/input/staking-analytics-query.dto'
 import { StakingAnalyticsOutputDto } from '../dto/output/staking-analytics.output.dto';
 import { StakingAnalyticsOutputDtoMapper } from '../mappers/staking-analytics-output-dto.mapper';
 import { StakingAnalyticsRepository } from '../repositories/staking-analytics.repository';
-import { StakingRepository } from 'src/subdomains/staking/application/repositories/staking.repository';
-import { getCustomRepository } from 'typeorm';
 import { PRICE_PROVIDER, PriceProvider } from 'src/subdomains/staking/application/interfaces';
+import { RepositoryFactory } from 'src/shared/repositories/repository.factory';
 
 @Injectable()
 export class StakingAnalyticsService implements OnModuleInit {
   constructor(
+    private readonly repos: RepositoryFactory,
     private readonly repository: StakingAnalyticsRepository,
     private readonly stakingService: StakingService,
     private readonly masternodeService: MasternodeService,
@@ -72,7 +72,7 @@ export class StakingAnalyticsService implements OnModuleInit {
         const analytics = (await this.repository.getByType(type)) ?? this.repository.create(type);
 
         // get TVL and operator count
-        const tvl = await getCustomRepository(StakingRepository).getCurrentTotalStakingBalance(type);
+        const tvl = await this.repos.staking.getCurrentTotalStakingBalance(type);
         const operatorCount = await this.getOperatorCount(type);
 
         analytics.updateAnalytics(averageBalance, averageRewards, operatorCount, tvl);

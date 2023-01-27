@@ -1,16 +1,21 @@
-import { EntityRepository, Repository } from 'typeorm';
+import { Injectable } from '@nestjs/common';
+import { EntityManager, Repository } from 'typeorm';
 import { Ref } from '../../domain/entities/ref.entity';
 
-@EntityRepository(Ref)
+@Injectable()
 export class RefRepository extends Repository<Ref> {
+  constructor(manager: EntityManager) {
+    super(Ref, manager);
+  }
+
   async addOrUpdate(ip: string, ref?: string, origin?: string): Promise<Ref> {
-    const entity = (await this.findOne({ ip })) ?? this.create({ ip, ref, origin });
+    const entity = (await this.findOneBy({ ip })) ?? this.create({ ip, ref, origin });
 
     return await this.save({ ...entity, ref, origin });
   }
 
   async getAndRemove(ip: string): Promise<Ref> {
-    const ref = await this.findOne({ ip });
+    const ref = await this.findOneBy({ ip });
     if (ref) {
       await this.remove(ref);
     }

@@ -1,4 +1,4 @@
-export enum Vote {
+export enum VoteDecision {
   YES = 'Yes',
   NO = 'No',
   NEUTRAL = 'Neutral',

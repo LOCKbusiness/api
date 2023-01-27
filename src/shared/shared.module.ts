@@ -14,19 +14,31 @@ import { AssetRepository } from './models/asset/asset.repository';
 import { SettingService } from './services/setting.service';
 import { SettingRepository } from './repositories/setting.repository';
 import { ApiKeyStrategy } from './auth/api-key.strategy';
+import { Setting } from './models/setting.entity';
+import { Asset } from './models/asset/asset.entity';
+import { RepositoryFactory } from './repositories/repository.factory';
 
 @Module({
   imports: [
     HttpModule,
     ConfigModule,
-    TypeOrmModule.forFeature([SettingRepository, AssetRepository]),
+    TypeOrmModule.forFeature([Setting, Asset]),
     PassportModule.register({ defaultStrategy: 'jwt', session: true }),
     JwtModule.register(GetConfig().auth.jwt),
     I18nModule.forRoot(GetConfig().i18n),
     ScheduleModule.forRoot(),
   ],
   controllers: [],
-  providers: [HttpService, JwtStrategy, ApiKeyStrategy, SettingService, AssetService],
-  exports: [PassportModule, JwtModule, ScheduleModule, HttpService, SettingService, AssetService],
+  providers: [
+    RepositoryFactory,
+    AssetRepository,
+    SettingRepository,
+    HttpService,
+    JwtStrategy,
+    ApiKeyStrategy,
+    SettingService,
+    AssetService,
+  ],
+  exports: [RepositoryFactory, PassportModule, JwtModule, ScheduleModule, HttpService, SettingService, AssetService],
 })
 export class SharedModule {}

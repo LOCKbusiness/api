@@ -18,11 +18,11 @@ export class AssetService {
   }
 
   async getAllAssetsForBlockchain(blockchain: Blockchain): Promise<Asset[]> {
-    return this.assetRepo.find({ where: { blockchain } });
+    return this.assetRepo.findBy({ blockchain });
   }
 
   async getAssetById(id: number): Promise<Asset> {
-    return this.assetRepo.findOne(id);
+    return this.assetRepo.findOneBy({ id });
   }
 
   async getAssetByQuery(query: AssetQuery): Promise<Asset> {

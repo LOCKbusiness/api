@@ -49,7 +49,7 @@ export class TransactionService {
   }
 
   async verified(id: string, signature: string) {
-    const tx = await this.repository.findOne({ chainId: id });
+    const tx = await this.repository.findOneBy({ chainId: id });
     if (!tx) throw new NotFoundException('Transaction not found');
     if (tx.isVerified) return;
 
@@ -58,7 +58,7 @@ export class TransactionService {
   }
 
   async invalidated(id: string, reason?: string) {
-    const tx = await this.repository.findOne({ chainId: id });
+    const tx = await this.repository.findOneBy({ chainId: id });
     if (!tx) throw new NotFoundException('Transaction not found');
     if (tx.isInvalidated) return;
 
@@ -69,7 +69,7 @@ export class TransactionService {
   }
 
   async signed(id: string, hex: string) {
-    const tx = await this.repository.findOne({ chainId: id });
+    const tx = await this.repository.findOneBy({ chainId: id });
     if (!tx) throw new NotFoundException('Transaction not found');
     if (tx.isInvalidated) throw new BadRequestException('Transaction is invalidated');
     if (tx.isSigned) return;
@@ -82,7 +82,7 @@ export class TransactionService {
 
   async sign(rawTx: RawTxDto, signature: string, payload?: any): Promise<string> {
     const id = rawTx.id ?? this.receiveIdFor(rawTx);
-    const existingTx = await this.repository.findOne({ chainId: id });
+    const existingTx = await this.repository.findOneBy({ chainId: id });
     if (existingTx && existingTx.signedHex) return Promise.resolve(existingTx.signedHex);
 
     const newTx = TransactionEntity.create(id, rawTx, payload, signature);

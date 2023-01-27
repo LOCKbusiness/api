@@ -11,10 +11,10 @@ export class CountryService {
   }
 
   async getCountry(id: number): Promise<Country> {
-    return this.countryRepo.findOne(id);
+    return this.countryRepo.findOneBy({ id });
   }
 
   async getCountryBySymbol(symbol: string): Promise<Country> {
-    return this.countryRepo.findOne({ where: { symbol } });
+    return this.countryRepo.findOneBy({ symbol });
   }
 }

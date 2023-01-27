@@ -10,6 +10,7 @@ import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 @Injectable()
 export class UserService {
   constructor(private readonly userRepo: UserRepository) {}
+
   async createUser(): Promise<User> {
     return await this.userRepo.save({
       language: Config.defaultLanguage,
@@ -17,7 +18,7 @@ export class UserService {
   }
 
   async updateUser(userId: number, dto: Partial<User>): Promise<User> {
-    const user = await this.userRepo.findOne(userId);
+    const user = await this.userRepo.findOneBy({ id: userId });
     if (!user) throw new NotFoundException('User not found');
     return await this.userRepo.save(Object.assign(user, dto));
   }
@@ -27,7 +28,7 @@ export class UserService {
   }
 
   async getUserByKycId(kycId: string): Promise<User> {
-    return this.userRepo.findOne({ where: { kycId } });
+    return this.userRepo.findOneBy({ kycId });
   }
 
   async getUserByAddressOrThrow(address: string): Promise<User> {
@@ -42,12 +43,15 @@ export class UserService {
   }
 
   async getKycStatus(userId: number): Promise<KycStatus> {
-    const user = await this.userRepo.findOne({ where: { id: userId } });
+    const user = await this.userRepo.findOneBy({ id: userId });
     return user.kycStatus;
   }
 
   async canStake(userId: number, walletId: number): Promise<boolean> {
-    const user = await this.userRepo.findOne(userId, { relations: ['wallets', 'wallets.walletProvider'] });
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+      relations: ['wallets', 'wallets.walletProvider'],
+    });
     const minKycStatus =
       user.wallets.find((w) => w.id === walletId)?.walletProvider.minStakingKycStatus ?? KycStatus.NA;
 
@@ -63,7 +67,7 @@ export class UserService {
   // --- VOTES --- //
 
   async getVotes(id: number): Promise<Votes> {
-    return this.userRepo.findOne({ id }, { select: ['id', 'votes'] }).then((u) => u.vote);
+    return this.userRepo.findOne({ where: { id }, select: ['id', 'votes'] }).then((u) => u.vote);
   }
 
   async updateVotes(id: number, votes: Votes): Promise<Votes> {
@@ -72,6 +76,6 @@ export class UserService {
   }
 
   async getAllUserWithVotes(): Promise<User[]> {
-    return await this.userRepo.find({ votes: Not(IsNull()) });
+    return await this.userRepo.findBy({ votes: Not(IsNull()) });
   }
 }

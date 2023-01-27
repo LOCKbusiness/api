@@ -140,7 +140,7 @@ export class MasternodeService {
   }
 
   async getActiveCount(): Promise<number> {
-    return this.repository.count({ where: { creationHash: Not(IsNull()), resignHash: IsNull() } });
+    return this.repository.countBy({ creationHash: Not(IsNull()), resignHash: IsNull() });
   }
 
   async getActive(): Promise<Masternode[]> {
@@ -201,9 +201,7 @@ export class MasternodeService {
 
   // get unpaid fee in DFI
   async getUnpaidFee(): Promise<number> {
-    const unpaidMasternodeFee = await this.repository.count({
-      where: { creationHash: Not(IsNull()), creationFeePaid: false },
-    });
+    const unpaidMasternodeFee = await this.repository.countBy({ creationHash: Not(IsNull()), creationFeePaid: false });
     return unpaidMasternodeFee * Config.masternode.fee;
   }
 
@@ -230,7 +228,7 @@ export class MasternodeService {
     timeLock: MasternodeTimeLock,
     accountIndex: number,
   ): Promise<void> {
-    const masternode = await this.repository.findOne(id);
+    const masternode = await this.repository.findOneBy({ id });
     if (!masternode) throw new NotFoundException('Masternode not found');
 
     masternode.state = MasternodeState.ENABLING;
@@ -243,7 +241,7 @@ export class MasternodeService {
   }
 
   async preEnabled(id: number, txId: string): Promise<void> {
-    const masternode = await this.repository.findOne(id);
+    const masternode = await this.repository.findOneBy({ id });
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (masternode.creationHash) throw new ConflictException('Masternode already created');
 
@@ -255,7 +253,7 @@ export class MasternodeService {
   }
 
   async enabled(id: number): Promise<void> {
-    const masternode = await this.repository.findOne(id);
+    const masternode = await this.repository.findOneBy({ id });
     if (!masternode) throw new NotFoundException('Masternode not found');
 
     masternode.state = MasternodeState.ENABLED;
@@ -264,7 +262,7 @@ export class MasternodeService {
   }
 
   async resigning(id: number): Promise<void> {
-    const masternode = await this.repository.findOne(id);
+    const masternode = await this.repository.findOneBy({ id });
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (masternode.state !== MasternodeState.ENABLED) throw new ConflictException('Masternode not yet created');
 
@@ -274,7 +272,7 @@ export class MasternodeService {
   }
 
   async preResigned(id: number, txId: string): Promise<void> {
-    const masternode = await this.repository.findOne(id);
+    const masternode = await this.repository.findOneBy({ id });
     if (!masternode) throw new NotFoundException('Masternode not found');
     if (!masternode.creationHash) throw new ConflictException('Masternode not yet created');
     if (masternode.resignHash) throw new ConflictException('Masternode already resigned');
@@ -287,7 +285,7 @@ export class MasternodeService {
   }
 
   async movingCollateral(id: number): Promise<void> {
-    const masternode = await this.repository.findOne(id);
+    const masternode = await this.repository.findOneBy({ id });
     if (!masternode) throw new NotFoundException('Masternode not found');
 
     masternode.state = MasternodeState.MOVING_COLLATERAL;
@@ -296,7 +294,7 @@ export class MasternodeService {
   }
 
   async resigned(id: number): Promise<void> {
-    const masternode = await this.repository.findOne(id);
+    const masternode = await this.repository.findOneBy({ id });
     if (!masternode) throw new NotFoundException('Masternode not found');
 
     masternode.state = MasternodeState.RESIGNED;

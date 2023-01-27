@@ -1,11 +1,16 @@
+import { Injectable } from '@nestjs/common';
 import { Util } from 'src/shared/util';
-import { Between, EntityRepository, FindOperator, In, Repository } from 'typeorm';
+import { Between, EntityManager, FindOperator, In, Repository } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { StakingReference, StakingType } from '../../domain/entities/staking.entity';
 import { DepositStatus } from '../../domain/enums';
 
-@EntityRepository(Deposit)
+@Injectable()
 export class DepositRepository extends Repository<Deposit> {
+  constructor(manager: EntityManager) {
+    super(Deposit, manager);
+  }
+
   async getConfirmed(stakingId: number): Promise<Deposit[]> {
     return this.getByStatuses([DepositStatus.CONFIRMED], stakingId);
   }
@@ -23,7 +28,7 @@ export class DepositRepository extends Repository<Deposit> {
   }
 
   async getByPayInTxId(stakingId: number, payInTxId: string): Promise<Deposit> {
-    return this.findOne({ staking: { id: stakingId }, payInTxId });
+    return this.findOneBy({ staking: { id: stakingId }, payInTxId });
   }
 
   async getByUserId(userId: number, dateFrom?: Date, dateTo?: Date): Promise<Deposit[]> {
@@ -52,7 +57,7 @@ export class DepositRepository extends Repository<Deposit> {
   }
 
   async getStakingReferencesForPending(): Promise<StakingReference[]> {
-    return this.find({ status: DepositStatus.PENDING })
+    return this.findBy({ status: DepositStatus.PENDING })
       .then((d) => d.map(({ staking: s }) => ({ id: s.id, strategy: s.strategy })))
       .then((refs) => refs.filter((r1, i, a) => a.findIndex((r2) => r1.id === r2.id) === i));
   }

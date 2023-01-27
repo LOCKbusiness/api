@@ -9,16 +9,24 @@ import { TransactionRepository } from './application/repositories/transaction.re
 import { TransactionCacheService } from './application/services/transaction-cache.service';
 import { TransactionExecutionService } from './application/services/transaction-execution.service';
 import { TransactionService } from './application/services/transaction.service';
+import { TransactionCache } from './domain/entities/transaction-cache.entity';
+import { Transaction } from './domain/entities/transaction.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([TransactionRepository, TransactionCacheRepository]),
+    TypeOrmModule.forFeature([Transaction, TransactionCache]),
     SharedModule,
     BlockchainModule,
     MonitoringModule,
   ],
   controllers: [TransactionController],
-  providers: [TransactionService, TransactionCacheService, TransactionExecutionService],
+  providers: [
+    TransactionCacheRepository,
+    TransactionRepository,
+    TransactionService,
+    TransactionCacheService,
+    TransactionExecutionService,
+  ],
   exports: [TransactionExecutionService],
 })
 export class TransactionModule {}

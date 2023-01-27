@@ -1,16 +1,21 @@
+import { Injectable } from '@nestjs/common';
 import { Util } from 'src/shared/util';
-import { EntityRepository, IsNull, LessThan, Not, Repository } from 'typeorm';
+import { EntityManager, IsNull, LessThan, Not, Repository } from 'typeorm';
 import { Transaction } from '../../domain/entities/transaction.entity';
 
-@EntityRepository(Transaction)
+@Injectable()
 export class TransactionRepository extends Repository<Transaction> {
+  constructor(manager: EntityManager) {
+    super(Transaction, manager);
+  }
+
   async getUndecidedTransactions(): Promise<Transaction[]> {
     return this.find({
       where: {
         inBlockchain: false,
         signedHex: Not(IsNull()),
         invalidationReason: IsNull(),
-        updated: LessThan(Util.hourBefore(1).toISOString()),
+        updated: LessThan(Util.hourBefore(1)),
       },
     });
   }

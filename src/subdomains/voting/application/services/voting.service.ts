@@ -8,17 +8,17 @@ import { Lock } from 'src/shared/lock';
 import { AssetType } from 'src/shared/models/asset/asset.entity';
 import { HttpService } from 'src/shared/services/http.service';
 import { Util } from 'src/shared/util';
-import { StakingRepository } from 'src/subdomains/staking/application/repositories/staking.repository';
 import { Staking } from 'src/subdomains/staking/domain/entities/staking.entity';
 import { MasternodeVote, StakingStrategy } from 'src/subdomains/staking/domain/enums';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
-import { getCustomRepository, IsNull } from 'typeorm';
-import { Vote } from '../../domain/enums';
+import { IsNull } from 'typeorm';
 import { CfpMnVoteDto } from '../dto/cfp-mn-vote.dto';
 import { User } from 'src/subdomains/user/domain/entities/user.entity';
 import { CfpDto, CfpInfo, CfpResultDto, CfpVoteDto, CfpVotesDto } from '../dto/cfp.dto';
 import { Distribution } from '../dto/distribution.dto';
 import { VoteRepository } from '../repositories/voting.repository';
+import { VoteDecision } from '../../domain/enums';
+import { RepositoryFactory } from 'src/shared/repositories/repository.factory';
 
 @Injectable()
 export class VotingService implements OnModuleInit {
@@ -26,6 +26,7 @@ export class VotingService implements OnModuleInit {
   private votingLock = new Lock(86400);
 
   constructor(
+    private readonly repos: RepositoryFactory,
     private readonly voteRepo: VoteRepository,
     private readonly userService: UserService,
     private readonly masternodeService: MasternodeService,
@@ -59,7 +60,7 @@ export class VotingService implements OnModuleInit {
   async getCurrentVotes(): Promise<CfpVotesDto[]> {
     const { cfpList } = await this.getCfpInfos();
     const userWithVotes = await this.userService.getAllUserWithVotes();
-    const stakings = await getCustomRepository(StakingRepository).getByType({
+    const stakings = await this.repos.staking.getByType({
       asset: { name: 'DFI', type: AssetType.COIN },
       strategy: StakingStrategy.MASTERNODE,
     });
@@ -101,15 +102,18 @@ export class VotingService implements OnModuleInit {
         id,
         name,
         votes: [
-          ...this.getVotes(tmpMasternodes.splice(0, yesMnCount), Vote.YES),
-          ...this.getVotes(tmpMasternodes.splice(0, noMnCount), Vote.NO),
-          ...this.getVotes(tmpMasternodes, Vote.NEUTRAL),
+          ...this.getVotes(tmpMasternodes.splice(0, yesMnCount), VoteDecision.YES),
+          ...this.getVotes(tmpMasternodes.splice(0, noMnCount), VoteDecision.NO),
+          ...this.getVotes(tmpMasternodes, VoteDecision.NEUTRAL),
         ],
       };
     });
   }
 
-  private getVotes(masternodes: Masternode[], vote: Vote): { accountIndex: number; address: string; vote: Vote }[] {
+  private getVotes(
+    masternodes: Masternode[],
+    vote: VoteDecision,
+  ): { accountIndex: number; address: string; vote: VoteDecision }[] {
     return masternodes.map((mn) => ({
       accountIndex: mn.accountIndex,
       address: mn.owner,
@@ -144,13 +148,13 @@ export class VotingService implements OnModuleInit {
     if (!this.votingLock.acquire()) return;
 
     try {
-      const voteMap: { [k in Vote]: MasternodeVote } = {
-        [Vote.NO]: MasternodeVote.NO,
-        [Vote.YES]: MasternodeVote.YES,
-        [Vote.NEUTRAL]: MasternodeVote.NEUTRAL,
+      const voteMap: { [k in VoteDecision]: MasternodeVote } = {
+        [VoteDecision.NO]: MasternodeVote.NO,
+        [VoteDecision.YES]: MasternodeVote.YES,
+        [VoteDecision.NEUTRAL]: MasternodeVote.NEUTRAL,
       };
 
-      const pendingVotes = await this.voteRepo.find({ txId: IsNull() });
+      const pendingVotes = await this.voteRepo.findBy({ txId: IsNull() });
       for (const vote of pendingVotes) {
         const txId = await this.transactionService.voteMasternode({
           ownerWallet: vote.masternode.ownerWallet,
@@ -176,7 +180,7 @@ export class VotingService implements OnModuleInit {
       (prev, curr) => ({ ...prev, [curr.id]: { yes: 0, no: 0, neutral: 0 } }),
       {},
     );
-    const stakings = await getCustomRepository(StakingRepository).getByType({
+    const stakings = await this.repos.staking.getByType({
       asset: { name: 'DFI', type: AssetType.COIN },
       strategy: StakingStrategy.MASTERNODE,
     });
@@ -216,7 +220,7 @@ export class VotingService implements OnModuleInit {
       .map((cfp) => ({ id: cfp.id, vote: this.getUserVote(user, cfp.id), name: cfp.name }));
   }
 
-  private getUserVote(user: User, cfpId: string): Vote | undefined {
+  private getUserVote(user: User, cfpId: string): VoteDecision | undefined {
     return Object.entries(user.vote).find(([id, _]) => id === cfpId)?.[1];
   }
 

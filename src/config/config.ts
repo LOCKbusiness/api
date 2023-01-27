@@ -1,9 +1,10 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { I18nJsonParser, I18nOptions } from 'nestjs-i18n';
+import { I18nOptions } from 'nestjs-i18n';
 import * as path from 'path';
 import { MailOptions } from 'src/integration/notification/services/mail.service';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { NetworkName } from '@defichain/jellyfish-network';
 
 export enum Process {
   PAY_IN = 'PayIn',
@@ -25,7 +26,7 @@ export function GetConfig(): Configuration {
 
 export class Configuration {
   environment = process.env.ENVIRONMENT;
-  network = process.env.NETWORK;
+  network = process.env.NETWORK as NetworkName;
   defaultLanguage = 'en';
   defaultTelegramUrl = 'https://t.me/LOCK_Staking';
   defaultTwitterUrl = 'https://twitter.com/Lock_Space_';
@@ -42,20 +43,17 @@ export class Configuration {
     synchronize: process.env.SQL_SYNCHRONIZE === 'true',
     migrationsRun: process.env.SQL_MIGRATE === 'true',
     migrations: ['migration/*.js'],
-    cli: {
-      migrationsDir: 'migration',
-    },
     connectionTimeout: 30000,
     requestTimeout: 30000,
   };
 
   i18n: I18nOptions = {
     fallbackLanguage: this.defaultLanguage,
-    parser: I18nJsonParser,
-    parserOptions: {
+    loaderOptions: {
       path: path.join(__dirname, '../shared/i18n/'),
       watch: true,
     },
+    resolvers: [{ resolve: () => this.defaultLanguage }],
   };
 
   mail: MailOptions = {

@@ -8,11 +8,11 @@ export class TransactionCacheService {
   constructor(private readonly repository: TransactionCacheRepository) {}
 
   async get(type: TransactionType, correlationId: string): Promise<RawTxDto | undefined> {
-    return this.repository.findOne({ type, correlationId }).then((c) => (c ? JSON.parse(c.rawTx) : undefined));
+    return this.repository.findOneBy({ type, correlationId }).then((c) => (c ? JSON.parse(c.rawTx) : undefined));
   }
 
   async set(type: TransactionType, correlationId: string, rawTx: RawTxDto): Promise<RawTxDto> {
-    const existing = await this.repository.findOne({ type, correlationId });
+    const existing = await this.repository.findOneBy({ type, correlationId });
     await this.repository.save({ ...existing, type, correlationId, rawTx: JSON.stringify(rawTx) });
     return rawTx;
   }

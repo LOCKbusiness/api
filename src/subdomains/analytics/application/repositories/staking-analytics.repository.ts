@@ -1,10 +1,15 @@
+import { Injectable } from '@nestjs/common';
 import { StakingType } from 'src/subdomains/staking/domain/entities/staking.entity';
-import { DeepPartial, EntityRepository, Repository } from 'typeorm';
+import { EntityManager, FindOptionsWhere, Repository } from 'typeorm';
 import { StakingAnalytics } from '../../domain/staking-analytics.entity';
 
-@EntityRepository(StakingAnalytics)
+@Injectable()
 export class StakingAnalyticsRepository extends Repository<StakingAnalytics> {
-  async getByType(type: DeepPartial<StakingType>): Promise<StakingAnalytics> {
-    return this.findOne(type);
+  constructor(manager: EntityManager) {
+    super(StakingAnalytics, manager);
+  }
+
+  async getByType(type: FindOptionsWhere<StakingType>): Promise<StakingAnalytics> {
+    return this.findOneBy(type);
   }
 }

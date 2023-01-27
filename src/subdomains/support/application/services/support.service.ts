@@ -1,24 +1,26 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { DepositRepository } from 'src/subdomains/staking/application/repositories/deposit.repository';
-import { RewardRepository } from 'src/subdomains/staking/application/repositories/reward.repository';
-import { WithdrawalRepository } from 'src/subdomains/staking/application/repositories/withdrawal.repository';
+import { RepositoryFactory } from 'src/shared/repositories/repository.factory';
 import { Deposit } from 'src/subdomains/staking/domain/entities/deposit.entity';
 import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
 import { Withdrawal } from 'src/subdomains/staking/domain/entities/withdrawal.entity';
 import { DbQueryDto } from 'src/subdomains/support/application/dto/db-query.dto';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
-import { getConnection, getCustomRepository } from 'typeorm';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class SupportService {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly repos: RepositoryFactory,
+    private readonly userService: UserService,
+    private readonly dataSource: DataSource,
+  ) {}
 
   async getRawDataDeprecated(query: DbQueryDto): Promise<{ keys: any; values: any }> {
     const id = query.min ? +query.min : 1;
     const maxResult = query.maxLine ? +query.maxLine : undefined;
     const updated = query.updatedSince ? new Date(query.updatedSince) : new Date(0);
 
-    const data = await getConnection()
+    const data = await this.dataSource
       .createQueryBuilder()
       .select(query.filterCols)
       .from(query.table, query.table)
@@ -41,7 +43,7 @@ export class SupportService {
   }
 
   async getRawData(query: DbQueryDto): Promise<any> {
-    const request = getConnection()
+    const request = this.dataSource
       .createQueryBuilder()
       .from(query.table, query.table)
       .orderBy(`${query.table}.id`, query.sorting)
@@ -77,9 +79,9 @@ export class SupportService {
     const user = await this.userService.getUser(userId);
     if (!user) throw new NotFoundException('User not found');
 
-    const deposits = await getCustomRepository(DepositRepository).getByUserId(userId);
-    const withdrawals = await getCustomRepository(WithdrawalRepository).getByUserId(userId);
-    const rewards = await getCustomRepository(RewardRepository).getByUserId(userId);
+    const deposits = await this.repos.deposit.getByUserId(userId);
+    const withdrawals = await this.repos.withdrawal.getByUserId(userId);
+    const rewards = await this.repos.reward.getByUserId(userId);
 
     return {
       staking: {

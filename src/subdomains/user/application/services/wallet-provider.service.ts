@@ -7,6 +7,6 @@ export class WalletProviderService {
   constructor(private walletProviderRepo: WalletProviderRepository) {}
 
   async getWalletProviderByName(name: string): Promise<WalletProvider> {
-    return await this.walletProviderRepo.findOne({ where: { name } });
+    return await this.walletProviderRepo.findOneBy({ name });
   }
 }

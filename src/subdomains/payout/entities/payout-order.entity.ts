@@ -3,7 +3,7 @@ import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { IEntity } from 'src/shared/models/entity';
 import { Util } from 'src/shared/util';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, ManyToOne } from 'typeorm';
 
 export enum PayoutOrderContext {
   STAKING_REWARD = 'StakingReward',
@@ -21,6 +21,7 @@ export enum PayoutOrderStatus {
 }
 
 @Entity()
+@Index((p: PayoutOrder) => [p.context, p.correlationId], { unique: true })
 export class PayoutOrder extends IEntity {
   @Column({ length: 256, nullable: false })
   context: PayoutOrderContext;

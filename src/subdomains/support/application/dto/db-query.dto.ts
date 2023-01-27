@@ -27,10 +27,10 @@ export class DbQueryDto {
   select?: string[];
 
   @IsOptional()
-  join?: [string, string][] = [];
+  join: [string, string][] = [];
 
   @IsOptional()
-  where?: [string, { [key: string]: string }][] = [];
+  where: [string, { [key: string]: string }][] = [];
 
   // Comma separated column names
   @IsOptional()

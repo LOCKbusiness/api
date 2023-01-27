@@ -136,7 +136,7 @@ export class StakingDepositService {
   }
 
   private async processPendingDepositsForStaking(stakingId: number): Promise<void> {
-    const staking = await this.repository.findOne(stakingId);
+    const staking = await this.repository.findOneBy({ id: stakingId });
     const deposits = await this.depositRepository.getPending(stakingId);
 
     for (const deposit of deposits) {
@@ -189,7 +189,7 @@ export class StakingDepositService {
     const stakingPairs: [number, PayIn][] = [];
 
     for (const payIn of stakingPayIns) {
-      const staking = await this.repository.findOne({
+      const staking = await this.repository.findOneBy({
         depositAddress: { address: payIn.address.address, blockchain: payIn.address.blockchain },
       });
 
@@ -202,7 +202,7 @@ export class StakingDepositService {
   private async processNewDeposits(stakingPairs: [number, PayIn][]): Promise<void> {
     for (const [stakingId, payIn] of stakingPairs) {
       try {
-        const staking = await this.repository.findOne({ where: { id: stakingId } });
+        const staking = await this.repository.findOneBy({ id: stakingId });
 
         // verify asset
         const hasSameAsset = staking.asset.id === payIn.asset.id;

@@ -1,5 +1,10 @@
-import { EntityRepository, Repository } from 'typeorm';
+import { Injectable } from '@nestjs/common';
+import { EntityManager, Repository } from 'typeorm';
 import { Asset } from './asset.entity';
 
-@EntityRepository(Asset)
-export class AssetRepository extends Repository<Asset> {}
+@Injectable()
+export class AssetRepository extends Repository<Asset> {
+  constructor(manager: EntityManager) {
+    super(Asset, manager);
+  }
+}

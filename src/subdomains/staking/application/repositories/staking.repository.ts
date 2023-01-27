@@ -1,19 +1,34 @@
+import { Injectable } from '@nestjs/common';
+import { AssetType } from 'src/shared/models/asset/asset.entity';
 import { LockedRepository } from 'src/shared/repositories/locked.repository';
-import { DeepPartial, EntityRepository } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import { Staking, StakingType } from '../../domain/entities/staking.entity';
+import { StakingStrategy } from '../../domain/enums';
 
-@EntityRepository(Staking)
+export interface StakingFindOptions {
+  strategy: StakingStrategy;
+  asset: { name: string; type: AssetType };
+}
+
+@Injectable()
 export class StakingRepository extends LockedRepository<Staking> {
-  async getByType(type: DeepPartial<StakingType>): Promise<Staking[]> {
-    return this.find({ where: type, relations: ['asset'] });
+  constructor(manager: EntityManager) {
+    super(Staking, manager);
   }
 
-  async getByUserId(userId: number, type?: DeepPartial<StakingType>): Promise<Staking[]> {
-    return this.find({ where: { userId, ...type }, relations: ['asset'] });
+  async getByType({ strategy, asset }: StakingFindOptions): Promise<Staking[]> {
+    return this.find({
+      where: { strategy, asset: { name: asset.name, type: asset.type } },
+      relations: ['asset'],
+    });
+  }
+
+  async getByUserId(userId: number): Promise<Staking[]> {
+    return this.findBy({ userId });
   }
 
   async getByDepositAddress(depositAddress: string): Promise<Staking[]> {
-    return this.find({ depositAddress: { address: depositAddress } });
+    return this.findBy({ depositAddress: { address: depositAddress } });
   }
 
   async getCurrentTotalStakingBalance({ asset, strategy }: StakingType): Promise<number> {
