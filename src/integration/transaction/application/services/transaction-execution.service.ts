@@ -198,7 +198,7 @@ export class TransactionExecutionService {
     const existingTx = await this.transactionCache.get(type, correlationId);
     if (existingTx) return existingTx;
 
-    return await this.transactionCache.set(type, correlationId, await create());
+    return this.transactionCache.set(type, correlationId, await create());
   }
 
   private createPayloadFor(data: WalletBaseData, type: TransactionType): any {

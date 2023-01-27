@@ -33,7 +33,7 @@ export class WhaleClient {
   }
 
   async getTokenBalances(address: string): Promise<AddressToken[]> {
-    return await this.getAll(() => this.client.address.listToken(address));
+    return this.getAll(() => this.client.address.listToken(address));
   }
 
   async getTokenBalance(address: string, token: string): Promise<BigNumber> {
@@ -47,15 +47,15 @@ export class WhaleClient {
   }
 
   async getAllUnspent(address: string): Promise<AddressUnspent[]> {
-    return await this.getAll(() => this.client.address.listTransactionUnspent(address, 200));
+    return this.getAll(() => this.client.address.listTransactionUnspent(address, 200));
   }
 
   async getAllTokens(): Promise<TokenData[]> {
-    return await this.getAll(() => this.client.tokens.list(200));
+    return this.getAll(() => this.client.tokens.list(200));
   }
 
   async getAllCollateralTokens(): Promise<CollateralToken[]> {
-    return await this.getAll(() => this.client.loan.listCollateralToken(200));
+    return this.getAll(() => this.client.loan.listCollateralToken(200));
   }
 
   async getVault(vaultId: string): Promise<LoanVaultActive> {
@@ -69,15 +69,15 @@ export class WhaleClient {
   }
 
   async waitForTx(txId: string, timeout = 600000): Promise<string> {
-    return await this.transactions.wait(txId, timeout);
+    return this.transactions.wait(txId, timeout);
   }
 
   async getTx(txId: string): Promise<Transaction> {
-    return await this.client.transactions.get(txId);
+    return this.client.transactions.get(txId);
   }
 
   async getTxVins(txId: string): Promise<TransactionVin[]> {
-    return await this.client.transactions.getVins(txId);
+    return this.client.transactions.getVins(txId);
   }
 
   // --- HELPER METHODS --- //

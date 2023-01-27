@@ -50,7 +50,7 @@ export class DexService {
         );
       }
 
-      return strategy.checkLiquidity(request);
+      return await strategy.checkLiquidity(request);
     } catch (e) {
       console.error(e.message);
 

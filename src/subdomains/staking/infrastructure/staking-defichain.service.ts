@@ -64,7 +64,7 @@ export class StakingDeFiChainService {
       Config.staking.liquidity.address,
       new BigNumber(amount),
     );
-    return await this.send(forwardToLiq);
+    return this.send(forwardToLiq);
   }
 
   private async forwardLiquidityMiningDeposit(address: string, amount: number, asset: Asset): Promise<string> {
@@ -79,7 +79,7 @@ export class StakingDeFiChainService {
       new BigNumber(amount),
       new BigNumber(Config.payIn.forward.accountToAccountFee),
     );
-    return await this.send(forwardToLiq);
+    return this.send(forwardToLiq);
   }
 
   private async sendFeeUtxosToDepositIfNeeded(address: string): Promise<void> {

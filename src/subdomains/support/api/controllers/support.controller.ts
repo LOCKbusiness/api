@@ -22,7 +22,7 @@ export class SupportController {
     @Query()
     query: DbQueryDto,
   ): Promise<{ keys: any; values: any }> {
-    return await this.supportService.getRawDataDeprecated(query);
+    return this.supportService.getRawDataDeprecated(query);
   }
 
   @Post('db')
@@ -33,7 +33,7 @@ export class SupportController {
     @Body()
     query: DbQueryDto,
   ): Promise<{ keys: string[]; values: any }> {
-    return await this.supportService.getRawData(query);
+    return this.supportService.getRawData(query);
   }
 
   @Get()
@@ -47,6 +47,6 @@ export class SupportController {
       rewards: Reward[];
     };
   }> {
-    return await this.supportService.getSupportData(+id);
+    return this.supportService.getSupportData(+id);
   }
 }

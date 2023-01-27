@@ -12,7 +12,7 @@ export class UserService {
   constructor(private readonly userRepo: UserRepository) {}
 
   async createUser(): Promise<User> {
-    return await this.userRepo.save({
+    return this.userRepo.save({
       language: Config.defaultLanguage,
     });
   }
@@ -20,7 +20,7 @@ export class UserService {
   async updateUser(userId: number, dto: Partial<User>): Promise<User> {
     const user = await this.userRepo.findOneBy({ id: userId });
     if (!user) throw new NotFoundException('User not found');
-    return await this.userRepo.save(Object.assign(user, dto));
+    return this.userRepo.save(Object.assign(user, dto));
   }
 
   async getUser(userId: number): Promise<User> {
@@ -39,7 +39,7 @@ export class UserService {
   }
 
   async getAllUser(): Promise<User[]> {
-    return await this.userRepo.find();
+    return this.userRepo.find();
   }
 
   async getKycStatus(userId: number): Promise<KycStatus> {
@@ -76,6 +76,6 @@ export class UserService {
   }
 
   async getAllUserWithVotes(): Promise<User[]> {
-    return await this.userRepo.findBy({ votes: Not(IsNull()) });
+    return this.userRepo.findBy({ votes: Not(IsNull()) });
   }
 }

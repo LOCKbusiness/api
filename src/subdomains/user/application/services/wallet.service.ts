@@ -27,7 +27,7 @@ export class WalletService {
     const wallet = await this.walletRepo.findOne({ where: { id: walletId }, relations: ['user'] });
     if (!wallet) throw new NotFoundException('Wallet not found');
 
-    return await this.toDto(wallet);
+    return this.toDto(wallet);
   }
 
   async getByAddress(address: string, needsRelation = false): Promise<Wallet> {
@@ -59,7 +59,7 @@ export class WalletService {
     wallet.ref = await this.getNextRef();
     wallet.user = user ?? (await this.userService.createUser());
 
-    return await this.walletRepo.save(wallet);
+    return this.walletRepo.save(wallet);
   }
 
   private async getNextRef(): Promise<string> {

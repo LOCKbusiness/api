@@ -114,7 +114,7 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
   }
 
   private async getLastOutputDate(strategy: StakingStrategy): Promise<Date> {
-    return await this.repos.reward
+    return this.repos.reward
       .findOne({
         order: { outputDate: 'DESC' },
         where: { staking: { strategy } },
