@@ -114,6 +114,10 @@ export class Reward extends IEntity {
     return this;
   }
 
+  payingOut() {
+    this.status = RewardStatus.PAYING_OUT;
+  }
+
   complete(txId: string): this {
     this.txId = txId;
     this.outputDate = new Date();
