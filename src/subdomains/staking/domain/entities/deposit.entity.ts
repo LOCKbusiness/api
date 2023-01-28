@@ -3,11 +3,12 @@ import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { IEntity } from 'src/shared/models/entity';
 import { Price } from 'src/shared/models/price';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { DepositStatus } from '../enums';
 import { Staking } from './staking.entity';
 
 @Entity()
+@Index((d: Deposit) => [d.staking, d.status, d.created])
 export class Deposit extends IEntity {
   @ManyToOne(() => Staking, { eager: true, nullable: false })
   staking: Staking;
