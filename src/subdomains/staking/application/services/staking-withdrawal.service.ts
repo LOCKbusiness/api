@@ -13,7 +13,6 @@ import { WithdrawalDraftOutputDto } from '../dto/output/withdrawal-draft.output.
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
 import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
-import { StakingRepository } from '../repositories/staking.repository';
 import { WithdrawalDraftOutputDtoMapper } from '../mappers/withdrawal-draft-output-dto.mapper';
 import { WithdrawalRepository } from '../repositories/withdrawal.repository';
 import { WithdrawalOutputDto } from '../dto/output/withdrawal.output.dto';
@@ -29,7 +28,6 @@ export class StakingWithdrawalService {
   private readonly lock = new Lock(1800);
 
   constructor(
-    private readonly stakingRepo: StakingRepository,
     private readonly withdrawalRepo: WithdrawalRepository,
     private readonly authorize: StakingAuthorizeService,
     private readonly kycCheck: StakingKycCheckService,
