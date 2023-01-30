@@ -10,7 +10,7 @@ import { Method } from 'axios';
 import { Config, Process } from 'src/config/config';
 import { HttpError, HttpService } from 'src/shared/services/http.service';
 import { SettingService } from 'src/shared/services/setting.service';
-import { In, IsNull, LessThan, MoreThan, Not } from 'typeorm';
+import { In, IsNull, LessThan, Not } from 'typeorm';
 import { Masternode } from '../../domain/entities/masternode.entity';
 import { MasternodeState, MasternodeTimeLock } from '../../../../subdomains/staking/domain/enums';
 import { MasternodeState as BlockchainMasternodeState } from '@defichain/jellyfish-api-core/dist/category/masternode';
@@ -149,10 +149,7 @@ export class MasternodeService {
 
   async getAllVotersAt(date: Date): Promise<Masternode[]> {
     return this.repository.find({
-      where: [
-        { firstBlockFound: LessThan(date), resignDate: IsNull() },
-        { firstBlockFound: LessThan(date), resignDate: MoreThan(date) },
-      ],
+      where: { firstBlockFound: LessThan(date), resignDate: IsNull() },
     });
   }
 
