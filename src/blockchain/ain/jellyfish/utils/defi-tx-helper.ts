@@ -12,7 +12,6 @@ import {
 import { JellyfishService } from '../services/jellyfish.service';
 import { TestNet } from '@defichain/jellyfish-network';
 import BigNumber from 'bignumber.js';
-import { from } from 'rxjs';
 
 export class DefiTxHelper {
   // --- MASTERNODE --- //
