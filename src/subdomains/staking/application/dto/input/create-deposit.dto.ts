@@ -15,6 +15,5 @@ export class CreateDepositDto {
 
   @ApiProperty()
   @IsOptional()
-  @IsString()
   asset: Asset;
 }
