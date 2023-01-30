@@ -62,29 +62,32 @@ export class DepositRepository extends Repository<Deposit> {
       .then((refs) => refs.filter((r1, i, a) => a.findIndex((r2) => r1.id === r2.id) === i));
   }
 
-  async getConfirmedAmount(stakingId: number): Promise<number> {
+  async getConfirmedAmount(stakingId: number, assetId: number): Promise<number> {
     return this.createQueryBuilder('deposit')
       .select('SUM(amount)', 'amount')
       .where('stakingId = :stakingId', { stakingId })
+      .where('assetId = :assetId', { assetId })
       .andWhere('status = :status', { status: DepositStatus.CONFIRMED })
       .getRawOne<{ amount: number }>()
       .then((r) => r.amount ?? 0);
   }
 
-  async getConfirmedStageOneAmount(stakingId: number): Promise<number> {
+  async getConfirmedStageOneAmount(stakingId: number, assetId: number): Promise<number> {
     return this.createQueryBuilder('deposit')
       .select('SUM(amount)', 'amount')
       .where('stakingId = :stakingId', { stakingId })
+      .where('assetId = :assetId', { assetId })
       .andWhere('status = :status', { status: DepositStatus.CONFIRMED })
       .andWhere('created >= :date', { date: Util.daysBefore(2) })
       .getRawOne<{ amount: number }>()
       .then((r) => r.amount ?? 0);
   }
 
-  async getConfirmedStageTwoAmount(stakingId: number): Promise<number> {
+  async getConfirmedStageTwoAmount(stakingId: number, assetId: number): Promise<number> {
     return this.createQueryBuilder('deposit')
       .select('SUM(amount)', 'amount')
       .where('stakingId = :stakingId', { stakingId })
+      .where('assetId = :assetId', { assetId })
       .andWhere('status = :status', { status: DepositStatus.CONFIRMED })
       .andWhere('created >= :date', { date: Util.daysBefore(6) })
       .getRawOne<{ amount: number }>()

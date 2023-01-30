@@ -154,7 +154,7 @@ export class StakingDepositService {
          * potential case of updateStakingBalance failure is tolerated
          */
         await this.depositRepository.save(deposit);
-        await this.stakingService.updateStakingBalance(stakingId);
+        await this.stakingService.updateStakingBalance(stakingId, deposit.asset);
 
         if (staking.isNotActive) await this.repository.saveWithLock(staking.id, (staking) => staking.activate());
       } catch (e) {
@@ -205,7 +205,7 @@ export class StakingDepositService {
         const staking = await this.repository.findOneBy({ id: stakingId });
 
         // verify asset
-        const hasSameAsset = staking.asset.id === payIn.asset.id;
+        const hasSameAsset = staking.balances.find((b) => b.asset.id === payIn.asset.id);
         if (!hasSameAsset) {
           await this.payInService.failedPayIn(payIn, PayInPurpose.STAKING);
           continue;
@@ -244,6 +244,6 @@ export class StakingDepositService {
   }
 
   private async createNewDeposit(staking: Staking, payIn: PayIn): Promise<Deposit> {
-    return this.factory.createDeposit(staking, { amount: payIn.amount, txId: payIn.txId });
+    return this.factory.createDeposit(staking, { amount: payIn.amount, txId: payIn.txId, asset: payIn.asset });
   }
 }

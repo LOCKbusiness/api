@@ -13,13 +13,14 @@ export class StakingOutputDtoMapper {
 
     dto.id = staking.id;
     dto.status = staking.status;
-    dto.asset = staking.asset.name;
+    dto.asset = staking.balances[0].asset.name;
     dto.depositAddress = staking.depositAddress.address;
     dto.strategy = staking.strategy;
     dto.minimalStake = Config.staking.minimalStake;
-    dto.minimalDeposit = Config.payIn.min.DeFiChain[staking.asset.name];
+    dto.minimalDeposits = Config.payIn.min.DeFiChain;
     dto.fee = staking.fee ?? Config.staking.defaultFee;
-    dto.balance = staking.balance;
+    dto.balance = staking.balances[0].balance;
+    dto.balances = staking.balances;
     dto.pendingDeposits = unconfirmedDepositsAmount;
     dto.pendingWithdrawals = pendingWithdrawalsAmount;
     dto.rewardRoutes = staking.activeRewardRoutes.map(RewardRouteOutputDtoMapper.entityToDto);

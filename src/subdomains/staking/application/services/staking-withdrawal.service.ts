@@ -3,7 +3,7 @@ import { BadRequestException, Injectable, NotFoundException, UnauthorizedExcepti
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
-import { WithdrawalStatus } from '../../domain/enums';
+import { StakingStrategy, WithdrawalStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingDeFiChainService } from '../../infrastructure/staking-defichain.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
@@ -50,6 +50,8 @@ export class StakingWithdrawalService {
     await this.kycCheck.check(userId, walletId);
 
     const staking = await this.authorize.authorize(userId, stakingId);
+
+    if (staking.strategy == StakingStrategy.LIQUIDITY_MINING) dto.asset.name ??= 'DUSD';
 
     const withdrawal = this.factory.createWithdrawalDraft(staking, dto);
 
@@ -101,7 +103,9 @@ export class StakingWithdrawalService {
     }
 
     const pendingWithdrawalsAmount = await this.withdrawalRepo.getInProgressAmount(stakingId);
-    staking.checkBalanceForWithdrawalOrThrow(withdrawal, pendingWithdrawalsAmount);
+    staking.balances
+      .find((s) => s.asset == withdrawal.asset)
+      .checkBalanceForWithdrawalOrThrow(withdrawal, pendingWithdrawalsAmount);
     withdrawal.signWithdrawal(dto.signature);
 
     await this.withdrawalRepo.save(withdrawal);
@@ -126,7 +130,9 @@ export class StakingWithdrawalService {
     withdrawal.changeAmount(dto.amount, staking);
 
     const pendingWithdrawalsAmount = await this.withdrawalRepo.getInProgressAmount(stakingId);
-    staking.checkBalanceForWithdrawalOrThrow(withdrawal, pendingWithdrawalsAmount);
+    staking.balances
+      .find((s) => s.asset == withdrawal.asset)
+      .checkBalanceForWithdrawalOrThrow(withdrawal, pendingWithdrawalsAmount);
 
     await this.withdrawalRepo.save(withdrawal);
 
@@ -245,7 +251,7 @@ export class StakingWithdrawalService {
            * potential case of updateStakingBalance failure is tolerated
            */
           await this.withdrawalRepo.save(withdrawal);
-          await this.stakingService.updateStakingBalance(stakingId);
+          await this.stakingService.updateStakingBalance(stakingId, withdrawal.asset);
         }
       } catch (e) {
         console.error(`Error trying to confirm withdrawal. ID: ${withdrawal.id}`, e);

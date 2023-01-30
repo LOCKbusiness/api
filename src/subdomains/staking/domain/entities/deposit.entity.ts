@@ -39,14 +39,14 @@ export class Deposit extends IEntity {
 
   //*** FACTORY METHODS ***//
 
-  static create(staking: Staking, amount: number, payInTxId: string): Deposit {
+  static create(staking: Staking, amount: number, payInTxId: string, asset: Asset): Deposit {
     if (!payInTxId) throw new BadRequestException('TxID must be provided when creating a staking deposit');
 
     const deposit = new Deposit();
 
     deposit.staking = staking;
     deposit.status = DepositStatus.OPEN;
-    deposit.asset = staking.asset;
+    deposit.asset = asset;
     deposit.amount = amount;
     deposit.payInTxId = payInTxId;
 

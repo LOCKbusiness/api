@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { AssetType } from 'src/shared/models/asset/asset.entity';
 import { LockedRepository } from 'src/shared/repositories/locked.repository';
 import { EntityManager } from 'typeorm';
 import { Staking, StakingType } from '../../domain/entities/staking.entity';
@@ -7,7 +6,6 @@ import { StakingStrategy } from '../../domain/enums';
 
 export interface StakingFindOptions {
   strategy: StakingStrategy;
-  asset: { name: string; type: AssetType };
 }
 
 @Injectable()
@@ -16,10 +14,9 @@ export class StakingRepository extends LockedRepository<Staking> {
     super(Staking, manager);
   }
 
-  async getByType({ strategy, asset }: StakingFindOptions): Promise<Staking[]> {
+  async getByStrategy({ strategy }: StakingFindOptions): Promise<Staking[]> {
     return this.find({
-      where: { strategy, asset: { name: asset.name, type: asset.type } },
-      relations: ['asset'],
+      where: { strategy },
     });
   }
 

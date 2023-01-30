@@ -47,14 +47,14 @@ export class Withdrawal extends IEntity {
 
   //*** FACTORY METHODS ***//
 
-  static create(staking: Staking, amount: number): Withdrawal {
+  static create(staking: Staking, amount: number, asset: Asset): Withdrawal {
     if (amount <= 0) throw new BadRequestException('Withdrawal amount must be greater than 0');
 
     const withdrawal = new Withdrawal();
 
     withdrawal.staking = staking;
     withdrawal.status = WithdrawalStatus.DRAFT;
-    withdrawal.asset = staking.asset;
+    withdrawal.asset = asset;
     withdrawal.amount = amount;
 
     return withdrawal;
@@ -66,7 +66,7 @@ export class Withdrawal extends IEntity {
   setSignMessage(): this {
     this.signMessage = this.generateWithdrawalSignatureMessage(
       this.amount,
-      this.staking.asset.name,
+      this.asset.name,
       this.staking.withdrawalAddress.address,
       this.staking.id,
       this.id,
@@ -106,7 +106,7 @@ export class Withdrawal extends IEntity {
     this.amount = amount;
     this.signMessage = this.generateWithdrawalSignatureMessage(
       this.amount,
-      parentStaking.asset.name,
+      this.asset.name,
       parentStaking.withdrawalAddress.address,
       parentStaking.id,
       this.id,

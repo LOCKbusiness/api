@@ -28,15 +28,15 @@ export class StakingFactory {
   }
 
   createDeposit(staking: Staking, dto: CreateDepositDto): Deposit {
-    const { amount, txId } = dto;
+    const { amount, txId, asset } = dto;
 
-    return Deposit.create(staking, amount, txId);
+    return Deposit.create(staking, amount, txId, asset);
   }
 
   createWithdrawalDraft(staking: Staking, dto: CreateWithdrawalDraftDto): Withdrawal {
     const { amount } = dto;
 
-    return Withdrawal.create(staking, amount);
+    return Withdrawal.create(staking, amount, dto.asset);
   }
 
   async createReward(staking: Staking, dto: CreateRewardDto): Promise<Reward> {

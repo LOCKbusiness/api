@@ -5,7 +5,6 @@ import { MasternodeService } from 'src/integration/masternode/application/servic
 import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
 import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
 import { Lock } from 'src/shared/lock';
-import { AssetType } from 'src/shared/models/asset/asset.entity';
 import { HttpService } from 'src/shared/services/http.service';
 import { Util } from 'src/shared/util';
 import { Staking } from 'src/subdomains/staking/domain/entities/staking.entity';
@@ -60,8 +59,7 @@ export class VotingService implements OnModuleInit {
   async getCurrentVotes(): Promise<CfpVotesDto[]> {
     const { cfpList } = await this.getCfpInfos();
     const userWithVotes = await this.userService.getAllUserWithVotes();
-    const stakings = await this.repos.staking.getByType({
-      asset: { name: 'DFI', type: AssetType.COIN },
+    const stakings = await this.repos.staking.getByStrategy({
       strategy: StakingStrategy.MASTERNODE,
     });
 
@@ -72,7 +70,7 @@ export class VotingService implements OnModuleInit {
 
       cfpVotesList.push({
         depositAddress: staking.depositAddress.address,
-        balance: staking.balance,
+        balance: staking.balances[0].balance,
         votes: user ? this.getUserVotes(user, cfpList) : [],
       });
     }
@@ -180,8 +178,7 @@ export class VotingService implements OnModuleInit {
       (prev, curr) => ({ ...prev, [curr.id]: { yes: 0, no: 0, neutral: 0 } }),
       {},
     );
-    const stakings = await this.repos.staking.getByType({
-      asset: { name: 'DFI', type: AssetType.COIN },
+    const stakings = await this.repos.staking.getByStrategy({
       strategy: StakingStrategy.MASTERNODE,
     });
 
@@ -208,10 +205,7 @@ export class VotingService implements OnModuleInit {
   }
 
   private getDfiStakingBalanceFor(userId: number, stakings: Staking[]): number {
-    return Util.sumObj(
-      stakings.filter((s) => s.userId === userId),
-      'balance',
-    );
+    return Util.sumObj(stakings.filter((s) => s.userId === userId).map((s) => s.balances)[0], 'balance');
   }
 
   private getUserVotes(user: User, cfpList: CfpInfo[]): CfpVoteDto[] {
