@@ -18,9 +18,16 @@ import { Distribution } from '../dto/distribution.dto';
 import { VoteRepository } from '../repositories/voting.repository';
 import { VoteDecision } from '../../domain/enums';
 import { RepositoryFactory } from 'src/shared/repositories/repository.factory';
+import { Vote } from '../../domain/entities/vote.entity';
 
 @Injectable()
 export class VotingService implements OnModuleInit {
+  private readonly VoteMap: { [k in VoteDecision]: MasternodeVote } = {
+    [VoteDecision.NO]: MasternodeVote.NO,
+    [VoteDecision.YES]: MasternodeVote.YES,
+    [VoteDecision.NEUTRAL]: MasternodeVote.NEUTRAL,
+  };
+
   private currentResults: CfpResultDto[] = [];
   private votingLock = new Lock(86400);
 
@@ -144,27 +151,27 @@ export class VotingService implements OnModuleInit {
     if (!this.votingLock.acquire()) return;
 
     try {
-      const voteMap: { [k in VoteDecision]: MasternodeVote } = {
-        [VoteDecision.NO]: MasternodeVote.NO,
-        [VoteDecision.YES]: MasternodeVote.YES,
-        [VoteDecision.NEUTRAL]: MasternodeVote.NEUTRAL,
-      };
-
       const pendingVotes = await this.voteRepo.findBy({ txId: IsNull() });
-      for (const vote of pendingVotes) {
-        const txId = await this.transactionService.voteMasternode({
-          ownerWallet: vote.masternode.ownerWallet,
-          accountIndex: vote.masternode.accountIndex,
-          masternode: vote.masternode,
-          proposalId: vote.proposalId,
-          voteDecision: voteMap[vote.decision],
-        });
-        await this.voteRepo.update(vote.id, { txId });
-      }
+      await Util.doInBatches(pendingVotes, (votes) => Promise.all(votes.map((v) => this.processVote(v))), 100);
     } catch (e) {
       console.error(`Exception during vote processing:`, e);
     } finally {
       this.votingLock.release();
+    }
+  }
+
+  private async processVote(vote: Vote) {
+    try {
+      const txId = await this.transactionService.voteMasternode({
+        ownerWallet: vote.masternode.ownerWallet,
+        accountIndex: vote.masternode.accountIndex,
+        masternode: vote.masternode,
+        proposalId: vote.proposalId,
+        voteDecision: this.VoteMap[vote.decision],
+      });
+      await this.voteRepo.update(vote.id, { txId });
+    } catch (e) {
+      console.error(`Failed to process vote ${vote.id}:`, e);
     }
   }
 
