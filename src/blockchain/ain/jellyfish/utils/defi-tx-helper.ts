@@ -12,6 +12,7 @@ import {
 import { JellyfishService } from '../services/jellyfish.service';
 import { TestNet } from '@defichain/jellyfish-network';
 import BigNumber from 'bignumber.js';
+import { from } from 'rxjs';
 
 export class DefiTxHelper {
   // --- MASTERNODE --- //
@@ -52,6 +53,12 @@ export class DefiTxHelper {
           balances,
         },
       ],
+    });
+  }
+
+  static utxoToAccount(from: Script, balances: TokenBalanceUInt32[]): OP_DEFI_TX {
+    return OP_CODES.OP_DEFI_TX_UTXOS_TO_ACCOUNT({
+      to: [{ script: from, balances }],
     });
   }
 

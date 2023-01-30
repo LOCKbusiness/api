@@ -9,7 +9,7 @@ import { fromScriptHex } from '@defichain/jellyfish-address';
 import { NetworkName } from '@defichain/jellyfish-network';
 import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
 import BigNumber from 'bignumber.js';
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { StakingStrategy } from '../domain/enums';
 import { JellyfishWallet, WalletHdNode } from '@defichain/jellyfish-wallet';
 import { WhaleWalletAccount } from '@defichain/whale-api-wallet';
@@ -69,20 +69,29 @@ export class StakingDeFiChainService {
 
   private async forwardLiquidityMiningDeposit(address: string, amount: number, asset: Asset): Promise<string> {
     console.info(`forwarding ${amount} of ${asset.name} of ${address}`);
-    await this.sendFeeUtxosToDepositIfNeeded(address);
+    await this.sendFeeUtxosToDepositIfNeeded(address, asset);
     const token = await this.tokenProviderService.get(asset.name);
     console.log(`${asset.name} has blockchain id ${token.id}`);
-    const forwardToLiq = await this.rawTxService.Account.send(
-      address,
-      Config.yieldMachine.liquidity.address,
-      +token.id,
-      new BigNumber(amount),
-      new BigNumber(Config.payIn.forward.accountToAccountFee),
-    );
+    const forwardToLiq =
+      asset.type === AssetType.TOKEN
+        ? await this.rawTxService.Account.send(
+            address,
+            Config.yieldMachine.liquidity.address,
+            +token.id,
+            new BigNumber(amount),
+            new BigNumber(Config.payIn.forward.accountToAccountFee),
+          )
+        : await this.rawTxService.Utxo.sendAsAccount(
+            address,
+            Config.yieldMachine.liquidity.address,
+            +token.id,
+            new BigNumber(amount),
+          );
     return this.send(forwardToLiq);
   }
 
-  private async sendFeeUtxosToDepositIfNeeded(address: string): Promise<void> {
+  private async sendFeeUtxosToDepositIfNeeded(address: string, asset: Asset): Promise<void> {
+    if (asset.type === AssetType.COIN) return;
     const forwardAccount = this.wallet.get(0);
     const accountToAccountUtxo = new BigNumber(Config.payIn.forward.accountToAccountFee);
     const hasUtxo = await this.utxoProvider.addressHasUtxoExactAmount(address, accountToAccountUtxo);

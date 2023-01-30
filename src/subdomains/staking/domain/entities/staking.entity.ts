@@ -25,7 +25,10 @@ export interface StakingReference {
 
 export const StakingTypes: { [key in StakingStrategy]: AssetQuery[] } = {
   [StakingStrategy.MASTERNODE]: [{ name: 'DFI', blockchain: Blockchain.DEFICHAIN, type: AssetType.COIN }],
-  [StakingStrategy.LIQUIDITY_MINING]: [{ name: 'DUSD', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN }],
+  [StakingStrategy.LIQUIDITY_MINING]: [
+    { name: 'DUSD', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN },
+    { name: 'DFI', blockchain: Blockchain.DEFICHAIN, type: AssetType.COIN },
+  ],
 };
 
 @Entity()
