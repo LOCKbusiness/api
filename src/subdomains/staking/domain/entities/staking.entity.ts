@@ -1,6 +1,6 @@
 import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { Withdrawal } from './withdrawal.entity';
-import { Column, Entity, Index, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, Index, OneToMany } from 'typeorm';
 import { IEntity } from 'src/shared/models/entity';
 import { StakingStatus, StakingStrategy, WithdrawalStatus } from '../enums';
 import { BadRequestException } from '@nestjs/common';
@@ -69,22 +69,24 @@ export class Staking extends IEntity {
 
   static create(
     userId: number,
-    { asset, strategy }: StakingType,
+    strategy: StakingStrategy,
+    blockchain: Blockchain,
     depositAddress: BlockchainAddress,
     withdrawalAddress: BlockchainAddress,
+    assetList: Asset[],
   ): Staking {
     const staking = new Staking();
 
     staking.userId = userId;
     staking.status = StakingStatus.CREATED;
     staking.strategy = strategy;
-    staking.blockchain = asset.blockchain;
+    staking.blockchain = blockchain;
 
-    staking.balances = [StakingBalance.create(asset)];
+    assetList.map((a) => (staking.balances = [StakingBalance.create(a)]));
 
     staking.depositAddress = depositAddress;
     staking.withdrawalAddress = withdrawalAddress;
-    staking.rewardRoutes = [this.createDefaultRewardRoute(staking, asset, depositAddress)];
+    staking.rewardRoutes = [this.createDefaultRewardRoute(staking, assetList[0], depositAddress)];
 
     return staking;
   }

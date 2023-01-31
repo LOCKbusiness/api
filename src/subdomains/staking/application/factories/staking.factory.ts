@@ -3,7 +3,7 @@ import { AssetService } from 'src/shared/models/asset/asset.service';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Reward } from '../../domain/entities/reward.entity';
 import { ReservableBlockchainAddress } from '../../../address-pool/domain/entities/reservable-blockchain-address.entity';
-import { Staking, StakingType } from '../../domain/entities/staking.entity';
+import { Staking } from '../../domain/entities/staking.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { CreateDepositDto } from '../dto/input/create-deposit.dto';
 import { CreateRewardDto } from '../dto/input/create-reward.dto';
@@ -14,6 +14,8 @@ import { RewardRoute } from '../../domain/entities/reward-route.entity';
 import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { RewardRouteRepository } from '../repositories/reward-route.repository';
 import { StakingStrategyValidator } from '../validators/staking-strategy.validator';
+import { StakingStrategy } from '../../domain/enums';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
 
 @Injectable()
 export class StakingFactory {
@@ -21,11 +23,13 @@ export class StakingFactory {
 
   async createStaking(
     userId: number,
-    type: StakingType,
+    strategy: StakingStrategy,
+    blockchain: Blockchain,
     depositAddress: ReservableBlockchainAddress,
     withdrawalAddress: BlockchainAddress,
+    assetList: Asset[],
   ): Promise<Staking> {
-    return Staking.create(userId, type, depositAddress.address, withdrawalAddress);
+    return Staking.create(userId, strategy, blockchain, depositAddress.address, withdrawalAddress, assetList);
   }
 
   async createDeposit(staking: Staking, dto: CreateDepositDto): Promise<Deposit> {
