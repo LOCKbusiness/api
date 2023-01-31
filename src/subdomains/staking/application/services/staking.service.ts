@@ -63,7 +63,7 @@ export class StakingService {
     if (existingStaking) {
       const amounts = await this.getUnconfirmedDepositsAndWithdrawalsAmounts(existingStaking.id);
 
-      return StakingOutputDtoMapper.entityToDto(existingStaking, amounts.withdrawals, amounts.deposits);
+      return StakingOutputDtoMapper.entityToDto(existingStaking, amounts.deposits, amounts.withdrawals);
     }
 
     return StakingOutputDtoMapper.entityToDto(await this.createStaking(userId, walletId, { asset, strategy }), [], []);
