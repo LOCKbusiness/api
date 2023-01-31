@@ -62,12 +62,13 @@ export class Deposit extends IEntity {
     return this;
   }
 
-  updatePreCreatedDeposit(payInTxId: string, amount: number) {
+  updatePreCreatedDeposit(payInTxId: string, amount: number, asset: Asset) {
     if (this.payInTxId !== payInTxId) {
       throw new BadRequestException('Provided wrong payInTxId for deposit, payInTxId does not match.');
     }
 
     this.amount = amount;
+    this.asset = asset;
     this.status = DepositStatus.PENDING;
   }
 
