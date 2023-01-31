@@ -7,7 +7,6 @@ import { StakingService } from '../../application/services/staking.service';
 import { GetJwt } from 'src/shared/auth/get-jwt.decorator';
 import { JwtPayload } from 'src/shared/auth/jwt-payload.interface';
 import { StakingOutputDto } from '../../application/dto/output/staking.output.dto';
-import { UpdateStakingDto } from '../../application/dto/input/update-staking.dto';
 import { GetOrCreateStakingQuery } from '../../application/dto/input/get-staking.query';
 import { BalanceOutputDto } from '../../application/dto/output/balance.output.dto';
 import { BalanceQuery } from '../../application/dto/input/balance-query.dto';
@@ -47,7 +46,7 @@ export class StakingController {
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
-  async updateBalance(@Param('id') stakingId: string, @Body() dto: UpdateStakingDto): Promise<void> {
-    await this.stakingService.updateStakingBalance(+stakingId, +dto.assetId);
+  async updateBalance(@Param('id') stakingId: string, @Query('assetId') assetId: string): Promise<void> {
+    await this.stakingService.updateStakingBalance(+stakingId, +assetId);
   }
 }
