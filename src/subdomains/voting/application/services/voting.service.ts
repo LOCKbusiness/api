@@ -50,7 +50,7 @@ export class VotingService implements OnModuleInit {
     if (Config.processDisabled(Process.ANALYTICS)) return;
 
     try {
-      const { cfpList } = await this.getCfpInfos();
+      const cfpList = await this.getCfpList();
       const distributions = await this.getVoteDistributions(cfpList);
 
       this.currentResults = distributions.map((d) => ({
@@ -64,7 +64,7 @@ export class VotingService implements OnModuleInit {
   }
 
   async getCurrentVotes(): Promise<CfpVotesDto[]> {
-    const { cfpList } = await this.getCfpInfos();
+    const cfpList = await this.getCfpList();
     const userWithVotes = await this.userService.getAllUserWithVotes();
     const stakings = await this.repos.staking.getByStrategy(StakingStrategy.MASTERNODE);
 
@@ -89,9 +89,9 @@ export class VotingService implements OnModuleInit {
 
   // --- MASTERNODE VOTES --- //
   async getMasternodeVotes(): Promise<CfpMnVoteDto[]> {
-    const { startDate, cfpList } = await this.getCfpInfos();
+    const cfpList = await this.getCfpList();
     const distributions = await this.getVoteDistributions(cfpList);
-    const masternodes = await this.masternodeService.getAllVotersAt(startDate);
+    const masternodes = await this.masternodeService.getAllVoters();
 
     // get masternode distribution and signing messages
     const mnCount = masternodes.length;
@@ -225,12 +225,9 @@ export class VotingService implements OnModuleInit {
   }
 
   // --- CFP HELPERS --- //
-  private async getCfpInfos(): Promise<{ startDate: Date; cfpList: CfpInfo[] }> {
+  private async getCfpList(): Promise<CfpInfo[]> {
     const cfpList = await this.getCurrentCfpList();
-    return {
-      startDate: new Date(cfpList[0].startDate),
-      cfpList: cfpList.map((cfp) => ({ id: cfp.number, name: cfp.title.split(':')[0] })),
-    };
+    return cfpList.map((cfp) => ({ id: cfp.number, name: cfp.title.split(':')[0] }));
   }
 
   private async getCurrentCfpList(): Promise<CfpDto[]> {

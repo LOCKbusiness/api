@@ -147,9 +147,9 @@ export class MasternodeService {
     return this.repository.find({ where: { creationHash: Not(IsNull()), resignHash: IsNull() } });
   }
 
-  async getAllVotersAt(date: Date): Promise<Masternode[]> {
+  async getAllVoters(): Promise<Masternode[]> {
     return this.repository.find({
-      where: { firstBlockFound: LessThan(date), resignDate: IsNull() },
+      where: { firstBlockFound: Not(IsNull()), resignDate: IsNull() },
     });
   }
 
