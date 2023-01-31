@@ -27,6 +27,13 @@ export class PayInService {
     return this.payInRepository.findBy({ status: PayInStatus.CONFIRMED });
   }
 
+  async getPayInAsset(address: string, txId: string): Promise<Asset> {
+    const payIn = await this.payInRepository.findOneBy({ address: { address: address }, txId });
+    if (!payIn) throw new Error(`Pay in ${txId} on ${address} not found`);
+
+    return payIn.asset;
+  }
+
   async acknowledgePayIn(payIn: PayIn, purpose: PayInPurpose): Promise<void> {
     const _payIn = await this.payInRepository.findOneBy({ id: payIn.id });
 

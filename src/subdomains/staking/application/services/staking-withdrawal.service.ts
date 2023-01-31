@@ -108,7 +108,7 @@ export class StakingWithdrawalService {
 
     const amounts = await this.stakingService.getUnconfirmedDepositsAndWithdrawalsAmounts(stakingId);
 
-    return StakingOutputDtoMapper.entityToDto(staking, amounts.deposits, amounts.withdrawals);
+    return StakingOutputDtoMapper.entityToDto(staking, amounts.deposits, amounts.withdrawals, withdrawal.asset);
   }
 
   async changeAmount(

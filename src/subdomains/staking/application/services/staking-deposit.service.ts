@@ -78,7 +78,7 @@ export class StakingDepositService {
 
     const amounts = await this.stakingService.getUnconfirmedDepositsAndWithdrawalsAmounts(stakingId);
 
-    return StakingOutputDtoMapper.entityToDto(staking, amounts.deposits, amounts.withdrawals);
+    return StakingOutputDtoMapper.entityToDto(staking, amounts.deposits, amounts.withdrawals, deposit.asset);
   }
 
   //*** JOBS ***//
@@ -144,10 +144,11 @@ export class StakingDepositService {
 
     for (const deposit of deposits) {
       try {
+        const payInAsset = await this.payInService.getPayInAsset(staking.depositAddress.address, deposit.payInTxId);
         const txId = await this.deFiChainStakingService.forwardDeposit(
           staking.depositAddress.address,
           deposit.amount,
-          deposit.asset,
+          payInAsset,
           staking.strategy,
         );
         deposit.confirmDeposit(txId);

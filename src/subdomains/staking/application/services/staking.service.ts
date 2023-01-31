@@ -24,6 +24,7 @@ import { StakingBalance } from '../../domain/entities/staking-balance.entity';
 import { AssetBalance } from '../dto/output/asset-balance';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
+import { Asset } from 'src/shared/models/asset/asset.entity';
 
 export interface StakingBalances {
   currentBalance: number;
@@ -55,18 +56,27 @@ export class StakingService {
 
     const { asset: assetName, blockchain, strategy } = query;
 
-    const assetSpec = StakingStrategyValidator.validate(strategy, assetName, blockchain);
-    const asset = await this.assetService.getAssetByQuery(assetSpec);
-    if (!asset) throw new NotFoundException('Asset not found');
+    let asset: Asset;
+    if (assetName) {
+      const assetSpec = StakingStrategyValidator.validate(strategy, assetName, blockchain);
+      asset = await this.assetService.getAssetByQuery(assetSpec);
+    }
 
     const existingStaking = await this.repository.findOneBy({ userId, strategy });
     if (existingStaking) {
       const amounts = await this.getUnconfirmedDepositsAndWithdrawalsAmounts(existingStaking.id);
 
-      return StakingOutputDtoMapper.entityToDto(existingStaking, amounts.deposits, amounts.withdrawals);
+      return StakingOutputDtoMapper.entityToDto(existingStaking, amounts.deposits, amounts.withdrawals, asset);
     }
 
-    return StakingOutputDtoMapper.entityToDto(await this.createStaking(userId, walletId, { asset, strategy }), [], []);
+    if (!asset) throw new NotFoundException('Asset not found');
+
+    return StakingOutputDtoMapper.entityToDto(
+      await this.createStaking(userId, walletId, { asset, strategy }),
+      [],
+      [],
+      asset,
+    );
   }
 
   async getDepositAddressBalances(address: string): Promise<BalanceOutputDto[]> {

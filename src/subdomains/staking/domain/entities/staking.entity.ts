@@ -181,6 +181,10 @@ export class Staking extends IEntity {
     return this.balances[0];
   }
 
+  getBalanceFor(asset?: Asset): StakingBalance | undefined {
+    return this.balances.find((b) => b.asset.id === asset?.id);
+  }
+
   //*** HELPER STATIC METHODS ***//
 
   static calculateFiatReferenceAmount(fiatName: Fiat, assetName: string, assetAmount: number, prices: Price[]): number {
@@ -247,9 +251,5 @@ export class Staking extends IEntity {
 
   private resetExistingRoutes(): void {
     this.rewardRoutes.forEach((route) => (route.rewardPercent = 0));
-  }
-
-  private getBalanceFor(asset: Asset): StakingBalance | undefined {
-    return this.balances.find((b) => b.asset.id === asset.id);
   }
 }
