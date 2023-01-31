@@ -98,12 +98,12 @@ export class DepositRepository extends Repository<Deposit> {
       .then((r) => r.amount ?? 0);
   }
 
-  async getTotalConfirmedAmountSince({ asset, strategy }: StakingType, date: Date): Promise<number> {
+  async getTotalConfirmedAmountSince({ strategy }: StakingType, date: Date): Promise<number> {
+    // TODO: this is wrong for multi-asset staking
     return this.createQueryBuilder('deposit')
       .leftJoin('deposit.staking', 'staking')
       .select('SUM(amount)', 'amount')
-      .where('staking.assetId = :id', { id: asset.id })
-      .andWhere('staking.strategy = :strategy', { strategy })
+      .where('staking.strategy = :strategy', { strategy })
       .andWhere('deposit.status = :status', { status: DepositStatus.CONFIRMED })
       .andWhere('deposit.created >= :date', { date })
       .getRawOne<{ amount: number }>()

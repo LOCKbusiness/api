@@ -30,8 +30,8 @@ export class StakingFactory {
 
   async createDeposit(staking: Staking, dto: CreateDepositDto): Promise<Deposit> {
     const assetSpec = StakingStrategyValidator.validate(staking.strategy, dto.asset, staking.blockchain);
-    const assetObject = await this.assetService.getAssetByQuery(assetSpec);
-    return Deposit.create(staking, dto.amount, dto.txId, assetObject);
+    const asset = await this.assetService.getAssetByQuery(assetSpec);
+    return Deposit.create(staking, dto.amount, dto.txId, asset);
   }
 
   async createWithdrawalDraft(staking: Staking, dto: CreateWithdrawalDraftDto): Promise<Withdrawal> {
