@@ -47,7 +47,7 @@ export class Staking extends IEntity {
   @Column({ nullable: false, default: StakingStrategy.MASTERNODE })
   strategy: StakingStrategy;
 
-  @ManyToOne(() => StakingBalance, { eager: true, cascade: true })
+  @OneToMany(() => StakingBalance, (balance) => balance.staking, { eager: true, cascade: true })
   balances: StakingBalance[];
 
   @Column(() => BlockchainAddress)
@@ -78,6 +78,7 @@ export class Staking extends IEntity {
     staking.userId = userId;
     staking.status = StakingStatus.CREATED;
     staking.strategy = strategy;
+    staking.blockchain = asset.blockchain;
 
     staking.balances = [StakingBalance.create(asset)];
 

@@ -147,17 +147,19 @@ export class StakingService {
     try {
       const stakingIds = await this.repository
         .createQueryBuilder('staking')
+        .innerJoin('staking.balances', 'balance')
         .select('staking.id', 'id')
-        .where('staking.stageOneBalance != staking.balance')
-        .orWhere('staking.stageTwoBalance != staking.balance')
+        .where('balance.stageOneBalance != balance.balance')
+        .orWhere('balance.stageTwoBalance != balance.balance')
         .getRawMany<{ id: number }>();
 
       for (const { id } of stakingIds) {
         try {
           const staking = await this.repository.findOneBy({ id });
 
-          for (const stakingBalance of staking.balances) {
-            await this.updateStakingBalance(id, stakingBalance.asset.id);
+          for (const balance of staking.balances) {
+            if (balance.balance !== balance.stageOneBalance || balance.balance !== balance.stageTwoBalance)
+              await this.updateStakingBalance(id, balance.asset.id);
           }
         } catch (e) {
           console.error(`Failed to update balance of staking ${id}:`, e);
