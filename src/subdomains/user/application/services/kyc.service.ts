@@ -50,16 +50,16 @@ export class KycService {
   }
 
   private async getSignMessage(address: string): Promise<{ message: string }> {
-    return await this.callApi<{ message: string }>(`auth/signMessage?address=${address}`);
+    return this.callApi<{ message: string }>(`auth/signMessage?address=${address}`);
   }
 
   private async getUser(accessToken: string): Promise<User> {
-    return await this.callApi<User>(`user`, 'GET', undefined, accessToken);
+    return this.callApi<User>(`user`, 'GET', undefined, accessToken);
   }
 
   private async getSignature(privKey: Buffer, address: string): Promise<string> {
     const { message } = await this.getSignMessage(address);
-    return await this.cryptoService.signMessage(privKey, message);
+    return this.cryptoService.signMessage(privKey, message);
   }
 
   private async callApi<T>(url: string, method: Method = 'GET', data?: any, auth?: string): Promise<T> {
@@ -69,7 +69,7 @@ export class KycService {
   }
 
   private async request<T>(url: string, method: Method, data?: any, accessToken?: string): Promise<T> {
-    return await this.http.request<T>({
+    return this.http.request<T>({
       url: `${Config.kyc.apiUrl}/${url}`,
       method: method,
       data: data,

@@ -3,7 +3,7 @@ import { BadRequestException, Injectable, NotFoundException, UnauthorizedExcepti
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
-import { WithdrawalStatus } from '../../domain/enums';
+import { StakingStrategy, WithdrawalStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingDeFiChainService } from '../../infrastructure/staking-defichain.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
@@ -13,7 +13,6 @@ import { WithdrawalDraftOutputDto } from '../dto/output/withdrawal-draft.output.
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
 import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
-import { StakingRepository } from '../repositories/staking.repository';
 import { WithdrawalDraftOutputDtoMapper } from '../mappers/withdrawal-draft-output-dto.mapper';
 import { WithdrawalRepository } from '../repositories/withdrawal.repository';
 import { WithdrawalOutputDto } from '../dto/output/withdrawal.output.dto';
@@ -29,7 +28,6 @@ export class StakingWithdrawalService {
   private readonly lock = new Lock(1800);
 
   constructor(
-    private readonly stakingRepo: StakingRepository,
     private readonly withdrawalRepo: WithdrawalRepository,
     private readonly authorize: StakingAuthorizeService,
     private readonly kycCheck: StakingKycCheckService,
@@ -51,9 +49,11 @@ export class StakingWithdrawalService {
 
     const staking = await this.authorize.authorize(userId, stakingId);
 
-    const withdrawal = this.factory.createWithdrawalDraft(staking, dto);
+    dto.asset ??= staking.strategy === StakingStrategy.LIQUIDITY_MINING ? 'DUSD' : 'DFI';
 
-    const pendingWithdrawalsAmount = await this.withdrawalRepo.getInProgressAmount(stakingId);
+    const withdrawal = await this.factory.createWithdrawalDraft(staking, dto);
+
+    const pendingWithdrawalsAmount = await this.withdrawalRepo.getInProgressAmount(stakingId, withdrawal.asset.id);
     staking.checkWithdrawalDraftOrThrow(withdrawal, pendingWithdrawalsAmount);
 
     try {
@@ -100,7 +100,7 @@ export class StakingWithdrawalService {
       throw e;
     }
 
-    const pendingWithdrawalsAmount = await this.withdrawalRepo.getInProgressAmount(stakingId);
+    const pendingWithdrawalsAmount = await this.withdrawalRepo.getInProgressAmount(stakingId, withdrawal.asset.id);
     staking.checkBalanceForWithdrawalOrThrow(withdrawal, pendingWithdrawalsAmount);
     withdrawal.signWithdrawal(dto.signature);
 
@@ -108,7 +108,7 @@ export class StakingWithdrawalService {
 
     const amounts = await this.stakingService.getUnconfirmedDepositsAndWithdrawalsAmounts(stakingId);
 
-    return StakingOutputDtoMapper.entityToDto(staking, amounts.withdrawals, amounts.deposits);
+    return StakingOutputDtoMapper.entityToDto(staking, amounts.deposits, amounts.withdrawals, withdrawal.asset);
   }
 
   async changeAmount(
@@ -125,7 +125,7 @@ export class StakingWithdrawalService {
 
     withdrawal.changeAmount(dto.amount, staking);
 
-    const pendingWithdrawalsAmount = await this.withdrawalRepo.getInProgressAmount(stakingId);
+    const pendingWithdrawalsAmount = await this.withdrawalRepo.getInProgressAmount(stakingId, withdrawal.asset.id);
     staking.checkBalanceForWithdrawalOrThrow(withdrawal, pendingWithdrawalsAmount);
 
     await this.withdrawalRepo.save(withdrawal);
@@ -245,7 +245,7 @@ export class StakingWithdrawalService {
            * potential case of updateStakingBalance failure is tolerated
            */
           await this.withdrawalRepo.save(withdrawal);
-          await this.stakingService.updateStakingBalance(stakingId);
+          await this.stakingService.updateStakingBalance(stakingId, withdrawal.asset);
         }
       } catch (e) {
         console.error(`Error trying to confirm withdrawal. ID: ${withdrawal.id}`, e);

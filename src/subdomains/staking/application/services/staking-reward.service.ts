@@ -71,7 +71,7 @@ export class StakingRewardService {
 
     const amounts = await this.stakingService.getUnconfirmedDepositsAndWithdrawalsAmounts(stakingId);
 
-    return StakingOutputDtoMapper.entityToDto(updatedStaking, amounts.withdrawals, amounts.deposits);
+    return StakingOutputDtoMapper.entityToDto(updatedStaking, amounts.deposits, amounts.withdrawals);
   }
 
   async getRewardRoutes(userId: number, stakingId: number): Promise<RewardRouteOutputDto[]> {

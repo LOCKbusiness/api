@@ -3,11 +3,12 @@ import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { IEntity } from 'src/shared/models/entity';
 import { Price } from 'src/shared/models/price';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { DepositStatus } from '../enums';
 import { Staking } from './staking.entity';
 
 @Entity()
+@Index((d: Deposit) => [d.staking, d.status, d.created])
 export class Deposit extends IEntity {
   @ManyToOne(() => Staking, { eager: true, nullable: false })
   staking: Staking;
@@ -38,14 +39,14 @@ export class Deposit extends IEntity {
 
   //*** FACTORY METHODS ***//
 
-  static create(staking: Staking, amount: number, payInTxId: string): Deposit {
+  static create(staking: Staking, amount: number, payInTxId: string, asset: Asset): Deposit {
     if (!payInTxId) throw new BadRequestException('TxID must be provided when creating a staking deposit');
 
     const deposit = new Deposit();
 
     deposit.staking = staking;
     deposit.status = DepositStatus.OPEN;
-    deposit.asset = staking.asset;
+    deposit.asset = asset;
     deposit.amount = amount;
     deposit.payInTxId = payInTxId;
 
@@ -61,12 +62,13 @@ export class Deposit extends IEntity {
     return this;
   }
 
-  updatePreCreatedDeposit(payInTxId: string, amount: number) {
+  updatePreCreatedDeposit(payInTxId: string, amount: number, asset: Asset) {
     if (this.payInTxId !== payInTxId) {
       throw new BadRequestException('Provided wrong payInTxId for deposit, payInTxId does not match.');
     }
 
     this.amount = amount;
+    this.asset = asset;
     this.status = DepositStatus.PENDING;
   }
 

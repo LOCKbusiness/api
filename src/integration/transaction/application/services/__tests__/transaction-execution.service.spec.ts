@@ -190,6 +190,7 @@ describe('TransactionExecutionService', () => {
     expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
     expect(transactionService.sign).toBeCalledWith(rawTxWithdrawal, 'signed-tx-hex-as-message', {
       id: withdrawal.withdrawalId,
+      assetType: AssetType.COIN,
       type: TransactionType.WITHDRAWAL,
     });
     expect(whaleClient.sendRaw).toBeCalledWith('signed-raw-tx-hex');
@@ -212,6 +213,7 @@ describe('TransactionExecutionService', () => {
     expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
     expect(transactionService.sign).toBeCalledWith(rawTxWithdrawal, 'signed-tx-hex-as-message', {
       id: withdrawal.withdrawalId,
+      assetType: AssetType.COIN,
       type: TransactionType.WITHDRAWAL,
     });
     expect(whaleClient.sendRaw).toBeCalledWith('signed-raw-tx-hex');
@@ -316,6 +318,7 @@ describe('TransactionExecutionService', () => {
     expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
     expect(transactionService.sign).toBeCalledWith(rawTxWithdrawal, 'signed-tx-hex-as-message', {
       id: withdrawal.withdrawalId,
+      assetType: AssetType.COIN,
       type: TransactionType.WITHDRAWAL,
     });
     expect(whaleClient.sendRaw).toBeCalledTimes(0);

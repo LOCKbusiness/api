@@ -30,6 +30,10 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
     return this.getByStatuses([WithdrawalStatus.DRAFT], stakingId);
   }
 
+  async getInProgress(stakingId: number): Promise<Withdrawal[]> {
+    return this.getByStatuses([WithdrawalStatus.PENDING, WithdrawalStatus.PAYING_OUT], stakingId);
+  }
+
   async getByStatuses(statuses: WithdrawalStatus[], stakingId: number): Promise<Withdrawal[]> {
     /**
      * @note
@@ -70,28 +74,29 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
     );
   }
 
-  async getConfirmedAmount(stakingId: number): Promise<number> {
+  async getConfirmedAmount(stakingId: number, assetId: number): Promise<number> {
     return this.createQueryBuilder('withdrawal')
       .select('SUM(amount)', 'amount')
       .where('stakingId = :stakingId', { stakingId })
+      .andWhere('assetId = :assetId', { assetId })
       .andWhere('status = :status', { status: WithdrawalStatus.CONFIRMED })
       .getRawOne<{ amount: number }>()
       .then((r) => r.amount ?? 0);
   }
 
-  async getTotalConfirmedAmountSince({ asset, strategy }: StakingType, date: Date): Promise<number> {
+  async getTotalConfirmedAmountSince({ strategy }: StakingType, date: Date): Promise<number> {
+    // TODO: this is wrong for multi-asset staking
     return this.createQueryBuilder('withdrawal')
       .leftJoin('withdrawal.staking', 'staking')
       .select('SUM(amount)', 'amount')
-      .where('staking.assetId = :id', { id: asset.id })
-      .andWhere('staking.strategy = :strategy', { strategy })
+      .where('staking.strategy = :strategy', { strategy })
       .andWhere('withdrawal.status = :status', { status: WithdrawalStatus.CONFIRMED })
       .andWhere('withdrawal.created >= :date', { date })
       .getRawOne<{ amount: number }>()
       .then((b) => b.amount ?? 0);
   }
 
-  async getInProgressAmount(stakingId: number): Promise<number> {
+  async getInProgressAmount(stakingId: number, assetId: number): Promise<number> {
     return this.createQueryBuilder('withdrawal')
       .select('SUM(amount)', 'amount')
       .where('stakingId = :stakingId', { stakingId })
@@ -99,6 +104,7 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
         pending: WithdrawalStatus.PENDING,
         payingOut: WithdrawalStatus.PAYING_OUT,
       })
+      .andWhere('withdrawal.assetId = :id', { id: assetId })
       .getRawOne<{ amount: number }>()
       .then((r) => r.amount ?? 0);
   }

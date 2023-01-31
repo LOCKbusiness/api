@@ -46,16 +46,12 @@ export class RewardRepository extends Repository<Reward> {
       .then((r) => r.amount ?? 0);
   }
 
-  async getAllRewardsAmountForCondition(
-    { asset, strategy }: StakingType,
-    dateFrom: Date,
-    dateTo: Date,
-  ): Promise<number> {
+  async getAllRewardsAmountForCondition({ strategy }: StakingType, dateFrom: Date, dateTo: Date): Promise<number> {
+    // TODO: this is wrong for multi-asset staking
     return this.createQueryBuilder('reward')
       .leftJoin('reward.staking', 'staking')
       .select('SUM(outputReferenceAmount)', 'amount')
-      .where('staking.assetId = :id', { id: asset.id })
-      .andWhere('reward.status = :status', { status: RewardStatus.CONFIRMED })
+      .where('reward.status = :status', { status: RewardStatus.CONFIRMED })
       .andWhere('staking.strategy = :strategy', { strategy })
       .andWhere('reward.outputDate BETWEEN :dateFrom AND :dateTo', { dateFrom, dateTo })
       .getRawOne<{ amount: number }>()

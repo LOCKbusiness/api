@@ -11,7 +11,7 @@ export class RefRepository extends Repository<Ref> {
   async addOrUpdate(ip: string, ref?: string, origin?: string): Promise<Ref> {
     const entity = (await this.findOneBy({ ip })) ?? this.create({ ip, ref, origin });
 
-    return await this.save({ ...entity, ref, origin });
+    return this.save({ ...entity, ref, origin });
   }
 
   async getAndRemove(ip: string): Promise<Ref> {

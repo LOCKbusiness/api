@@ -63,7 +63,7 @@ export class StakingAnalyticsService implements OnModuleInit {
         let averageRewards = await this.stakingService.getAverageRewards(type, dateFrom, dateTo);
 
         // convert to staking asset (rewards are in DFI)
-        if (type.asset.id !== dfi.id) {
+        if (type.asset.name !== dfi.name) {
           const { price } = await this.priceProvider.getAverageExchangePrice(dfi.id, type.asset.id, dateFrom, dateTo);
 
           averageRewards = averageRewards / price;
@@ -85,9 +85,9 @@ export class StakingAnalyticsService implements OnModuleInit {
 
   private async getOperatorCount(type: StakingType): Promise<number | undefined> {
     if (type.asset.name === 'DFI') {
-      return await this.masternodeService.getActiveCount();
+      return this.masternodeService.getActiveCount();
     } else if (type.asset.name === 'DUSD') {
-      return await this.vaultService.getActiveCount();
+      return this.vaultService.getActiveCount();
     }
 
     return undefined;

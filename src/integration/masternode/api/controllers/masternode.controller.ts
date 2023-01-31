@@ -14,7 +14,7 @@ export class MasternodeController {
   @Get()
   @ApiOkResponse({ type: String, isArray: true })
   async getMasternodes(): Promise<string[]> {
-    return await this.masternodeService.getAllOwner();
+    return this.masternodeService.getAllOwner();
   }
 
   // --- ADMIN --- //

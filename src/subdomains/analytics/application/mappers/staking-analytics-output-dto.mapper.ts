@@ -11,6 +11,7 @@ export class StakingAnalyticsOutputDtoMapper {
     dto.operatorCount = analytics.operatorCount;
     dto.tvl = analytics.tvl;
     dto.asset = analytics.asset.name;
+    dto.strategy = analytics.strategy;
 
     return dto;
   }

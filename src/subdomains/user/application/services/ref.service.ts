@@ -31,6 +31,6 @@ export class RefService {
   }
 
   async get(ip: string): Promise<Ref | undefined> {
-    return await this.refRepo.getAndRemove(ip);
+    return this.refRepo.getAndRemove(ip);
   }
 }

@@ -22,7 +22,7 @@ export class HttpService {
   }
 
   public async getRaw<T>(url: string, config?: HttpRequestConfig): Promise<AxiosResponse<T>> {
-    return await Util.retry(() => firstValueFrom(this.http.get<T>(url, config)), config?.tryCount ?? 1);
+    return Util.retry(() => firstValueFrom(this.http.get<T>(url, config)), config?.tryCount ?? 1);
   }
 
   public async put<T>(url: string, data: any, config?: HttpRequestConfig): Promise<T> {

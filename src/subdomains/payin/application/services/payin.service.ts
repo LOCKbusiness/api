@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Config, Process } from 'src/config/config';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { Lock } from 'src/shared/lock';
+import { Asset } from 'src/shared/models/asset/asset.entity';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { PayIn, PayInPurpose, PayInStatus } from '../../domain/entities/payin.entity';
 import { PayInDeFiChainService } from '../../infrastructure/payin-crypto-defichain.service';
@@ -25,6 +26,13 @@ export class PayInService {
 
   async getNewPayInTransactions(): Promise<PayIn[]> {
     return this.payInRepository.findBy({ status: PayInStatus.CONFIRMED });
+  }
+
+  async getPayInAsset(address: string, txId: string): Promise<Asset> {
+    const payIn = await this.payInRepository.findOneBy({ address: { address: address }, txId });
+    if (!payIn) throw new Error(`Pay in ${txId} on ${address} not found`);
+
+    return payIn.asset;
   }
 
   async acknowledgePayIn(payIn: PayIn, purpose: PayInPurpose): Promise<void> {

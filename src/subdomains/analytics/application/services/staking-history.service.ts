@@ -63,8 +63,8 @@ export class StakingHistoryService {
     dateTo?: Date,
   ): Promise<Deposit[]> {
     return userId
-      ? await this.repos.deposit.getByUserId(userId, dateFrom, dateTo)
-      : await this.repos.deposit.getByDepositAddress(depositAddress, dateFrom, dateTo);
+      ? this.repos.deposit.getByUserId(userId, dateFrom, dateTo)
+      : this.repos.deposit.getByDepositAddress(depositAddress, dateFrom, dateTo);
   }
 
   private async getWithdrawalsByUserOrAddress(
@@ -74,8 +74,8 @@ export class StakingHistoryService {
     dateTo?: Date,
   ): Promise<Withdrawal[]> {
     return userId
-      ? await this.repos.withdrawal.getByUserId(userId, dateFrom, dateTo)
-      : await this.repos.withdrawal.getByDepositAddress(depositAddress, dateFrom, dateTo);
+      ? this.repos.withdrawal.getByUserId(userId, dateFrom, dateTo)
+      : this.repos.withdrawal.getByDepositAddress(depositAddress, dateFrom, dateTo);
   }
 
   private async getRewardsByUserOrAddress(
@@ -85,8 +85,8 @@ export class StakingHistoryService {
     dateTo?: Date,
   ): Promise<Reward[]> {
     return userId
-      ? await this.repos.reward.getByUserId(userId, dateFrom, dateTo)
-      : await this.repos.reward.getByDepositAddress(depositAddress, dateFrom, dateTo);
+      ? this.repos.reward.getByUserId(userId, dateFrom, dateTo)
+      : this.repos.reward.getByDepositAddress(depositAddress, dateFrom, dateTo);
   }
 
   private getHistoryCT(deposits: Deposit[], withdrawals: Withdrawal[], rewards: Reward[]): CoinTrackingCsvHistoryDto[] {

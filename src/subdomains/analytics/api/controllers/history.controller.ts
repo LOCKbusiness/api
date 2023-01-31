@@ -17,7 +17,7 @@ export class HistoryController {
     @Query() query: HistoryQuery,
     @Response({ passthrough: true }) res,
   ): Promise<CompactHistoryDto[] | StreamableFile> {
-    return await this.getHistoryData(query, ExportType.COMPACT, res);
+    return this.getHistoryData(query, ExportType.COMPACT, res);
   }
 
   @Get('CoinTracking')
@@ -26,7 +26,7 @@ export class HistoryController {
     @Query() query: HistoryQuery,
     @Response({ passthrough: true }) res,
   ): Promise<CoinTrackingCsvHistoryDto[] | StreamableFile> {
-    return await this.getHistoryData(query, ExportType.COIN_TRACKING, res);
+    return this.getHistoryData(query, ExportType.COIN_TRACKING, res);
   }
 
   @Get('ChainReport')
@@ -35,7 +35,7 @@ export class HistoryController {
     @Query() query: HistoryQuery,
     @Response({ passthrough: true }) res,
   ): Promise<ChainReportCsvHistoryDto[] | StreamableFile> {
-    return await this.getHistoryData(query, ExportType.CHAIN_REPORT, res);
+    return this.getHistoryData(query, ExportType.CHAIN_REPORT, res);
   }
 
   // --- HELPER METHODS --- //
@@ -59,7 +59,7 @@ export class HistoryController {
         return csvFile;
 
       case ExportDataType.JSON:
-        return await this.historyService.getHistory(query, exportType);
+        return this.historyService.getHistory(query, exportType);
     }
   }
 }

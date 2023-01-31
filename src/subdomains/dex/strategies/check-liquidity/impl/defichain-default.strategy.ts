@@ -49,7 +49,7 @@ export class DeFiChainDefaultStrategy extends CheckLiquidityStrategy {
 
       if (!purchaseStrategy) return [];
 
-      return purchaseStrategy.getPrioritySwapAssets();
+      return await purchaseStrategy.getPrioritySwapAssets();
     } catch (e) {
       const { name, type, blockchain } = targetAsset;
       console.warn(
