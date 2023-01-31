@@ -134,8 +134,12 @@ export class StakingService {
     await this.repository.saveWithLock(stakingId, (staking) => staking.setStakingFee(feePercent));
   }
 
-  async updateStakingBalance(stakingId: number, assetId: number): Promise<Staking> {
+  async updateStakingBalanceFor(stakingId: number, assetId: number): Promise<Staking> {
     const asset = await this.assetService.getAssetById(assetId);
+    return this.updateStakingBalance(stakingId, asset);
+  }
+
+  async updateStakingBalance(stakingId: number, asset: Asset): Promise<Staking> {
     return this.repository.saveWithLock(
       stakingId,
       async (staking, manager) => staking.updateBalance(await this.getBalances(manager, staking.id, asset.id), asset),
@@ -168,7 +172,7 @@ export class StakingService {
 
           for (const balance of staking.balances) {
             if (balance.balance !== balance.stageOneBalance || balance.balance !== balance.stageTwoBalance)
-              await this.updateStakingBalance(id, balance.asset.id);
+              await this.updateStakingBalance(id, balance.asset);
           }
         } catch (e) {
           console.error(`Failed to update balance of staking ${id}:`, e);

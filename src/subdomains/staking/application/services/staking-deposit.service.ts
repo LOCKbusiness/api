@@ -158,7 +158,7 @@ export class StakingDepositService {
          * potential case of updateStakingBalance failure is tolerated
          */
         await this.depositRepository.save(deposit);
-        await this.stakingService.updateStakingBalance(stakingId, deposit.asset.id);
+        await this.stakingService.updateStakingBalance(stakingId, deposit.asset);
 
         if (staking.isNotActive) await this.repository.saveWithLock(staking.id, (staking) => staking.activate());
       } catch (e) {

@@ -245,7 +245,7 @@ export class StakingWithdrawalService {
            * potential case of updateStakingBalance failure is tolerated
            */
           await this.withdrawalRepo.save(withdrawal);
-          await this.stakingService.updateStakingBalance(stakingId, withdrawal.asset.id);
+          await this.stakingService.updateStakingBalance(stakingId, withdrawal.asset);
         }
       } catch (e) {
         console.error(`Error trying to confirm withdrawal. ID: ${withdrawal.id}`, e);
