@@ -20,6 +20,6 @@ export class StakingAnalyticsOutputDto {
   @ApiProperty()
   asset: string;
 
-  @ApiProperty()
+  @ApiProperty({ enum: StakingStrategy })
   strategy: StakingStrategy;
 }
