@@ -1,6 +1,6 @@
 import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { Withdrawal } from './withdrawal.entity';
-import { Column, Entity, Index, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, Index, OneToMany } from 'typeorm';
 import { IEntity } from 'src/shared/models/entity';
 import { StakingStatus, StakingStrategy, WithdrawalStatus } from '../enums';
 import { BadRequestException } from '@nestjs/common';
