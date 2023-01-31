@@ -243,7 +243,7 @@ export class StakingDepositService {
       (await this.depositRepository.getByPayInTxId(staking.id, payIn.txId)) ??
       (await this.createNewDeposit(staking, payIn));
 
-    deposit.updatePreCreatedDeposit(payIn.txId, payIn.amount);
+    deposit.updatePreCreatedDeposit(payIn.txId, payIn.amount, payIn.asset);
 
     await this.depositRepository.save(deposit);
   }

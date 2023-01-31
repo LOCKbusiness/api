@@ -63,7 +63,7 @@ export class StakingAnalyticsService implements OnModuleInit {
         let averageRewards = await this.stakingService.getAverageRewards(type, dateFrom, dateTo);
 
         // convert to staking asset (rewards are in DFI)
-        if (type.asset.id !== dfi.id) {
+        if (type.asset.name !== dfi.name) {
           const { price } = await this.priceProvider.getAverageExchangePrice(dfi.id, type.asset.id, dateFrom, dateTo);
 
           averageRewards = averageRewards / price;

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { StakingType } from 'src/subdomains/staking/domain/entities/staking.entity';
-import { EntityManager, FindOptionsWhere, Repository } from 'typeorm';
+import { AssetQuery } from 'src/shared/models/asset/asset.service';
+import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
+import { EntityManager, Repository } from 'typeorm';
 import { StakingAnalytics } from '../../domain/staking-analytics.entity';
 
 @Injectable()
@@ -9,7 +10,7 @@ export class StakingAnalyticsRepository extends Repository<StakingAnalytics> {
     super(StakingAnalytics, manager);
   }
 
-  async getByType(type: FindOptionsWhere<StakingType>): Promise<StakingAnalytics> {
-    return this.findOneBy(type);
+  async getByType({ strategy, asset }: { strategy: StakingStrategy; asset: AssetQuery }): Promise<StakingAnalytics> {
+    return this.findOneBy({ strategy, asset: { name: asset.name, type: asset.type, blockchain: asset.blockchain } });
   }
 }

@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { Util } from 'src/shared/util';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
-import { Staking, StakingType } from '../../domain/entities/staking.entity';
+import { Staking, StakingType, StakingTypes } from '../../domain/entities/staking.entity';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
 import { GetOrCreateStakingQuery } from '../dto/input/get-staking.query';
 import { BalanceOutputDto } from '../dto/output/balance.output.dto';
@@ -11,7 +11,6 @@ import { StakingFactory } from '../factories/staking.factory';
 import { StakingBalanceDtoMapper } from '../mappers/staking-balance-dto.mapper';
 import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
 import { StakingRepository } from '../repositories/staking.repository';
-import { StakingStrategyValidator } from '../validators/staking-strategy.validator';
 import { ReservableBlockchainAddressService } from '../../../address-pool/application/services/reservable-blockchain-address.service';
 import { BlockchainAddressReservationPurpose } from 'src/subdomains/address-pool/domain/enums';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -24,7 +23,9 @@ import { StakingBalance } from '../../domain/entities/staking-balance.entity';
 import { AssetBalance } from '../dto/output/asset-balance';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
+import { StakingStrategy } from '../../domain/enums';
 import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
 
 export interface StakingBalances {
   currentBalance: number;
@@ -54,28 +55,24 @@ export class StakingService {
   ): Promise<StakingOutputDto> {
     await this.kycCheck.check(userId, walletId);
 
-    const { asset: assetName, blockchain, strategy } = query;
+    const { blockchain, strategy } = query;
 
-    let asset: Asset;
-    if (assetName) {
-      const assetSpec = StakingStrategyValidator.validate(strategy, assetName, blockchain);
-      asset = await this.assetService.getAssetByQuery(assetSpec);
+    const assetList: Asset[] = [];
+    for (const stakingType of StakingTypes[strategy].filter((s) => s.blockchain == blockchain)) {
+      assetList.push(await this.assetService.getAssetByQuery(stakingType));
     }
 
     const existingStaking = await this.repository.findOneBy({ userId, strategy });
     if (existingStaking) {
       const amounts = await this.getUnconfirmedDepositsAndWithdrawalsAmounts(existingStaking.id);
 
-      return StakingOutputDtoMapper.entityToDto(existingStaking, amounts.deposits, amounts.withdrawals, asset);
+      return StakingOutputDtoMapper.entityToDto(existingStaking, amounts.deposits, amounts.withdrawals);
     }
 
-    if (!asset) throw new NotFoundException('Asset not found');
-
     return StakingOutputDtoMapper.entityToDto(
-      await this.createStaking(userId, walletId, { asset, strategy }),
+      await this.createStaking(userId, walletId, strategy, assetList, blockchain),
       [],
       [],
-      asset,
     );
   }
 
@@ -184,11 +181,24 @@ export class StakingService {
 
   //*** HELPER METHODS ***//
 
-  private async createStaking(userId: number, walletId: number, type: StakingType): Promise<Staking> {
+  private async createStaking(
+    userId: number,
+    walletId: number,
+    strategy: StakingStrategy,
+    assetList: Asset[],
+    blockchain: Blockchain,
+  ): Promise<Staking> {
     const depositAddress = await this.addressService.getAvailableAddress(BlockchainAddressReservationPurpose.STAKING);
     const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
 
-    const staking = await this.factory.createStaking(userId, type, depositAddress, withdrawalAddress);
+    const staking = await this.factory.createStaking(
+      userId,
+      strategy,
+      blockchain,
+      assetList,
+      depositAddress,
+      withdrawalAddress,
+    );
 
     return this.repository.save(staking);
   }
