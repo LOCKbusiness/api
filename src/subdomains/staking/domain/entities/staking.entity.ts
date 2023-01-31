@@ -1,6 +1,6 @@
 import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { Withdrawal } from './withdrawal.entity';
-import { Column, Entity, Index, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, Index, OneToMany } from 'typeorm';
 import { IEntity } from 'src/shared/models/entity';
 import { StakingStatus, StakingStrategy, WithdrawalStatus } from '../enums';
 import { BadRequestException } from '@nestjs/common';
@@ -11,6 +11,7 @@ import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { AssetQuery } from 'src/shared/models/asset/asset.service';
 import { RewardRoute } from './reward-route.entity';
 import { BlockchainAddress } from 'src/shared/models/blockchain-address';
+import { StakingBalance } from './staking-balance.entity';
 import { StakingBalances } from '../../application/services/staking.service';
 
 export interface StakingType {
@@ -25,11 +26,14 @@ export interface StakingReference {
 
 export const StakingTypes: { [key in StakingStrategy]: AssetQuery[] } = {
   [StakingStrategy.MASTERNODE]: [{ name: 'DFI', blockchain: Blockchain.DEFICHAIN, type: AssetType.COIN }],
-  [StakingStrategy.LIQUIDITY_MINING]: [{ name: 'DUSD', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN }],
+  [StakingStrategy.LIQUIDITY_MINING]: [
+    { name: 'DUSD', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN },
+    { name: 'DFI', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN },
+  ],
 };
 
 @Entity()
-@Index((s: Staking) => [s.userId, s.strategy, s.asset], { unique: true })
+@Index((s: Staking) => [s.userId, s.strategy], { unique: true })
 export class Staking extends IEntity {
   @Column({ type: 'int', nullable: false })
   userId: number;
@@ -37,20 +41,14 @@ export class Staking extends IEntity {
   @Column({ nullable: false })
   status: StakingStatus;
 
+  @Column({ nullable: false, default: Blockchain.DEFICHAIN })
+  blockchain: Blockchain;
+
   @Column({ nullable: false, default: StakingStrategy.MASTERNODE })
   strategy: StakingStrategy;
 
-  @ManyToOne(() => Asset, { eager: true, nullable: false })
-  asset: Asset;
-
-  @Column({ type: 'float', nullable: false, default: 0 })
-  balance: number;
-
-  @Column({ type: 'float', nullable: false, default: 0 })
-  stageOneBalance: number;
-
-  @Column({ type: 'float', nullable: false, default: 0 })
-  stageTwoBalance: number;
+  @OneToMany(() => StakingBalance, (balance) => balance.staking, { eager: true, cascade: true })
+  balances: StakingBalance[];
 
   @Column(() => BlockchainAddress)
   depositAddress: BlockchainAddress;
@@ -80,8 +78,9 @@ export class Staking extends IEntity {
     staking.userId = userId;
     staking.status = StakingStatus.CREATED;
     staking.strategy = strategy;
-    staking.asset = asset;
-    staking.balance = 0;
+    staking.blockchain = asset.blockchain;
+
+    staking.balances = [StakingBalance.create(asset)];
 
     staking.depositAddress = depositAddress;
     staking.withdrawalAddress = withdrawalAddress;
@@ -108,14 +107,6 @@ export class Staking extends IEntity {
     return this;
   }
 
-  updateBalance({ currentBalance, stageOneBalance, stageTwoBalance }: StakingBalances): this {
-    this.balance = currentBalance;
-    this.stageOneBalance = stageOneBalance;
-    this.stageTwoBalance = stageTwoBalance;
-
-    return this;
-  }
-
   updateRewardsAmount(rewardsAmount: number): this {
     this.rewardsAmount = rewardsAmount;
 
@@ -131,9 +122,10 @@ export class Staking extends IEntity {
   }
 
   checkBalanceForWithdrawalOrThrow(withdrawal: Withdrawal, inProgressWithdrawalsAmount: number): void {
-    if (!this.isEnoughBalanceForWithdrawal(withdrawal, inProgressWithdrawalsAmount)) {
-      throw new BadRequestException('Not sufficient staking balance to proceed with Withdrawal');
-    }
+    const balance = this.getBalanceFor(withdrawal.asset);
+    if (!balance) throw new BadRequestException('No balance to proceed with Withdrawal');
+
+    balance.checkBalanceForWithdrawalOrThrow(withdrawal, inProgressWithdrawalsAmount);
   }
 
   setRewardRoutes(newRewardRoutes: RewardRoute[]): this {
@@ -155,6 +147,18 @@ export class Staking extends IEntity {
     return addresses.every((a) => a === this.withdrawalAddress.address);
   }
 
+  updateBalance(balances: StakingBalances, asset: Asset): this {
+    let balance = this.getBalanceFor(asset);
+    if (!balance) {
+      balance = StakingBalance.create(asset);
+      this.balances.push(balance);
+    }
+
+    balance.updateBalance(balances);
+
+    return this;
+  }
+
   //*** GETTERS ***//
 
   get isActive(): boolean {
@@ -171,6 +175,10 @@ export class Staking extends IEntity {
 
   get activeRewardRoutes(): RewardRoute[] {
     return this.rewardRoutes.filter((r) => r.rewardPercent !== 0);
+  }
+
+  get defaultBalance(): StakingBalance {
+    return this.balances[0];
   }
 
   //*** HELPER STATIC METHODS ***//
@@ -241,9 +249,7 @@ export class Staking extends IEntity {
     this.rewardRoutes.forEach((route) => (route.rewardPercent = 0));
   }
 
-  private isEnoughBalanceForWithdrawal(withdrawal: Withdrawal, inProgressWithdrawalsAmount: number): boolean {
-    const currentBalance = this.balance - inProgressWithdrawalsAmount;
-
-    return currentBalance >= withdrawal.amount;
+  private getBalanceFor(asset: Asset): StakingBalance | undefined {
+    return this.balances.find((b) => b.asset.id === asset.id);
   }
 }

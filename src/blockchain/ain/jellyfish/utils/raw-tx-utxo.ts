@@ -23,6 +23,10 @@ export class RawTxUtxo extends RawTxBase {
     return this.handle(() => this.send(from, to, amount, true, { useFeeBuffer: true, sizePriority }));
   }
 
+  async sendAsAccount(from: string, to: string, token: number, amount: BigNumber): Promise<RawTxDto> {
+    return this.handle(() => this.createSendAsAccount(from, to, token, amount));
+  }
+
   async forward(from: string, to: string, amount: BigNumber): Promise<RawTxDto> {
     return this.handle(() =>
       this.send(from, to, amount, false, {
@@ -55,6 +59,26 @@ export class RawTxUtxo extends RawTxBase {
     const witnesses = new Array(vins.length).fill(fromWitness);
 
     return RawTxUtil.generateTxAndCalcFee(utxo, vins, vouts, witnesses);
+  }
+
+  private async createSendAsAccount(from: string, to: string, token: number, amount: BigNumber): Promise<RawTxDto> {
+    const [, fromPubKeyHash] = RawTxUtil.parseAddress(from);
+    const [toScript] = RawTxUtil.parseAddress(to);
+
+    const utxo = await this.utxoProvider.provideExactAmount(from, amount);
+
+    const vins = RawTxUtil.createVins(utxo.prevouts);
+    const voutsTemp = [RawTxUtil.createVoutUtxoToAccount(toScript, token, amount)];
+
+    const witness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(fromPubKeyHash)]);
+    const witnesses = new Array(vins.length).fill(witness);
+
+    // special handling for utxos to account
+    const tx = RawTxUtil.createTxSegWit(vins, voutsTemp, witnesses);
+    const fee = RawTxUtil.calculateFee(tx);
+    const vouts = [RawTxUtil.createVoutUtxoToAccount(toScript, token, amount.minus(fee))];
+
+    return RawTxUtil.generateTx(utxo, vins, vouts, witnesses);
   }
 
   // MANAGE UTXOS //

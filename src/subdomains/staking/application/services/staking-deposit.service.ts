@@ -11,7 +11,7 @@ import { PayIn, PayInPurpose } from 'src/subdomains/payin/domain/entities/payin.
 import { Between, LessThan } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Staking, StakingReference } from '../../domain/entities/staking.entity';
-import { DepositStatus, StakingStatus } from '../../domain/enums';
+import { DepositStatus, StakingStatus, StakingStrategy } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingDeFiChainService } from '../../infrastructure/staking-defichain.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
@@ -21,6 +21,7 @@ import { StakingFactory } from '../factories/staking.factory';
 import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
 import { DepositRepository } from '../repositories/deposit.repository';
 import { StakingRepository } from '../repositories/staking.repository';
+import { StakingStrategyValidator } from '../validators/staking-strategy.validator';
 import { StakingService } from './staking.service';
 
 @Injectable()
@@ -69,7 +70,9 @@ export class StakingDepositService {
     const staking = await this.authorize.authorize(userId, stakingId);
     if (staking.isBlocked) throw new BadRequestException('Staking is blocked');
 
-    const deposit = this.factory.createDeposit(staking, dto);
+    dto.asset ??= staking.strategy === StakingStrategy.LIQUIDITY_MINING ? 'DUSD' : 'DFI';
+
+    const deposit = await this.factory.createDeposit(staking, dto);
 
     await this.depositRepository.save(deposit);
 
@@ -154,7 +157,7 @@ export class StakingDepositService {
          * potential case of updateStakingBalance failure is tolerated
          */
         await this.depositRepository.save(deposit);
-        await this.stakingService.updateStakingBalance(stakingId);
+        await this.stakingService.updateStakingBalance(stakingId, deposit.asset.id);
 
         if (staking.isNotActive) await this.repository.saveWithLock(staking.id, (staking) => staking.activate());
       } catch (e) {
@@ -204,9 +207,10 @@ export class StakingDepositService {
       try {
         const staking = await this.repository.findOneBy({ id: stakingId });
 
-        // verify asset
-        const hasSameAsset = staking.asset.id === payIn.asset.id;
-        if (!hasSameAsset) {
+        // validate pay in
+        try {
+          StakingStrategyValidator.validate(staking.strategy, payIn.asset.name, payIn.asset.blockchain);
+        } catch {
           await this.payInService.failedPayIn(payIn, PayInPurpose.STAKING);
           continue;
         }
@@ -244,6 +248,6 @@ export class StakingDepositService {
   }
 
   private async createNewDeposit(staking: Staking, payIn: PayIn): Promise<Deposit> {
-    return this.factory.createDeposit(staking, { amount: payIn.amount, txId: payIn.txId });
+    return this.factory.createDeposit(staking, { amount: payIn.amount, txId: payIn.txId, asset: payIn.asset.name });
   }
 }

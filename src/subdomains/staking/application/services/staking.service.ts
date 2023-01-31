@@ -5,7 +5,6 @@ import { UserService } from 'src/subdomains/user/application/services/user.servi
 import { Staking, StakingType } from '../../domain/entities/staking.entity';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
 import { GetOrCreateStakingQuery } from '../dto/input/get-staking.query';
-import { SetStakingFeeDto } from '../dto/input/set-staking-fee.dto';
 import { BalanceOutputDto } from '../dto/output/balance.output.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
@@ -20,6 +19,11 @@ import { RewardRepository } from '../repositories/reward.repository';
 import { DepositRepository } from '../repositories/deposit.repository';
 import { WithdrawalRepository } from '../repositories/withdrawal.repository';
 import { EntityManager } from 'typeorm';
+import { SetStakingFeeDto } from '../dto/input/set-staking-fee.dto';
+import { StakingBalance } from '../../domain/entities/staking-balance.entity';
+import { AssetBalance } from '../dto/output/asset-balance';
+import { Deposit } from '../../domain/entities/deposit.entity';
+import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 
 export interface StakingBalances {
   currentBalance: number;
@@ -55,27 +59,32 @@ export class StakingService {
     const asset = await this.assetService.getAssetByQuery(assetSpec);
     if (!asset) throw new NotFoundException('Asset not found');
 
-    const existingStaking = await this.repository.findOneBy({ userId, asset: { id: asset.id }, strategy });
+    const existingStaking = await this.repository.findOneBy({ userId, strategy });
     if (existingStaking) {
       const amounts = await this.getUnconfirmedDepositsAndWithdrawalsAmounts(existingStaking.id);
 
       return StakingOutputDtoMapper.entityToDto(existingStaking, amounts.withdrawals, amounts.deposits);
     }
 
-    return StakingOutputDtoMapper.entityToDto(await this.createStaking(userId, walletId, { asset, strategy }), 0, 0);
+    return StakingOutputDtoMapper.entityToDto(await this.createStaking(userId, walletId, { asset, strategy }), [], []);
   }
 
   async getDepositAddressBalances(address: string): Promise<BalanceOutputDto[]> {
     const stakingEntities = await this.repository.getByDepositAddress(address);
     if (stakingEntities.length == 0) throw new NotFoundException('No staking for deposit address found');
-    return stakingEntities.map(StakingBalanceDtoMapper.entityToDto);
+
+    return stakingEntities
+      .reduce((prev, curr) => prev.concat(curr.balances), [] as StakingBalance[])
+      .map(StakingBalanceDtoMapper.entityToDto);
   }
 
   async getUserAddressBalances(address: string): Promise<BalanceOutputDto[]> {
     const stakingEntities = await this.getStakingsByUserAddress(address);
     if (stakingEntities.length == 0) throw new NotFoundException('No staking for user address found');
 
-    return stakingEntities.map(StakingBalanceDtoMapper.entityToDto);
+    return stakingEntities
+      .reduce((prev, curr) => prev.concat(curr.balances), [] as StakingBalance[])
+      .map(StakingBalanceDtoMapper.entityToDto);
   }
 
   async getStakingsByUserAddress(address: string): Promise<Staking[]> {
@@ -105,26 +114,23 @@ export class StakingService {
     return rewardVolume / Util.daysDiff(dateFrom, dateTo);
   }
 
-  /**
-   * @warning
-   * Assuming that deposits and withdrawals are in same asset as staking
-   */
   async getUnconfirmedDepositsAndWithdrawalsAmounts(
     stakingId: number,
-  ): Promise<{ deposits: number; withdrawals: number }> {
-    const deposits = await this.depositRepository.getInProgressAmount(stakingId);
-    const withdrawals = await this.withdrawalRepository.getInProgressAmount(stakingId);
+  ): Promise<{ deposits: AssetBalance[]; withdrawals: AssetBalance[] }> {
+    const deposits = await this.depositRepository.getInProgress(stakingId);
+    const withdrawals = await this.withdrawalRepository.getInProgress(stakingId);
 
-    return { deposits, withdrawals };
+    return { deposits: this.aggregateByAsset(deposits), withdrawals: this.aggregateByAsset(withdrawals) };
   }
 
   async setStakingFee(stakingId: number, { feePercent }: SetStakingFeeDto): Promise<void> {
     await this.repository.saveWithLock(stakingId, (staking) => staking.setStakingFee(feePercent));
   }
 
-  async updateStakingBalance(stakingId: number): Promise<Staking> {
+  async updateStakingBalance(stakingId: number, assetId: number): Promise<Staking> {
+    const asset = await this.assetService.getAssetById(assetId);
     return this.repository.saveWithLock(stakingId, async (staking, manager) =>
-      staking.updateBalance(await this.getBalances(manager, staking.id)),
+      staking.updateBalance(await this.getBalances(manager, staking.id, asset.id), asset),
     );
   }
 
@@ -141,14 +147,20 @@ export class StakingService {
     try {
       const stakingIds = await this.repository
         .createQueryBuilder('staking')
+        .innerJoin('staking.balances', 'balance')
         .select('staking.id', 'id')
-        .where('staking.stageOneBalance != staking.balance')
-        .orWhere('staking.stageTwoBalance != staking.balance')
+        .where('balance.stageOneBalance != balance.balance')
+        .orWhere('balance.stageTwoBalance != balance.balance')
         .getRawMany<{ id: number }>();
 
       for (const { id } of stakingIds) {
         try {
-          await this.updateStakingBalance(id);
+          const staking = await this.repository.findOneBy({ id });
+
+          for (const balance of staking.balances) {
+            if (balance.balance !== balance.stageOneBalance || balance.balance !== balance.stageTwoBalance)
+              await this.updateStakingBalance(id, balance.asset.id);
+          }
         } catch (e) {
           console.error(`Failed to update balance of staking ${id}:`, e);
         }
@@ -169,15 +181,15 @@ export class StakingService {
     return this.repository.save(staking);
   }
 
-  private async getBalances(manager: EntityManager, stakingId: number): Promise<StakingBalances> {
+  private async getBalances(manager: EntityManager, stakingId: number, assetId: number): Promise<StakingBalances> {
     /**
      * @warning
      * Assuming that deposits and withdrawals are in same asset as staking
      */
-    const deposits = await new DepositRepository(manager).getConfirmedAmount(stakingId);
-    const withdrawals = await new WithdrawalRepository(manager).getConfirmedAmount(stakingId);
-    const stageOneDeposits = await new DepositRepository(manager).getConfirmedStageOneAmount(stakingId);
-    const stageTwoDeposits = await new DepositRepository(manager).getConfirmedStageTwoAmount(stakingId);
+    const deposits = await new DepositRepository(manager).getConfirmedAmount(stakingId, assetId);
+    const withdrawals = await new WithdrawalRepository(manager).getConfirmedAmount(stakingId, assetId);
+    const stageOneDeposits = await new DepositRepository(manager).getConfirmedStageOneAmount(stakingId, assetId);
+    const stageTwoDeposits = await new DepositRepository(manager).getConfirmedStageTwoAmount(stakingId, assetId);
 
     const currentBalance = Util.round(deposits - withdrawals, 8);
 
@@ -201,5 +213,14 @@ export class StakingService {
 
   private async getTotalWithdrawalsSince(type: StakingType, date: Date): Promise<number> {
     return this.withdrawalRepository.getTotalConfirmedAmountSince(type, date);
+  }
+
+  private aggregateByAsset(items: (Deposit | Withdrawal)[]): AssetBalance[] {
+    const amounts = items.reduce((prev, curr) => {
+      prev[curr.asset.id] = (prev[curr.asset.id] ?? 0) + curr.amount;
+      return prev;
+    }, {} as { [assetId: number]: number });
+
+    return Object.entries(amounts).map(([assetId, amount]) => ({ assetId: +assetId, balance: amount }));
   }
 }
