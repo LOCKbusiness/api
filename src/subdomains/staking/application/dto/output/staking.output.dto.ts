@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { StakingBalance } from 'src/subdomains/staking/domain/entities/staking-balances.entity';
 import { StakingStatus, StakingStrategy } from 'src/subdomains/staking/domain/enums';
 import { RewardRouteOutputDto } from './reward-route.output.dto';
+import { StakingBalanceDto } from './staking-balance.dto';
 
 export class StakingOutputDto {
   @ApiProperty()
@@ -13,7 +13,7 @@ export class StakingOutputDto {
   @ApiProperty({ enum: StakingStrategy })
   strategy: StakingStrategy;
 
-  @ApiProperty()
+  @ApiProperty({ deprecated: true })
   asset: string;
 
   @ApiProperty()
@@ -31,21 +31,18 @@ export class StakingOutputDto {
   @ApiProperty()
   fee: number;
 
-  @ApiProperty()
+  @ApiProperty({ deprecated: true })
   balance: number;
 
-  @ApiProperty()
-  balances: StakingBalance[];
-
-  @ApiProperty()
+  @ApiProperty({ deprecated: true })
   pendingDeposits: number;
 
-  @ApiProperty()
+  @ApiProperty({ deprecated: true })
   pendingWithdrawals: number;
+
+  @ApiProperty({ type: StakingBalanceDto, isArray: true })
+  balances: StakingBalanceDto[];
 
   @ApiProperty({ type: RewardRouteOutputDto, isArray: true })
   rewardRoutes: RewardRouteOutputDto[];
-
-  @ApiProperty()
-  rewardsAmount: number;
 }

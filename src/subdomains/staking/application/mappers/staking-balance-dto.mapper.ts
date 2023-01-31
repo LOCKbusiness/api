@@ -1,4 +1,4 @@
-import { StakingBalance } from '../../domain/entities/staking-balances.entity';
+import { StakingBalance } from '../../domain/entities/staking-balance.entity';
 import { BalanceOutputDto } from '../dto/output/balance.output.dto';
 
 export class StakingBalanceDtoMapper {

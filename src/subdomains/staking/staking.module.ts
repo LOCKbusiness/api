@@ -45,10 +45,20 @@ import { RewardRoute } from './domain/entities/reward-route.entity';
 import { AddressPoolModule } from '../address-pool/address-pool.module';
 import { RewardRouteController } from './api/controllers/reward-route.controller';
 import { UtxoManagementService } from './application/services/utxo-management.service';
+import { StakingBalance } from './domain/entities/staking-balance.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Staking, Withdrawal, Deposit, Reward, RewardBatch, RewardRoute, AssetStakingMetadata]),
+    TypeOrmModule.forFeature([
+      Staking,
+      StakingBalance,
+      Withdrawal,
+      Deposit,
+      Reward,
+      RewardBatch,
+      RewardRoute,
+      AssetStakingMetadata,
+    ]),
     BlockchainModule,
     SharedModule,
     UserModule,

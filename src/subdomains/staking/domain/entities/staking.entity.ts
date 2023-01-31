@@ -11,7 +11,7 @@ import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { AssetQuery } from 'src/shared/models/asset/asset.service';
 import { RewardRoute } from './reward-route.entity';
 import { BlockchainAddress } from 'src/shared/models/blockchain-address';
-import { StakingBalance } from './staking-balances.entity';
+import { StakingBalance } from './staking-balance.entity';
 import { StakingBalances } from '../../application/services/staking.service';
 
 export interface StakingType {
@@ -47,7 +47,7 @@ export class Staking extends IEntity {
   @Column({ nullable: false, default: StakingStrategy.MASTERNODE })
   strategy: StakingStrategy;
 
-  @ManyToOne(() => StakingBalance, { eager: true, cascade: true })
+  @OneToMany(() => StakingBalance, (balance) => balance.staking, { eager: true, cascade: true })
   balances: StakingBalance[];
 
   @Column(() => BlockchainAddress)
@@ -78,6 +78,7 @@ export class Staking extends IEntity {
     staking.userId = userId;
     staking.status = StakingStatus.CREATED;
     staking.strategy = strategy;
+    staking.blockchain = asset.blockchain;
 
     staking.balances = [StakingBalance.create(asset)];
 
@@ -116,10 +117,15 @@ export class Staking extends IEntity {
     if (this.status !== StakingStatus.ACTIVE) throw new BadRequestException('Staking is inactive');
     if (withdrawal.status !== WithdrawalStatus.DRAFT) throw new BadRequestException('Cannot add non-Draft Withdrawals');
 
-    this.balances
-      .find((s) => s.asset == withdrawal.asset)
-      .checkBalanceForWithdrawalOrThrow(withdrawal, inProgressWithdrawalsAmount);
     // restrict creation of draft in case of insufficient balance, does not protect from parallel creation.
+    this.checkBalanceForWithdrawalOrThrow(withdrawal, inProgressWithdrawalsAmount);
+  }
+
+  checkBalanceForWithdrawalOrThrow(withdrawal: Withdrawal, inProgressWithdrawalsAmount: number): void {
+    const balance = this.getBalanceFor(withdrawal.asset);
+    if (!balance) throw new BadRequestException('No balance to proceed with Withdrawal');
+
+    balance.checkBalanceForWithdrawalOrThrow(withdrawal, inProgressWithdrawalsAmount);
   }
 
   setRewardRoutes(newRewardRoutes: RewardRoute[]): this {
@@ -142,7 +148,13 @@ export class Staking extends IEntity {
   }
 
   updateBalance(balances: StakingBalances, asset: Asset): this {
-    this.balances.find((s) => s.asset == asset).updateBalance(balances);
+    let balance = this.getBalanceFor(asset);
+    if (!balance) {
+      balance = StakingBalance.create(asset);
+      this.balances.push(balance);
+    }
+
+    balance.updateBalance(balances);
 
     return this;
   }
@@ -163,6 +175,10 @@ export class Staking extends IEntity {
 
   get activeRewardRoutes(): RewardRoute[] {
     return this.rewardRoutes.filter((r) => r.rewardPercent !== 0);
+  }
+
+  get defaultBalance(): StakingBalance {
+    return this.balances[0];
   }
 
   //*** HELPER STATIC METHODS ***//
@@ -231,5 +247,9 @@ export class Staking extends IEntity {
 
   private resetExistingRoutes(): void {
     this.rewardRoutes.forEach((route) => (route.rewardPercent = 0));
+  }
+
+  private getBalanceFor(asset: Asset): StakingBalance | undefined {
+    return this.balances.find((b) => b.asset.id === asset.id);
   }
 }

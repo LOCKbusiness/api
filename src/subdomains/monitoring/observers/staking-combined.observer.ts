@@ -82,9 +82,9 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
     // calculate database balance
     const dbBalance = await this.repos.staking
       .createQueryBuilder('staking')
-      .leftJoin('staking.asset', 'asset')
-      .select('SUM(balance)', 'balance')
-      .where('asset.name = :name', { name: 'DFI' })
+      .leftJoin('staking.balances', 'balance')
+      .select('SUM(balance.balance)', 'balance')
+      .where('staking.strategy = :strategy', { strategy: StakingStrategy.MASTERNODE })
       .getRawOne<{ balance: number }>()
       .then((b) => b.balance);
 

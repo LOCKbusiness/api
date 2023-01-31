@@ -19,6 +19,10 @@ export class DepositRepository extends Repository<Deposit> {
     return this.getByStatuses([DepositStatus.PENDING], stakingId);
   }
 
+  async getInProgress(stakingId: number): Promise<Deposit[]> {
+    return this.getByStatuses([DepositStatus.OPEN, DepositStatus.PENDING], stakingId);
+  }
+
   async getByStatuses(statuses: DepositStatus[], stakingId: number): Promise<Deposit[]> {
     /**
      * @note
@@ -90,15 +94,6 @@ export class DepositRepository extends Repository<Deposit> {
       .where('assetId = :assetId', { assetId })
       .andWhere('status = :status', { status: DepositStatus.CONFIRMED })
       .andWhere('created >= :date', { date: Util.daysBefore(6) })
-      .getRawOne<{ amount: number }>()
-      .then((r) => r.amount ?? 0);
-  }
-
-  async getInProgressAmount(stakingId: number): Promise<number> {
-    return this.createQueryBuilder('deposit')
-      .select('SUM(amount)', 'amount')
-      .where('stakingId = :stakingId', { stakingId })
-      .andWhere('status IN (:pending, :open)', { pending: DepositStatus.PENDING, open: DepositStatus.OPEN })
       .getRawOne<{ amount: number }>()
       .then((r) => r.amount ?? 0);
   }

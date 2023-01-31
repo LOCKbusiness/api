@@ -30,6 +30,10 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
     return this.getByStatuses([WithdrawalStatus.DRAFT], stakingId);
   }
 
+  async getInProgress(stakingId: number): Promise<Withdrawal[]> {
+    return this.getByStatuses([WithdrawalStatus.PENDING, WithdrawalStatus.PAYING_OUT], stakingId);
+  }
+
   async getByStatuses(statuses: WithdrawalStatus[], stakingId: number): Promise<Withdrawal[]> {
     /**
      * @note
@@ -92,10 +96,11 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
       .then((b) => b.amount ?? 0);
   }
 
-  async getInProgressAmount(stakingId: number): Promise<number> {
+  async getInProgressAmount(stakingId: number, assetId: number): Promise<number> {
     return this.createQueryBuilder('withdrawal')
       .select('SUM(amount)', 'amount')
       .where('stakingId = :stakingId', { stakingId })
+      .andWhere('staking.assetId = :id', { id: assetId })
       .andWhere('status IN (:pending, :payingOut)', {
         pending: WithdrawalStatus.PENDING,
         payingOut: WithdrawalStatus.PAYING_OUT,

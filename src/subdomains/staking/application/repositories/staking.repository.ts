@@ -11,9 +11,7 @@ export class StakingRepository extends LockedRepository<Staking> {
   }
 
   async getByStrategy(strategy: StakingStrategy): Promise<Staking[]> {
-    return this.find({
-      where: { strategy },
-    });
+    return this.findBy({ strategy });
   }
 
   async getByUserId(userId: number): Promise<Staking[]> {
@@ -26,8 +24,9 @@ export class StakingRepository extends LockedRepository<Staking> {
 
   async getCurrentTotalStakingBalance({ asset, strategy }: StakingType): Promise<number> {
     return this.createQueryBuilder('staking')
-      .select('SUM(balance)', 'balance')
-      .where('staking.assetId = :id', { id: asset.id })
+      .leftJoin('staking.balances', 'balance')
+      .select('SUM(balance.balance)', 'balance')
+      .where('balance.assetId = :id', { id: asset.id })
       .andWhere('staking.strategy = :strategy', { strategy })
       .getRawOne<{ balance: number }>()
       .then((b) => b.balance);
