@@ -78,18 +78,18 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
     return this.createQueryBuilder('withdrawal')
       .select('SUM(amount)', 'amount')
       .where('stakingId = :stakingId', { stakingId })
-      .where('assetId = :assetId', { assetId })
+      .andWhere('assetId = :assetId', { assetId })
       .andWhere('status = :status', { status: WithdrawalStatus.CONFIRMED })
       .getRawOne<{ amount: number }>()
       .then((r) => r.amount ?? 0);
   }
 
-  async getTotalConfirmedAmountSince({ asset, strategy }: StakingType, date: Date): Promise<number> {
+  async getTotalConfirmedAmountSince({ strategy }: StakingType, date: Date): Promise<number> {
+    // TODO: this is wrong for multi-asset staking
     return this.createQueryBuilder('withdrawal')
       .leftJoin('withdrawal.staking', 'staking')
       .select('SUM(amount)', 'amount')
-      .where('staking.assetId = :id', { id: asset.id })
-      .andWhere('staking.strategy = :strategy', { strategy })
+      .where('staking.strategy = :strategy', { strategy })
       .andWhere('withdrawal.status = :status', { status: WithdrawalStatus.CONFIRMED })
       .andWhere('withdrawal.created >= :date', { date })
       .getRawOne<{ amount: number }>()
@@ -100,11 +100,11 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
     return this.createQueryBuilder('withdrawal')
       .select('SUM(amount)', 'amount')
       .where('stakingId = :stakingId', { stakingId })
-      .andWhere('staking.assetId = :id', { id: assetId })
       .andWhere('status IN (:pending, :payingOut)', {
         pending: WithdrawalStatus.PENDING,
         payingOut: WithdrawalStatus.PAYING_OUT,
       })
+      .andWhere('withdrawal.assetId = :id', { id: assetId })
       .getRawOne<{ amount: number }>()
       .then((r) => r.amount ?? 0);
   }

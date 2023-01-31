@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
 
 export class StakingAnalyticsOutputDto {
   @ApiProperty()
@@ -18,4 +19,7 @@ export class StakingAnalyticsOutputDto {
 
   @ApiProperty()
   asset: string;
+
+  @ApiProperty({ enum: StakingStrategy })
+  strategy: StakingStrategy;
 }

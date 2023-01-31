@@ -70,7 +70,7 @@ export class DepositRepository extends Repository<Deposit> {
     return this.createQueryBuilder('deposit')
       .select('SUM(amount)', 'amount')
       .where('stakingId = :stakingId', { stakingId })
-      .where('assetId = :assetId', { assetId })
+      .andWhere('assetId = :assetId', { assetId })
       .andWhere('status = :status', { status: DepositStatus.CONFIRMED })
       .getRawOne<{ amount: number }>()
       .then((r) => r.amount ?? 0);
@@ -80,7 +80,7 @@ export class DepositRepository extends Repository<Deposit> {
     return this.createQueryBuilder('deposit')
       .select('SUM(amount)', 'amount')
       .where('stakingId = :stakingId', { stakingId })
-      .where('assetId = :assetId', { assetId })
+      .andWhere('assetId = :assetId', { assetId })
       .andWhere('status = :status', { status: DepositStatus.CONFIRMED })
       .andWhere('created >= :date', { date: Util.daysBefore(2) })
       .getRawOne<{ amount: number }>()
@@ -91,19 +91,19 @@ export class DepositRepository extends Repository<Deposit> {
     return this.createQueryBuilder('deposit')
       .select('SUM(amount)', 'amount')
       .where('stakingId = :stakingId', { stakingId })
-      .where('assetId = :assetId', { assetId })
+      .andWhere('assetId = :assetId', { assetId })
       .andWhere('status = :status', { status: DepositStatus.CONFIRMED })
       .andWhere('created >= :date', { date: Util.daysBefore(6) })
       .getRawOne<{ amount: number }>()
       .then((r) => r.amount ?? 0);
   }
 
-  async getTotalConfirmedAmountSince({ asset, strategy }: StakingType, date: Date): Promise<number> {
+  async getTotalConfirmedAmountSince({ strategy }: StakingType, date: Date): Promise<number> {
+    // TODO: this is wrong for multi-asset staking
     return this.createQueryBuilder('deposit')
       .leftJoin('deposit.staking', 'staking')
       .select('SUM(amount)', 'amount')
-      .where('staking.assetId = :id', { id: asset.id })
-      .andWhere('staking.strategy = :strategy', { strategy })
+      .where('staking.strategy = :strategy', { strategy })
       .andWhere('deposit.status = :status', { status: DepositStatus.CONFIRMED })
       .andWhere('deposit.created >= :date', { date })
       .getRawOne<{ amount: number }>()

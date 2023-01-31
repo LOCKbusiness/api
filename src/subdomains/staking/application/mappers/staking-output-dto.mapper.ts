@@ -1,4 +1,5 @@
 import { Config } from 'src/config/config';
+import { Asset } from 'src/shared/models/asset/asset.entity';
 import { Staking } from '../../domain/entities/staking.entity';
 import { AssetBalance } from '../dto/output/asset-balance';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
@@ -10,20 +11,22 @@ export class StakingOutputDtoMapper {
     staking: Staking,
     pendingDepositAmounts: AssetBalance[],
     pendingWithdrawalAmounts: AssetBalance[],
+    asset?: Asset,
   ): StakingOutputDto {
+    const balance = staking.getBalanceFor(asset) ?? staking.defaultBalance;
+
     return {
       id: staking.id,
       status: staking.status,
-      asset: staking.defaultBalance.asset.name,
+      asset: balance.asset.name,
       depositAddress: staking.depositAddress.address,
       strategy: staking.strategy,
       minimalStake: Config.staking.minimalStake,
       minimalDeposits: Config.payIn.min.DeFiChain,
       fee: staking.fee ?? Config.staking.defaultFee,
-      balance: staking.defaultBalance.balance,
-      pendingDeposits: pendingDepositAmounts.find((a) => a.assetId === staking.defaultBalance.asset.id)?.balance ?? 0,
-      pendingWithdrawals:
-        pendingWithdrawalAmounts.find((a) => a.assetId === staking.defaultBalance.asset.id)?.balance ?? 0,
+      balance: balance.balance,
+      pendingDeposits: pendingDepositAmounts.find((a) => a.assetId === balance.asset.id)?.balance ?? 0,
+      pendingWithdrawals: pendingWithdrawalAmounts.find((a) => a.assetId === balance.asset.id)?.balance ?? 0,
       balances: staking.balances.map((b) =>
         StakingBalanceMapper.entityToDto(b, pendingDepositAmounts, pendingWithdrawalAmounts),
       ),

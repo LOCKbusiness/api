@@ -11,7 +11,7 @@ import { PayIn, PayInPurpose } from 'src/subdomains/payin/domain/entities/payin.
 import { Between, LessThan } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Staking, StakingReference } from '../../domain/entities/staking.entity';
-import { DepositStatus, StakingStatus } from '../../domain/enums';
+import { DepositStatus, StakingStatus, StakingStrategy } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingDeFiChainService } from '../../infrastructure/staking-defichain.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
@@ -70,13 +70,15 @@ export class StakingDepositService {
     const staking = await this.authorize.authorize(userId, stakingId);
     if (staking.isBlocked) throw new BadRequestException('Staking is blocked');
 
+    dto.asset ??= staking.strategy === StakingStrategy.LIQUIDITY_MINING ? 'DUSD' : 'DFI';
+
     const deposit = await this.factory.createDeposit(staking, dto);
 
     await this.depositRepository.save(deposit);
 
     const amounts = await this.stakingService.getUnconfirmedDepositsAndWithdrawalsAmounts(stakingId);
 
-    return StakingOutputDtoMapper.entityToDto(staking, amounts.withdrawals, amounts.deposits);
+    return StakingOutputDtoMapper.entityToDto(staking, amounts.deposits, amounts.withdrawals, deposit.asset);
   }
 
   //*** JOBS ***//
@@ -142,10 +144,11 @@ export class StakingDepositService {
 
     for (const deposit of deposits) {
       try {
+        const payInAsset = await this.payInService.getPayInAsset(staking.depositAddress.address, deposit.payInTxId);
         const txId = await this.deFiChainStakingService.forwardDeposit(
           staking.depositAddress.address,
           deposit.amount,
-          deposit.asset,
+          payInAsset,
           staking.strategy,
         );
         deposit.confirmDeposit(txId);

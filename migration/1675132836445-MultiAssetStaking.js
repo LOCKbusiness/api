@@ -42,22 +42,20 @@ module.exports = class MultiAssetStaking1675132836445 {
     await queryRunner.query(`DROP INDEX "IDX_caf83dbef4196e0979cba098f9" ON "dbo"."staking"`);
     await queryRunner.query(`ALTER TABLE "dbo"."staking" DROP CONSTRAINT "DF_453d51a0e273da9c09171581e27"`);
     await queryRunner.query(`ALTER TABLE "dbo"."staking" DROP COLUMN "blockchain"`);
-    await queryRunner.query(`ALTER TABLE "dbo"."staking" ADD "stageTwoBalance" float NOT NULL`);
     await queryRunner.query(
-      `ALTER TABLE "dbo"."staking" ADD CONSTRAINT "DF_e33ed9712d5705d569755afff7d" DEFAULT 0 FOR "stageTwoBalance"`,
+      `ALTER TABLE "dbo"."staking" ADD "stageTwoBalance" float NOT NULL CONSTRAINT "DF_e33ed9712d5705d569755afff7d" DEFAULT 0`,
     );
-    await queryRunner.query(`ALTER TABLE "dbo"."staking" ADD "stageOneBalance" float NOT NULL`);
     await queryRunner.query(
-      `ALTER TABLE "dbo"."staking" ADD CONSTRAINT "DF_2da628d68dc2fb24e382ac941b9" DEFAULT 0 FOR "stageOneBalance"`,
+      `ALTER TABLE "dbo"."staking" ADD "stageOneBalance" float NOT NULL CONSTRAINT "DF_2da628d68dc2fb24e382ac941b9" DEFAULT 0`,
     );
-    await queryRunner.query(`ALTER TABLE "dbo"."staking" ADD "assetId" int NOT NULL`);
-    await queryRunner.query(`ALTER TABLE "dbo"."staking" ADD "balance" float NOT NULL`);
+    await queryRunner.query(`ALTER TABLE "dbo"."staking" ADD "assetId" int`);
     await queryRunner.query(
-      `ALTER TABLE "dbo"."staking" ADD CONSTRAINT "DF_73123fbb52548e2f205c1739f22" DEFAULT 0 FOR "balance"`,
+      `ALTER TABLE "dbo"."staking" ADD "balance" float NOT NULL CONSTRAINT "DF_73123fbb52548e2f205c1739f22" DEFAULT 0`,
     );
     await queryRunner.query(
       `UPDATE s SET s.assetId = b.assetId, s.balance = b.balance, s.stageOneBalance = b.stageOneBalance, s.stageTwoBalance = b.stageTwoBalance FROM "dbo"."staking" s INNER JOIN "dbo"."staking_balance" b ON b.stakingId = s.id`,
     );
+    await queryRunner.query(`ALTER TABLE "dbo"."staking" ALTER COLUMN "assetId" int NOT NULL`);
     await queryRunner.query(`DROP INDEX "IDX_a023e936b304b5118b75c99dbd" ON "staking_balance"`);
     await queryRunner.query(`DROP TABLE "staking_balance"`);
     await queryRunner.query(

@@ -71,7 +71,7 @@ export class StakingService {
     if (existingStaking) {
       const amounts = await this.getUnconfirmedDepositsAndWithdrawalsAmounts(existingStaking.id);
 
-      return StakingOutputDtoMapper.entityToDto(existingStaking, amounts.withdrawals, amounts.deposits);
+      return StakingOutputDtoMapper.entityToDto(existingStaking, amounts.deposits, amounts.withdrawals);
     }
 
     return StakingOutputDtoMapper.entityToDto(
@@ -141,8 +141,10 @@ export class StakingService {
 
   async updateStakingBalance(stakingId: number, assetId: number): Promise<Staking> {
     const asset = await this.assetService.getAssetById(assetId);
-    return this.repository.saveWithLock(stakingId, async (staking, manager) =>
-      staking.updateBalance(await this.getBalances(manager, staking.id, asset.id), asset),
+    return this.repository.saveWithLock(
+      stakingId,
+      async (staking, manager) => staking.updateBalance(await this.getBalances(manager, staking.id, asset.id), asset),
+      ['balances', 'balances.asset'],
     );
   }
 

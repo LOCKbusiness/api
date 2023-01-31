@@ -8,12 +8,12 @@ export class CreateDepositDto {
   amount: number;
 
   @ApiProperty()
-  @IsNotEmpty()
-  @IsString()
-  txId: string;
-
-  @ApiProperty()
   @IsOptional()
   @IsString()
   asset: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  txId: string;
 }
