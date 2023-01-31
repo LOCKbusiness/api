@@ -25,11 +25,11 @@ export class StakingFactory {
     userId: number,
     strategy: StakingStrategy,
     blockchain: Blockchain,
+    assetList: Asset[],
     depositAddress: ReservableBlockchainAddress,
     withdrawalAddress: BlockchainAddress,
-    assetList: Asset[],
   ): Promise<Staking> {
-    return Staking.create(userId, strategy, blockchain, depositAddress.address, withdrawalAddress, assetList);
+    return Staking.create(userId, strategy, blockchain, assetList, depositAddress.address, withdrawalAddress);
   }
 
   async createDeposit(staking: Staking, dto: CreateDepositDto): Promise<Deposit> {

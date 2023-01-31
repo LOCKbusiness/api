@@ -59,12 +59,7 @@ export class StakingService {
 
     const assetList: Asset[] = [];
     for (const stakingType of StakingTypes[strategy].filter((s) => s.blockchain == blockchain)) {
-      const asset = await this.assetService.getAssetByQuery({
-        name: stakingType.name,
-        blockchain: blockchain,
-        type: stakingType.type,
-      });
-      assetList.push(asset);
+      assetList.push(await this.assetService.getAssetByQuery(stakingType));
     }
 
     const existingStaking = await this.repository.findOneBy({ userId, strategy });
@@ -200,9 +195,9 @@ export class StakingService {
       userId,
       strategy,
       blockchain,
+      assetList,
       depositAddress,
       withdrawalAddress,
-      assetList,
     );
 
     return this.repository.save(staking);

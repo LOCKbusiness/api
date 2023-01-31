@@ -71,9 +71,9 @@ export class Staking extends IEntity {
     userId: number,
     strategy: StakingStrategy,
     blockchain: Blockchain,
+    assetList: Asset[],
     depositAddress: BlockchainAddress,
     withdrawalAddress: BlockchainAddress,
-    assetList: Asset[],
   ): Staking {
     const staking = new Staking();
 
@@ -82,17 +82,17 @@ export class Staking extends IEntity {
     staking.strategy = strategy;
     staking.blockchain = blockchain;
 
-    assetList.map((a) => (staking.balances = [StakingBalance.create(a)]));
+    staking.balances = assetList.map((a) => StakingBalance.create(a));
 
     staking.depositAddress = depositAddress;
     staking.withdrawalAddress = withdrawalAddress;
-    staking.rewardRoutes = [this.createDefaultRewardRoute(staking, assetList[0], depositAddress)];
+    staking.rewardRoutes = [this.createDefaultRewardRoute(staking)];
 
     return staking;
   }
 
-  static createDefaultRewardRoute(staking: Staking, asset: Asset, depositAddress: BlockchainAddress): RewardRoute {
-    return RewardRoute.create(staking, 'Reinvest', 1, asset, depositAddress);
+  static createDefaultRewardRoute(staking: Staking): RewardRoute {
+    return RewardRoute.create(staking, 'Reinvest', 1, staking.defaultBalance.asset, staking.depositAddress);
   }
 
   //*** PUBLIC API ***//
