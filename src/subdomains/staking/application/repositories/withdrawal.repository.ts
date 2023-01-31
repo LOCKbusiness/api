@@ -78,7 +78,7 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
     return this.createQueryBuilder('withdrawal')
       .select('SUM(amount)', 'amount')
       .where('stakingId = :stakingId', { stakingId })
-      .where('assetId = :assetId', { assetId })
+      .andWhere('assetId = :assetId', { assetId })
       .andWhere('status = :status', { status: WithdrawalStatus.CONFIRMED })
       .getRawOne<{ amount: number }>()
       .then((r) => r.amount ?? 0);
