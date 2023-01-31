@@ -19,8 +19,8 @@ import { RewardRepository } from '../repositories/reward.repository';
 import { DepositRepository } from '../repositories/deposit.repository';
 import { WithdrawalRepository } from '../repositories/withdrawal.repository';
 import { EntityManager } from 'typeorm';
-import { Asset } from 'src/shared/models/asset/asset.entity';
 import { SetStakingFeeDto } from '../dto/input/set-staking-fee.dto';
+import { StakingBalance } from '../../domain/entities/staking-balances.entity';
 
 export interface StakingBalances {
   currentBalance: number;
@@ -69,14 +69,19 @@ export class StakingService {
   async getDepositAddressBalances(address: string): Promise<BalanceOutputDto[]> {
     const stakingEntities = await this.repository.getByDepositAddress(address);
     if (stakingEntities.length == 0) throw new NotFoundException('No staking for deposit address found');
-    return stakingEntities.map(StakingBalanceDtoMapper.entityToDto);
+
+    return stakingEntities
+      .reduce((prev, curr) => prev.concat(curr.balances), [] as StakingBalance[])
+      .map(StakingBalanceDtoMapper.entityToDto);
   }
 
   async getUserAddressBalances(address: string): Promise<BalanceOutputDto[]> {
     const stakingEntities = await this.getStakingsByUserAddress(address);
     if (stakingEntities.length == 0) throw new NotFoundException('No staking for user address found');
 
-    return stakingEntities.map(StakingBalanceDtoMapper.entityToDto);
+    return stakingEntities
+      .reduce((prev, curr) => prev.concat(curr.balances), [] as StakingBalance[])
+      .map(StakingBalanceDtoMapper.entityToDto);
   }
 
   async getStakingsByUserAddress(address: string): Promise<Staking[]> {
@@ -123,7 +128,8 @@ export class StakingService {
     await this.repository.saveWithLock(stakingId, (staking) => staking.setStakingFee(feePercent));
   }
 
-  async updateStakingBalance(stakingId: number, asset: Asset): Promise<Staking> {
+  async updateStakingBalance(stakingId: number, assetId: number): Promise<Staking> {
+    const asset = await this.assetService.getAssetById(assetId);
     return this.repository.saveWithLock(stakingId, async (staking, manager) =>
       staking.updateBalance(await this.getBalances(manager, staking.id, asset.id), asset),
     );
@@ -149,10 +155,10 @@ export class StakingService {
 
       for (const { id } of stakingIds) {
         try {
-          const staking = await this.repository.findOne({ where: { id: id } });
+          const staking = await this.repository.findOneBy({ id });
 
           for (const stakingBalance of staking.balances) {
-            await this.updateStakingBalance(id, stakingBalance.asset);
+            await this.updateStakingBalance(id, stakingBalance.asset.id);
           }
         } catch (e) {
           console.error(`Failed to update balance of staking ${id}:`, e);

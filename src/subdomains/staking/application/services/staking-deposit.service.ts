@@ -69,7 +69,7 @@ export class StakingDepositService {
     const staking = await this.authorize.authorize(userId, stakingId);
     if (staking.isBlocked) throw new BadRequestException('Staking is blocked');
 
-    const deposit = this.factory.createDeposit(staking, dto);
+    const deposit = await this.factory.createDeposit(staking, dto);
 
     await this.depositRepository.save(deposit);
 
@@ -154,7 +154,7 @@ export class StakingDepositService {
          * potential case of updateStakingBalance failure is tolerated
          */
         await this.depositRepository.save(deposit);
-        await this.stakingService.updateStakingBalance(stakingId, deposit.asset);
+        await this.stakingService.updateStakingBalance(stakingId, deposit.asset.id);
 
         if (staking.isNotActive) await this.repository.saveWithLock(staking.id, (staking) => staking.activate());
       } catch (e) {
@@ -244,6 +244,6 @@ export class StakingDepositService {
   }
 
   private async createNewDeposit(staking: Staking, payIn: PayIn): Promise<Deposit> {
-    return this.factory.createDeposit(staking, { amount: payIn.amount, txId: payIn.txId, asset: payIn.asset });
+    return this.factory.createDeposit(staking, { amount: payIn.amount, txId: payIn.txId, asset: payIn.asset.name });
   }
 }

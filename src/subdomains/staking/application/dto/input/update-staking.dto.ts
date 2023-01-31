@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty } from 'class-validator';
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { IsNotEmpty, IsNumber } from 'class-validator';
 
 export class UpdateStakingDto {
   @ApiProperty()
+  @IsNumber()
   @IsNotEmpty()
-  asset: Asset;
+  assetId: number;
 }

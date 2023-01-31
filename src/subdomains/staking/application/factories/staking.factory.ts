@@ -13,6 +13,8 @@ import { CreateRewardRouteDto } from '../dto/input/create-reward-route.dto';
 import { RewardRoute } from '../../domain/entities/reward-route.entity';
 import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { RewardRouteRepository } from '../repositories/reward-route.repository';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
+import { StakingStrategyValidator } from '../validators/staking-strategy.validator';
 
 @Injectable()
 export class StakingFactory {
@@ -27,16 +29,16 @@ export class StakingFactory {
     return Staking.create(userId, type, depositAddress.address, withdrawalAddress);
   }
 
-  createDeposit(staking: Staking, dto: CreateDepositDto): Deposit {
-    const { amount, txId, asset } = dto;
-
-    return Deposit.create(staking, amount, txId, asset);
+  async createDeposit(staking: Staking, dto: CreateDepositDto): Promise<Deposit> {
+    const assetSpec = StakingStrategyValidator.validate(staking.strategy, dto.asset, staking.blockchain);
+    const assetObject = await this.assetService.getAssetByQuery(assetSpec);
+    return Deposit.create(staking, dto.amount, dto.txId, assetObject);
   }
 
-  createWithdrawalDraft(staking: Staking, dto: CreateWithdrawalDraftDto): Withdrawal {
-    const { amount } = dto;
-
-    return Withdrawal.create(staking, amount, dto.asset);
+  async createWithdrawalDraft(staking: Staking, dto: CreateWithdrawalDraftDto): Promise<Withdrawal >{
+    const assetSpec = StakingStrategyValidator.validate(staking.strategy, dto.asset, staking.blockchain);
+    const asset = await this.assetService.getAssetByQuery(assetSpec);
+    return Withdrawal.create(staking, dto.amount, asset);
   }
 
   async createReward(staking: Staking, dto: CreateRewardDto): Promise<Reward> {

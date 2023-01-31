@@ -12,6 +12,7 @@ import { GetOrCreateStakingQuery } from '../../application/dto/input/get-staking
 import { BalanceOutputDto } from '../../application/dto/output/balance.output.dto';
 import { BalanceQuery } from '../../application/dto/input/balance-query.dto';
 import { SetStakingFeeDto } from '../../application/dto/input/set-staking-fee.dto';
+import { StakingBalance } from '../../domain/entities/staking-balances.entity';
 
 @ApiTags('Staking')
 @Controller('staking')
@@ -48,6 +49,6 @@ export class StakingController {
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async updateBalance(@Param('id') stakingId: string, @Body() dto: UpdateStakingDto): Promise<void> {
-    await this.stakingService.updateStakingBalance(+stakingId, dto.asset);
+    await this.stakingService.updateStakingBalance(+stakingId, +dto.assetId);
   }
 }

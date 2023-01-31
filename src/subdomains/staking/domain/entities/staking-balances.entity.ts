@@ -26,9 +26,9 @@ export class StakingBalance extends IEntity {
   //*** FACTORY METHODS ***//
 
   static create(asset: Asset): StakingBalance {
-    const stakingAsset = new StakingBalance();
-    stakingAsset.asset = asset;
-    return stakingAsset;
+    const stakingBalance = new StakingBalance();
+    stakingBalance.asset = asset;
+    return stakingBalance;
   }
 
   //*** PUBLIC API ***//

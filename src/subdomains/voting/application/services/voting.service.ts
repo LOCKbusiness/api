@@ -59,9 +59,7 @@ export class VotingService implements OnModuleInit {
   async getCurrentVotes(): Promise<CfpVotesDto[]> {
     const { cfpList } = await this.getCfpInfos();
     const userWithVotes = await this.userService.getAllUserWithVotes();
-    const stakings = await this.repos.staking.getByStrategy({
-      strategy: StakingStrategy.MASTERNODE,
-    });
+    const stakings = await this.repos.staking.getByStrategy(StakingStrategy.MASTERNODE);
 
     const cfpVotesList: CfpVotesDto[] = [];
 
@@ -178,9 +176,7 @@ export class VotingService implements OnModuleInit {
       (prev, curr) => ({ ...prev, [curr.id]: { yes: 0, no: 0, neutral: 0 } }),
       {},
     );
-    const stakings = await this.repos.staking.getByStrategy({
-      strategy: StakingStrategy.MASTERNODE,
-    });
+    const stakings = await this.repos.staking.getByStrategy(StakingStrategy.MASTERNODE);
 
     for (const user of userWithVotes) {
       const stakingBalance = this.getDfiStakingBalanceFor(user.id, stakings);

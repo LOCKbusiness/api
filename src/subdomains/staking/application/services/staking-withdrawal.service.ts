@@ -49,9 +49,9 @@ export class StakingWithdrawalService {
 
     const staking = await this.authorize.authorize(userId, stakingId);
 
-    if (staking.strategy == StakingStrategy.LIQUIDITY_MINING) dto.asset.name ??= 'DUSD';
+    dto.asset ??= staking.strategy === StakingStrategy.LIQUIDITY_MINING ? 'DUSD' : 'DFI';
 
-    const withdrawal = this.factory.createWithdrawalDraft(staking, dto);
+    const withdrawal = await this.factory.createWithdrawalDraft(staking, dto);
 
     const pendingWithdrawalsAmount = await this.withdrawalRepo.getInProgressAmount(stakingId);
     staking.checkWithdrawalDraftOrThrow(withdrawal, pendingWithdrawalsAmount);
@@ -249,7 +249,7 @@ export class StakingWithdrawalService {
            * potential case of updateStakingBalance failure is tolerated
            */
           await this.withdrawalRepo.save(withdrawal);
-          await this.stakingService.updateStakingBalance(stakingId, withdrawal.asset);
+          await this.stakingService.updateStakingBalance(stakingId, withdrawal.asset.id);
         }
       } catch (e) {
         console.error(`Error trying to confirm withdrawal. ID: ${withdrawal.id}`, e);

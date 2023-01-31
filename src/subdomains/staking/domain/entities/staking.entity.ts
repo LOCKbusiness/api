@@ -11,7 +11,7 @@ import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { AssetQuery } from 'src/shared/models/asset/asset.service';
 import { RewardRoute } from './reward-route.entity';
 import { BlockchainAddress } from 'src/shared/models/blockchain-address';
-import { StakingBalance } from './staking.balances.entity';
+import { StakingBalance } from './staking-balances.entity';
 import { StakingBalances } from '../../application/services/staking.service';
 
 export interface StakingType {
@@ -40,6 +40,9 @@ export class Staking extends IEntity {
 
   @Column({ nullable: false })
   status: StakingStatus;
+
+  @Column({ nullable: false, default: Blockchain.DEFICHAIN })
+  blockchain: Blockchain;
 
   @Column({ nullable: false, default: StakingStrategy.MASTERNODE })
   strategy: StakingStrategy;
@@ -76,7 +79,7 @@ export class Staking extends IEntity {
     staking.status = StakingStatus.CREATED;
     staking.strategy = strategy;
 
-    staking.balances.push(StakingBalance.create(asset));
+    staking.balances = [StakingBalance.create(asset)];
 
     staking.depositAddress = depositAddress;
     staking.withdrawalAddress = withdrawalAddress;

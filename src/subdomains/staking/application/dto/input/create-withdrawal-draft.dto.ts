@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsOptional, IsPositive } from 'class-validator';
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
 
 export class CreateWithdrawalDraftDto {
   @ApiProperty()
@@ -11,5 +10,6 @@ export class CreateWithdrawalDraftDto {
 
   @ApiProperty()
   @IsOptional()
-  asset: Asset;
+  @IsString()
+  asset: string;
 }

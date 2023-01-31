@@ -4,17 +4,13 @@ import { EntityManager } from 'typeorm';
 import { Staking, StakingType } from '../../domain/entities/staking.entity';
 import { StakingStrategy } from '../../domain/enums';
 
-export interface StakingFindOptions {
-  strategy: StakingStrategy;
-}
-
 @Injectable()
 export class StakingRepository extends LockedRepository<Staking> {
   constructor(manager: EntityManager) {
     super(Staking, manager);
   }
 
-  async getByStrategy({ strategy }: StakingFindOptions): Promise<Staking[]> {
+  async getByStrategy(strategy: StakingStrategy): Promise<Staking[]> {
     return this.find({
       where: { strategy },
     });

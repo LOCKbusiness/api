@@ -1,13 +1,12 @@
-import { Staking } from '../../domain/entities/staking.entity';
+import { StakingBalance } from '../../domain/entities/staking-balances.entity';
 import { BalanceOutputDto } from '../dto/output/balance.output.dto';
 
 export class StakingBalanceDtoMapper {
-  static entityToDto(staking: Staking): BalanceOutputDto {
+  static entityToDto(stakingBalance: StakingBalance): BalanceOutputDto {
     return {
-      asset: staking.balances[0].asset.name,
-      balance: staking.balances[0].balance,
-      balances: staking.balances,
-      blockchain: staking.balances[0].asset.blockchain,
+      asset: stakingBalance.asset.name,
+      balance: stakingBalance.balance,
+      blockchain: stakingBalance.asset.blockchain,
     };
   }
 }
