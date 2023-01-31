@@ -239,11 +239,11 @@ export class StakingDepositService {
   }
 
   private async createOrUpdateDeposit(staking: Staking, payIn: PayIn): Promise<void> {
-    const deposit =
-      (await this.depositRepository.getByPayInTxId(staking.id, payIn.txId)) ??
-      (await this.createNewDeposit(staking, payIn));
+    const existingDeposit = await this.depositRepository.getByPayInTxId(staking.id, payIn.txId);
+    const newDeposit = await this.createNewDeposit(staking, payIn);
 
-    deposit.updatePreCreatedDeposit(payIn.txId, payIn.amount, payIn.asset);
+    const deposit = existingDeposit ?? newDeposit;
+    deposit.updatePreCreatedDeposit(newDeposit.payInTxId, newDeposit.amount, newDeposit.asset);
 
     await this.depositRepository.save(deposit);
   }
