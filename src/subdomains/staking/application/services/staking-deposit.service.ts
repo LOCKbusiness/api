@@ -11,7 +11,7 @@ import { PayIn, PayInPurpose } from 'src/subdomains/payin/domain/entities/payin.
 import { Between, LessThan } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Staking, StakingReference } from '../../domain/entities/staking.entity';
-import { DepositStatus, StakingStatus } from '../../domain/enums';
+import { DepositStatus, StakingStatus, StakingStrategy } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingDeFiChainService } from '../../infrastructure/staking-defichain.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
@@ -69,6 +69,8 @@ export class StakingDepositService {
 
     const staking = await this.authorize.authorize(userId, stakingId);
     if (staking.isBlocked) throw new BadRequestException('Staking is blocked');
+
+    dto.asset ??= staking.strategy === StakingStrategy.LIQUIDITY_MINING ? 'DUSD' : 'DFI';
 
     const deposit = await this.factory.createDeposit(staking, dto);
 
