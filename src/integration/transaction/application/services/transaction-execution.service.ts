@@ -103,6 +103,7 @@ export class TransactionExecutionService {
       rawTx,
       {
         id: data.withdrawalId,
+        assetType: data.type,
         ...this.createPayloadFor(
           { ownerWallet: config.wallet, accountIndex: config.account },
           TransactionType.WITHDRAWAL,
