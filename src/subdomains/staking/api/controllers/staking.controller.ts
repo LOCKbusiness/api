@@ -12,7 +12,6 @@ import { GetOrCreateStakingQuery } from '../../application/dto/input/get-staking
 import { BalanceOutputDto } from '../../application/dto/output/balance.output.dto';
 import { BalanceQuery } from '../../application/dto/input/balance-query.dto';
 import { SetStakingFeeDto } from '../../application/dto/input/set-staking-fee.dto';
-import { StakingBalance } from '../../domain/entities/staking-balances.entity';
 
 @ApiTags('Staking')
 @Controller('staking')

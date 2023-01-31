@@ -68,7 +68,7 @@ export class VotingService implements OnModuleInit {
 
       cfpVotesList.push({
         depositAddress: staking.depositAddress.address,
-        balance: staking.balances[0].balance,
+        balance: staking.defaultBalance.balance,
         votes: user ? this.getUserVotes(user, cfpList) : [],
       });
     }
@@ -201,7 +201,10 @@ export class VotingService implements OnModuleInit {
   }
 
   private getDfiStakingBalanceFor(userId: number, stakings: Staking[]): number {
-    return Util.sumObj(stakings.filter((s) => s.userId === userId).map((s) => s.balances)[0], 'balance');
+    return Util.sumObj(
+      stakings.filter((s) => s.userId === userId).map((s) => s.defaultBalance),
+      'balance',
+    );
   }
 
   private getUserVotes(user: User, cfpList: CfpInfo[]): CfpVoteDto[] {

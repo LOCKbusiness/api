@@ -1,13 +1,17 @@
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { Withdrawal } from './withdrawal.entity';
-import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { IEntity } from 'src/shared/models/entity';
 import { BadRequestException } from '@nestjs/common';
 import { Staking } from './staking.entity';
 import { StakingBalances } from '../../application/services/staking.service';
 
 @Entity()
+@Index((sb: StakingBalance) => [sb.staking, sb.asset], { unique: true })
 export class StakingBalance extends IEntity {
+  @ManyToOne(() => Staking, (staking) => staking.balances, { nullable: false })
+  staking: Staking;
+
   @ManyToOne(() => Asset, { eager: true, nullable: false })
   asset: Asset;
 
@@ -19,9 +23,6 @@ export class StakingBalance extends IEntity {
 
   @Column({ type: 'float', nullable: false, default: 0 })
   stageTwoBalance: number;
-
-  @OneToMany(() => Staking, (staking) => staking.balances, { nullable: false })
-  staking: Staking;
 
   //*** FACTORY METHODS ***//
 

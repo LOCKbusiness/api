@@ -53,7 +53,7 @@ export class StakingWithdrawalService {
 
     const withdrawal = await this.factory.createWithdrawalDraft(staking, dto);
 
-    const pendingWithdrawalsAmount = await this.withdrawalRepo.getInProgressAmount(stakingId);
+    const pendingWithdrawalsAmount = await this.withdrawalRepo.getInProgressAmount(stakingId, withdrawal.asset.id);
     staking.checkWithdrawalDraftOrThrow(withdrawal, pendingWithdrawalsAmount);
 
     try {
@@ -100,10 +100,8 @@ export class StakingWithdrawalService {
       throw e;
     }
 
-    const pendingWithdrawalsAmount = await this.withdrawalRepo.getInProgressAmount(stakingId);
-    staking.balances
-      .find((s) => s.asset == withdrawal.asset)
-      .checkBalanceForWithdrawalOrThrow(withdrawal, pendingWithdrawalsAmount);
+    const pendingWithdrawalsAmount = await this.withdrawalRepo.getInProgressAmount(stakingId, withdrawal.asset.id);
+    staking.checkBalanceForWithdrawalOrThrow(withdrawal, pendingWithdrawalsAmount);
     withdrawal.signWithdrawal(dto.signature);
 
     await this.withdrawalRepo.save(withdrawal);
@@ -127,11 +125,8 @@ export class StakingWithdrawalService {
 
     withdrawal.changeAmount(dto.amount, staking);
 
-    const pendingWithdrawalsAmount = await this.withdrawalRepo.getInProgressAmount(stakingId);
-    staking.balances
-      .find((s) => s.asset == withdrawal.asset)
-      .checkBalanceForWithdrawalOrThrow(withdrawal, pendingWithdrawalsAmount);
-
+    const pendingWithdrawalsAmount = await this.withdrawalRepo.getInProgressAmount(stakingId, withdrawal.asset.id);
+    staking.checkBalanceForWithdrawalOrThrow(withdrawal, pendingWithdrawalsAmount);
     await this.withdrawalRepo.save(withdrawal);
 
     return WithdrawalDraftOutputDtoMapper.entityToDto(withdrawal);

@@ -21,6 +21,7 @@ import { StakingFactory } from '../factories/staking.factory';
 import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
 import { DepositRepository } from '../repositories/deposit.repository';
 import { StakingRepository } from '../repositories/staking.repository';
+import { StakingStrategyValidator } from '../validators/staking-strategy.validator';
 import { StakingService } from './staking.service';
 
 @Injectable()
@@ -204,9 +205,10 @@ export class StakingDepositService {
       try {
         const staking = await this.repository.findOneBy({ id: stakingId });
 
-        // verify asset
-        const hasSameAsset = staking.balances.find((b) => b.asset.id === payIn.asset.id);
-        if (!hasSameAsset) {
+        // validate pay in
+        try {
+          StakingStrategyValidator.validate(staking.strategy, payIn.asset.name, payIn.asset.blockchain);
+        } catch {
           await this.payInService.failedPayIn(payIn, PayInPurpose.STAKING);
           continue;
         }
