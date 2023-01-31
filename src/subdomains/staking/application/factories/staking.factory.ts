@@ -13,7 +13,6 @@ import { CreateRewardRouteDto } from '../dto/input/create-reward-route.dto';
 import { RewardRoute } from '../../domain/entities/reward-route.entity';
 import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { RewardRouteRepository } from '../repositories/reward-route.repository';
-import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { StakingStrategyValidator } from '../validators/staking-strategy.validator';
 
 @Injectable()
