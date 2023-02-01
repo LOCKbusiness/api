@@ -144,6 +144,7 @@ export class StakingWithdrawalService {
       date: v.outputDate,
       amount: v.amount,
       asset: v.asset.displayName,
+      stakingStrategy: v.staking.strategy,
     }));
   }
 

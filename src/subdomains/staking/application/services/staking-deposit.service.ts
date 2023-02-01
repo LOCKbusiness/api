@@ -46,9 +46,9 @@ export class StakingDepositService {
   //*** PUBLIC API ***//
 
   async getDeposits(dateFrom: Date = new Date(0), dateTo: Date = new Date()): Promise<TransactionDto[]> {
-    const deposits = await this.depositRepository.find({
-      relations: ['asset'],
-      where: { created: Between(dateFrom, dateTo), status: DepositStatus.CONFIRMED },
+    const deposits = await this.depositRepository.findBy({
+      created: Between(dateFrom, dateTo),
+      status: DepositStatus.CONFIRMED,
     });
 
     return deposits.map((v) => ({
@@ -56,6 +56,7 @@ export class StakingDepositService {
       date: v.created,
       amount: v.amount,
       asset: v.asset.displayName,
+      stakingStrategy: v.staking.strategy,
     }));
   }
 
