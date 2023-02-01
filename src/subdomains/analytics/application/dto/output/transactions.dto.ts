@@ -14,7 +14,7 @@ export class TransactionDto {
   @ApiProperty()
   asset: string;
 
-  @ApiProperty()
+  @ApiProperty({ enum: StakingStrategy })
   stakingStrategy: StakingStrategy;
 }
 
