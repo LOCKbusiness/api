@@ -36,9 +36,11 @@ export class YieldMachineService {
 
     // additional checks for account to account txs
     if (command === TransactionCommand.ACCOUNT_TO_ACCOUNT) {
-      const allowedAddresses = await this.vaultService
-        .getAllAddresses()
-        .then((addresses) => addresses.concat(Config.yieldMachine.liquidity.address));
+      const allowedAddresses = [
+        Config.yieldMachine.liquidity.address,
+        Config.blockchain.default.rew.stakingAddress,
+        ...(await this.vaultService.getAllAddresses()),
+      ];
 
       if (!this.isSendAllowed(parameters, allowedAddresses))
         throw new ForbiddenException('Send parameters are not allowed');
