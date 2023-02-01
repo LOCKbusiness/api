@@ -22,6 +22,12 @@ export class PrepareStrategiesFacade {
     return criteria instanceof Asset ? this.getByAsset(criteria) : this.getByAlias(criteria);
   }
 
+  getPrepareStrategyAlias(asset: Asset): Alias {
+    const { blockchain } = asset;
+
+    if (blockchain === Blockchain.DEFICHAIN) return Alias.DEFICHAIN;
+  }
+
   //*** HELPER METHODS ***//
 
   private getByAlias(alias: Alias): PrepareStrategy {
@@ -33,14 +39,8 @@ export class PrepareStrategiesFacade {
   }
 
   private getByAsset(asset: Asset): PrepareStrategy {
-    const alias = this.getAlias(asset);
+    const alias = this.getPrepareStrategyAlias(asset);
 
     return this.getByAlias(alias);
-  }
-
-  private getAlias(asset: Asset): Alias {
-    const { blockchain } = asset;
-
-    if (blockchain === Blockchain.DEFICHAIN) return Alias.DEFICHAIN;
   }
 }

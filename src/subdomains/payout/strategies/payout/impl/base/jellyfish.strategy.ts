@@ -4,6 +4,7 @@ import { NotificationService } from 'src/integration/notification/services/notif
 import { SettingService } from 'src/shared/services/setting.service';
 import { Util } from 'src/shared/util';
 import { PayoutGroup, PayoutJellyfishService } from 'src/subdomains/payout/services/base/payout-jellyfish.service';
+import { PayoutUtils } from 'src/subdomains/payout/utils/payout-utils';
 import { PayoutOrder, PayoutOrderContext } from '../../../../entities/payout-order.entity';
 import { PayoutOrderRepository } from '../../../../repositories/payout-order.repository';
 import { PayoutStrategy } from './payout.strategy';
@@ -20,7 +21,7 @@ export abstract class JellyfishStrategy extends PayoutStrategy {
 
   async doPayout(orders: PayoutOrder[]): Promise<void> {
     try {
-      const groups = this.groupOrdersByContext(orders);
+      const groups = PayoutUtils.groupOrdersByContext(orders);
 
       for (const [context, group] of [...groups.entries()]) {
         if (!(await this.jellyfishService.isHealthy(context))) return;
@@ -50,22 +51,6 @@ export abstract class JellyfishStrategy extends PayoutStrategy {
     } catch (e) {
       console.error(`Error in checking DeFiChain payout order completion. Order ID: ${order.id}`, e);
     }
-  }
-
-  protected groupOrdersByContext(orders: PayoutOrder[]): Map<PayoutOrderContext, PayoutOrder[]> {
-    const groups = new Map<PayoutOrderContext, PayoutOrder[]>();
-
-    orders.forEach((order) => {
-      const existingGroup = groups.get(order.context);
-
-      if (existingGroup) {
-        existingGroup.push(order);
-      } else {
-        groups.set(order.context, [order]);
-      }
-    });
-
-    return groups;
   }
 
   protected abstract doPayoutForContext(context: PayoutOrderContext, group: PayoutOrder[]): Promise<void>;
