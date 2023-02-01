@@ -138,11 +138,14 @@ export class Util {
     });
   }
 
-  static async doInBatches<T>(list: T[], action: (batch: T[]) => Promise<unknown>, batchSize: number): Promise<void> {
-    do {
+  static async doInBatches<T, U>(list: T[], action: (batch: T[]) => Promise<U>, batchSize: number): Promise<U[]> {
+    const results: U[] = [];
+    while (list.length > 0) {
       const batch = list.splice(0, batchSize);
-      await action(batch);
-    } while (list.length > 0);
+      results.push(await action(batch));
+    }
+
+    return results;
   }
 
   static async delay(ms: number): Promise<void> {

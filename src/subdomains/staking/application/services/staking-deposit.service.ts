@@ -131,7 +131,7 @@ export class StakingDepositService {
   }
 
   private async processPendingDepositsInBatches(refs: StakingReference[], batchSize = 50): Promise<void> {
-    return Util.doInBatches(
+    await Util.doInBatches(
       refs,
       async (batch: StakingReference[]) =>
         Promise.all(batch.map((ref) => this.processPendingDepositsForStaking(ref.id))),

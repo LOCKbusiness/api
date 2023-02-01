@@ -8,9 +8,17 @@ import { VotingController } from './api/voting.controller';
 import { VoteRepository } from './application/repositories/voting.repository';
 import { Vote } from './domain/entities/vote.entity';
 import { VotingService } from './application/services/voting.service';
+import { BlockchainModule } from 'src/blockchain/blockchain.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Vote]), UserModule, SharedModule, StakingModule, IntegrationModule],
+  imports: [
+    TypeOrmModule.forFeature([Vote]),
+    UserModule,
+    SharedModule,
+    StakingModule,
+    IntegrationModule,
+    BlockchainModule,
+  ],
   providers: [VoteRepository, VotingService],
   controllers: [VotingController],
   exports: [VotingService],

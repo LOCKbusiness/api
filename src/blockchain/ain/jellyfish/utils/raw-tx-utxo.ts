@@ -20,6 +20,10 @@ export class RawTxUtxo extends RawTxBase {
     );
   }
 
+  async sendFeeUtxos(from: string, to: string[], amount: BigNumber): Promise<RawTxDto> {
+    return this.handle(() => this.sendMany(from, to, amount));
+  }
+
   async sendWithChange(from: string, to: string, amount: BigNumber, sizePriority: UtxoSizePriority): Promise<RawTxDto> {
     return this.handle(() => this.send(from, to, amount, true, { useFeeBuffer: true, sizePriority }));
   }
@@ -34,10 +38,6 @@ export class RawTxUtxo extends RawTxBase {
         useFeeBuffer: false,
       }),
     );
-  }
-
-  async fundMasternodeVoting(from: string, masternodes: Masternode[]): Promise<RawTxDto> {
-    return this.handle(() => this.createFundMasternodeVoting(from, masternodes));
   }
 
   private async send(
@@ -66,6 +66,29 @@ export class RawTxUtxo extends RawTxBase {
     return RawTxUtil.generateTxAndCalcFee(utxo, vins, vouts, witnesses);
   }
 
+  private async sendMany(from: string, to: string[], amount: BigNumber): Promise<RawTxDto> {
+    const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
+
+    const neededUtxoAmount = amount.multipliedBy(to.length);
+    const utxo = await this.utxoProvider.provideUntilAmount(from, neededUtxoAmount, {
+      sizePriority: UtxoSizePriority.FITTING,
+    });
+
+    const vins = RawTxUtil.createVins(utxo.prevouts);
+    const vouts = to.map((address) => {
+      const [toScript] = RawTxUtil.parseAddress(address);
+      return RawTxUtil.createVoutReturn(toScript, amount);
+    });
+
+    const change = RawTxUtil.createVoutReturn(fromScript, utxo.total?.minus(neededUtxoAmount));
+    vouts.push(change);
+
+    const witness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(fromPubKeyHash)]);
+    const witnesses = new Array(vins.length).fill(witness);
+
+    return RawTxUtil.generateTx(utxo, vins, vouts, witnesses);
+  }
+
   private async createSendAsAccount(from: string, to: string, token: number, amount: BigNumber): Promise<RawTxDto> {
     const [, fromPubKeyHash] = RawTxUtil.parseAddress(from);
     const [toScript] = RawTxUtil.parseAddress(to);
@@ -82,29 +105,6 @@ export class RawTxUtxo extends RawTxBase {
     const tx = RawTxUtil.createTxSegWit(vins, voutsTemp, witnesses);
     const fee = RawTxUtil.calculateFee(tx);
     const vouts = [RawTxUtil.createVoutUtxoToAccount(toScript, token, amount.minus(fee))];
-
-    return RawTxUtil.generateTx(utxo, vins, vouts, witnesses);
-  }
-
-  private async createFundMasternodeVoting(from: string, masternodes: Masternode[]): Promise<RawTxDto> {
-    const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
-
-    const neededUtxoAmount = new BigNumber(Config.masternode.voteFee).multipliedBy(masternodes.length);
-    const utxo = await this.utxoProvider.provideUntilAmount(from, neededUtxoAmount, {
-      sizePriority: UtxoSizePriority.FITTING,
-    });
-
-    const vins = RawTxUtil.createVins(utxo.prevouts);
-    const vouts = masternodes.map((mn) => {
-      const [toScript] = RawTxUtil.parseAddress(mn.owner);
-      return RawTxUtil.createVoutReturn(toScript, new BigNumber(Config.masternode.voteFee));
-    });
-
-    const change = RawTxUtil.createVoutReturn(fromScript, utxo.total?.minus(neededUtxoAmount));
-    vouts.push(change);
-
-    const witness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(fromPubKeyHash)]);
-    const witnesses = new Array(vins.length).fill(witness);
 
     return RawTxUtil.generateTx(utxo, vins, vouts, witnesses);
   }

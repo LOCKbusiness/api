@@ -108,6 +108,7 @@ import { StakingBalance } from './domain/entities/staking-balance.entity';
     StakingService,
     StakingDepositService,
     StakingWithdrawalService,
+    StakingDeFiChainService,
     { provide: PRICE_PROVIDER, useClass: CoinGeckoService },
   ],
 })

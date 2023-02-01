@@ -10,15 +10,19 @@ import { Util } from 'src/shared/util';
 import { Staking } from 'src/subdomains/staking/domain/entities/staking.entity';
 import { MasternodeVote, StakingStrategy } from 'src/subdomains/staking/domain/enums';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
-import { IsNull } from 'typeorm';
 import { CfpMnVoteDto } from '../dto/cfp-mn-vote.dto';
 import { User } from 'src/subdomains/user/domain/entities/user.entity';
 import { CfpDto, CfpInfo, CfpResultDto, CfpVoteDto, CfpVotesDto } from '../dto/cfp.dto';
 import { Distribution } from '../dto/distribution.dto';
 import { VoteRepository } from '../repositories/voting.repository';
-import { VoteDecision } from '../../domain/enums';
+import { VoteDecision, VoteStatus } from '../../domain/enums';
 import { RepositoryFactory } from 'src/shared/repositories/repository.factory';
 import { Vote } from '../../domain/entities/vote.entity';
+import { ProposalStatus } from '@defichain/jellyfish-api-core/dist/category/governance';
+import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
+import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
+import { StakingDeFiChainService } from 'src/subdomains/staking/infrastructure/staking-defichain.service';
+import BigNumber from 'bignumber.js';
 
 @Injectable()
 export class VotingService implements OnModuleInit {
@@ -30,6 +34,7 @@ export class VotingService implements OnModuleInit {
 
   private currentResults: CfpResultDto[] = [];
   private votingLock = new Lock(86400);
+  private client: WhaleClient;
 
   constructor(
     private readonly repos: RepositoryFactory,
@@ -38,7 +43,11 @@ export class VotingService implements OnModuleInit {
     private readonly masternodeService: MasternodeService,
     private readonly http: HttpService,
     private readonly transactionService: TransactionExecutionService,
-  ) {}
+    private readonly deFiChainService: StakingDeFiChainService,
+    readonly whaleService: WhaleService,
+  ) {
+    whaleService.getClient().subscribe((client) => (this.client = client));
+  }
 
   // --- CURRENT RESULT --- //
   onModuleInit() {
@@ -135,6 +144,7 @@ export class VotingService implements OnModuleInit {
             proposalId: cfp.id,
             proposalName: cfp.name,
             decision: v.vote,
+            status: VoteStatus.CREATED,
           }),
         ),
       )
@@ -151,13 +161,48 @@ export class VotingService implements OnModuleInit {
     if (!this.votingLock.acquire()) return;
 
     try {
-      const pendingVotes = await this.voteRepo.findBy({ txId: IsNull() });
-      await Util.doInBatches(pendingVotes, (votes) => Promise.all(votes.map((v) => this.processVote(v))), 100);
+      await this.sendFeeUtxos();
+      await this.doVote();
     } catch (e) {
       console.error(`Exception during vote processing:`, e);
     } finally {
       this.votingLock.release();
     }
+  }
+
+  private async sendFeeUtxos() {
+    const pendingVotes = await this.voteRepo.getByStatuses([VoteStatus.CREATED]);
+    if (pendingVotes.length === 0) return;
+
+    const txList = [];
+    const groupedVotes = Util.groupBy(pendingVotes, 'proposalId');
+    for (const votes of groupedVotes.values()) {
+      const txIds = await Util.doInBatches(votes, (votes) => this.sendFeeUtxo(votes), 1000);
+      txList.push(...txIds.filter((id) => id));
+    }
+
+    if (txList.length > 0) await this.client.waitForTx(txList.pop());
+  }
+
+  private async sendFeeUtxo(votes: Vote[]): Promise<string | undefined> {
+    try {
+      const txId = await this.deFiChainService.sendFeeUtxos(
+        votes.map((v) => v.masternode.owner),
+        new BigNumber(Config.masternode.voteFee),
+      );
+      await this.voteRepo.update(
+        votes.map((v) => v.id),
+        { status: VoteStatus.FEE_SENT },
+      );
+      return txId;
+    } catch (e) {
+      console.error(`Failed to send fee UTXO for votes ${votes.map((v) => v.id).join(',')}`);
+    }
+  }
+
+  private async doVote() {
+    const pendingVotes = await this.voteRepo.getByStatuses([VoteStatus.FEE_SENT]);
+    await Util.doInBatches(pendingVotes, (votes) => Promise.all(votes.map((v) => this.processVote(v))), 100);
   }
 
   private async processVote(vote: Vote) {
@@ -169,7 +214,7 @@ export class VotingService implements OnModuleInit {
         proposalId: vote.proposalId,
         voteDecision: this.VoteMap[vote.decision],
       });
-      await this.voteRepo.update(vote.id, { txId });
+      await this.voteRepo.update(vote.id, { txId, status: VoteStatus.COMPLETED });
     } catch (e) {
       console.error(`Failed to process vote ${vote.id}:`, e);
     }
