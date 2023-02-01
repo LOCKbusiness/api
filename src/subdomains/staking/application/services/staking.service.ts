@@ -80,17 +80,22 @@ export class StakingService {
     const stakingEntities = await this.repository.getByDepositAddress(address);
     if (stakingEntities.length == 0) throw new NotFoundException('No staking for deposit address found');
 
-    return stakingEntities
-      .reduce((prev, curr) => prev.concat(curr.balances), [] as StakingBalance[])
-      .map(StakingBalanceDtoMapper.entityToDto);
+    return this.mapBalanceToDto(stakingEntities);
   }
 
   async getUserAddressBalances(address: string): Promise<BalanceOutputDto[]> {
     const stakingEntities = await this.getStakingsByUserAddress(address);
     if (stakingEntities.length == 0) throw new NotFoundException('No staking for user address found');
 
-    return stakingEntities
-      .reduce((prev, curr) => prev.concat(curr.balances), [] as StakingBalance[])
+    return this.mapBalanceToDto(stakingEntities);
+  }
+
+  private mapBalanceToDto(staking: Staking[]): BalanceOutputDto[] {
+    return staking
+      .reduce((prev, curr) => {
+        curr.balances.forEach((b) => (b.staking = curr));
+        return prev.concat(curr.balances);
+      }, [] as StakingBalance[])
       .map(StakingBalanceDtoMapper.entityToDto);
   }
 
