@@ -92,11 +92,16 @@ export class VaultManagementService {
     const amountToDeposit = this.amountOf(vault.blockchainPairTokenBId, tokens);
     if (amountToDeposit) {
       console.info(`${logId}: Depositing ${amountToDeposit} of ${vault.blockchainPairTokenBId}`);
-      const depositTx = await this.yieldMachineService.depositToVault(vault, {
-        amount: +amountToDeposit,
-        address: vault.address,
-        vault: vault.vault,
-      });
+      const depositTx = await this.yieldMachineService.depositToVault(
+        vault,
+        {
+          amount: +amountToDeposit,
+          address: vault.address,
+          vault: vault.vault,
+          token: '', // only being used for receiving token on endpoint
+        },
+        vault.blockchainPairTokenBId,
+      );
       savingTxs.push(this.whaleClient.waitForTx(depositTx));
     }
 
