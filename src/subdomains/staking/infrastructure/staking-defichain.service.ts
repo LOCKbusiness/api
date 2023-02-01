@@ -18,6 +18,8 @@ import { TokenProviderService } from 'src/blockchain/ain/whale/token-provider.se
 import { UtxoProviderService } from 'src/blockchain/ain/jellyfish/services/utxo-provider.service';
 import { RawTxService } from 'src/blockchain/ain/jellyfish/services/raw-tx.service';
 import { RawTxDto } from 'src/blockchain/ain/jellyfish/dto/raw-tx.dto';
+import { StakingTypes } from '../domain/entities/staking.entity';
+import { AssetQuery } from 'src/shared/models/asset/asset.service';
 
 @Injectable()
 export class StakingDeFiChainService {
@@ -134,17 +136,38 @@ export class StakingDeFiChainService {
 
   // --- WITHDRAWALS --- //
   async getPossibleWithdrawals(withdrawals: Withdrawal[]): Promise<Withdrawal[]> {
-    const dfiBalance = await this.whaleClient.getUtxoBalance(Config.staking.liquidity.address);
-    const dusdBalance = await this.whaleClient.getTokenBalance(Config.yieldMachine.liquidity.address, 'DUSD');
+    const mnBalances = await Promise.all(
+      StakingTypes[StakingStrategy.MASTERNODE].map((asset) =>
+        this.getBalanceFor(asset, Config.staking.liquidity.address),
+      ),
+    );
+    const lmBalances = await Promise.all(
+      StakingTypes[StakingStrategy.LIQUIDITY_MINING].map((asset) =>
+        this.getBalanceFor(asset, Config.yieldMachine.liquidity.address),
+      ),
+    );
 
-    return [
-      ...this.getPossibleWithdrawalsFor(dfiBalance, 'DFI', withdrawals),
-      ...this.getPossibleWithdrawalsFor(dusdBalance, 'DUSD', withdrawals),
-    ];
+    return [...mnBalances, ...lmBalances]
+      .map(({ balance, asset }) => this.getPossibleWithdrawalsFor(balance, asset, withdrawals))
+      .reduce((prev, curr) => prev.concat(curr), []);
   }
 
-  private getPossibleWithdrawalsFor(balance: BigNumber, assetName: string, withdrawals: Withdrawal[]): Withdrawal[] {
-    const sortedWithdrawals = withdrawals.filter((w) => w.asset.name === assetName).sort((a, b) => a.amount - b.amount);
+  private async getBalanceFor(asset: AssetQuery, address: string): Promise<{ asset: AssetQuery; balance: BigNumber }> {
+    const balance =
+      asset.type === AssetType.COIN
+        ? await this.whaleClient.getUtxoBalance(address)
+        : await this.whaleClient.getTokenBalance(address, asset.name);
+
+    return {
+      asset,
+      balance,
+    };
+  }
+
+  private getPossibleWithdrawalsFor(balance: BigNumber, asset: AssetQuery, withdrawals: Withdrawal[]): Withdrawal[] {
+    const sortedWithdrawals = withdrawals.filter((w) => w.asset.isEqual(asset));
+    // TODO: re-enable
+    //.sort((a, b) => a.amount - b.amount);
 
     const possibleWithdrawals = [];
     let withdrawalSum = 0;
