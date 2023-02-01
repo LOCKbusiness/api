@@ -12,7 +12,6 @@ import { RewardRouteOutputDto } from '../dto/output/reward-route.output.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
 import { RewardRouteOutputDtoMapper } from '../mappers/reward-route-output-dto.mapper';
-import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
 import { RewardRepository } from '../repositories/reward.repository';
 import { StakingRepository } from '../repositories/staking.repository';
 import { StakingRewardBatchService } from './staking-reward-batch.service';

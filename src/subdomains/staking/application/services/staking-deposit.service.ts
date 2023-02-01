@@ -18,7 +18,6 @@ import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.s
 import { CreateDepositDto } from '../dto/input/create-deposit.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
-import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
 import { DepositRepository } from '../repositories/deposit.repository';
 import { StakingRepository } from '../repositories/staking.repository';
 import { StakingStrategyValidator } from '../validators/staking-strategy.validator';

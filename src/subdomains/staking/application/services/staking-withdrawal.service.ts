@@ -12,7 +12,6 @@ import { CreateWithdrawalDraftDto } from '../dto/input/create-withdrawal-draft.d
 import { WithdrawalDraftOutputDto } from '../dto/output/withdrawal-draft.output.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
-import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
 import { WithdrawalDraftOutputDtoMapper } from '../mappers/withdrawal-draft-output-dto.mapper';
 import { WithdrawalRepository } from '../repositories/withdrawal.repository';
 import { WithdrawalOutputDto } from '../dto/output/withdrawal.output.dto';
