@@ -37,6 +37,9 @@ export class VaultParameters {
 export class DepositToVaultParameters extends VaultParameters {
   @IsPositive()
   amount: number;
+
+  @IsString()
+  token: string;
 }
 
 export class WithdrawFromVaultParameters extends VaultParameters {
