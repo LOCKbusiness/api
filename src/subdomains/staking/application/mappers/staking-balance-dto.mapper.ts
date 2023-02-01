@@ -7,7 +7,7 @@ export class StakingBalanceDtoMapper {
       asset: stakingBalance.asset.name,
       balance: stakingBalance.balance,
       blockchain: stakingBalance.asset.blockchain,
-      strategy: stakingBalance.staking.strategy,
+      stakingStrategy: stakingBalance.staking.strategy,
     };
   }
 }

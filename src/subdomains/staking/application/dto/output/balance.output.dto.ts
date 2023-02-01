@@ -13,5 +13,5 @@ export class BalanceOutputDto {
   blockchain: Blockchain;
 
   @ApiProperty({ enum: StakingStrategy })
-  strategy: StakingStrategy;
+  stakingStrategy: StakingStrategy;
 }
