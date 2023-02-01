@@ -227,7 +227,9 @@ export class VotingService implements OnModuleInit {
   // --- CFP HELPERS --- //
   private async getCfpList(): Promise<CfpInfo[]> {
     const cfpList = await this.getCurrentCfpList();
-    return cfpList.map((cfp) => ({ id: cfp.number, name: cfp.title.split(':')[0] }));
+    return cfpList
+      .filter((cfp) => cfp.status === ProposalStatus.VOTING)
+      .map((cfp) => ({ id: cfp.number, name: cfp.title.split(':')[0] }));
   }
 
   private async getCurrentCfpList(): Promise<CfpDto[]> {

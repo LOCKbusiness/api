@@ -1,3 +1,4 @@
+import { ProposalStatus } from '@defichain/jellyfish-api-core/dist/category/governance';
 import { ApiProperty } from '@nestjs/swagger';
 import { VoteDecision } from '../../domain/enums';
 import { Distribution } from './distribution.dto';
@@ -6,8 +7,8 @@ export interface CfpDto {
   number: string;
   title: string;
   type: 'cfp' | 'dfip';
-  startDate: string;
   endDate: string;
+  status: ProposalStatus;
 }
 
 export class CfpInfo {
