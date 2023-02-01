@@ -1,6 +1,7 @@
 import { Vout, Script } from '@defichain/jellyfish-transaction';
 import BigNumber from 'bignumber.js';
 import { Config } from 'src/config/config';
+import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
 import { UtxoConfig } from '../domain/entities/utxo-config';
 import { UtxoSizePriority } from '../domain/enums';
 import { RawTxDto } from '../dto/raw-tx.dto';
@@ -33,6 +34,10 @@ export class RawTxUtxo extends RawTxBase {
         useFeeBuffer: false,
       }),
     );
+  }
+
+  async fundMasternodeVoting(from: string, masternodes: Masternode[]): Promise<RawTxDto> {
+    return this.handle(() => this.createFundMasternodeVoting(from, masternodes));
   }
 
   private async send(
@@ -77,6 +82,29 @@ export class RawTxUtxo extends RawTxBase {
     const tx = RawTxUtil.createTxSegWit(vins, voutsTemp, witnesses);
     const fee = RawTxUtil.calculateFee(tx);
     const vouts = [RawTxUtil.createVoutUtxoToAccount(toScript, token, amount.minus(fee))];
+
+    return RawTxUtil.generateTx(utxo, vins, vouts, witnesses);
+  }
+
+  private async createFundMasternodeVoting(from: string, masternodes: Masternode[]): Promise<RawTxDto> {
+    const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
+
+    const neededUtxoAmount = new BigNumber(Config.masternode.voteFee).multipliedBy(masternodes.length);
+    const utxo = await this.utxoProvider.provideUntilAmount(from, neededUtxoAmount, {
+      sizePriority: UtxoSizePriority.FITTING,
+    });
+
+    const vins = RawTxUtil.createVins(utxo.prevouts);
+    const vouts = masternodes.map((mn) => {
+      const [toScript] = RawTxUtil.parseAddress(mn.owner);
+      return RawTxUtil.createVoutReturn(toScript, new BigNumber(Config.masternode.voteFee));
+    });
+
+    const change = RawTxUtil.createVoutReturn(fromScript, utxo.total?.minus(neededUtxoAmount));
+    vouts.push(change);
+
+    const witness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(fromPubKeyHash)]);
+    const witnesses = new Array(vins.length).fill(witness);
 
     return RawTxUtil.generateTx(utxo, vins, vouts, witnesses);
   }
