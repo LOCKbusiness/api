@@ -9,7 +9,7 @@ import { StakingBalances } from '../../application/services/staking.service';
 @Entity()
 @Index((sb: StakingBalance) => [sb.staking, sb.asset], { unique: true })
 export class StakingBalance extends IEntity {
-  @ManyToOne(() => Staking, (staking) => staking.balances, { nullable: false })
+  @ManyToOne(() => Staking, (staking) => staking.balances, { nullable: false, eager: true })
   staking: Staking;
 
   @ManyToOne(() => Asset, { eager: true, nullable: false })
