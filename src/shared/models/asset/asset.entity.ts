@@ -1,6 +1,7 @@
 import { Entity, Column, Index } from 'typeorm';
 import { Blockchain } from '../../enums/blockchain.enum';
 import { IEntity } from '../entity';
+import { AssetQuery } from './asset.service';
 
 export enum AssetType {
   COIN = 'Coin',
@@ -32,4 +33,8 @@ export class Asset extends IEntity {
 
   @Column({ default: Blockchain.DEFICHAIN })
   blockchain: Blockchain;
+
+  isEqual(asset: AssetQuery): boolean {
+    return this.name === asset.name && this.type === asset.type && this.blockchain === asset.blockchain;
+  }
 }

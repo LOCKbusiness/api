@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { AssetService } from 'src/shared/models/asset/asset.service';
+import { AssetQuery, AssetService } from 'src/shared/models/asset/asset.service';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Reward } from '../../domain/entities/reward.entity';
 import { ReservableBlockchainAddress } from '../../../address-pool/domain/entities/reservable-blockchain-address.entity';
@@ -114,15 +114,15 @@ export class StakingFactory {
 
   //*** HELPER METHODS ***//
 
-  private findCoin(assets: Asset[], name: string, blockchain: string): Asset | undefined {
-    return this.findAsset(assets, name, blockchain, AssetType.COIN);
+  private findCoin(assets: Asset[], name: string, blockchain: Blockchain): Asset | undefined {
+    return this.findAsset(assets, { name, blockchain, type: AssetType.COIN });
   }
 
-  private findToken(assets: Asset[], name: string, blockchain: string): Asset | undefined {
-    return this.findAsset(assets, name, blockchain, AssetType.TOKEN);
+  private findToken(assets: Asset[], name: string, blockchain: Blockchain): Asset | undefined {
+    return this.findAsset(assets, { name, blockchain, type: AssetType.TOKEN });
   }
 
-  private findAsset(assets: Asset[], name: string, blockchain: string, type: AssetType): Asset | undefined {
-    return assets.find((a) => a.name === name && a.blockchain === blockchain && a.type === type);
+  private findAsset(assets: Asset[], query: AssetQuery): Asset | undefined {
+    return assets.find((a) => a.isEqual(query));
   }
 }
