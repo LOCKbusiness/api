@@ -38,7 +38,7 @@ export class YieldMachineService {
     if (command === TransactionCommand.ACCOUNT_TO_ACCOUNT) {
       const allowedAddresses = [
         Config.yieldMachine.liquidity.address,
-        Config.blockchain.default.rew.stakingAddress,
+        Config.yieldMachine.rewardAddress,
         ...(await this.vaultService.getAllAddresses()),
       ];
 
