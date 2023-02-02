@@ -65,6 +65,9 @@
     "yieldMachineLiquidityAccountIndex": {
       "value": "xxx"
     },
+    "yieldMachineRewardAddress": {
+      "value": "xxx"
+    },
     "nodeServicePlanSkuName": {
       "value": "P1v2"
     },
