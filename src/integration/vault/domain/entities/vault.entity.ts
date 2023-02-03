@@ -32,4 +32,7 @@ export class Vault extends IEntity {
 
   @Column({ type: 'integer', default: 155, nullable: false })
   emergencyCollateralRatio: number;
+
+  @Column({ nullable: true })
+  takeLoanAddress: string;
 }
