@@ -131,7 +131,7 @@ export class YieldMachineService {
 
   private takeLoan(vault: Vault, parameters: TakeLoanParameters): Promise<string> {
     return this.transactionExecutionService.takeLoan({
-      to: vault.address,
+      to: vault.takeLoanAddress ?? vault.address,
       vault: vault.vault,
       token: vault.blockchainPairTokenAId,
       amount: new BigNumber(parameters.amount),
