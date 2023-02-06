@@ -155,7 +155,12 @@ export class PayoutService {
       try {
         const strategy = this.payoutStrategies.getPayoutStrategy(group[0]);
         await strategy.doPayout(group[1]);
-      } catch {
+      } catch (e) {
+        console.error(
+          'Error while paying out new payout orders',
+          group[1].map((o) => o.id),
+          e,
+        );
         continue;
       }
     }

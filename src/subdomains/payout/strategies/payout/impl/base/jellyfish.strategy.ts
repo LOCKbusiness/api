@@ -24,7 +24,7 @@ export abstract class JellyfishStrategy extends PayoutStrategy {
       const groups = PayoutUtils.groupOrdersByContext(orders);
 
       for (const [context, group] of [...groups.entries()]) {
-        if (!(await this.jellyfishService.isHealthy(context))) return;
+        if (!(await this.jellyfishService.isHealthy(context))) continue;
 
         await this.doPayoutForContext(context, group);
       }
