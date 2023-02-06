@@ -165,9 +165,7 @@ export class StakingDeFiChainService {
   }
 
   private getPossibleWithdrawalsFor(balance: BigNumber, asset: AssetQuery, withdrawals: Withdrawal[]): Withdrawal[] {
-    const sortedWithdrawals = withdrawals.filter((w) => w.asset.isEqual(asset));
-    // TODO: re-enable
-    //.sort((a, b) => a.amount - b.amount);
+    const sortedWithdrawals = withdrawals.filter((w) => w.asset.isEqual(asset)).sort((a, b) => a.amount - b.amount);
 
     const possibleWithdrawals = [];
     let withdrawalSum = 0;
