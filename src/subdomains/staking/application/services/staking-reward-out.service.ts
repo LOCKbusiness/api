@@ -63,7 +63,7 @@ export class StakingRewardOutService {
         this.logRewardsPayouts(successfulRequests);
       }
     } catch (e) {
-      console.error(e);
+      console.error('Failed to payout rewards:', e);
     }
   }
 

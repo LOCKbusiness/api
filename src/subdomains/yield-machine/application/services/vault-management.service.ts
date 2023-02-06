@@ -36,24 +36,27 @@ export class VaultManagementService {
       );
       const collateralTokens = await this.whaleClient.getAllCollateralTokens();
       const allEmergencyProcesses: Promise<unknown>[] = [];
+
       for (const vault of vaultInfos) {
         const dbVault = vaults.find((v) => v.vault === vault.vaultId);
+
         const nextCollateralRatio = this.calculateNextCollateralRatio(vault, collateralTokens);
         const collateralRatioToUse = nextCollateralRatio
           ? Math.min(+vault.collateralRatio, nextCollateralRatio.toNumber())
           : +vault.collateralRatio;
+
         if (dbVault.emergencyCollateralRatio > collateralRatioToUse) {
-          console.info(`starting emergency payback for ${dbVault.vault} on ${dbVault.address}`);
           const logId = `${dbVault.address} (${dbVault.vault})`;
+          console.warn(`Starting emergency payback for ${logId}`);
+
           allEmergencyProcesses.push(
             this.executeEmergencyFor(dbVault, logId).catch((e) =>
-              console.error(`Exception during vault emergency check for ${logId}:`, e),
+              console.error(`Exception during vault emergency check:`, e),
             ),
           );
         }
       }
       await Promise.all(allEmergencyProcesses);
-      console.info(`finished emergency check`);
     } catch (e) {
       console.error('Exception during vault emergency check:', e);
     } finally {
@@ -67,6 +70,7 @@ export class VaultManagementService {
     // remove liquidity mining pool tokens to have pair token A and pair token B available
     const amountToRemoveFromPool = this.amountOf(vault.blockchainPairId, tokens);
     if (!amountToRemoveFromPool) throw new Error(`${logId}: No pool liquidity found for vault: ${vault.vault}`);
+
     console.info(`${logId}: Removing ${amountToRemoveFromPool} of pool ${vault.blockchainPairId}`);
     const removePoolTx = await this.yieldMachineService.removePoolLiquidity(vault, {
       amount: +amountToRemoveFromPool,

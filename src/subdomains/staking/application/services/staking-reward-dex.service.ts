@@ -61,7 +61,7 @@ export class StakingRewardDexService {
       await this.checkPendingBatches(pendingBatches);
       await this.processNewBatches(newBatches);
     } catch (e) {
-      console.error(e);
+      console.error('Failed to secure reward liquidity:', e);
     }
   }
 
@@ -258,7 +258,7 @@ export class StakingRewardDexService {
       return await this.dexService.reserveLiquidity(request);
     } catch (e) {
       if (e instanceof NotEnoughLiquidityException) {
-        console.info(e.message);
+        console.info(`Not enough liquidity for batch ${batch.id} (asset ${batch.targetAsset.name}): ${e.message}`);
         return 0;
       }
 

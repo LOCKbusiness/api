@@ -49,7 +49,7 @@ export class UtxoProviderService {
         );
       }
     } catch (e) {
-      console.error('Exception during unlocking utxos cronjob:', e);
+      console.error('Exception during UTXO unlocking:', e);
     } finally {
       this.lockUtxo.release();
     }
@@ -57,18 +57,14 @@ export class UtxoProviderService {
 
   unlockSpentBasedOn(prevouts: Prevout[], address: string): void {
     const idsToUnlock = prevouts.map(UtxoProviderService.idForPrevout);
-    console.info(`unlock ${address}: to unlock ${idsToUnlock}`);
     const spentToUnlock = this.spent
       .get(address)
       ?.filter((blocked) => idsToUnlock.includes(blocked.unspent.id))
       .map((blocked) => blocked.unspent);
     this.unspent.set(address, (this.unspent.get(address) ?? []).concat(spentToUnlock));
+
     const newSpent = this.spent.get(address)?.filter((blocked) => !idsToUnlock.includes(blocked.unspent.id));
     this.spent.set(address, newSpent);
-    console.info(`unlock ${address}: unspent ${Array.from(this.unspent.get(address)).map((unspent) => unspent.id)}`);
-    console.info(
-      `unlock ${address}: spent ${Array.from(this.spent.get(address) ?? []).map((blocked) => blocked.unspent.id)}`,
-    );
   }
 
   async addressHasUtxoExactAmount(address: string, amount: BigNumber): Promise<boolean> {
@@ -117,7 +113,6 @@ export class UtxoProviderService {
 
   // --- HELPER METHODS --- //
   private markUsed(address: string, unspent: AddressUnspent[]): AddressUnspent[] {
-    console.info(`lock ${address}: locking ${unspent.map((unspent) => unspent.id)}`);
     const newSpent = unspent.map((u) => {
       return { unlockAt: Util.hoursAfter(1), unspent: u, address };
     });
@@ -126,10 +121,7 @@ export class UtxoProviderService {
       address,
       this.unspent.get(address)?.filter((u) => !unspent.map((us) => us.id).includes(u.id)),
     );
-    console.info(`lock ${address}: unspent ${Array.from(this.unspent.get(address)).map((unspent) => unspent.id)}`);
-    console.info(
-      `lock ${address}: spent ${Array.from(this.spent.get(address) ?? []).map((blocked) => blocked.unspent.id)}`,
-    );
+
     return unspent;
   }
 
@@ -141,25 +133,19 @@ export class UtxoProviderService {
   private async checkBlockAndInvalidate(address: string) {
     const storedBlockHeight = this.addressToBlockHeight.get(address);
     const currentBlockHeight = await this.whaleClient.getBlockHeight();
-    console.info(`update ${address}: stored block ${storedBlockHeight} blockchain block ${currentBlockHeight}`);
     if (storedBlockHeight === currentBlockHeight) return;
-
-    this.addressToBlockHeight.set(address, currentBlockHeight);
 
     const currentUnspent = await this.whaleClient
       .getAllUnspent(address)
       .then((unspent) => unspent.map((u) => ({ ...u, id: UtxoProviderService.idForUnspent(u) })));
-    console.info(`update ${address}: current unspent ${currentUnspent.map((unspent) => unspent.id)}`);
     this.unspent.set(
       address,
       currentUnspent.filter(
         (u) => !(this.spent.get(address) ?? []).map((blocked) => blocked.unspent.id).includes(u.id),
       ),
     );
-    console.info(`update ${address}: unspent ${Array.from(this.unspent.get(address)).map((unspent) => unspent.id)}`);
-    console.info(
-      `update ${address}: spent ${Array.from(this.spent.get(address) ?? []).map((blocked) => blocked.unspent.id)}`,
-    );
+
+    this.addressToBlockHeight.set(address, currentBlockHeight);
   }
 
   private static provideExactAmount(

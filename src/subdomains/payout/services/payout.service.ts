@@ -34,7 +34,6 @@ export class PayoutService {
 
       await this.payoutOrderRepo.save(order);
     } catch (e) {
-      console.error(e);
       throw new Error(
         `Error while trying to create PayoutOrder for context ${request.context} and correlationId: ${request.correlationId}`,
       );

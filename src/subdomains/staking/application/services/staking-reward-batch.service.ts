@@ -43,7 +43,7 @@ export class StakingRewardBatchService {
         );
       }
     } catch (e) {
-      console.error(e);
+      console.error('Failed to batch rewards:', e);
     }
   }
 
