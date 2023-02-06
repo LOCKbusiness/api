@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Asset } from 'src/shared/models/asset/asset.entity';
-import { Not, IsNull } from 'typeorm';
+import { Not } from 'typeorm';
 import { RewardBatch, RewardBatchStatus } from '../../domain/entities/reward-batch.entity';
 import { Reward } from '../../domain/entities/reward.entity';
-import { RewardStatus } from '../../domain/enums';
 import { RewardBatchRepository } from '../repositories/reward-batch.repository';
 import { RewardRepository } from '../repositories/reward.repository';
 
@@ -13,17 +12,7 @@ export class StakingRewardBatchService {
 
   async batchRewardsByAssets(): Promise<void> {
     try {
-      const rewardsInput = await this.rewardRepo.find({
-        where: {
-          referenceAsset: Not(IsNull()),
-          outputReferenceAmount: Not(IsNull()),
-          rewardRoute: Not(IsNull()),
-          batch: IsNull(),
-          status: RewardStatus.PREPARATION_CONFIRMED,
-        },
-        relations: ['staking', 'batch'],
-      });
-
+      const rewardsInput = await this.rewardRepo.getNewRewards();
       if (rewardsInput.length === 0) {
         return;
       }
