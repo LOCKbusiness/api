@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { Between, EntityManager, FindOperator, Repository } from 'typeorm';
+import { Between, EntityManager, FindOperator, IsNull, Not, Repository } from 'typeorm';
 import { Reward } from '../../domain/entities/reward.entity';
 import { StakingType } from '../../domain/entities/staking.entity';
 import { RewardStatus } from '../../domain/enums';
@@ -57,15 +56,16 @@ export class RewardRepository extends Repository<Reward> {
       .getRawOne<{ amount: number }>()
       .then((r) => r.amount ?? 0);
   }
-
-  async getDfiAmountForNewRewards(): Promise<number> {
-    return this.createQueryBuilder('reward')
-      .leftJoin('reward.referenceAsset', 'referenceAsset')
-      .select('SUM(outputReferenceAmount)', 'amount')
-      .where('reward.status = :status', { status: RewardStatus.PREPARATION_PENDING })
-      .andWhere('referenceAsset.name = :name', { name: 'DFI' })
-      .andWhere('referenceAsset.blockchain = :blockchain', { blockchain: Blockchain.DEFICHAIN })
-      .getRawOne<{ amount: number }>()
-      .then((r) => r.amount ?? 0);
+  async getNewRewards(): Promise<Reward[]> {
+    return this.find({
+      where: {
+        referenceAsset: Not(IsNull()),
+        outputReferenceAmount: Not(IsNull()),
+        rewardRoute: Not(IsNull()),
+        batch: IsNull(),
+        status: RewardStatus.CREATED,
+      },
+      relations: ['staking', 'batch'],
+    });
   }
 }
