@@ -280,7 +280,7 @@ export class LiquidityManagementService {
             return this.client.getUtxoBalance(masternode.owner).then((balance) => balance.toString());
           },
           updateFunc: (masternode: Masternode, balance: string) => {
-            if (new BigNumber(balance).gt(0)) return;
+            if (new BigNumber(balance).gt(0.1)) return;
             return this.masternodeService.resigned(masternode.id);
           },
         };
