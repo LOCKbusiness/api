@@ -53,13 +53,4 @@ export class StakingRewardNotificationService {
       metadata: { context: MailContext.STAKING, correlationId },
     });
   }
-
-  async sendRewardsPausedErrorMail(message: string, e?: Error): Promise<void> {
-    const errors = e ? [message, e.message] : [message];
-
-    await this.notificationService.sendMail({
-      type: MailType.ERROR_MONITORING,
-      input: { subject: 'Reward Payout Error - rewards paused!', errors },
-    });
-  }
 }

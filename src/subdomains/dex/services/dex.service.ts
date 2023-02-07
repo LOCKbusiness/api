@@ -200,14 +200,12 @@ export class DexService {
   }
 
   async getPendingOrdersCount(asset: Asset): Promise<number> {
-    const pendingOrders = await this.liquidityOrderRepo.findBy([
+    return this.liquidityOrderRepo.countBy([
       { targetAsset: { id: asset.id }, isComplete: false },
       { targetAsset: { id: asset.id }, isReady: false },
       { swapAsset: { id: asset.id }, isComplete: false },
       { swapAsset: { id: asset.id }, isReady: false },
     ]);
-
-    return pendingOrders.length;
   }
 
   // *** SUPPLEMENTARY PUBLIC API *** //
