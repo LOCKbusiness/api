@@ -63,7 +63,7 @@ export class StakingRewardService {
     const updatedStaking = await this.repository.saveWithLock(
       stakingId,
       (staking) => staking.setRewardRoutes(rewardRoutes),
-      ['asset', 'rewardRoutes', 'rewardRoutes.targetAsset'],
+      ['rewardRoutes', 'rewardRoutes.targetAsset'],
     );
 
     return this.stakingService.getStakingDto(updatedStaking);
