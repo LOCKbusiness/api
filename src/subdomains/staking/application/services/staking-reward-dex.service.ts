@@ -8,6 +8,7 @@ import { NotEnoughLiquidityException } from 'src/subdomains/dex/exceptions/not-e
 import { PriceSlippageException } from 'src/subdomains/dex/exceptions/price-slippage.exception';
 import { PurchaseLiquidityRequest, ReserveLiquidityRequest } from 'src/subdomains/dex/interfaces';
 import { DexService } from 'src/subdomains/dex/services/dex.service';
+import { Not } from 'typeorm';
 import { RewardBatch, RewardBatchStatus } from '../../domain/entities/reward-batch.entity';
 import { RewardBatchRepository } from '../repositories/reward-batch.repository';
 import { StakingRewardNotificationService } from './staking-reward-notification.service';
@@ -31,6 +32,9 @@ export class StakingRewardDexService {
      * abort the whole process if node is unavailable
      */
     await this.checkNodeHealth();
+
+    const pendingBatch = await this.rewardBatchRepo.findOneBy({ status: Not(RewardBatchStatus.COMPLETE) });
+    if (pendingBatch != null) return;
 
     await this.startNewPreparation();
   }
