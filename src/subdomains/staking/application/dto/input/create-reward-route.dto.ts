@@ -25,8 +25,8 @@ export class CreateRewardRouteDto {
   @IsString()
   targetAddress: string;
 
-  @ApiProperty()
+  @ApiProperty({ enum: [Blockchain.DEFICHAIN] })
   @IsNotEmpty()
-  @IsEnum([Blockchain.DEFICHAIN])
-  targetBlockchain = Blockchain.DEFICHAIN;
+  @IsEnum({ [Blockchain.DEFICHAIN]: Blockchain.DEFICHAIN })
+  targetBlockchain: Blockchain;
 }
