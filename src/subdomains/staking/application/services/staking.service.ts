@@ -19,7 +19,6 @@ import { DepositRepository } from '../repositories/deposit.repository';
 import { WithdrawalRepository } from '../repositories/withdrawal.repository';
 import { EntityManager } from 'typeorm';
 import { SetStakingFeeDto } from '../dto/input/set-staking-fee.dto';
-import { StakingBalance } from '../../domain/entities/staking-balance.entity';
 import { AssetBalance } from '../dto/output/asset-balance';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
