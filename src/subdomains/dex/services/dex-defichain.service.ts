@@ -167,7 +167,7 @@ export class DexDeFiChainService {
     targetAsset: Asset,
     swapAsset: Asset,
   ): Promise<number> {
-    if (referenceAsset === targetAsset) {
+    if (referenceAsset.id === targetAsset.id) {
       const swapAssetPrice = await this.calculatePrice(swapAsset, referenceAsset);
 
       const swapAmount = referenceAmount * swapAssetPrice;
@@ -202,7 +202,7 @@ export class DexDeFiChainService {
   // *** HELPER METHODS *** //
 
   private async getTargetAmount(sourceAsset: Asset, sourceAmount: number, targetAsset: Asset): Promise<number> {
-    return targetAsset.name === sourceAsset.name
+    return targetAsset.id === sourceAsset.id
       ? sourceAmount
       : this.#dexClient.testCompositeSwap(sourceAsset.name, targetAsset.name, sourceAmount);
   }
