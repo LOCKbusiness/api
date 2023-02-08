@@ -206,7 +206,7 @@ export class Staking extends IEntity {
   //*** HELPER METHODS ***//
 
   private validateRewardDistribution(newRewardRoutes: RewardRoute[]): void {
-    const totalDistribution = Util.sumObj<RewardRoute>(newRewardRoutes, 'rewardPercent');
+    const totalDistribution = Util.round(Util.sumObj<RewardRoute>(newRewardRoutes, 'rewardPercent'), 2);
 
     if (totalDistribution !== 1) {
       throw new BadRequestException(
