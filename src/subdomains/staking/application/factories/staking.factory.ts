@@ -16,6 +16,7 @@ import { RewardRouteRepository } from '../repositories/reward-route.repository';
 import { StakingStrategyValidator } from '../validators/staking-strategy.validator';
 import { StakingStrategy } from '../../domain/enums';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
+import { Util } from 'src/shared/util';
 
 @Injectable()
 export class StakingFactory {
@@ -109,7 +110,7 @@ export class StakingFactory {
 
     const targetAddress = BlockchainAddress.create(targetAddressName, targetBlockchain);
 
-    return RewardRoute.create(staking, label, rewardPercent, targetAsset, targetAddress);
+    return RewardRoute.create(staking, label, Util.round(rewardPercent, 2), targetAsset, targetAddress);
   }
 
   //*** HELPER METHODS ***//
