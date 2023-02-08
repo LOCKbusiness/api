@@ -32,14 +32,48 @@ export abstract class JellyfishStrategy extends PayoutStrategy {
     }
   }
 
-  async checkPayoutCompletionData(order: PayoutOrder): Promise<void> {
+  async checkPayoutCompletionData(orders: PayoutOrder[]): Promise<void> {
     try {
-      const [isComplete, totalPayoutFee] = await this.jellyfishService.getPayoutCompletionData(
-        order.context,
-        order.payoutTxId,
-      );
+      const groups = Util.groupBy<PayoutOrder, PayoutOrderContext>(orders, 'context');
 
-      if (isComplete) {
+      for (const [context, group] of groups.entries()) {
+        if (!(await this.jellyfishService.isHealthy(context))) continue;
+
+        await this.checkPayoutCompletionDataForContext(context, group);
+      }
+    } catch (e) {
+      console.error('Error while checking payout completion of DeFiChain payout orders', e);
+    }
+  }
+
+  protected abstract doPayoutForContext(context: PayoutOrderContext, orders: PayoutOrder[]): Promise<void>;
+
+  async checkPayoutCompletionDataForContext(context: PayoutOrderContext, orders: PayoutOrder[]): Promise<void> {
+    const groups = Util.groupBy<PayoutOrder, string>(orders, 'payoutTxId');
+
+    for (const [payoutTxId, group] of groups.entries()) {
+      try {
+        await this.checkPayoutCompletionDataForTx(context, group, payoutTxId);
+      } catch (e) {
+        console.error(
+          `Error while checking payout completion data of payout orders for context ${context} and payoutTxId ${payoutTxId}`,
+          group.map((o) => o.id),
+          e,
+        );
+        continue;
+      }
+    }
+  }
+
+  private async checkPayoutCompletionDataForTx(
+    context: PayoutOrderContext,
+    orders: PayoutOrder[],
+    payoutTxId: string,
+  ): Promise<void> {
+    const [isComplete, totalPayoutFee] = await this.jellyfishService.getPayoutCompletionData(context, payoutTxId);
+
+    if (isComplete) {
+      for (const order of orders) {
         const orderPayoutFee = await this.calculateOrderPayoutFee(order, totalPayoutFee);
 
         order.complete();
@@ -47,12 +81,8 @@ export abstract class JellyfishStrategy extends PayoutStrategy {
 
         await this.payoutOrderRepo.save(order);
       }
-    } catch (e) {
-      console.error(`Error in checking DeFiChain payout order completion. Order ID: ${order.id}`, e);
     }
   }
-
-  protected abstract doPayoutForContext(context: PayoutOrderContext, group: PayoutOrder[]): Promise<void>;
 
   protected createPayoutGroups(orders: PayoutOrder[], maxGroupSize: number): PayoutOrder[][] {
     const isSameAsset = this.validateIfOrdersOfSameAsset(orders);
