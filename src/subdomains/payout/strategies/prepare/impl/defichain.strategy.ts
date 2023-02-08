@@ -4,7 +4,6 @@ import { AssetService } from 'src/shared/models/asset/asset.service';
 import { Util } from 'src/shared/util';
 import { TransferNotRequiredException } from 'src/subdomains/dex/exceptions/transfer-not-required.exception';
 import { DexService } from 'src/subdomains/dex/services/dex.service';
-import { PayoutUtils } from 'src/subdomains/payout/utils/payout-utils';
 import { PayoutOrder, PayoutOrderContext } from '../../../entities/payout-order.entity';
 import { FeeResult } from '../../../interfaces';
 import { PayoutOrderRepository } from '../../../repositories/payout-order.repository';
@@ -23,9 +22,9 @@ export class DeFiChainStrategy extends PrepareStrategy {
   }
 
   async preparePayout(orders: PayoutOrder[]): Promise<void> {
-    const groups = PayoutUtils.groupOrdersByContext(orders);
+    const groups = Util.groupBy<PayoutOrder, PayoutOrderContext>(orders, 'context');
 
-    for (const [context, group] of [...groups.entries()]) {
+    for (const [context, group] of groups.entries()) {
       await this.preparePayoutForContext(context, group);
     }
   }
@@ -58,9 +57,9 @@ export class DeFiChainStrategy extends PrepareStrategy {
   //*** HELPER METHODS ***//
 
   private async preparePayoutForContext(context: PayoutOrderContext, orders: PayoutOrder[]): Promise<void> {
-    const groups = PayoutUtils.groupOrdersByAssetId(orders);
+    const groups = Util.groupBy<PayoutOrder, number>(orders, 'id');
 
-    for (const [assetId, group] of [...groups.entries()]) {
+    for (const [assetId, group] of groups.entries()) {
       try {
         if (!(await this.defichainService.isHealthy(context))) continue;
 
