@@ -71,10 +71,11 @@ export abstract class JellyfishStrategy extends PayoutStrategy {
     payoutTxId: string,
   ): Promise<void> {
     const [isComplete, totalPayoutFee] = await this.jellyfishService.getPayoutCompletionData(context, payoutTxId);
+    const totalPayoutAmount = Util.sumObj<PayoutOrder>(orders, 'amount');
 
     if (isComplete) {
       for (const order of orders) {
-        const orderPayoutFee = await this.calculateOrderPayoutFee(order, totalPayoutFee);
+        const orderPayoutFee = this.calculateOrderPayoutFee(order, totalPayoutFee, totalPayoutAmount);
 
         order.complete();
         order.recordPayoutFee(await this.feeAsset(), orderPayoutFee);
@@ -192,11 +193,7 @@ export abstract class JellyfishStrategy extends PayoutStrategy {
     return orders.every((order, i) => (orders[i + 1] ? order.asset.name === orders[i + 1].asset.name : true));
   }
 
-  private async calculateOrderPayoutFee(order: PayoutOrder, totalPayoutFee: number): Promise<number> {
-    const ordersWithSamePayoutTxId = await this.payoutOrderRepo.findBy({ payoutTxId: order.payoutTxId });
-
-    const totalOrdersAmount = Util.sumObj<PayoutOrder>(ordersWithSamePayoutTxId, 'amount');
-
-    return Util.round((totalPayoutFee / totalOrdersAmount) * order.amount, 8);
+  private calculateOrderPayoutFee(order: PayoutOrder, totalPayoutFee: number, totalPayoutAmount: number): number {
+    return Util.round((totalPayoutFee / totalPayoutAmount) * order.amount, 8);
   }
 }
