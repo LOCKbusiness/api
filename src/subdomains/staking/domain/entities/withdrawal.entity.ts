@@ -55,7 +55,7 @@ export class Withdrawal extends IEntity {
     withdrawal.staking = staking;
     withdrawal.status = WithdrawalStatus.DRAFT;
     withdrawal.asset = asset;
-    withdrawal.amount = amount;
+    withdrawal.amount = Util.round(amount, 8);
 
     return withdrawal;
   }
