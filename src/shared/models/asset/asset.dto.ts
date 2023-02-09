@@ -14,13 +14,13 @@ export class AssetDto {
   displayName: string;
 
   @ApiProperty({
-    description: 'Asset type of the asset',
+    description: 'Type of the asset',
     enum: AssetType,
   })
   type: AssetType;
 
   @ApiProperty({
-    description: 'Asset category of the asset',
+    description: 'Category of the asset',
     enum: AssetCategory,
   })
   category: AssetCategory;
@@ -30,4 +30,14 @@ export class AssetDto {
     enum: Blockchain,
   })
   blockchain: Blockchain;
+
+  @ApiProperty({
+    description: 'Indicates if an asset can be bought',
+  })
+  buyable: boolean;
+
+  @ApiProperty({
+    description: 'Indicates if an asset can be sold',
+  })
+  sellable: boolean;
 }
