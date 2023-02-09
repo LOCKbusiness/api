@@ -34,6 +34,12 @@ export class Asset extends IEntity {
   @Column({ default: Blockchain.DEFICHAIN })
   blockchain: Blockchain;
 
+  @Column({ default: false })
+  buyable: boolean;
+
+  @Column({ default: false })
+  sellable: boolean;
+
   isEqual(asset: AssetQuery): boolean {
     return this.name === asset.name && this.type === asset.type && this.blockchain === asset.blockchain;
   }
