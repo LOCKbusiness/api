@@ -222,7 +222,7 @@ export class VotingService implements OnModuleInit {
     const cfpList = await this.getCurrentCfpList();
     return {
       startDate: new Date(cfpList[0].startDate),
-      cfpList: cfpList.map((cfp) => ({ id: cfp.number, name: cfp.title.split(':')[0] })),
+      cfpList: cfpList.map((cfp) => ({ id: cfp.number, name: cfp.title })),
     };
   }
 
