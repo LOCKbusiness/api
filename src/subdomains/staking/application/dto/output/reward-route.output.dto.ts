@@ -24,5 +24,8 @@ export class RewardRouteOutputDto {
   targetBlockchain: Blockchain;
 
   @ApiProperty()
+  rewardAsset: string;
+
+  @ApiProperty()
   isReinvest: boolean;
 }

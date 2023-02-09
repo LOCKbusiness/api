@@ -11,6 +11,7 @@ export class RewardRouteOutputDtoMapper {
       targetAsset: route.targetAsset.name,
       targetAddress: route.targetAddress.address,
       targetBlockchain: route.targetAddress.blockchain,
+      rewardAsset: route.rewardAsset.name,
       isReinvest: route.targetAddress.isEqual(staking.depositAddress),
     }));
   }
