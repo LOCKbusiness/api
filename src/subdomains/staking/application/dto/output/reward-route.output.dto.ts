@@ -5,9 +5,6 @@ export class RewardRouteOutputDto {
   @ApiProperty()
   id: number;
 
-  @ApiProperty()
-  stakingId: number;
-
   @ApiPropertyOptional()
   label?: string;
 
@@ -22,6 +19,9 @@ export class RewardRouteOutputDto {
 
   @ApiProperty()
   targetBlockchain: Blockchain;
+
+  @ApiProperty()
+  rewardAsset: string;
 
   @ApiProperty()
   isReinvest: boolean;
