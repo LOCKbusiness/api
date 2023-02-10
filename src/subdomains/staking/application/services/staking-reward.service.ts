@@ -3,10 +3,12 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Config, Process } from 'src/config/config';
 import { Lock } from 'src/shared/lock';
 import { AssetService } from 'src/shared/models/asset/asset.service';
+import { Reward } from '../../domain/entities/reward.entity';
 import { RewardStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { CreateRewardRouteDto } from '../dto/input/create-reward-route.dto';
 import { CreateRewardDto } from '../dto/input/create-reward.dto';
+import { UpdateRewardDto } from '../dto/input/update-reward.dto';
 import { RewardRouteOutputDto } from '../dto/output/reward-route.output.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
@@ -51,6 +53,13 @@ export class StakingRewardService {
        */
       await this.stakingService.updateRewardsAmount(stakingId);
     }
+  }
+
+  async updateReward(rewardId: number, dto: UpdateRewardDto): Promise<Reward> {
+    const entity = await this.rewardRepository.findOneBy({ id: rewardId });
+    if (!entity) throw new NotFoundException('Reward not found');
+
+    return await this.rewardRepository.save({ ...entity, ...dto });
   }
 
   async setRewardRoutes(userId: number, stakingId: number, dtos: CreateRewardRouteDto[]): Promise<StakingOutputDto> {
