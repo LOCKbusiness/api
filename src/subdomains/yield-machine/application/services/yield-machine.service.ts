@@ -36,9 +36,11 @@ export class YieldMachineService {
 
     // additional checks for account to account txs
     if (command === TransactionCommand.ACCOUNT_TO_ACCOUNT) {
-      const allowedAddresses = await this.vaultService
-        .getAllAddresses()
-        .then((addresses) => addresses.concat(Config.yieldMachine.liquidity.address));
+      const allowedAddresses = [
+        Config.yieldMachine.liquidity.address,
+        Config.yieldMachine.rewardAddress,
+        ...(await this.vaultService.getAllAddresses()),
+      ];
 
       if (!this.isSendAllowed(parameters, allowedAddresses))
         throw new ForbiddenException('Send parameters are not allowed');
@@ -129,7 +131,7 @@ export class YieldMachineService {
 
   private takeLoan(vault: Vault, parameters: TakeLoanParameters): Promise<string> {
     return this.transactionExecutionService.takeLoan({
-      to: vault.address,
+      to: vault.takeLoanAddress ?? vault.address,
       vault: vault.vault,
       token: vault.blockchainPairTokenAId,
       amount: new BigNumber(parameters.amount),

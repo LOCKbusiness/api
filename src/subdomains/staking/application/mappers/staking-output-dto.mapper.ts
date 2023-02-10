@@ -30,7 +30,7 @@ export class StakingOutputDtoMapper {
       balances: staking.balances.map((b) =>
         StakingBalanceMapper.entityToDto(b, pendingDepositAmounts, pendingWithdrawalAmounts),
       ),
-      rewardRoutes: staking.activeRewardRoutes.map(RewardRouteOutputDtoMapper.entityToDto),
+      rewardRoutes: RewardRouteOutputDtoMapper.entityToDtos(staking),
     };
   }
 }

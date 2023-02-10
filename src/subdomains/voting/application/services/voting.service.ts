@@ -274,7 +274,7 @@ export class VotingService implements OnModuleInit {
     const cfpList = await this.getCurrentCfpList();
     return cfpList
       .filter((cfp) => cfp.status === ProposalStatus.VOTING)
-      .map((cfp) => ({ id: cfp.number, name: cfp.title.split(':')[0] }));
+      .map((cfp) => ({ id: cfp.number, name: cfp.title }));
   }
 
   private async getCurrentCfpList(): Promise<CfpDto[]> {

@@ -1,6 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, Max, Min } from 'class-validator';
+import { GetConfig } from 'src/config/config';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
+import { AllRewardAssets } from 'src/subdomains/staking/domain/entities/staking.entity';
 
 export class CreateRewardRouteDto {
   @ApiPropertyOptional()
@@ -23,10 +25,16 @@ export class CreateRewardRouteDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
+  @Matches(GetConfig().addressFormat)
   targetAddress: string;
+
+  @ApiProperty({ enum: [Blockchain.DEFICHAIN] })
+  @IsNotEmpty()
+  @IsEnum({ [Blockchain.DEFICHAIN]: Blockchain.DEFICHAIN })
+  targetBlockchain: Blockchain;
 
   @ApiProperty()
   @IsNotEmpty()
-  @IsEnum([Blockchain.DEFICHAIN])
-  targetBlockchain = Blockchain.DEFICHAIN;
+  @IsEnum(AllRewardAssets.map((a) => a.name))
+  rewardAsset: string;
 }

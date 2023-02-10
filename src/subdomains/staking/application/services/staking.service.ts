@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { Util } from 'src/shared/util';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
-import { Staking, StakingType, StakingTypes } from '../../domain/entities/staking.entity';
+import { Staking, StakingType } from '../../domain/entities/staking.entity';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
 import { GetOrCreateStakingQuery } from '../dto/input/get-staking.query';
 import { BalanceOutputDto } from '../dto/output/balance.output.dto';
@@ -19,7 +19,6 @@ import { DepositRepository } from '../repositories/deposit.repository';
 import { WithdrawalRepository } from '../repositories/withdrawal.repository';
 import { EntityManager } from 'typeorm';
 import { SetStakingFeeDto } from '../dto/input/set-staking-fee.dto';
-import { StakingBalance } from '../../domain/entities/staking-balance.entity';
 import { AssetBalance } from '../dto/output/asset-balance';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
@@ -57,41 +56,35 @@ export class StakingService {
 
     const { blockchain, strategy } = query;
 
-    const assetList: Asset[] = [];
-    for (const stakingType of StakingTypes[strategy].filter((s) => s.blockchain == blockchain)) {
-      assetList.push(await this.assetService.getAssetByQuery(stakingType));
-    }
-
     const existingStaking = await this.repository.findOneBy({ userId, strategy });
-    if (existingStaking) {
-      const amounts = await this.getUnconfirmedDepositsAndWithdrawalsAmounts(existingStaking.id);
+    if (existingStaking) return this.getStakingDto(existingStaking);
 
-      return StakingOutputDtoMapper.entityToDto(existingStaking, amounts.deposits, amounts.withdrawals);
-    }
+    // create a new staking
+    const newStaking = await this.createStaking(userId, walletId, strategy, blockchain);
+    return StakingOutputDtoMapper.entityToDto(newStaking, [], []);
+  }
 
-    return StakingOutputDtoMapper.entityToDto(
-      await this.createStaking(userId, walletId, strategy, assetList, blockchain),
-      [],
-      [],
-    );
+  async getStakingDto(staking: Staking, asset?: Asset): Promise<StakingOutputDto> {
+    const { deposits, withdrawals } = await this.getUnconfirmedDepositsAndWithdrawalsAmounts(staking.id);
+    return StakingOutputDtoMapper.entityToDto(staking, deposits, withdrawals, asset);
   }
 
   async getDepositAddressBalances(address: string): Promise<BalanceOutputDto[]> {
     const stakingEntities = await this.repository.getByDepositAddress(address);
     if (stakingEntities.length == 0) throw new NotFoundException('No staking for deposit address found');
 
-    return stakingEntities
-      .reduce((prev, curr) => prev.concat(curr.balances), [] as StakingBalance[])
-      .map(StakingBalanceDtoMapper.entityToDto);
+    return this.getBalanceDtos(stakingEntities);
   }
 
   async getUserAddressBalances(address: string): Promise<BalanceOutputDto[]> {
     const stakingEntities = await this.getStakingsByUserAddress(address);
     if (stakingEntities.length == 0) throw new NotFoundException('No staking for user address found');
 
-    return stakingEntities
-      .reduce((prev, curr) => prev.concat(curr.balances), [] as StakingBalance[])
-      .map(StakingBalanceDtoMapper.entityToDto);
+    return this.getBalanceDtos(stakingEntities);
+  }
+
+  private getBalanceDtos(stakings: Staking[]): BalanceOutputDto[] {
+    return stakings.map(StakingBalanceDtoMapper.entityToDtos).reduce((prev, curr) => prev.concat(curr), []);
   }
 
   async getStakingsByUserAddress(address: string): Promise<Staking[]> {
@@ -189,20 +182,12 @@ export class StakingService {
     userId: number,
     walletId: number,
     strategy: StakingStrategy,
-    assetList: Asset[],
     blockchain: Blockchain,
   ): Promise<Staking> {
     const depositAddress = await this.addressService.getAvailableAddress(BlockchainAddressReservationPurpose.STAKING);
     const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
 
-    const staking = await this.factory.createStaking(
-      userId,
-      strategy,
-      blockchain,
-      assetList,
-      depositAddress,
-      withdrawalAddress,
-    );
+    const staking = await this.factory.createStaking(userId, strategy, blockchain, depositAddress, withdrawalAddress);
 
     return this.repository.save(staking);
   }

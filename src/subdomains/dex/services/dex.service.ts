@@ -21,7 +21,8 @@ import {
 } from '../interfaces';
 import { PurchaseLiquidityStrategies } from '../strategies/purchase-liquidity/purchase-liquidity.facade';
 import { SellLiquidityStrategies } from '../strategies/sell-liquidity/sell-liquidity.facade';
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
+import { TransferNotRequiredException } from '../exceptions/transfer-not-required.exception';
 
 @Injectable()
 export class DexService {
@@ -200,22 +201,25 @@ export class DexService {
   }
 
   async getPendingOrdersCount(asset: Asset): Promise<number> {
-    const pendingOrders = await this.liquidityOrderRepo.findBy([
+    return this.liquidityOrderRepo.countBy([
       { targetAsset: { id: asset.id }, isComplete: false },
       { targetAsset: { id: asset.id }, isReady: false },
       { swapAsset: { id: asset.id }, isComplete: false },
       { swapAsset: { id: asset.id }, isReady: false },
     ]);
-
-    return pendingOrders.length;
   }
 
   // *** SUPPLEMENTARY PUBLIC API *** //
 
   async transferLiquidity(request: TransferRequest): Promise<string> {
     const { destinationAddress, asset, amount } = request;
+    const sourceAddress = this.dexDeFiChainService.stakingWalletAddress;
 
-    return this.dexDeFiChainService.transferLiquidity(destinationAddress, asset.name, amount);
+    if (asset.type === AssetType.TOKEN && destinationAddress === sourceAddress) {
+      throw new TransferNotRequiredException('Transfer of token to same address is not required/useless');
+    }
+
+    return this.dexDeFiChainService.transferLiquidity(sourceAddress, destinationAddress, asset.name, amount);
   }
 
   async transferMinimalUtxo(address: string): Promise<string> {

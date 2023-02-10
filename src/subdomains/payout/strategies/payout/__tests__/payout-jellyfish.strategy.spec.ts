@@ -3,7 +3,7 @@ import { NotificationService } from 'src/integration/notification/services/notif
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { createCustomAsset } from 'src/shared/models/asset/__mocks__/asset.entity.mock';
 import { SettingService } from 'src/shared/services/setting.service';
-import { PayoutOrder, PayoutOrderContext, PayoutOrderStatus } from '../../../entities/payout-order.entity';
+import { PayoutOrder, PayoutOrderStatus } from '../../../entities/payout-order.entity';
 import {
   createCustomPayoutOrder,
   createDefaultPayoutOrder,
@@ -44,43 +44,6 @@ describe('PayoutJellyfishStrategy', () => {
   afterEach(() => {
     repoSaveSpy.mockClear();
     sendErrorMailSpy.mockClear();
-  });
-
-  describe('#groupOrdersByContext(...)', () => {
-    it('returns an instance of Map', () => {
-      expect(strategy.groupOrdersByContextWrapper([])).toBeInstanceOf(Map);
-      expect(strategy.groupOrdersByContextWrapper([createDefaultPayoutOrder()])).toBeInstanceOf(Map);
-    });
-
-    it('separates orders in different groups by context', () => {
-      const orders = [
-        createCustomPayoutOrder({ context: PayoutOrderContext.STAKING_REWARD }),
-        createCustomPayoutOrder({ context: PayoutOrderContext.STAKING_REWARD }),
-        createCustomPayoutOrder({ context: PayoutOrderContext.CRYPTO_CRYPTO }),
-      ];
-
-      const groups = strategy.groupOrdersByContextWrapper(orders);
-
-      expect([...groups.entries()].length).toBe(2);
-      expect([...groups.keys()][0]).toBe(PayoutOrderContext.STAKING_REWARD);
-      expect([...groups.keys()][1]).toBe(PayoutOrderContext.CRYPTO_CRYPTO);
-      expect([...groups.values()][0].length).toBe(2);
-      expect([...groups.values()][1].length).toBe(1);
-    });
-
-    it('puts orders with same context in one group', () => {
-      const orders = [
-        createCustomPayoutOrder({ context: PayoutOrderContext.STAKING_REWARD }),
-        createCustomPayoutOrder({ context: PayoutOrderContext.STAKING_REWARD }),
-        createCustomPayoutOrder({ context: PayoutOrderContext.STAKING_REWARD }),
-      ];
-
-      const groups = strategy.groupOrdersByContextWrapper(orders);
-
-      expect([...groups.entries()].length).toBe(1);
-      expect([...groups.keys()][0]).toBe(PayoutOrderContext.STAKING_REWARD);
-      expect([...groups.values()][0].length).toBe(3);
-    });
   });
 
   describe('#createPayoutGroups(...)', () => {
@@ -300,10 +263,6 @@ class PayoutJellyfishStrategyWrapper extends JellyfishStrategy {
 
   protected async dispatchPayout(): Promise<string> {
     return 'TX_ID_01';
-  }
-
-  groupOrdersByContextWrapper(orders: PayoutOrder[]) {
-    return this.groupOrdersByContext(orders);
   }
 
   createPayoutGroupsWrapper(orders: PayoutOrder[], maxGroupSize: number) {

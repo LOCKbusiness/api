@@ -42,7 +42,7 @@
       "value": "xxx"
     },
     "rewStakingAddress": {
-      "value": "tf1qu036vgy0phkrwkamn4axwqfsu3d4nja7n9rnsv"
+      "value": "xxx"
     },
     "apiSignAddress": {
       "value": "xxx"
@@ -63,6 +63,9 @@
       "value": "xxx"
     },
     "yieldMachineLiquidityAccountIndex": {
+      "value": "xxx"
+    },
+    "yieldMachineRewardAddress": {
       "value": "xxx"
     },
     "nodeServicePlanSkuName": {

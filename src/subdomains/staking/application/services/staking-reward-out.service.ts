@@ -49,7 +49,7 @@ export class StakingRewardOutService {
 
         const successfulRequests = [];
 
-        for (const reward of batch.rewards.filter((r) => r.status === RewardStatus.PREPARATION_CONFIRMED)) {
+        for (const reward of batch.rewards.filter((r) => r.status === RewardStatus.CREATED)) {
           try {
             await this.doPayout(reward);
             successfulRequests.push(reward);
@@ -63,7 +63,7 @@ export class StakingRewardOutService {
         this.logRewardsPayouts(successfulRequests);
       }
     } catch (e) {
-      console.error(e);
+      console.error('Failed to payout rewards:', e);
     }
   }
 

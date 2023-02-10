@@ -31,7 +31,6 @@ export class AsyncMap<K, T> {
 
   public resolve(id: K, value: T) {
     const subscriber = this.subscribers.get(id);
-    console.log(`AsyncMap - resolving ${id}:`, value);
     if (subscriber) {
       subscriber.resolve(value);
       clearTimeout(subscriber.timer);

@@ -193,6 +193,7 @@ export class Configuration {
       wallet: process.env.YIELD_MACHINE_LIQUIDITY_WALLET_NAME,
       account: +process.env.YIELD_MACHINE_LIQUIDITY_ACCOUNT_INDEX,
     },
+    rewardAddress: process.env.YIELD_MACHINE_REWARD_ADDRESS,
   };
 
   utxo = {

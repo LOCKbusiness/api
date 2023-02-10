@@ -17,6 +17,7 @@ import { ApiKeyStrategy } from './auth/api-key.strategy';
 import { Setting } from './models/setting.entity';
 import { Asset } from './models/asset/asset.entity';
 import { RepositoryFactory } from './repositories/repository.factory';
+import { AssetController } from './models/asset/asset.controller';
 
 @Module({
   imports: [
@@ -28,7 +29,7 @@ import { RepositoryFactory } from './repositories/repository.factory';
     I18nModule.forRoot(GetConfig().i18n),
     ScheduleModule.forRoot(),
   ],
-  controllers: [],
+  controllers: [AssetController],
   providers: [
     RepositoryFactory,
     AssetRepository,

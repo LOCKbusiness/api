@@ -3,7 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Config, Process } from 'src/config/config';
 import { Lock } from 'src/shared/lock';
 import { AssetService } from 'src/shared/models/asset/asset.service';
-import { SettingService } from 'src/shared/services/setting.service';
+import { RewardAssets } from '../../domain/entities/staking.entity';
 import { RewardStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { CreateRewardRouteDto } from '../dto/input/create-reward-route.dto';
@@ -12,7 +12,6 @@ import { RewardRouteOutputDto } from '../dto/output/reward-route.output.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
 import { RewardRouteOutputDtoMapper } from '../mappers/reward-route-output-dto.mapper';
-import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
 import { RewardRepository } from '../repositories/reward.repository';
 import { StakingRepository } from '../repositories/staking.repository';
 import { StakingRewardBatchService } from './staking-reward-batch.service';
@@ -32,7 +31,6 @@ export class StakingRewardService {
     private readonly batchService: StakingRewardBatchService,
     private readonly dexService: StakingRewardDexService,
     private readonly outService: StakingRewardOutService,
-    private readonly settingService: SettingService,
     private readonly assetService: AssetService,
     private readonly stakingService: StakingService,
   ) {}
@@ -60,25 +58,26 @@ export class StakingRewardService {
     const staking = await this.authorize.authorize(userId, stakingId);
     if (!staking) throw new NotFoundException('Staking not found');
 
-    const supportedAssets = await this.assetService.getAllAssets();
-    const rewardRoutes = dtos.map((dto) => this.factory.createRewardRoute(staking, dto, supportedAssets));
+    const supportedAssets = await this.assetService.getAllAssetsForBlockchain(staking.blockchain);
+    const supportedRewardAssets = await this.assetService.getAssetsByQuery(RewardAssets[staking.strategy]);
+    const rewardRoutes = dtos.map((dto) =>
+      this.factory.createRewardRoute(staking, dto, supportedAssets, supportedRewardAssets),
+    );
 
     const updatedStaking = await this.repository.saveWithLock(
       stakingId,
       (staking) => staking.setRewardRoutes(rewardRoutes),
-      ['asset', 'rewardRoutes', 'rewardRoutes.targetAsset'],
+      ['balances', 'balances.asset', 'rewardRoutes', 'rewardRoutes.targetAsset', 'rewardRoutes.rewardAsset'],
     );
 
-    const amounts = await this.stakingService.getUnconfirmedDepositsAndWithdrawalsAmounts(stakingId);
-
-    return StakingOutputDtoMapper.entityToDto(updatedStaking, amounts.deposits, amounts.withdrawals);
+    return this.stakingService.getStakingDto(updatedStaking);
   }
 
   async getRewardRoutes(userId: number, stakingId: number): Promise<RewardRouteOutputDto[]> {
     const staking = await this.authorize.authorize(userId, stakingId);
     if (!staking) throw new NotFoundException('Staking not found');
 
-    return staking.activeRewardRoutes.map(RewardRouteOutputDtoMapper.entityToDto);
+    return RewardRouteOutputDtoMapper.entityToDtos(staking);
   }
 
   //*** JOBS ***//
@@ -86,7 +85,6 @@ export class StakingRewardService {
   @Cron(CronExpression.EVERY_MINUTE)
   async processRewards(): Promise<void> {
     if (Config.processDisabled(Process.STAKING_REWARD_PAYOUT)) return;
-    if ((await this.settingService.get('reward-payout')) !== 'on') return;
     if (!this.lock.acquire()) return;
 
     try {

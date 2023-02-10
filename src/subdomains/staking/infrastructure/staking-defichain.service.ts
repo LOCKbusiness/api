@@ -18,6 +18,8 @@ import { TokenProviderService } from 'src/blockchain/ain/whale/token-provider.se
 import { UtxoProviderService } from 'src/blockchain/ain/jellyfish/services/utxo-provider.service';
 import { RawTxService } from 'src/blockchain/ain/jellyfish/services/raw-tx.service';
 import { RawTxDto } from 'src/blockchain/ain/jellyfish/dto/raw-tx.dto';
+import { StakingTypes } from '../domain/entities/staking.entity';
+import { AssetQuery } from 'src/shared/models/asset/asset.service';
 
 @Injectable()
 export class StakingDeFiChainService {
@@ -68,12 +70,9 @@ export class StakingDeFiChainService {
   }
 
   private async forwardLiquidityMiningDeposit(address: string, amount: number, asset: Asset): Promise<string> {
-    console.info(`forwarding ${amount} of ${asset.name} of ${address}`);
     await this.sendFeeUtxoToDepositIfNeeded(address, asset);
 
     const token = await this.tokenProviderService.get(asset.name);
-    console.log(`${asset.name} has blockchain id ${token.id}`);
-
     const rawTx =
       asset.type === AssetType.TOKEN
         ? await this.rawTxService.Account.send(
@@ -97,7 +96,6 @@ export class StakingDeFiChainService {
 
     const accountToAccountUtxo = new BigNumber(Config.payIn.forward.accountToAccountFee);
     const hasUtxo = await this.utxoProvider.addressHasUtxoExactAmount(address, accountToAccountUtxo);
-    console.info(`${address} has utxo to forward? ${hasUtxo ? 'yes' : 'no'}`);
 
     if (!hasUtxo) {
       await this.sendFeeUtxoToDeposit(address, accountToAccountUtxo);
@@ -111,9 +109,7 @@ export class StakingDeFiChainService {
     try {
       const txId = await this.sendFromAccount(forwardAccount, rawTx);
 
-      console.info(`sent ${txId}, now waiting for blockchain...`);
       await this.whaleClient.waitForTx(txId, Config.payIn.forward.timeout);
-      console.info(`... completed`);
     } catch (e) {
       await this.rawTxService.unlockUtxosOf(rawTx);
       throw e;
@@ -148,17 +144,36 @@ export class StakingDeFiChainService {
 
   // --- WITHDRAWALS --- //
   async getPossibleWithdrawals(withdrawals: Withdrawal[]): Promise<Withdrawal[]> {
-    const dfiBalance = await this.whaleClient.getUtxoBalance(Config.staking.liquidity.address);
-    const dusdBalance = await this.whaleClient.getTokenBalance(Config.yieldMachine.liquidity.address, 'DUSD');
+    const mnBalances = await Promise.all(
+      StakingTypes[StakingStrategy.MASTERNODE].map((asset) =>
+        this.getBalanceFor(asset, Config.staking.liquidity.address),
+      ),
+    );
+    const lmBalances = await Promise.all(
+      StakingTypes[StakingStrategy.LIQUIDITY_MINING].map((asset) =>
+        this.getBalanceFor(asset, Config.yieldMachine.liquidity.address),
+      ),
+    );
 
-    return [
-      ...this.getPossibleWithdrawalsFor(dfiBalance, 'DFI', withdrawals),
-      ...this.getPossibleWithdrawalsFor(dusdBalance, 'DUSD', withdrawals),
-    ];
+    return [...mnBalances, ...lmBalances]
+      .map(({ balance, asset }) => this.getPossibleWithdrawalsFor(balance, asset, withdrawals))
+      .reduce((prev, curr) => prev.concat(curr), []);
   }
 
-  private getPossibleWithdrawalsFor(balance: BigNumber, assetName: string, withdrawals: Withdrawal[]): Withdrawal[] {
-    const sortedWithdrawals = withdrawals.filter((w) => w.asset.name === assetName).sort((a, b) => a.amount - b.amount);
+  private async getBalanceFor(asset: AssetQuery, address: string): Promise<{ asset: AssetQuery; balance: BigNumber }> {
+    const balance =
+      asset.type === AssetType.COIN
+        ? await this.whaleClient.getUtxoBalance(address)
+        : await this.whaleClient.getTokenBalance(address, asset.name);
+
+    return {
+      asset,
+      balance,
+    };
+  }
+
+  private getPossibleWithdrawalsFor(balance: BigNumber, asset: AssetQuery, withdrawals: Withdrawal[]): Withdrawal[] {
+    const sortedWithdrawals = withdrawals.filter((w) => w.asset.isEqual(asset)).sort((a, b) => a.amount - b.amount);
 
     const possibleWithdrawals = [];
     let withdrawalSum = 0;

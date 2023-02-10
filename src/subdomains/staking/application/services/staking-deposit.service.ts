@@ -18,7 +18,6 @@ import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.s
 import { CreateDepositDto } from '../dto/input/create-deposit.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
-import { StakingOutputDtoMapper } from '../mappers/staking-output-dto.mapper';
 import { DepositRepository } from '../repositories/deposit.repository';
 import { StakingRepository } from '../repositories/staking.repository';
 import { StakingStrategyValidator } from '../validators/staking-strategy.validator';
@@ -77,9 +76,7 @@ export class StakingDepositService {
 
     await this.depositRepository.save(deposit);
 
-    const amounts = await this.stakingService.getUnconfirmedDepositsAndWithdrawalsAmounts(stakingId);
-
-    return StakingOutputDtoMapper.entityToDto(staking, amounts.deposits, amounts.withdrawals, deposit.asset);
+    return this.stakingService.getStakingDto(staking, deposit.asset);
   }
 
   //*** JOBS ***//
