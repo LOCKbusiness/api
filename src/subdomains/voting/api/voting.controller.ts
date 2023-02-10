@@ -55,12 +55,6 @@ export class VotingController {
     return this.votingService.getCurrentVotes();
   }
 
-  @Get('masternode')
-  @ApiOkResponse({ type: Number })
-  async getMasternodeCount(): Promise<number> {
-    return this.votingService.getMasternodeCount();
-  }
-
   // --- ADMIN --- //
   @Get('mn-votes')
   @ApiBearerAuth()

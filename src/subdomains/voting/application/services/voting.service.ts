@@ -81,10 +81,6 @@ export class VotingService implements OnModuleInit {
   }
 
   // --- MASTERNODE VOTES --- //
-  async getMasternodeCount(): Promise<number> {
-    return (await this.masternodeService.getAllVotersAt(new Date())).length ?? undefined;
-  }
-
   async getMasternodeVotes(): Promise<CfpMnVoteDto[]> {
     const { startDate, cfpList } = await this.getCfpInfos();
     const distributions = await this.getVoteDistributions(cfpList);
