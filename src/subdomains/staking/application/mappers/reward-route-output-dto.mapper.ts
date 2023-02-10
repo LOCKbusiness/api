@@ -5,7 +5,6 @@ export class RewardRouteOutputDtoMapper {
   static entityToDtos(staking: Staking): RewardRouteOutputDto[] {
     return staking.activeRewardRoutes.map((route) => ({
       id: route.id,
-      stakingId: staking.id,
       label: route.label,
       rewardPercent: route.rewardPercent,
       targetAsset: route.targetAsset.name,

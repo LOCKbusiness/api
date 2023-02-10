@@ -36,7 +36,7 @@ export const RewardAssets: { [key in StakingStrategy]: AssetQuery[] } = {
   [StakingStrategy.MASTERNODE]: [{ name: 'DFI', blockchain: Blockchain.DEFICHAIN, type: AssetType.COIN }],
   [StakingStrategy.LIQUIDITY_MINING]: [
     { name: 'DUSD', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN },
-    { name: 'DFI', blockchain: Blockchain.DEFICHAIN, type: AssetType.COIN },
+    { name: 'DFI', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN },
   ],
 };
 
@@ -84,7 +84,6 @@ export class Staking extends IEntity {
     assetList: Asset[],
     depositAddress: BlockchainAddress,
     withdrawalAddress: BlockchainAddress,
-    rewardAssets: Asset[],
   ): Staking {
     const staking = new Staking();
 
@@ -97,15 +96,9 @@ export class Staking extends IEntity {
 
     staking.depositAddress = depositAddress;
     staking.withdrawalAddress = withdrawalAddress;
-    staking.rewardRoutes = this.createDefaultRewardRoutes(staking, rewardAssets);
+    staking.rewardRoutes = [];
 
     return staking;
-  }
-
-  static createDefaultRewardRoutes(staking: Staking, rewardAssets: Asset[]): RewardRoute[] {
-    return rewardAssets.map((asset) =>
-      RewardRoute.create(staking, 'Reinvest', 1, asset, staking.depositAddress, asset),
-    );
   }
 
   //*** PUBLIC API ***//

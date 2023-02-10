@@ -35,16 +35,37 @@ export class StakingFactory {
     const rewardAssets = await this.assetService.getAssetsByQuery(
       RewardAssets[strategy].filter((a) => a.blockchain === blockchain),
     );
+    const supportedAssets = await this.assetService.getAllAssetsForBlockchain(blockchain);
 
-    return Staking.create(
+    const staking = Staking.create(
       userId,
       strategy,
       blockchain,
       stakingAssets,
       depositAddress.address,
       withdrawalAddress,
-      rewardAssets,
     );
+
+    // default reward routes
+    const rewardRoutes = rewardAssets.map((asset) =>
+      this.createRewardRoute(
+        staking,
+        {
+          label: 'Reinvest',
+          rewardPercent: 1,
+          targetAsset: asset.name,
+          targetAddress: staking.depositAddress.address,
+          targetBlockchain: staking.blockchain,
+          rewardAsset: asset.name,
+        },
+        supportedAssets,
+        rewardAssets,
+      ),
+    );
+
+    staking.setRewardRoutes(rewardRoutes);
+
+    return staking;
   }
 
   async createDeposit(staking: Staking, dto: CreateDepositDto): Promise<Deposit> {

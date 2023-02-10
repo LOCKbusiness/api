@@ -5,9 +5,6 @@ export class RewardRouteOutputDto {
   @ApiProperty()
   id: number;
 
-  @ApiProperty()
-  stakingId: number;
-
   @ApiPropertyOptional()
   label?: string;
 
