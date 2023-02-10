@@ -59,7 +59,7 @@ export class StakingRewardService {
     const entity = await this.rewardRepository.findOneBy({ id: rewardId });
     if (!entity) throw new NotFoundException('Reward not found');
 
-    return await this.rewardRepository.save({ ...entity, ...dto });
+    return this.rewardRepository.save({ ...entity, ...dto });
   }
 
   async setRewardRoutes(userId: number, stakingId: number, dtos: CreateRewardRouteDto[]): Promise<StakingOutputDto> {

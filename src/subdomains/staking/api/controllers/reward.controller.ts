@@ -26,6 +26,6 @@ export class RewardController {
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
   async updateReward(@Param('id') id: string, @Body() dto: UpdateRewardDto): Promise<Reward> {
-    return await this.stakingRewardService.updateReward(+id, dto);
+    return this.stakingRewardService.updateReward(+id, dto);
   }
 }
