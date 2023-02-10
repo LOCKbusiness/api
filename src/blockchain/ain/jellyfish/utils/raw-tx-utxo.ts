@@ -1,7 +1,6 @@
 import { Vout, Script } from '@defichain/jellyfish-transaction';
 import BigNumber from 'bignumber.js';
 import { Config } from 'src/config/config';
-import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
 import { UtxoConfig } from '../domain/entities/utxo-config';
 import { UtxoSizePriority } from '../domain/enums';
 import { RawTxDto } from '../dto/raw-tx.dto';
