@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Config, Process } from 'src/config/config';
 import { Lock } from 'src/shared/lock';
 import { AssetService } from 'src/shared/models/asset/asset.service';
+import { RewardAssets } from '../../domain/entities/staking.entity';
 import { RewardStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { CreateRewardRouteDto } from '../dto/input/create-reward-route.dto';
@@ -57,13 +58,16 @@ export class StakingRewardService {
     const staking = await this.authorize.authorize(userId, stakingId);
     if (!staking) throw new NotFoundException('Staking not found');
 
-    const supportedAssets = await this.assetService.getAllAssets();
-    const rewardRoutes = dtos.map((dto) => this.factory.createRewardRoute(staking, dto, supportedAssets));
+    const supportedAssets = await this.assetService.getAllAssetsForBlockchain(staking.blockchain);
+    const supportedRewardAssets = await this.assetService.getAssetsByQuery(RewardAssets[staking.strategy]);
+    const rewardRoutes = dtos.map((dto) =>
+      this.factory.createRewardRoute(staking, dto, supportedAssets, supportedRewardAssets),
+    );
 
     const updatedStaking = await this.repository.saveWithLock(
       stakingId,
       (staking) => staking.setRewardRoutes(rewardRoutes),
-      ['balances', 'balances.asset', 'rewardRoutes', 'rewardRoutes.targetAsset'],
+      ['balances', 'balances.asset', 'rewardRoutes', 'rewardRoutes.targetAsset', 'rewardRoutes.rewardAsset'],
     );
 
     return this.stakingService.getStakingDto(updatedStaking);

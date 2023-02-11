@@ -17,6 +17,12 @@ export class MasternodeController {
     return this.masternodeService.getAllOwner();
   }
 
+  @Get('voters')
+  @ApiOkResponse({ type: Number })
+  async getMasternodeCount(): Promise<number> {
+    return this.masternodeService.getAllVoters().then((l) => l.length);
+  }
+
   // --- ADMIN --- //
 
   @Get('unpaid-fee')
