@@ -1,7 +1,7 @@
 import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
 import { IEntity } from 'src/shared/models/entity';
 import { Column, Entity, Index, ManyToOne } from 'typeorm';
-import { VoteDecision } from '../enums';
+import { VoteDecision, VoteStatus } from '../enums';
 
 @Entity()
 @Index((v: Vote) => [v.masternode, v.proposalId], { unique: true })
@@ -20,4 +20,7 @@ export class Vote extends IEntity {
 
   @Column({ nullable: true })
   txId: string;
+
+  @Column({ nullable: false, default: VoteStatus.CREATED })
+  status: VoteStatus;
 }

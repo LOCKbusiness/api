@@ -20,7 +20,7 @@ export class MasternodeController {
   @Get('voters')
   @ApiOkResponse({ type: Number })
   async getMasternodeCount(): Promise<number> {
-    return (await this.masternodeService.getAllVotersAt(new Date())).length;
+    return this.masternodeService.getAllVoters().then((l) => l.length);
   }
 
   // --- ADMIN --- //

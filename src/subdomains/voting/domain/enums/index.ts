@@ -3,3 +3,9 @@ export enum VoteDecision {
   NO = 'No',
   NEUTRAL = 'Neutral',
 }
+
+export enum VoteStatus {
+  CREATED = 'Created',
+  FEE_SENT = 'FeeSent',
+  COMPLETED = 'Completed',
+}

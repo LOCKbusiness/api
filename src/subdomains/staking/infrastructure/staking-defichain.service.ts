@@ -61,19 +61,19 @@ export class StakingDeFiChainService {
   }
 
   private async forwardMasternodeDeposit(address: string, amount: number): Promise<string> {
-    const forwardToLiq = await this.rawTxService.Utxo.forward(
+    const rawTx = await this.rawTxService.Utxo.forward(
       address,
       Config.staking.liquidity.address,
       new BigNumber(amount),
     );
-    return this.send(forwardToLiq);
+    return this.send(rawTx);
   }
 
   private async forwardLiquidityMiningDeposit(address: string, amount: number, asset: Asset): Promise<string> {
-    await this.sendFeeUtxosToDepositIfNeeded(address, asset);
+    await this.sendFeeUtxoToDepositIfNeeded(address, asset);
 
     const token = await this.tokenProviderService.get(asset.name);
-    const forwardToLiq =
+    const rawTx =
       asset.type === AssetType.TOKEN
         ? await this.rawTxService.Account.send(
             address,
@@ -88,38 +88,49 @@ export class StakingDeFiChainService {
             +token.id,
             new BigNumber(amount),
           );
-    return this.send(forwardToLiq);
+    return this.send(rawTx);
   }
 
-  private async sendFeeUtxosToDepositIfNeeded(address: string, asset: Asset): Promise<void> {
+  private async sendFeeUtxoToDepositIfNeeded(address: string, asset: Asset): Promise<void> {
     if (asset.type === AssetType.COIN) return;
-    const forwardAccount = this.wallet.get(0);
+
     const accountToAccountUtxo = new BigNumber(Config.payIn.forward.accountToAccountFee);
     const hasUtxo = await this.utxoProvider.addressHasUtxoExactAmount(address, accountToAccountUtxo);
+
     if (!hasUtxo) {
-      await this.sendFeeUtxosToDeposit(forwardAccount, address, accountToAccountUtxo);
+      await this.sendFeeUtxoToDeposit(address, accountToAccountUtxo);
     }
   }
 
-  private async sendFeeUtxosToDeposit(
-    forwardAccount: WhaleWalletAccount,
-    depositAddress: string,
-    amount: BigNumber,
-  ): Promise<void> {
-    const sendUtxosToDeposit = await this.rawTxService.Utxo.sendFeeUtxo(
-      await forwardAccount.getAddress(),
-      depositAddress,
-      amount,
-    );
-    try {
-      const signedSendUtxosHex = await this.jellyfishService.signRawTx(sendUtxosToDeposit, forwardAccount);
-      const txSendUtxosId = await this.whaleClient.sendRaw(signedSendUtxosHex);
+  private async sendFeeUtxoToDeposit(depositAddress: string, amount: BigNumber): Promise<void> {
+    const forwardAccount = this.wallet.get(0);
+    const rawTx = await this.rawTxService.Utxo.sendFeeUtxo(await forwardAccount.getAddress(), depositAddress, amount);
 
-      await this.whaleClient.waitForTx(txSendUtxosId, Config.payIn.forward.timeout);
+    try {
+      const txId = await this.sendFromAccount(forwardAccount, rawTx);
+
+      await this.whaleClient.waitForTx(txId, Config.payIn.forward.timeout);
     } catch (e) {
-      await this.rawTxService.unlockUtxosOf(sendUtxosToDeposit);
+      await this.rawTxService.unlockUtxosOf(rawTx);
       throw e;
     }
+  }
+
+  async sendFeeUtxos(to: string[], amount: BigNumber): Promise<string> {
+    const forwardAccount = this.wallet.get(0);
+    const rawTx = await this.rawTxService.Utxo.sendFeeUtxos(await forwardAccount.getAddress(), to, amount);
+
+    try {
+      return await this.sendFromAccount(forwardAccount, rawTx);
+    } catch (e) {
+      await this.rawTxService.unlockUtxosOf(rawTx);
+      throw e;
+    }
+  }
+
+  private async sendFromAccount(account: WhaleWalletAccount, rawTx: RawTxDto) {
+    const signedTx = await this.jellyfishService.signRawTx(rawTx, account);
+    return this.whaleClient.sendRaw(signedTx);
   }
 
   private async send(rawTx: RawTxDto): Promise<string> {
