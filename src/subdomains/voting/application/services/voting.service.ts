@@ -177,7 +177,7 @@ export class VotingService implements OnModuleInit {
     const txList = [];
     const groupedVotes = Util.groupBy(pendingVotes, 'proposalId');
     for (const votes of groupedVotes.values()) {
-      const txIds = await Util.doInBatches(votes, (votes) => this.sendFeeUtxo(votes), 1000);
+      const txIds = await Util.doInBatches(votes, (votes) => this.sendFeeUtxo(votes), 500);
       txList.push(...txIds.filter((id) => id));
     }
 
