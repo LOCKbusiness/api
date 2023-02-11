@@ -196,7 +196,7 @@ export class VotingService implements OnModuleInit {
       );
       return txId;
     } catch (e) {
-      console.error(`Failed to send fee UTXO for votes ${votes.map((v) => v.id).join(',')}`);
+      console.error(`Failed to send fee UTXO for votes ${votes.map((v) => v.id).join(',')}:`, e);
     }
   }
 
