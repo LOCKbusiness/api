@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common/exceptions';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Config, Process } from 'src/config/config';
 import { Lock } from 'src/shared/lock';
@@ -58,6 +59,8 @@ export class StakingRewardService {
   async updateReward(rewardId: number, dto: UpdateRewardDto): Promise<Reward> {
     const entity = await this.rewardRepository.findOneBy({ id: rewardId });
     if (!entity) throw new NotFoundException('Reward not found');
+    if (entity.status != RewardStatus.CREATED || dto.status != RewardStatus.READY)
+      throw new BadRequestException('Reward update not allowed');
 
     return this.rewardRepository.save({ ...entity, ...dto });
   }
