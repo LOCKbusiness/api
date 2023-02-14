@@ -93,27 +93,6 @@ export class StakingService {
     return this.repository.getByUserId(user.id);
   }
 
-  async getAverageStakingBalance(type: StakingType, dateFrom: Date, dateTo: Date): Promise<number> {
-    const currentBalance = (await this.repository.getCurrentTotalStakingBalance(type)) ?? 0;
-    const balances: number[] = [];
-
-    for (
-      const dateIterator = new Date(dateFrom);
-      dateIterator < dateTo;
-      dateIterator.setDate(dateIterator.getDate() + 1)
-    ) {
-      balances.push(await this.getPreviousTotalBalance(type, currentBalance, dateIterator));
-    }
-
-    return Util.avg(balances);
-  }
-
-  async getAverageRewards(type: StakingType, dateFrom: Date, dateTo: Date): Promise<number> {
-    const rewardVolume = await this.rewardRepository.getAllRewardsAmountForCondition(type, dateFrom, dateTo);
-
-    return rewardVolume / Util.daysDiff(dateFrom, dateTo);
-  }
-
   async getUnconfirmedDepositsAndWithdrawalsAmounts(
     stakingId: number,
   ): Promise<{ deposits: AssetBalance[]; withdrawals: AssetBalance[] }> {
@@ -209,21 +188,6 @@ export class StakingService {
       stageOneBalance: Math.max(0, Util.round(currentBalance - stageOneDeposits, 8)),
       stageTwoBalance: Math.max(0, Util.round(currentBalance - stageTwoDeposits, 8)),
     };
-  }
-
-  private async getPreviousTotalBalance(type: StakingType, currentBalance: number, date: Date): Promise<number> {
-    const depositsFromDate = (await this.getTotalDepositsSince(type, date)) ?? 0;
-    const withdrawalsFromDate = (await this.getTotalWithdrawalsSince(type, date)) ?? 0;
-
-    return currentBalance - depositsFromDate + withdrawalsFromDate;
-  }
-
-  private async getTotalDepositsSince(type: StakingType, date: Date): Promise<number> {
-    return this.depositRepository.getTotalConfirmedAmountSince(type, date);
-  }
-
-  private async getTotalWithdrawalsSince(type: StakingType, date: Date): Promise<number> {
-    return this.withdrawalRepository.getTotalConfirmedAmountSince(type, date);
   }
 
   private aggregateByAsset(items: (Deposit | Withdrawal)[]): AssetBalance[] {

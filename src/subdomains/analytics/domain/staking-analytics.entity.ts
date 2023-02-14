@@ -41,14 +41,6 @@ export class StakingAnalytics extends IEntity {
     return this;
   }
 
-  static getAprPeriod(): { dateFrom: Date; dateTo: Date } {
-    const dateTo = new Date();
-    dateTo.setUTCHours(0, 0, 0, 0);
-    const dateFrom = Util.daysBefore(GetConfig().staking.aprPeriod, dateTo);
-
-    return { dateFrom, dateTo };
-  }
-
   //*** HELPER METHODS ***//
 
   private calculateApy(apr: number): number {

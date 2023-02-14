@@ -84,18 +84,6 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
       .then((r) => r.amount ?? 0);
   }
 
-  async getTotalConfirmedAmountSince({ strategy }: StakingType, date: Date): Promise<number> {
-    // TODO: this is wrong for multi-asset staking
-    return this.createQueryBuilder('withdrawal')
-      .leftJoin('withdrawal.staking', 'staking')
-      .select('SUM(amount)', 'amount')
-      .where('staking.strategy = :strategy', { strategy })
-      .andWhere('withdrawal.status = :status', { status: WithdrawalStatus.CONFIRMED })
-      .andWhere('withdrawal.created >= :date', { date })
-      .getRawOne<{ amount: number }>()
-      .then((b) => b.amount ?? 0);
-  }
-
   async getInProgressAmount(stakingId: number, assetId: number): Promise<number> {
     return this.createQueryBuilder('withdrawal')
       .select('SUM(amount)', 'amount')
