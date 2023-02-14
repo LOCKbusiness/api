@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/models/asset/asset.entity';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { LiquidityOrderFactory } from '../../../factories/liquidity-order.factory';
 import { LiquidityOrderRepository } from '../../../repositories/liquidity-order.repository';
@@ -23,7 +23,7 @@ export class DeFiChainDfiStrategy extends DeFiChainNonPoolPairStrategy {
       dexDeFiChainService,
       liquidityOrderRepo,
       liquidityOrderFactory,
-      [{ name: 'BTC', type: AssetType.TOKEN }],
+      [],
       PurchaseLiquidityStrategyAlias.DEFICHAIN_DFI,
     );
   }

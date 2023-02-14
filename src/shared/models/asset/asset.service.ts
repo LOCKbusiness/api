@@ -29,6 +29,10 @@ export class AssetService {
     return this.assetRepo.findOne({ where: query });
   }
 
+  async getAssetsByQuery(query: AssetQuery[]): Promise<Asset[]> {
+    return this.assetRepo.find({ where: query });
+  }
+
   //*** UTILITY METHODS ***//
 
   async getDfiCoin(): Promise<Asset> {

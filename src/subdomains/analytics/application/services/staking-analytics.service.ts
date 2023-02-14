@@ -97,14 +97,9 @@ export class StakingAnalyticsService implements OnModuleInit {
     const stakingTypes = Object.entries(StakingTypes) as [StakingStrategy, AssetQuery[]][];
     const types: StakingType[] = [];
     for (const [strategy, assetSpecs] of stakingTypes) {
-      for (const assetSpec of assetSpecs) {
-        types.push(await this.getStakingType(assetSpec, strategy));
-      }
+      const assets = await this.assetService.getAssetsByQuery(assetSpecs);
+      types.push(...assets.map((asset) => ({ strategy, asset })));
     }
     return types;
-  }
-
-  private async getStakingType(assetSpec: AssetQuery, strategy: StakingStrategy): Promise<StakingType> {
-    return { asset: await this.assetService.getAssetByQuery(assetSpec), strategy };
   }
 }

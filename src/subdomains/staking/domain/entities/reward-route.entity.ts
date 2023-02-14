@@ -5,9 +5,10 @@ import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { Staking } from './staking.entity';
 
 @Entity()
-@Index((r: RewardRoute) => [r.staking, r.targetAddress.address, r.targetAddress.blockchain, r.targetAsset], {
-  unique: true,
-})
+@Index(
+  (r: RewardRoute) => [r.staking, r.targetAddress.address, r.targetAddress.blockchain, r.targetAsset, r.rewardAsset],
+  { unique: true },
+)
 export class RewardRoute extends IEntity {
   @ManyToOne(() => Staking, (staking) => staking.rewardRoutes, { nullable: false })
   staking: Staking;
@@ -24,6 +25,9 @@ export class RewardRoute extends IEntity {
   @ManyToOne(() => Asset, { eager: true, nullable: false })
   targetAsset: Asset;
 
+  @ManyToOne(() => Asset, { eager: true, nullable: false })
+  rewardAsset: Asset;
+
   //*** FACTORY METHODS ***//
 
   static create(
@@ -32,6 +36,7 @@ export class RewardRoute extends IEntity {
     rewardPercent: number,
     targetAsset: Asset,
     targetAddress: BlockchainAddress,
+    rewardAsset: Asset,
   ): RewardRoute {
     const route = new RewardRoute();
 
@@ -40,6 +45,7 @@ export class RewardRoute extends IEntity {
     route.rewardPercent = rewardPercent;
     route.targetAsset = targetAsset;
     route.targetAddress = targetAddress;
+    route.rewardAsset = rewardAsset;
 
     return route;
   }
@@ -47,7 +53,11 @@ export class RewardRoute extends IEntity {
   //*** PUBLIC API ***//
 
   isEqual(newRoute: RewardRoute): boolean {
-    return this.targetAsset.id === newRoute.targetAsset.id && this.targetAddress.isEqual(newRoute.targetAddress);
+    return (
+      this.targetAsset.id === newRoute.targetAsset.id &&
+      this.targetAddress.isEqual(newRoute.targetAddress) &&
+      this.rewardAsset.isEqual(newRoute.rewardAsset)
+    );
   }
 
   updateRoute(label: string, rewardPercent: number): this {

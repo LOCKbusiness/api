@@ -32,6 +32,16 @@ export const StakingTypes: { [key in StakingStrategy]: AssetQuery[] } = {
   ],
 };
 
+export const RewardAssets: { [key in StakingStrategy]: AssetQuery[] } = {
+  [StakingStrategy.MASTERNODE]: [{ name: 'DFI', blockchain: Blockchain.DEFICHAIN, type: AssetType.COIN }],
+  [StakingStrategy.LIQUIDITY_MINING]: [
+    { name: 'DUSD', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN },
+    { name: 'DFI', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN },
+  ],
+};
+
+export const AllRewardAssets = Object.values(RewardAssets).reduce((prev, curr) => prev.concat(curr), []);
+
 @Entity()
 @Index((s: Staking) => [s.userId, s.strategy], { unique: true })
 export class Staking extends IEntity {
@@ -86,13 +96,9 @@ export class Staking extends IEntity {
 
     staking.depositAddress = depositAddress;
     staking.withdrawalAddress = withdrawalAddress;
-    staking.rewardRoutes = [this.createDefaultRewardRoute(staking)];
+    staking.rewardRoutes = [];
 
     return staking;
-  }
-
-  static createDefaultRewardRoute(staking: Staking): RewardRoute {
-    return RewardRoute.create(staking, 'Reinvest', 1, staking.defaultBalance.asset, staking.depositAddress);
   }
 
   //*** PUBLIC API ***//
@@ -206,15 +212,19 @@ export class Staking extends IEntity {
   //*** HELPER METHODS ***//
 
   private validateRewardDistribution(newRewardRoutes: RewardRoute[]): void {
-    const totalDistribution = Util.round(Util.sumObj<RewardRoute>(newRewardRoutes, 'rewardPercent'), 2);
+    const routesByAsset = Util.groupByAccessor(newRewardRoutes, (r) => r.rewardAsset.id);
 
-    if (totalDistribution !== 1) {
-      throw new BadRequestException(
-        `Cannot create reward strategy. Total reward distribution must be 100%, instead distributed total of ${Util.round(
-          totalDistribution * 100,
-          2,
-        )}%`,
-      );
+    for (const routes of routesByAsset.values()) {
+      const totalDistribution = Util.round(Util.sumObj<RewardRoute>(routes, 'rewardPercent'), 2);
+
+      if (totalDistribution !== 1) {
+        throw new BadRequestException(
+          `Cannot create reward strategy. Total reward distribution must be 100%, instead distributed total of ${Util.round(
+            totalDistribution * 100,
+            2,
+          )}%`,
+        );
+      }
     }
   }
 

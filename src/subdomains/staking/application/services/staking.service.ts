@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { Util } from 'src/shared/util';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
-import { Staking, StakingType, StakingTypes } from '../../domain/entities/staking.entity';
+import { Staking, StakingType } from '../../domain/entities/staking.entity';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
 import { GetOrCreateStakingQuery } from '../dto/input/get-staking.query';
 import { BalanceOutputDto } from '../dto/output/balance.output.dto';
@@ -60,12 +60,7 @@ export class StakingService {
     if (existingStaking) return this.getStakingDto(existingStaking);
 
     // create a new staking
-    const assetList: Asset[] = [];
-    for (const stakingType of StakingTypes[strategy].filter((s) => s.blockchain == blockchain)) {
-      assetList.push(await this.assetService.getAssetByQuery(stakingType));
-    }
-
-    const newStaking = await this.createStaking(userId, walletId, strategy, assetList, blockchain);
+    const newStaking = await this.createStaking(userId, walletId, strategy, blockchain);
     return StakingOutputDtoMapper.entityToDto(newStaking, [], []);
   }
 
@@ -187,20 +182,12 @@ export class StakingService {
     userId: number,
     walletId: number,
     strategy: StakingStrategy,
-    assetList: Asset[],
     blockchain: Blockchain,
   ): Promise<Staking> {
     const depositAddress = await this.addressService.getAvailableAddress(BlockchainAddressReservationPurpose.STAKING);
     const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
 
-    const staking = await this.factory.createStaking(
-      userId,
-      strategy,
-      blockchain,
-      assetList,
-      depositAddress,
-      withdrawalAddress,
-    );
+    const staking = await this.factory.createStaking(userId, strategy, blockchain, depositAddress, withdrawalAddress);
 
     return this.repository.save(staking);
   }
