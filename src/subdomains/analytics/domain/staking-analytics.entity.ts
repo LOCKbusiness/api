@@ -31,7 +31,12 @@ export class StakingAnalytics extends IEntity {
     this.operatorCount = operatorCount;
     this.tvl = tvl;
 
-    console.log(`Updated analytics for ${this.asset.name} ${this.strategy}`);
+    return this;
+  }
+
+  updateApr(apr: number): this {
+    this.apr = apr;
+    this.apy = this.calculateApy(apr);
 
     return this;
   }
@@ -44,7 +49,9 @@ export class StakingAnalytics extends IEntity {
     return { dateFrom, dateTo };
   }
 
-  static calculateApy(apr: number): number {
+  //*** HELPER METHODS ***//
+
+  private calculateApy(apr: number): number {
     const apy = Math.pow(1 + apr / 365, 365) - 1;
 
     return Util.round(apy, 3);

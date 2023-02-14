@@ -49,9 +49,9 @@ export class StakingAnalyticsService implements OnModuleInit {
     const entity = await this.repository.findOne({ where: { strategy: query.strategy, asset: { name: query.asset } } });
     if (!entity) throw new NotFoundException('StakingAnalytics entity not found');
 
-    const apy = StakingAnalytics.calculateApy(dto.apr);
+    entity.updateApr(dto.apr);
 
-    return this.repository.save({ ...entity, apy, apr: dto.apr });
+    return this.repository.save(entity);
   }
 
   // --- JOBS --- //
