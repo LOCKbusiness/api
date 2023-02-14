@@ -64,9 +64,7 @@ export class StakingAnalyticsService implements OnModuleInit {
     if (Config.processDisabled(Process.ANALYTICS)) return;
 
     try {
-      const { dateFrom, dateTo } = StakingAnalytics.getAprPeriod();
       const stakingTypes = await this.getStakingTypes();
-      const dfi = await this.assetService.getDfiCoin();
 
       for (const type of stakingTypes) {
         const analytics = (await this.repository.getByType(type)) ?? this.repository.create(type);
