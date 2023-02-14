@@ -1,9 +1,8 @@
-import { Inject, Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Config, Process } from 'src/config/config';
 import { MasternodeService } from 'src/integration/masternode/application/services/masternode.service';
 import { AssetQuery, AssetService } from 'src/shared/models/asset/asset.service';
-import { StakingService } from 'src/subdomains/staking/application/services/staking.service';
 import { StakingStrategyValidator } from 'src/subdomains/staking/application/validators/staking-strategy.validator';
 import { StakingType, StakingTypes } from 'src/subdomains/staking/domain/entities/staking.entity';
 import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
@@ -13,19 +12,18 @@ import { StakingAnalyticsQuery } from '../dto/input/staking-analytics-query.dto'
 import { StakingAnalyticsOutputDto } from '../dto/output/staking-analytics.output.dto';
 import { StakingAnalyticsOutputDtoMapper } from '../mappers/staking-analytics-output-dto.mapper';
 import { StakingAnalyticsRepository } from '../repositories/staking-analytics.repository';
-import { PRICE_PROVIDER, PriceProvider } from 'src/subdomains/staking/application/interfaces';
 import { RepositoryFactory } from 'src/shared/repositories/repository.factory';
+import { UpdateStakingAnalyticsDto } from '../dto/input/update-staking-analytics.dto';
+import { StakingAnalyticsUpdateQuery } from '../dto/input/staking-analytics-update-query.dto';
 
 @Injectable()
 export class StakingAnalyticsService implements OnModuleInit {
   constructor(
     private readonly repos: RepositoryFactory,
     private readonly repository: StakingAnalyticsRepository,
-    private readonly stakingService: StakingService,
     private readonly masternodeService: MasternodeService,
     private readonly vaultService: VaultService,
     private readonly assetService: AssetService,
-    @Inject(PRICE_PROVIDER) private readonly priceProvider: PriceProvider,
   ) {}
 
   // --- PUBLIC API --- //
@@ -43,6 +41,15 @@ export class StakingAnalyticsService implements OnModuleInit {
     return StakingAnalyticsOutputDtoMapper.entityToDto(analytics);
   }
 
+  async update(query: StakingAnalyticsUpdateQuery, dto: UpdateStakingAnalyticsDto): Promise<StakingAnalytics> {
+    const entity = await this.repository.findOne({ where: { strategy: query.strategy, asset: { name: query.asset } } });
+    if (!entity) throw new NotFoundException('StakingAnalytics entity not found');
+
+    entity.updateApr(dto.apr);
+
+    return this.repository.save(entity);
+  }
+
   // --- JOBS --- //
   onModuleInit() {
     void this.updateStakingAnalytics();
@@ -53,29 +60,16 @@ export class StakingAnalyticsService implements OnModuleInit {
     if (Config.processDisabled(Process.ANALYTICS)) return;
 
     try {
-      const { dateFrom, dateTo } = StakingAnalytics.getAprPeriod();
       const stakingTypes = await this.getStakingTypes();
-      const dfi = await this.assetService.getDfiCoin();
 
       for (const type of stakingTypes) {
-        // get APR
-        const averageBalance = await this.stakingService.getAverageStakingBalance(type, dateFrom, dateTo);
-        let averageRewards = await this.stakingService.getAverageRewards(type, dateFrom, dateTo);
-
-        // convert to staking asset (rewards are in DFI)
-        if (type.asset.name !== dfi.name) {
-          const { price } = await this.priceProvider.getAverageExchangePrice(dfi.id, type.asset.id, dateFrom, dateTo);
-
-          averageRewards = averageRewards / price;
-        }
-
         const analytics = (await this.repository.getByType(type)) ?? this.repository.create(type);
 
         // get TVL and operator count
         const tvl = await this.repos.staking.getCurrentTotalStakingBalance(type);
         const operatorCount = await this.getOperatorCount(type);
 
-        analytics.updateAnalytics(averageBalance, averageRewards, operatorCount, tvl);
+        analytics.updateAnalytics(operatorCount, tvl);
         await this.repository.save(analytics);
       }
     } catch (e) {
