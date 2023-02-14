@@ -63,7 +63,7 @@ export class RewardRepository extends Repository<Reward> {
         outputReferenceAmount: Not(IsNull()),
         rewardRoute: Not(IsNull()),
         batch: IsNull(),
-        status: RewardStatus.CREATED,
+        status: RewardStatus.READY,
       },
       relations: ['staking', 'batch'],
     });

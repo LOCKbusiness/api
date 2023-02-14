@@ -7,6 +7,7 @@ export enum HistoryTransactionType {
 }
 
 export enum CompactHistoryStatus {
+  WAITING = 'WaitingForBalance',
   PENDING = 'Pending',
   CONFIRMED = 'Confirmed',
   FAILED = 'Failed',
