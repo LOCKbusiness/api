@@ -1,9 +1,8 @@
-import { Inject, Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Config, Process } from 'src/config/config';
 import { MasternodeService } from 'src/integration/masternode/application/services/masternode.service';
 import { AssetQuery, AssetService } from 'src/shared/models/asset/asset.service';
-import { StakingService } from 'src/subdomains/staking/application/services/staking.service';
 import { StakingStrategyValidator } from 'src/subdomains/staking/application/validators/staking-strategy.validator';
 import { StakingType, StakingTypes } from 'src/subdomains/staking/domain/entities/staking.entity';
 import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
@@ -13,7 +12,6 @@ import { StakingAnalyticsQuery } from '../dto/input/staking-analytics-query.dto'
 import { StakingAnalyticsOutputDto } from '../dto/output/staking-analytics.output.dto';
 import { StakingAnalyticsOutputDtoMapper } from '../mappers/staking-analytics-output-dto.mapper';
 import { StakingAnalyticsRepository } from '../repositories/staking-analytics.repository';
-import { PRICE_PROVIDER, PriceProvider } from 'src/subdomains/staking/application/interfaces';
 import { RepositoryFactory } from 'src/shared/repositories/repository.factory';
 import { UpdateStakingAnalyticsDto } from '../dto/input/update-staking-analytics.dto';
 import { StakingAnalyticsUpdateQuery } from '../dto/input/staking-analytics-update-query.dto';
@@ -23,11 +21,9 @@ export class StakingAnalyticsService implements OnModuleInit {
   constructor(
     private readonly repos: RepositoryFactory,
     private readonly repository: StakingAnalyticsRepository,
-    private readonly stakingService: StakingService,
     private readonly masternodeService: MasternodeService,
     private readonly vaultService: VaultService,
     private readonly assetService: AssetService,
-    @Inject(PRICE_PROVIDER) private readonly priceProvider: PriceProvider,
   ) {}
 
   // --- PUBLIC API --- //
