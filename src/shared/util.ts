@@ -208,4 +208,8 @@ export class Util {
     Object.entries(params).forEach(([key, value]) => (template = template.replace('${' + key + '}', value)));
     return template;
   }
+
+  static aprToApy(apr: number, periods: number): number {
+    return Math.pow(1 + apr / periods, periods) - 1;
+  }
 }

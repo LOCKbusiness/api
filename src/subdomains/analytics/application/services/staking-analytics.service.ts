@@ -15,6 +15,8 @@ import { StakingAnalyticsOutputDtoMapper } from '../mappers/staking-analytics-ou
 import { StakingAnalyticsRepository } from '../repositories/staking-analytics.repository';
 import { PRICE_PROVIDER, PriceProvider } from 'src/subdomains/staking/application/interfaces';
 import { RepositoryFactory } from 'src/shared/repositories/repository.factory';
+import { UpdateStakingAnalyticsDto } from '../dto/input/update-staking-analytics.dto';
+import { Util } from 'src/shared/util';
 
 @Injectable()
 export class StakingAnalyticsService implements OnModuleInit {
@@ -41,6 +43,15 @@ export class StakingAnalyticsService implements OnModuleInit {
     if (!analytics) throw new NotFoundException();
 
     return StakingAnalyticsOutputDtoMapper.entityToDto(analytics);
+  }
+
+  async update(id: number, dto: UpdateStakingAnalyticsDto): Promise<StakingAnalytics> {
+    const entity = await this.repository.findOne({ where: { id } });
+    if (!entity) throw new NotFoundException('StakingAnalytics entity not found');
+
+    const apy = Util.round(Util.aprToApy(dto.apr, 365), 4);
+
+    return this.repository.save({ ...entity, ...{ apy }, ...dto });
   }
 
   // --- JOBS --- //
