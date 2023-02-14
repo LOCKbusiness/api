@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Put, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiExcludeEndpoint, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
@@ -6,6 +6,7 @@ import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { StakingDepositService } from 'src/subdomains/staking/application/services/staking-deposit.service';
 import { StakingWithdrawalService } from 'src/subdomains/staking/application/services/staking-withdrawal.service';
 import { StakingAnalyticsQuery } from '../../application/dto/input/staking-analytics-query.dto';
+import { StakingAnalyticsUpdateQuery } from '../../application/dto/input/staking-analytics-update-query.dto';
 import { UpdateStakingAnalyticsDto } from '../../application/dto/input/update-staking-analytics.dto';
 import { StakingAnalyticsOutputDto } from '../../application/dto/output/staking-analytics.output.dto';
 import { TimeSpanDto } from '../../application/dto/output/time-span.dto';
@@ -37,11 +38,14 @@ export class StakingAnalyticsController {
     };
   }
 
-  @Put(':id')
+  @Put()
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
-  async updateApr(@Param('id') id: string, @Body() dto: UpdateStakingAnalyticsDto): Promise<StakingAnalytics> {
-    return this.stakingAnalyticsService.update(+id, dto);
+  async updateApr(
+    @Query() query: StakingAnalyticsUpdateQuery,
+    @Body() dto: UpdateStakingAnalyticsDto,
+  ): Promise<StakingAnalytics> {
+    return this.stakingAnalyticsService.update(query, dto);
   }
 }

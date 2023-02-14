@@ -16,7 +16,7 @@ import { StakingAnalyticsRepository } from '../repositories/staking-analytics.re
 import { PRICE_PROVIDER, PriceProvider } from 'src/subdomains/staking/application/interfaces';
 import { RepositoryFactory } from 'src/shared/repositories/repository.factory';
 import { UpdateStakingAnalyticsDto } from '../dto/input/update-staking-analytics.dto';
-import { Util } from 'src/shared/util';
+import { StakingAnalyticsUpdateQuery } from '../dto/input/staking-analytics-update-query.dto';
 
 @Injectable()
 export class StakingAnalyticsService implements OnModuleInit {
@@ -45,13 +45,13 @@ export class StakingAnalyticsService implements OnModuleInit {
     return StakingAnalyticsOutputDtoMapper.entityToDto(analytics);
   }
 
-  async update(id: number, dto: UpdateStakingAnalyticsDto): Promise<StakingAnalytics> {
-    const entity = await this.repository.findOne({ where: { id } });
+  async update(query: StakingAnalyticsUpdateQuery, dto: UpdateStakingAnalyticsDto): Promise<StakingAnalytics> {
+    const entity = await this.repository.findOne({ where: { strategy: query.strategy, asset: { name: query.asset } } });
     if (!entity) throw new NotFoundException('StakingAnalytics entity not found');
 
-    const apy = Util.round(Util.aprToApy(dto.apr, 365), 4);
+    const apy = StakingAnalytics.calculateApy(dto.apr);
 
-    return this.repository.save({ ...entity, ...{ apy }, ...dto });
+    return this.repository.save({ ...entity, apy, apr: dto.apr });
   }
 
   // --- JOBS --- //
@@ -70,7 +70,6 @@ export class StakingAnalyticsService implements OnModuleInit {
 
       for (const type of stakingTypes) {
         // get APR
-        const averageBalance = await this.stakingService.getAverageStakingBalance(type, dateFrom, dateTo);
         let averageRewards = await this.stakingService.getAverageRewards(type, dateFrom, dateTo);
 
         // convert to staking asset (rewards are in DFI)
@@ -86,7 +85,7 @@ export class StakingAnalyticsService implements OnModuleInit {
         const tvl = await this.repos.staking.getCurrentTotalStakingBalance(type);
         const operatorCount = await this.getOperatorCount(type);
 
-        analytics.updateAnalytics(averageBalance, averageRewards, operatorCount, tvl);
+        analytics.updateAnalytics(operatorCount, tvl);
         await this.repository.save(analytics);
       }
     } catch (e) {
