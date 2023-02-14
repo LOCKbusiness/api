@@ -69,16 +69,6 @@ export class StakingAnalyticsService implements OnModuleInit {
       const dfi = await this.assetService.getDfiCoin();
 
       for (const type of stakingTypes) {
-        // get APR
-        let averageRewards = await this.stakingService.getAverageRewards(type, dateFrom, dateTo);
-
-        // convert to staking asset (rewards are in DFI)
-        if (type.asset.name !== dfi.name) {
-          const { price } = await this.priceProvider.getAverageExchangePrice(dfi.id, type.asset.id, dateFrom, dateTo);
-
-          averageRewards = averageRewards / price;
-        }
-
         const analytics = (await this.repository.getByType(type)) ?? this.repository.create(type);
 
         // get TVL and operator count
