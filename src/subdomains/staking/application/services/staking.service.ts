@@ -25,6 +25,8 @@ import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { StakingStrategy } from '../../domain/enums';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
+import { RewardStrategy } from '../../domain/entities/reward-strategy.entity';
+import { RewardStrategyRepository } from '../repositories/reward-strategy.repository';
 
 export interface StakingBalances {
   currentBalance: number;
@@ -43,6 +45,7 @@ export class StakingService {
     private readonly factory: StakingFactory,
     private readonly addressService: ReservableBlockchainAddressService,
     private readonly assetService: AssetService,
+    private readonly rewardStrategyRepository: RewardStrategyRepository,
   ) {}
 
   //*** PUBLIC API ***//
@@ -165,10 +168,32 @@ export class StakingService {
   ): Promise<Staking> {
     const depositAddress = await this.addressService.getAvailableAddress(BlockchainAddressReservationPurpose.STAKING);
     const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
+    const rewardStrategy = await this.getOrCreateRewardStrategy(userId);
 
-    const staking = await this.factory.createStaking(userId, strategy, blockchain, depositAddress, withdrawalAddress);
+    const staking = await this.factory.createStaking(
+      userId,
+      strategy,
+      blockchain,
+      depositAddress,
+      withdrawalAddress,
+      rewardStrategy,
+    );
 
     return this.repository.save(staking);
+  }
+
+  private async getOrCreateRewardStrategy(userId: number): Promise<RewardStrategy | undefined> {
+    const existingStrategy = await this.rewardStrategyRepository.findOneBy({ userId });
+    if (existingStrategy) return existingStrategy;
+
+    // create a new strategy
+    try {
+      const strategy = this.factory.createRewardStrategy(userId);
+      return await this.rewardStrategyRepository.save(strategy);
+    } catch {
+      // retry the get (might have been created in meantime)
+      return await this.rewardStrategyRepository.findOneBy({ userId });
+    }
   }
 
   private async getBalances(manager: EntityManager, stakingId: number, assetId: number): Promise<StakingBalances> {

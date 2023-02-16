@@ -1,5 +1,6 @@
 import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Asset } from 'src/shared/models/asset/asset.entity';
+import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 import { IEntity } from 'src/shared/models/entity';
 import { Price } from 'src/shared/models/price';
 import { Util } from 'src/shared/util';
@@ -40,6 +41,12 @@ export class Reward extends IEntity {
 
   @ManyToOne(() => RewardRoute, { eager: true, nullable: true })
   rewardRoute: RewardRoute;
+
+  @Column(() => BlockchainAddress)
+  targetAddress: BlockchainAddress;
+
+  @ManyToOne(() => Asset, { eager: true, nullable: false })
+  targetAsset: Asset;
 
   //*** PAYOUT PROPS ***//
 

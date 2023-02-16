@@ -46,6 +46,8 @@ import { AddressPoolModule } from '../address-pool/address-pool.module';
 import { RewardRouteController } from './api/controllers/reward-route.controller';
 import { UtxoManagementService } from './application/services/utxo-management.service';
 import { StakingBalance } from './domain/entities/staking-balance.entity';
+import { RewardStrategy } from './domain/entities/reward-strategy.entity';
+import { RewardStrategyRepository } from './application/repositories/reward-strategy.repository';
 
 @Module({
   imports: [
@@ -54,6 +56,7 @@ import { StakingBalance } from './domain/entities/staking-balance.entity';
       StakingBalance,
       Withdrawal,
       Deposit,
+      RewardStrategy,
       Reward,
       RewardBatch,
       RewardRoute,
@@ -81,6 +84,7 @@ import { StakingBalance } from './domain/entities/staking-balance.entity';
     AssetStakingMetadataRepository,
     WithdrawalRepository,
     DepositRepository,
+    RewardStrategyRepository,
     RewardBatchRepository,
     RewardRepository,
     RewardRouteRepository,
