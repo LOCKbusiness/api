@@ -45,9 +45,9 @@ export class RewardRoute extends IEntity {
   // --- PUBLIC API --- //
 
   isEqual(route: RewardRoute): boolean {
-    if (this.isReinvest && route.isReinvest) {
+    if (this.isDefault && route.isDefault) {
       return true;
-    } else if (!this.isReinvest && !route.isReinvest) {
+    } else if (!this.isDefault && !route.isDefault) {
       return this.targetAsset.id === route.targetAsset.id && this.targetAddress.isEqual(route.targetAddress);
     }
 
@@ -63,7 +63,7 @@ export class RewardRoute extends IEntity {
 
   // --- GETTERS --- //
 
-  get isReinvest(): boolean {
+  get isDefault(): boolean {
     return this.targetAddress == null && this.targetAsset == null;
   }
 }

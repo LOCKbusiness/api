@@ -44,7 +44,7 @@ export class RewardStrategy extends IEntity {
 
   // --- GETTERS --- //
   get activeRewardRoutes(): RewardRoute[] {
-    return this.rewardRoutes.filter((r) => r.targetAddress != null && r.rewardPercent !== 0);
+    return this.rewardRoutes.filter((r) => !r.isDefault && r.rewardPercent !== 0);
   }
 
   // --- HELPER METHODS --- //
@@ -96,8 +96,8 @@ export class RewardStrategy extends IEntity {
 
     // update reinvest route
     const totalDistribution = Util.round(Util.sumObj<RewardRoute>(this.rewardRoutes, 'rewardPercent'), 2);
-    const reinvestRoute = this.rewardRoutes.find((rr) => rr.isReinvest);
-    reinvestRoute.rewardPercent = Util.round(1 - totalDistribution, 2);
+    const defaultRoute = this.rewardRoutes.find((rr) => rr.isDefault);
+    defaultRoute.rewardPercent = Util.round(1 - totalDistribution, 2);
   }
 
   private resetExistingRoutes(): void {

@@ -56,11 +56,11 @@ export class ChainReportHistoryDtoMapper {
             ? ChainReportTransactionType.LM
             : ChainReportTransactionType.STAKING,
         inputAmount: c.targetAmount,
-        inputAsset: this.getAssetSymbolChainReport(c.rewardRoute.targetAsset),
+        inputAsset: this.getAssetSymbolChainReport(c.targetAsset),
         outputAmount: null,
         outputAsset: null,
         feeAmount: c.feePercent != 0 ? (c.targetAmount * c.feePercent) / (1 - c.feePercent) : null,
-        feeAsset: c.feePercent != 0 ? this.getAssetSymbolChainReport(c.rewardRoute.targetAsset) : null,
+        feeAsset: c.feePercent != 0 ? this.getAssetSymbolChainReport(c.targetAsset) : null,
         txId: c.txId,
         description:
           c.staking.strategy === StakingStrategy.LIQUIDITY_MINING

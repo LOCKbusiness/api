@@ -105,7 +105,7 @@ export class Reward extends IEntity {
     reward.txId = txId;
     reward.outputDate = outputDate;
 
-    reward.isReinvest = rewardRoute.targetAddress.isEqual(staking.depositAddress);
+    reward.isReinvest = rewardRoute.isDefault || rewardRoute.targetAddress.isEqual(staking.depositAddress);
 
     return reward;
   }
