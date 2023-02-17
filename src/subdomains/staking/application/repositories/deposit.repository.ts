@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Util } from 'src/shared/util';
 import { Between, EntityManager, FindOperator, In, Repository } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
-import { StakingReference, StakingType } from '../../domain/entities/staking.entity';
+import { StakingReference } from '../../domain/entities/staking.entity';
 import { DepositStatus } from '../../domain/enums';
 
 @Injectable()

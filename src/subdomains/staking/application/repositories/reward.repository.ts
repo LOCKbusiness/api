@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Between, EntityManager, FindOperator, IsNull, Not, Repository } from 'typeorm';
 import { Reward } from '../../domain/entities/reward.entity';
-import { StakingType } from '../../domain/entities/staking.entity';
 import { RewardStatus } from '../../domain/enums';
 
 @Injectable()
