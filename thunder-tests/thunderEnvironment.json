@@ -95,5 +95,20 @@
       }
     ],
     "envFile": "env/dev.transaction-checker.env"
+  },
+  {
+    "_id": "ee2babe7-c922-4173-a070-54fb3c33eaa6",
+    "name": "dev (User)",
+    "default": true,
+    "sortNum": 15000,
+    "created": "2023-02-17T18:42:38.123Z",
+    "modified": "2023-02-17T18:42:38.123Z",
+    "data": [
+      {
+        "name": "url",
+        "value": "dev.api.lock.space"
+      }
+    ],
+    "envFile": "env/dev.user.env"
   }
 ]
