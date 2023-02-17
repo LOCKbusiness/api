@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { Between, EntityManager, FindOperator, In, Repository } from 'typeorm';
-import { StakingType } from '../../domain/entities/staking.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { WithdrawalStatus } from '../../domain/enums';
 
@@ -82,18 +81,6 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
       .andWhere('status = :status', { status: WithdrawalStatus.CONFIRMED })
       .getRawOne<{ amount: number }>()
       .then((r) => r.amount ?? 0);
-  }
-
-  async getTotalConfirmedAmountSince({ strategy }: StakingType, date: Date): Promise<number> {
-    // TODO: this is wrong for multi-asset staking
-    return this.createQueryBuilder('withdrawal')
-      .leftJoin('withdrawal.staking', 'staking')
-      .select('SUM(amount)', 'amount')
-      .where('staking.strategy = :strategy', { strategy })
-      .andWhere('withdrawal.status = :status', { status: WithdrawalStatus.CONFIRMED })
-      .andWhere('withdrawal.created >= :date', { date })
-      .getRawOne<{ amount: number }>()
-      .then((b) => b.amount ?? 0);
   }
 
   async getInProgressAmount(stakingId: number, assetId: number): Promise<number> {

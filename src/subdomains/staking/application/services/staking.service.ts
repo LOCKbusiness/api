@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { Util } from 'src/shared/util';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
-import { Staking, StakingType } from '../../domain/entities/staking.entity';
+import { Staking } from '../../domain/entities/staking.entity';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
 import { GetOrCreateStakingQuery } from '../dto/input/get-staking.query';
 import { BalanceOutputDto } from '../dto/output/balance.output.dto';
@@ -25,6 +25,8 @@ import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { StakingStrategy } from '../../domain/enums';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
+import { RewardStrategy } from '../../domain/entities/reward-strategy.entity';
+import { RewardStrategyRepository } from '../repositories/reward-strategy.repository';
 
 export interface StakingBalances {
   currentBalance: number;
@@ -43,6 +45,7 @@ export class StakingService {
     private readonly factory: StakingFactory,
     private readonly addressService: ReservableBlockchainAddressService,
     private readonly assetService: AssetService,
+    private readonly rewardStrategyRepository: RewardStrategyRepository,
   ) {}
 
   //*** PUBLIC API ***//
@@ -91,27 +94,6 @@ export class StakingService {
     const user = await this.userService.getUserByAddressOrThrow(address);
 
     return this.repository.getByUserId(user.id);
-  }
-
-  async getAverageStakingBalance(type: StakingType, dateFrom: Date, dateTo: Date): Promise<number> {
-    const currentBalance = (await this.repository.getCurrentTotalStakingBalance(type)) ?? 0;
-    const balances: number[] = [];
-
-    for (
-      const dateIterator = new Date(dateFrom);
-      dateIterator < dateTo;
-      dateIterator.setDate(dateIterator.getDate() + 1)
-    ) {
-      balances.push(await this.getPreviousTotalBalance(type, currentBalance, dateIterator));
-    }
-
-    return Util.avg(balances);
-  }
-
-  async getAverageRewards(type: StakingType, dateFrom: Date, dateTo: Date): Promise<number> {
-    const rewardVolume = await this.rewardRepository.getAllRewardsAmountForCondition(type, dateFrom, dateTo);
-
-    return rewardVolume / Util.daysDiff(dateFrom, dateTo);
   }
 
   async getUnconfirmedDepositsAndWithdrawalsAmounts(
@@ -186,10 +168,32 @@ export class StakingService {
   ): Promise<Staking> {
     const depositAddress = await this.addressService.getAvailableAddress(BlockchainAddressReservationPurpose.STAKING);
     const withdrawalAddress = await this.userService.getWalletAddress(userId, walletId);
+    const rewardStrategy = await this.getOrCreateRewardStrategy(userId);
 
-    const staking = await this.factory.createStaking(userId, strategy, blockchain, depositAddress, withdrawalAddress);
+    const staking = await this.factory.createStaking(
+      userId,
+      strategy,
+      blockchain,
+      depositAddress,
+      withdrawalAddress,
+      rewardStrategy,
+    );
 
     return this.repository.save(staking);
+  }
+
+  private async getOrCreateRewardStrategy(userId: number): Promise<RewardStrategy | undefined> {
+    const existingStrategy = await this.rewardStrategyRepository.findOneBy({ userId });
+    if (existingStrategy) return existingStrategy;
+
+    // create a new strategy
+    try {
+      const strategy = this.factory.createRewardStrategy(userId);
+      return await this.rewardStrategyRepository.save(strategy);
+    } catch {
+      // retry the get (might have been created in meantime)
+      return await this.rewardStrategyRepository.findOneBy({ userId });
+    }
   }
 
   private async getBalances(manager: EntityManager, stakingId: number, assetId: number): Promise<StakingBalances> {
@@ -209,21 +213,6 @@ export class StakingService {
       stageOneBalance: Math.max(0, Util.round(currentBalance - stageOneDeposits, 8)),
       stageTwoBalance: Math.max(0, Util.round(currentBalance - stageTwoDeposits, 8)),
     };
-  }
-
-  private async getPreviousTotalBalance(type: StakingType, currentBalance: number, date: Date): Promise<number> {
-    const depositsFromDate = (await this.getTotalDepositsSince(type, date)) ?? 0;
-    const withdrawalsFromDate = (await this.getTotalWithdrawalsSince(type, date)) ?? 0;
-
-    return currentBalance - depositsFromDate + withdrawalsFromDate;
-  }
-
-  private async getTotalDepositsSince(type: StakingType, date: Date): Promise<number> {
-    return this.depositRepository.getTotalConfirmedAmountSince(type, date);
-  }
-
-  private async getTotalWithdrawalsSince(type: StakingType, date: Date): Promise<number> {
-    return this.withdrawalRepository.getTotalConfirmedAmountSince(type, date);
   }
 
   private aggregateByAsset(items: (Deposit | Withdrawal)[]): AssetBalance[] {

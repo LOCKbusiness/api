@@ -14,7 +14,8 @@ export class CompactHistoryDtoMapper {
     [WithdrawalStatus.PAYING_OUT]: CompactHistoryStatus.PENDING,
     [WithdrawalStatus.CONFIRMED]: CompactHistoryStatus.CONFIRMED,
     [WithdrawalStatus.FAILED]: CompactHistoryStatus.FAILED,
-    [RewardStatus.CREATED]: null,
+    [RewardStatus.CREATED]: CompactHistoryStatus.WAITING,
+    [RewardStatus.READY]: CompactHistoryStatus.PENDING,
     [RewardStatus.PAUSED]: CompactHistoryStatus.PENDING,
   };
 
@@ -63,11 +64,11 @@ export class CompactHistoryDtoMapper {
       .map((c) => ({
         type: HistoryTransactionType.REWARD,
         inputAmount: c.targetAmount,
-        inputAsset: c.rewardRoute.targetAsset.name,
+        inputAsset: c.targetAsset.name,
         outputAmount: null,
         outputAsset: null,
         feeAmount: c.feePercent != 0 ? (c.targetAmount * c.feePercent) / (1 - c.feePercent) : null,
-        feeAsset: c.feePercent != 0 ? c.rewardRoute.targetAsset.name : null,
+        feeAsset: c.feePercent != 0 ? c.targetAsset.name : null,
         amountInEur: c.amountEur,
         amountInChf: c.amountChf,
         amountInUsd: c.amountUsd,

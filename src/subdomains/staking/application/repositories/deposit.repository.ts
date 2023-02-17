@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Util } from 'src/shared/util';
 import { Between, EntityManager, FindOperator, In, Repository } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
-import { StakingReference, StakingType } from '../../domain/entities/staking.entity';
+import { StakingReference } from '../../domain/entities/staking.entity';
 import { DepositStatus } from '../../domain/enums';
 
 @Injectable()
@@ -96,18 +96,6 @@ export class DepositRepository extends Repository<Deposit> {
       .andWhere('created >= :date', { date: Util.daysBefore(6) })
       .getRawOne<{ amount: number }>()
       .then((r) => r.amount ?? 0);
-  }
-
-  async getTotalConfirmedAmountSince({ strategy }: StakingType, date: Date): Promise<number> {
-    // TODO: this is wrong for multi-asset staking
-    return this.createQueryBuilder('deposit')
-      .leftJoin('deposit.staking', 'staking')
-      .select('SUM(amount)', 'amount')
-      .where('staking.strategy = :strategy', { strategy })
-      .andWhere('deposit.status = :status', { status: DepositStatus.CONFIRMED })
-      .andWhere('deposit.created >= :date', { date })
-      .getRawOne<{ amount: number }>()
-      .then((b) => b.amount ?? 0);
   }
 
   private dateQuery(from?: Date, to?: Date): { created: FindOperator<Date> } | undefined {

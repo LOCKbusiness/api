@@ -22,6 +22,7 @@ export enum DepositStatus {
 
 export enum RewardStatus {
   CREATED = 'Created',
+  READY = 'Ready',
   PAYING_OUT = 'PayingOut',
   PAUSED = 'Paused',
   CONFIRMED = 'Confirmed',

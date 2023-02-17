@@ -49,7 +49,7 @@ export class StakingRewardOutService {
 
         const successfulRequests = [];
 
-        for (const reward of batch.rewards.filter((r) => r.status === RewardStatus.CREATED)) {
+        for (const reward of batch.rewards.filter((r) => r.status === RewardStatus.READY)) {
           try {
             await this.doPayout(reward);
             successfulRequests.push(reward);
@@ -70,16 +70,12 @@ export class StakingRewardOutService {
   //*** HELPER METHODS ***//
 
   private async fetchBatchesForPayout(): Promise<RewardBatch[]> {
-    /**
-     * @note
-     * rewards.rewardRoute relation is required, otherwise the targetAsset is not loaded
-     */
     return this.rewardBatchRepo.find({
       where: {
         // PAYING_OUT batches are fetch for retry in case of failure in previous iteration
         status: In([RewardBatchStatus.SECURED, RewardBatchStatus.PAYING_OUT]),
       },
-      relations: ['rewards', 'rewards.rewardRoute'],
+      relations: ['rewards'],
     });
   }
 
@@ -87,9 +83,9 @@ export class StakingRewardOutService {
     const request: PayoutRequest = {
       context: PayoutOrderContext.STAKING_REWARD,
       correlationId: reward.id.toString(),
-      asset: reward.rewardRoute.targetAsset,
+      asset: reward.targetAsset,
       amount: reward.targetAmount,
-      destinationAddress: reward.rewardRoute.targetAddress.address,
+      destinationAddress: reward.targetAddress.address,
     };
 
     await this.payoutService.doPayout(request);

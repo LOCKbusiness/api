@@ -1,5 +1,6 @@
 import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Asset } from 'src/shared/models/asset/asset.entity';
+import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 import { IEntity } from 'src/shared/models/entity';
 import { Price } from 'src/shared/models/price';
 import { Util } from 'src/shared/util';
@@ -41,6 +42,12 @@ export class Reward extends IEntity {
   @ManyToOne(() => RewardRoute, { eager: true, nullable: true })
   rewardRoute: RewardRoute;
 
+  @Column(() => BlockchainAddress)
+  targetAddress: BlockchainAddress;
+
+  @ManyToOne(() => Asset, { eager: true, nullable: false })
+  targetAsset: Asset;
+
   //*** PAYOUT PROPS ***//
 
   @Column({ type: 'float', nullable: true })
@@ -78,6 +85,8 @@ export class Reward extends IEntity {
     feePercent: number,
     feeAmount: number,
     rewardRoute: RewardRoute,
+    targetAddress: BlockchainAddress,
+    targetAsset: Asset,
     status?: RewardStatus,
     targetAmount?: number,
     txId?: string,
@@ -93,12 +102,14 @@ export class Reward extends IEntity {
     reward.feePercent = feePercent;
     reward.feeAmount = feeAmount;
     reward.rewardRoute = rewardRoute;
+    reward.targetAddress = targetAddress;
+    reward.targetAsset = targetAsset;
 
     reward.targetAmount = targetAmount;
     reward.txId = txId;
     reward.outputDate = outputDate;
 
-    reward.isReinvest = rewardRoute.targetAddress.isEqual(staking.depositAddress);
+    reward.isReinvest = rewardRoute.isDefault || rewardRoute.targetAddress.isEqual(staking.depositAddress);
 
     return reward;
   }
