@@ -59,7 +59,8 @@ export class YieldMachineService {
         const depositToken = await this.tokenProviderService.get(parameters.token);
         return this.depositToVault(vault, parameters, +depositToken.id);
       case TransactionCommand.WITHDRAW_FROM_VAULT:
-        return this.withdrawFromVault(vault, parameters);
+        const withdrawToken = await this.tokenProviderService.get(parameters.token);
+        return this.withdrawFromVault(vault, parameters, +withdrawToken.id);
       case TransactionCommand.TAKE_LOAN:
         return this.takeLoan(vault, parameters);
       case TransactionCommand.PAYBACK_LOAN:
@@ -119,11 +120,11 @@ export class YieldMachineService {
     });
   }
 
-  private withdrawFromVault(vault: Vault, parameters: WithdrawFromVaultParameters): Promise<string> {
+  private withdrawFromVault(vault: Vault, parameters: WithdrawFromVaultParameters, token?: number): Promise<string> {
     return this.transactionExecutionService.withdrawFromVault({
       to: vault.address,
       vault: vault.vault,
-      token: vault.blockchainPairTokenBId,
+      token: token ?? vault.blockchainPairTokenBId,
       amount: new BigNumber(parameters.amount),
       ownerWallet: vault.wallet,
       accountIndex: vault.accountIndex,
