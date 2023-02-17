@@ -45,6 +45,9 @@ export class DepositToVaultParameters extends VaultParameters {
 export class WithdrawFromVaultParameters extends VaultParameters {
   @IsPositive()
   amount: number;
+
+  @IsString()
+  token: string;
 }
 
 export class TakeLoanParameters extends VaultParameters {
