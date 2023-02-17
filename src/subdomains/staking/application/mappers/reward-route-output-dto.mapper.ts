@@ -3,7 +3,7 @@ import { RewardRouteOutputDto } from '../dto/output/reward-route.output.dto';
 
 export class RewardRouteOutputDtoMapper {
   static entityToDtos(staking: Staking): RewardRouteOutputDto[] {
-    return staking.rewardStrategy.activeRewardRoutes.map((route) => ({
+    return staking.rewardStrategy.activeCustomRewardRoutes.map((route) => ({
       id: route.id,
       label: route.label,
       rewardPercent: route.rewardPercent,

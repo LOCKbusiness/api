@@ -28,7 +28,7 @@ export class RewardStrategy extends IEntity {
   }
 
   private static createDefaultRewardRoutes(): RewardRoute[] {
-    return [RewardRoute.create('Reinvest', 1, null, null)];
+    return [RewardRoute.create('Default', 1, null, null)];
   }
 
   // --- PUBLIC API --- //
@@ -43,7 +43,7 @@ export class RewardStrategy extends IEntity {
   }
 
   // --- GETTERS --- //
-  get activeRewardRoutes(): RewardRoute[] {
+  get activeCustomRewardRoutes(): RewardRoute[] {
     return this.rewardRoutes.filter((r) => !r.isDefault && r.rewardPercent !== 0);
   }
 
