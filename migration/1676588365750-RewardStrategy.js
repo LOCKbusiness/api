@@ -20,6 +20,7 @@ module.exports = class RewardStrategy1676588365750 {
     await queryRunner.query(
       `CREATE TABLE "reward_strategy" ("id" int NOT NULL IDENTITY(1,1), "updated" datetime2 NOT NULL CONSTRAINT "DF_3fcab49f81465a4935e72b9f166" DEFAULT getdate(), "created" datetime2 NOT NULL CONSTRAINT "DF_d6af8bf4e8a1faa31aabffea02a" DEFAULT getdate(), "userId" int NOT NULL, CONSTRAINT "UQ_8a7ffd53abf8eeece5010d49ca6" UNIQUE ("userId"), CONSTRAINT "PK_c75fa62b40cb9ffcc32de854c7a" PRIMARY KEY ("id"))`,
     );
+    await queryRunner.query(`INSERT INTO dbo.reward_strategy (userId) VALUES (-1)`);
     await queryRunner.query(
       `INSERT INTO dbo.reward_strategy (userId) SELECT DISTINCT u.id FROM dbo.[user] u INNER JOIN dbo.staking s ON s.userId = u.id`,
     );
@@ -74,7 +75,7 @@ module.exports = class RewardStrategy1676588365750 {
     await queryRunner.query(`ALTER TABLE "dbo"."reward_route" ADD "rewardAssetId" int`);
     await queryRunner.query(`ALTER TABLE "dbo"."reward_route" ADD "stakingId" int`);
     await queryRunner.query(
-      `UPDATE rr SET rr.stakingId = rs.stakingId, rr.rewardAssetId = 1 FROM dbo.reward_route rr INNER JOIN dbo.reward_strategy rs ON rr.strategyId = rs.id`,
+      `UPDATE rr SET rr.stakingId = s.id, rr.rewardAssetId = 1 FROM dbo.reward_route rr INNER JOIN dbo.reward_strategy rs ON rr.strategyId = rs.id INNER JOIN dbo.staking s ON s.rewardStrategyId = rs.id`,
     );
     await queryRunner.query(`ALTER TABLE "dbo"."reward_route" ALTER COLUMN "rewardAssetId" int NOT NULL`);
     await queryRunner.query(`ALTER TABLE "dbo"."reward_route" ALTER COLUMN "stakingId" int NOT NULL`);
