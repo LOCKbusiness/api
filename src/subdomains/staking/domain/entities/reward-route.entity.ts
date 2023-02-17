@@ -64,6 +64,6 @@ export class RewardRoute extends IEntity {
   // --- GETTERS --- //
 
   get isDefault(): boolean {
-    return this.targetAddress == null && this.targetAsset == null;
+    return this.targetAddress.address == null && this.targetAsset == null;
   }
 }

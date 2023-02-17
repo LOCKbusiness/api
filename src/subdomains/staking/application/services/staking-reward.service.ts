@@ -81,7 +81,6 @@ export class StakingRewardService {
         'rewardStrategy',
         'rewardStrategy.rewardRoutes',
         'rewardStrategy.rewardRoutes.targetAsset',
-        'rewardStrategy.rewardRoutes.rewardAsset',
       ],
     );
 
