@@ -163,7 +163,7 @@ export class LiquidityManagementService {
         process
           .txFunc(node)
           .then((value: string) => process.updateFunc(node, value)) // value can be txId or balance
-          .catch(console.error),
+          .catch((e) => console.error(`Masternode state update failed for ${node.owner} (${node.state}):`, e)),
       ),
     );
   }
