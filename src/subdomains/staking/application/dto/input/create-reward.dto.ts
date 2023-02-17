@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDate, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsDate, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Matches } from 'class-validator';
+import { GetConfig } from 'src/config/config';
+import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { RewardStatus } from 'src/subdomains/staking/domain/enums';
 
 export class CreateRewardDto {
@@ -33,6 +35,22 @@ export class CreateRewardDto {
   @IsNotEmpty()
   @IsInt()
   rewardRouteId: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  @Matches(GetConfig().addressFormat)
+  targetAddress: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsEnum(Blockchain)
+  targetBlockchain: Blockchain;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsInt()
+  targetAssetId: number;
 
   @ApiProperty()
   @IsOptional()

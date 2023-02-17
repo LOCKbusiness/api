@@ -85,6 +85,8 @@ export class Reward extends IEntity {
     feePercent: number,
     feeAmount: number,
     rewardRoute: RewardRoute,
+    targetAddress: BlockchainAddress,
+    targetAsset: Asset,
     status?: RewardStatus,
     targetAmount?: number,
     txId?: string,
@@ -100,6 +102,8 @@ export class Reward extends IEntity {
     reward.feePercent = feePercent;
     reward.feeAmount = feeAmount;
     reward.rewardRoute = rewardRoute;
+    reward.targetAddress = targetAddress;
+    reward.targetAsset = targetAsset;
 
     reward.targetAmount = targetAmount;
     reward.txId = txId;

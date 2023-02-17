@@ -70,6 +70,9 @@ export class StakingFactory {
       feePercent,
       feeAmount,
       rewardRouteId,
+      targetAddress: targetAddressName,
+      targetBlockchain,
+      targetAssetId,
       status,
       targetAmount,
       txId,
@@ -78,6 +81,8 @@ export class StakingFactory {
 
     const referenceAsset = await this.assetService.getAssetById(referenceAssetId);
     const rewardRoute = await this.rewardRouteRepo.findOneBy({ id: rewardRouteId });
+    const targetAsset = await this.assetService.getAssetById(targetAssetId);
+    const targetAddress = BlockchainAddress.create(targetAddressName, targetBlockchain);
 
     if (!referenceAsset) {
       throw new BadRequestException(
@@ -99,6 +104,8 @@ export class StakingFactory {
       feePercent,
       feeAmount,
       rewardRoute,
+      targetAddress,
+      targetAsset,
       status,
       targetAmount,
       txId,
