@@ -5,7 +5,6 @@ import { Config, Process } from 'src/config/config';
 import { Lock } from 'src/shared/lock';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { Reward } from '../../domain/entities/reward.entity';
-import { RewardAssets } from '../../domain/entities/staking.entity';
 import { RewardStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { CreateRewardRouteDto } from '../dto/input/create-reward-route.dto';
@@ -71,15 +70,18 @@ export class StakingRewardService {
     if (!staking) throw new NotFoundException('Staking not found');
 
     const supportedAssets = await this.assetService.getAllAssetsForBlockchain(staking.blockchain);
-    const supportedRewardAssets = await this.assetService.getAssetsByQuery(RewardAssets[staking.strategy]);
-    const rewardRoutes = dtos.map((dto) =>
-      this.factory.createRewardRoute(staking, dto, supportedAssets, supportedRewardAssets),
-    );
+    const rewardRoutes = dtos.map((dto) => this.factory.createRewardRoute(dto, supportedAssets));
 
     const updatedStaking = await this.repository.saveWithLock(
       stakingId,
       (staking) => staking.setRewardRoutes(rewardRoutes),
-      ['balances', 'balances.asset', 'rewardRoutes', 'rewardRoutes.targetAsset', 'rewardRoutes.rewardAsset'],
+      [
+        'balances',
+        'balances.asset',
+        'rewardStrategy',
+        'rewardStrategy.rewardRoutes',
+        'rewardStrategy.rewardRoutes.targetAsset',
+      ],
     );
 
     return this.stakingService.getStakingDto(updatedStaking);

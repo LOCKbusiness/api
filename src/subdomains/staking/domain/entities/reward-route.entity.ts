@@ -2,16 +2,15 @@ import { Asset } from 'src/shared/models/asset/asset.entity';
 import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 import { IEntity } from 'src/shared/models/entity';
 import { Column, Entity, Index, ManyToOne } from 'typeorm';
-import { Staking } from './staking.entity';
+import { RewardStrategy } from './reward-strategy.entity';
 
 @Entity()
-@Index(
-  (r: RewardRoute) => [r.staking, r.targetAddress.address, r.targetAddress.blockchain, r.targetAsset, r.rewardAsset],
-  { unique: true },
-)
+@Index((r: RewardRoute) => [r.strategy, r.targetAddress.address, r.targetAddress.blockchain, r.targetAsset], {
+  unique: true,
+})
 export class RewardRoute extends IEntity {
-  @ManyToOne(() => Staking, (staking) => staking.rewardRoutes, { nullable: false })
-  staking: Staking;
+  @ManyToOne(() => RewardStrategy, (strategy) => strategy.rewardRoutes, { nullable: false })
+  strategy: RewardStrategy;
 
   @Column({ nullable: true })
   label?: string;
@@ -22,42 +21,37 @@ export class RewardRoute extends IEntity {
   @Column(() => BlockchainAddress)
   targetAddress: BlockchainAddress;
 
-  @ManyToOne(() => Asset, { eager: true, nullable: false })
+  @ManyToOne(() => Asset, { eager: true, nullable: true })
   targetAsset: Asset;
 
-  @ManyToOne(() => Asset, { eager: true, nullable: false })
-  rewardAsset: Asset;
-
-  //*** FACTORY METHODS ***//
+  // --- FACTORY METHODS --- //
 
   static create(
-    staking: Staking,
     label: string,
     rewardPercent: number,
     targetAsset: Asset,
     targetAddress: BlockchainAddress,
-    rewardAsset: Asset,
   ): RewardRoute {
     const route = new RewardRoute();
 
-    route.staking = staking;
     route.label = label;
     route.rewardPercent = rewardPercent;
-    route.targetAsset = targetAsset;
     route.targetAddress = targetAddress;
-    route.rewardAsset = rewardAsset;
+    route.targetAsset = targetAsset;
 
     return route;
   }
 
-  //*** PUBLIC API ***//
+  // --- PUBLIC API --- //
 
-  isEqual(newRoute: RewardRoute): boolean {
-    return (
-      this.targetAsset.id === newRoute.targetAsset.id &&
-      this.targetAddress.isEqual(newRoute.targetAddress) &&
-      this.rewardAsset.isEqual(newRoute.rewardAsset)
-    );
+  isEqual(route: RewardRoute): boolean {
+    if (this.isDefault && route.isDefault) {
+      return true;
+    } else if (!this.isDefault && !route.isDefault) {
+      return this.targetAsset.id === route.targetAsset.id && this.targetAddress.isEqual(route.targetAddress);
+    }
+
+    return false;
   }
 
   updateRoute(label: string, rewardPercent: number): this {
@@ -65,5 +59,11 @@ export class RewardRoute extends IEntity {
     this.rewardPercent = rewardPercent;
 
     return this;
+  }
+
+  // --- GETTERS --- //
+
+  get isDefault(): boolean {
+    return this.targetAddress.address == null && this.targetAsset == null;
   }
 }

@@ -49,18 +49,18 @@ export class StakingRewardBatchService {
     const batches = new Map<string, RewardBatch>();
 
     for (const r of rewards) {
-      const { referenceAsset: outputReferenceAsset, rewardRoute } = r;
+      const { referenceAsset, targetAsset } = r;
 
-      let batch = batches.get(this.getBatchTempKey(outputReferenceAsset, rewardRoute.targetAsset));
+      let batch = batches.get(this.getBatchTempKey(referenceAsset, targetAsset));
 
       if (!batch) {
         batch = this.rewardBatchRepo.create({
-          outputReferenceAsset,
-          targetAsset: rewardRoute.targetAsset,
+          outputReferenceAsset: referenceAsset,
+          targetAsset: targetAsset,
           status: RewardBatchStatus.CREATED,
           rewards: [],
         });
-        batches.set(this.getBatchTempKey(outputReferenceAsset, rewardRoute.targetAsset), batch);
+        batches.set(this.getBatchTempKey(referenceAsset, targetAsset), batch);
       }
 
       batch.addTransaction(r);
