@@ -11,10 +11,10 @@ import {
 } from '../../../entities/__mocks__/payout-order.entity.mock';
 import { PayoutOrderRepository } from '../../../repositories/payout-order.repository';
 import { PayoutDeFiChainService } from '../../../services/payout-defichain.service';
-import { DeFiChainTokenStrategy } from '../impl/defichain-token.strategy';
+import { DeFiChainDefaultStrategy } from '../impl/defichain-default.strategy';
 
-describe('PayoutDeFiChainTokenStrategy', () => {
-  let strategy: PayoutDeFiChainTokenStrategyWrapper;
+describe('PayoutDeFiChainDefaultStrategy', () => {
+  let strategy: PayoutDeFiChainDefaultStrategyWrapper;
 
   let notificationService: NotificationService;
   let dexService: DexService;
@@ -31,7 +31,7 @@ describe('PayoutDeFiChainTokenStrategy', () => {
     assetService = mock<AssetService>();
     settingService = mock<SettingService>();
 
-    strategy = new PayoutDeFiChainTokenStrategyWrapper(
+    strategy = new PayoutDeFiChainDefaultStrategyWrapper(
       notificationService,
       dexService,
       defichainService,
@@ -79,7 +79,7 @@ describe('PayoutDeFiChainTokenStrategy', () => {
   });
 });
 
-class PayoutDeFiChainTokenStrategyWrapper extends DeFiChainTokenStrategy {
+class PayoutDeFiChainDefaultStrategyWrapper extends DeFiChainDefaultStrategy {
   constructor(
     notificationService: NotificationService,
     dexService: DexService,

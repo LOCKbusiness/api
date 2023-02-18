@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/models/asset/asset.entity';
 import { PayoutStrategy } from './impl/base/payout.strategy';
-import { DeFiChainCoinStrategy } from './impl/defichain-coin.strategy';
-import { DeFiChainTokenStrategy } from './impl/defichain-token.strategy';
+import { DeFiChainDfiStrategy } from './impl/defichain-dfi.strategy';
+import { DeFiChainDefaultStrategy } from './impl/defichain-default.strategy';
 
 enum Alias {
-  DEFICHAIN_COIN = 'DeFiChainCoin',
-  DEFICHAIN_TOKEN = 'DeFiChainToken',
+  DEFICHAIN_DFI = 'DeFiChainDfi',
+  DEFICHAIN_DEFAULT = 'DeFiChainDefault',
 }
 
 export { Alias as PayoutStrategyAlias };
@@ -16,9 +16,9 @@ export { Alias as PayoutStrategyAlias };
 export class PayoutStrategiesFacade {
   protected readonly strategies: Map<Alias, PayoutStrategy> = new Map();
 
-  constructor(deFiChainCoin: DeFiChainCoinStrategy, deFiChainToken: DeFiChainTokenStrategy) {
-    this.strategies.set(Alias.DEFICHAIN_COIN, deFiChainCoin);
-    this.strategies.set(Alias.DEFICHAIN_TOKEN, deFiChainToken);
+  constructor(deFiChainDfi: DeFiChainDfiStrategy, deFiChainDefault: DeFiChainDefaultStrategy) {
+    this.strategies.set(Alias.DEFICHAIN_DFI, deFiChainDfi);
+    this.strategies.set(Alias.DEFICHAIN_DEFAULT, deFiChainDefault);
   }
 
   getPayoutStrategy(criteria: Asset | Alias): PayoutStrategy {
@@ -26,10 +26,10 @@ export class PayoutStrategiesFacade {
   }
 
   getPayoutStrategyAlias(asset: Asset): Alias {
-    const { blockchain, type: assetType } = asset;
+    const { blockchain, name: assetName } = asset;
 
     if (blockchain === Blockchain.DEFICHAIN) {
-      return assetType === AssetType.COIN ? Alias.DEFICHAIN_COIN : Alias.DEFICHAIN_TOKEN;
+      return assetName === 'DFI' ? Alias.DEFICHAIN_DFI : Alias.DEFICHAIN_DEFAULT;
     }
   }
 

@@ -9,8 +9,8 @@ import { PayoutLogService } from './services/payout-log.service';
 import { PayoutService } from './services/payout.service';
 import { PayoutStrategiesFacade } from './strategies/payout/payout.facade';
 import { PrepareStrategiesFacade } from './strategies/prepare/prepare.facade';
-import { DeFiChainCoinStrategy as DeFiChainDfiStrategyPO } from './strategies/payout/impl/defichain-coin.strategy';
-import { DeFiChainTokenStrategy as DeFiChainTokenStrategyPO } from './strategies/payout/impl/defichain-token.strategy';
+import { DeFiChainDfiStrategy as DeFiChainDfiStrategyPO } from './strategies/payout/impl/defichain-dfi.strategy';
+import { DeFiChainDefaultStrategy as DeFiChainDefaultStrategyPO } from './strategies/payout/impl/defichain-default.strategy';
 import { DeFiChainStrategy as DeFiChainStrategyPR } from './strategies/prepare/impl/defichain.strategy';
 import { PayoutController } from './payout.controller';
 import { BlockchainModule } from 'src/blockchain/blockchain.module';
@@ -29,7 +29,7 @@ import { DexModule } from '../dex/dex.module';
     PayoutStrategiesFacade,
     PrepareStrategiesFacade,
     DeFiChainDfiStrategyPO,
-    DeFiChainTokenStrategyPO,
+    DeFiChainDefaultStrategyPO,
     DeFiChainStrategyPR,
   ],
   exports: [PayoutService],

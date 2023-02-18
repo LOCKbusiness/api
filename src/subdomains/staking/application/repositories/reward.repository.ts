@@ -43,6 +43,7 @@ export class RewardRepository extends Repository<Reward> {
       .getRawOne<{ amount: number }>()
       .then((r) => r.amount ?? 0);
   }
+
   async getNewRewards(): Promise<Reward[]> {
     return this.find({
       where: {

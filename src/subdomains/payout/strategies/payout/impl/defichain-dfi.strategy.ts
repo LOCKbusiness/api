@@ -11,7 +11,7 @@ import { NotificationService } from 'src/integration/notification/services/notif
 import { SettingService } from 'src/shared/services/setting.service';
 
 @Injectable()
-export class DeFiChainCoinStrategy extends JellyfishStrategy {
+export class DeFiChainDfiStrategy extends JellyfishStrategy {
   constructor(
     notificationService: NotificationService,
     protected readonly deFiChainService: PayoutDeFiChainService,

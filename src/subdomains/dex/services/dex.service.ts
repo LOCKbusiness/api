@@ -21,7 +21,7 @@ import {
 } from '../interfaces';
 import { PurchaseLiquidityStrategies } from '../strategies/purchase-liquidity/purchase-liquidity.facade';
 import { SellLiquidityStrategies } from '../strategies/sell-liquidity/sell-liquidity.facade';
-import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/models/asset/asset.entity';
 import { TransferNotRequiredException } from '../exceptions/transfer-not-required.exception';
 
 @Injectable()
@@ -215,7 +215,7 @@ export class DexService {
     const { destinationAddress, asset, amount } = request;
     const sourceAddress = this.dexDeFiChainService.stakingWalletAddress;
 
-    if (asset.type === AssetType.TOKEN && destinationAddress === sourceAddress) {
+    if (asset.name !== 'DFI' && destinationAddress === sourceAddress) {
       throw new TransferNotRequiredException('Transfer of token to same address is not required/useless');
     }
 
