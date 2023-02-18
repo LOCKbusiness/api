@@ -37,7 +37,6 @@ export interface StakingBalances {
 export class StakingService {
   constructor(
     private readonly repository: StakingRepository,
-    private readonly rewardRepository: RewardRepository,
     private readonly depositRepository: DepositRepository,
     private readonly withdrawalRepository: WithdrawalRepository,
     private readonly userService: UserService,

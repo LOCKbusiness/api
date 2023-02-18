@@ -5,7 +5,7 @@ import { Config, Process } from 'src/config/config';
 import { Lock } from 'src/shared/lock';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { Reward } from '../../domain/entities/reward.entity';
-import { RewardStatus } from '../../domain/enums';
+import { RewardStatus, StakingStrategy } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { CreateRewardRouteDto } from '../dto/input/create-reward-route.dto';
 import { CreateRewardDto } from '../dto/input/create-reward.dto';
@@ -14,6 +14,7 @@ import { RewardRouteOutputDto } from '../dto/output/reward-route.output.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
 import { StakingFactory } from '../factories/staking.factory';
 import { RewardRouteOutputDtoMapper } from '../mappers/reward-route-output-dto.mapper';
+import { RewardRouteRepository } from '../repositories/reward-route.repository';
 import { RewardRepository } from '../repositories/reward.repository';
 import { StakingRepository } from '../repositories/staking.repository';
 import { StakingRewardBatchService } from './staking-reward-batch.service';
@@ -36,13 +37,32 @@ export class StakingRewardService {
     private readonly outService: StakingRewardOutService,
     private readonly assetService: AssetService,
     private readonly stakingService: StakingService,
+    private readonly rewardRouteRepo: RewardRouteRepository,
+    private readonly stakingRepo: StakingRepository,
   ) {}
 
   //*** PUBLIC API ***//
 
-  async createReward(stakingId: number, dto: CreateRewardDto): Promise<void> {
-    const staking = await this.repository.findOneBy({ id: stakingId });
-    if (!staking) throw new NotFoundException('Staking not found');
+  async createReward(dto: CreateRewardDto): Promise<void> {
+    const rewardRoute = await this.rewardRouteRepo.findOne({
+      where: { id: dto.rewardRouteId },
+      relations: ['strategy'],
+    });
+    const stakings = await this.stakingRepo.findBy({ userId: rewardRoute.strategy.userId });
+
+    const staking = stakings.find((s) =>
+      dto.referenceAssetId == 1 ? s.strategy == StakingStrategy.MASTERNODE : StakingStrategy.LIQUIDITY_MINING,
+    );
+
+    dto.targetAddress =
+      dto.targetAddress ?? rewardRoute.isDefault ? staking.depositAddress.address : rewardRoute.targetAddress.address;
+
+    dto.targetBlockchain =
+      dto.targetBlockchain ?? rewardRoute.isDefault
+        ? staking.depositAddress.blockchain
+        : rewardRoute.targetAddress.blockchain;
+
+    dto.targetAssetId = dto.targetAssetId ?? rewardRoute.isDefault ? dto.referenceAssetId : rewardRoute.targetAsset.id;
 
     const reward = await this.factory.createReward(staking, dto);
 
@@ -53,7 +73,7 @@ export class StakingRewardService {
        * @note
        * potential case of updateRewardsAmount failure is tolerated
        */
-      await this.stakingService.updateRewardsAmount(stakingId);
+      await this.stakingService.updateRewardsAmount(staking.id);
     }
   }
 

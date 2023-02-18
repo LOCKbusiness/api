@@ -9,7 +9,7 @@ import { UpdateRewardDto } from '../../application/dto/input/update-reward.dto';
 import { Reward } from '../../domain/entities/reward.entity';
 
 @ApiTags('Reward')
-@Controller('staking/:stakingId/reward')
+@Controller('reward')
 export class RewardController {
   constructor(private readonly stakingRewardService: StakingRewardService) {}
 
@@ -17,8 +17,8 @@ export class RewardController {
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
-  async createReward(@Param('stakingId') stakingId: string, @Body() dto: CreateRewardDto): Promise<void> {
-    await this.stakingRewardService.createReward(+stakingId, dto);
+  async createReward(@Body() dto: CreateRewardDto): Promise<void> {
+    await this.stakingRewardService.createReward(dto);
   }
 
   @Put(':id')
