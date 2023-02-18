@@ -14,7 +14,7 @@ import { JellyfishStrategy } from './base/jellyfish.strategy';
 type TokenName = string;
 
 @Injectable()
-export class DeFiChainTokenStrategy extends JellyfishStrategy {
+export class DeFiChainDefaultStrategy extends JellyfishStrategy {
   constructor(
     notificationService: NotificationService,
     private readonly dexService: DexService,

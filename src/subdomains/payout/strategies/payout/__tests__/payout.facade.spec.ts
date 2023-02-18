@@ -1,32 +1,31 @@
 import { mock } from 'jest-mock-extended';
 import { NotificationService } from 'src/integration/notification/services/notification.service';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { AssetType } from 'src/shared/models/asset/asset.entity';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { createCustomAsset } from 'src/shared/models/asset/__mocks__/asset.entity.mock';
 import { SettingService } from 'src/shared/services/setting.service';
 import { DexService } from 'src/subdomains/dex/services/dex.service';
 import { PayoutOrderRepository } from '../../../repositories/payout-order.repository';
 import { PayoutDeFiChainService } from '../../../services/payout-defichain.service';
-import { DeFiChainCoinStrategy } from '../impl/defichain-coin.strategy';
-import { DeFiChainTokenStrategy } from '../impl/defichain-token.strategy';
+import { DeFiChainDfiStrategy } from '../impl/defichain-dfi.strategy';
+import { DeFiChainDefaultStrategy } from '../impl/defichain-default.strategy';
 import { PayoutStrategiesFacade, PayoutStrategyAlias } from '../payout.facade';
 
 describe('PayoutStrategiesFacade', () => {
-  let deFiChainCoin: DeFiChainCoinStrategy;
-  let deFiChainToken: DeFiChainTokenStrategy;
+  let deFiChainDfi: DeFiChainDfiStrategy;
+  let deFiChainDefault: DeFiChainDefaultStrategy;
 
   let facade: PayoutStrategiesFacadeWrapper;
 
   beforeEach(() => {
-    deFiChainCoin = new DeFiChainCoinStrategy(
+    deFiChainDfi = new DeFiChainDfiStrategy(
       mock<NotificationService>(),
       mock<PayoutDeFiChainService>(),
       mock<PayoutOrderRepository>(),
       mock<AssetService>(),
       mock<SettingService>(),
     );
-    deFiChainToken = new DeFiChainTokenStrategy(
+    deFiChainDefault = new DeFiChainDefaultStrategy(
       mock<NotificationService>(),
       mock<DexService>(),
       mock<PayoutDeFiChainService>(),
@@ -35,7 +34,7 @@ describe('PayoutStrategiesFacade', () => {
       mock<SettingService>(),
     );
 
-    facade = new PayoutStrategiesFacadeWrapper(deFiChainCoin, deFiChainToken);
+    facade = new PayoutStrategiesFacadeWrapper(deFiChainDfi, deFiChainDefault);
   });
 
   describe('#constructor(...)', () => {
@@ -50,32 +49,30 @@ describe('PayoutStrategiesFacade', () => {
     it('sets all required payoutStrategies aliases', () => {
       const aliases = [...facade.getStrategies().keys()];
 
-      expect(aliases.includes(PayoutStrategyAlias.DEFICHAIN_COIN)).toBe(true);
-      expect(aliases.includes(PayoutStrategyAlias.DEFICHAIN_TOKEN)).toBe(true);
+      expect(aliases.includes(PayoutStrategyAlias.DEFICHAIN_DFI)).toBe(true);
+      expect(aliases.includes(PayoutStrategyAlias.DEFICHAIN_DEFAULT)).toBe(true);
     });
 
     it('assigns proper payoutStrategies to aliases', () => {
-      expect(facade.getStrategies().get(PayoutStrategyAlias.DEFICHAIN_COIN)).toBeInstanceOf(DeFiChainCoinStrategy);
-      expect(facade.getStrategies().get(PayoutStrategyAlias.DEFICHAIN_TOKEN)).toBeInstanceOf(DeFiChainTokenStrategy);
+      expect(facade.getStrategies().get(PayoutStrategyAlias.DEFICHAIN_DFI)).toBeInstanceOf(DeFiChainDfiStrategy);
+      expect(facade.getStrategies().get(PayoutStrategyAlias.DEFICHAIN_DEFAULT)).toBeInstanceOf(
+        DeFiChainDefaultStrategy,
+      );
     });
   });
 
   describe('#getPayoutStrategy(...)', () => {
     describe('getting strategy by Asset', () => {
-      it('gets DEFICHAIN_COIN strategy', () => {
-        const strategy = facade.getPayoutStrategy(
-          createCustomAsset({ blockchain: Blockchain.DEFICHAIN, type: AssetType.COIN }),
-        );
+      it('gets DEFICHAIN_DFI strategy', () => {
+        const strategy = facade.getPayoutStrategy(createCustomAsset({ blockchain: Blockchain.DEFICHAIN, name: 'DFI' }));
 
-        expect(strategy).toBeInstanceOf(DeFiChainCoinStrategy);
+        expect(strategy).toBeInstanceOf(DeFiChainDfiStrategy);
       });
 
-      it('gets DEFICHAIN_TOKEN strategy for DEFICHAIN', () => {
-        const strategy = facade.getPayoutStrategy(
-          createCustomAsset({ blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN }),
-        );
+      it('gets DEFICHAIN_DEFAULT strategy for DEFICHAIN', () => {
+        const strategy = facade.getPayoutStrategy(createCustomAsset({ blockchain: Blockchain.DEFICHAIN, name: 'BTC' }));
 
-        expect(strategy).toBeInstanceOf(DeFiChainTokenStrategy);
+        expect(strategy).toBeInstanceOf(DeFiChainDefaultStrategy);
       });
 
       it('fails to get strategy for non-supported Blockchain', () => {
@@ -88,16 +85,16 @@ describe('PayoutStrategiesFacade', () => {
     });
 
     describe('getting strategy by Alias', () => {
-      it('gets DEFICHAIN_COIN strategy', () => {
-        const strategy = facade.getPayoutStrategy(PayoutStrategyAlias.DEFICHAIN_COIN);
+      it('gets DEFICHAIN_DFI strategy', () => {
+        const strategy = facade.getPayoutStrategy(PayoutStrategyAlias.DEFICHAIN_DFI);
 
-        expect(strategy).toBeInstanceOf(DeFiChainCoinStrategy);
+        expect(strategy).toBeInstanceOf(DeFiChainDfiStrategy);
       });
 
-      it('gets DEFICHAIN_TOKEN strategy', () => {
-        const strategy = facade.getPayoutStrategy(PayoutStrategyAlias.DEFICHAIN_TOKEN);
+      it('gets DEFICHAIN_DEFAULT strategy', () => {
+        const strategy = facade.getPayoutStrategy(PayoutStrategyAlias.DEFICHAIN_DEFAULT);
 
-        expect(strategy).toBeInstanceOf(DeFiChainTokenStrategy);
+        expect(strategy).toBeInstanceOf(DeFiChainDefaultStrategy);
       });
 
       it('fails to get strategy for non-supported Alias', () => {
@@ -111,8 +108,8 @@ describe('PayoutStrategiesFacade', () => {
 });
 
 class PayoutStrategiesFacadeWrapper extends PayoutStrategiesFacade {
-  constructor(deFiChainCoin: DeFiChainCoinStrategy, deFiChainToken: DeFiChainTokenStrategy) {
-    super(deFiChainCoin, deFiChainToken);
+  constructor(deFiChainDfi: DeFiChainDfiStrategy, deFiChainDefault: DeFiChainDefaultStrategy) {
+    super(deFiChainDfi, deFiChainDefault);
   }
 
   getStrategies() {
