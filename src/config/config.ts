@@ -147,13 +147,14 @@ export class Configuration {
   payIn = {
     min: {
       DeFiChain: {
-        DFI: 0.0001,
-        DUSD: 0.0001,
+        coin: 0.0001,
+        token: 0,
       },
     },
     forward: {
       phrase: process.env.FORWARD_PHRASE?.split(',') ?? [],
       accountToAccountFee: 0.00000297,
+      accountToUtxoFee: 0.00000297,
       timeout: 300000, // 5 minutes
     },
   };

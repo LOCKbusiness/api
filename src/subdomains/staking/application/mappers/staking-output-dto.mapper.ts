@@ -22,7 +22,7 @@ export class StakingOutputDtoMapper {
       depositAddress: staking.depositAddress.address,
       strategy: staking.strategy,
       minimalStake: Config.staking.minimalStake,
-      minimalDeposits: Config.payIn.min.DeFiChain,
+      minimalDeposits: [{ amount: Config.payIn.min.DeFiChain.coin, asset: 'DFI' }],
       fee: staking.fee ?? Config.staking.defaultFee,
       balance: balance.balance,
       pendingDeposits: pendingDepositAmounts.find((a) => a.assetId === balance.asset.id)?.balance ?? 0,
