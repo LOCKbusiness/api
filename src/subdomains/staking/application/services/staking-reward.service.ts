@@ -46,26 +46,19 @@ export class StakingRewardService {
   async createReward(dto: CreateRewardDto): Promise<void> {
     const rewardRoute = await this.rewardRouteRepo.findOne({
       where: { id: dto.rewardRouteId },
-      relations: ['strategy'],
+      relations: ['strategy', 'strategy.stakings'],
     });
-    const stakings = await this.stakingRepo.findBy({ userId: rewardRoute.strategy.userId });
 
-    const staking = stakings.find((s) =>
-      dto.referenceAssetId == 1 ? s.strategy == StakingStrategy.MASTERNODE : StakingStrategy.LIQUIDITY_MINING,
-    );
+    const strategy = dto.referenceAssetId === 1 ? StakingStrategy.MASTERNODE : StakingStrategy.LIQUIDITY_MINING;
+    const staking = rewardRoute.strategy.stakings.find((s) => s.strategy === strategy);
 
-    dto.targetAddress =
-      dto.targetAddress ?? rewardRoute.isDefault ? staking.depositAddress.address : rewardRoute.targetAddress.address;
+    const targetAddress = rewardRoute.isDefault ? staking.depositAddress : rewardRoute.targetAddress;
 
-    dto.targetBlockchain =
-      dto.targetBlockchain ?? rewardRoute.isDefault
-        ? staking.depositAddress.blockchain
-        : rewardRoute.targetAddress.blockchain;
-
-    dto.targetAssetId = dto.targetAssetId ?? rewardRoute.isDefault ? dto.referenceAssetId : rewardRoute.targetAsset.id;
+    dto.targetAddress ??= targetAddress.address;
+    dto.targetBlockchain ??= targetAddress.blockchain;
+    dto.targetAssetId ??= rewardRoute.isDefault ? dto.referenceAssetId : rewardRoute.targetAsset.id;
 
     const reward = await this.factory.createReward(staking, dto);
-
     await this.rewardRepository.save(reward);
 
     if (reward.status === RewardStatus.CONFIRMED) {
