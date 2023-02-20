@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { StakingStatus, StakingStrategy } from 'src/subdomains/staking/domain/enums';
+import { MinDeposit } from './min-deposit.dto';
 import { RewardRouteOutputDto } from './reward-route.output.dto';
 import { StakingBalanceDto } from './staking-balance.dto';
 
@@ -22,11 +23,8 @@ export class StakingOutputDto {
   @ApiProperty()
   minimalStake: number;
 
-  @ApiProperty()
-  minimalDeposits: {
-    DFI: number;
-    DUSD: number;
-  };
+  @ApiProperty({ type: MinDeposit, isArray: true })
+  minimalDeposits: MinDeposit[];
 
   @ApiProperty()
   fee: number;

@@ -111,7 +111,7 @@ export class DexDeFiChainService {
       Config.blockchain.default.rew.stakingAddress,
       address,
       'DFI',
-      Config.payIn.min.DeFiChain.DFI / 2,
+      Config.payIn.min.DeFiChain.coin / 2,
     );
   }
 

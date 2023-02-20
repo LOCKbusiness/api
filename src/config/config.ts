@@ -147,8 +147,8 @@ export class Configuration {
   payIn = {
     min: {
       DeFiChain: {
-        DFI: 0.0001,
-        DUSD: 0.0001,
+        coin: 0.0001,
+        token: 0,
       },
     },
     forward: {

@@ -11,7 +11,6 @@ import { TransactionExecutionService } from 'src/integration/transaction/applica
 import BigNumber from 'bignumber.js';
 import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { StakingStrategy } from '../domain/enums';
-import { JellyfishWallet, WalletHdNode } from '@defichain/jellyfish-wallet';
 import { WhaleWalletAccount } from '@defichain/whale-api-wallet';
 import { JellyfishService } from 'src/blockchain/ain/jellyfish/services/jellyfish.service';
 import { TokenProviderService } from 'src/blockchain/ain/whale/token-provider.service';
@@ -23,7 +22,7 @@ import { AssetQuery } from 'src/shared/models/asset/asset.service';
 
 @Injectable()
 export class StakingDeFiChainService {
-  private wallet: JellyfishWallet<WhaleWalletAccount, WalletHdNode>;
+  private forwardWallet: WhaleWalletAccount;
   private inputClient: DeFiClient;
   private whaleClient: WhaleClient;
 
@@ -38,7 +37,7 @@ export class StakingDeFiChainService {
   ) {
     nodeService.getConnectedNode(NodeType.INPUT).subscribe((client) => (this.inputClient = client));
     whaleService.getClient().subscribe((client) => (this.whaleClient = client));
-    this.wallet = this.jellyfishService.createWallet(Config.payIn.forward.phrase);
+    this.forwardWallet = this.jellyfishService.createWallet(Config.payIn.forward.phrase).get(0);
   }
 
   async checkSync(): Promise<void> {
@@ -103,11 +102,14 @@ export class StakingDeFiChainService {
   }
 
   private async sendFeeUtxoToDeposit(depositAddress: string, amount: BigNumber): Promise<void> {
-    const forwardAccount = this.wallet.get(0);
-    const rawTx = await this.rawTxService.Utxo.sendFeeUtxo(await forwardAccount.getAddress(), depositAddress, amount);
+    const rawTx = await this.rawTxService.Utxo.sendFeeUtxo(
+      await this.forwardWallet.getAddress(),
+      depositAddress,
+      amount,
+    );
 
     try {
-      const txId = await this.sendFromAccount(forwardAccount, rawTx);
+      const txId = await this.sendFromAccount(this.forwardWallet, rawTx);
 
       await this.whaleClient.waitForTx(txId, Config.payIn.forward.timeout);
     } catch (e) {
@@ -117,11 +119,10 @@ export class StakingDeFiChainService {
   }
 
   async sendFeeUtxos(to: string[], amount: BigNumber): Promise<string> {
-    const forwardAccount = this.wallet.get(0);
-    const rawTx = await this.rawTxService.Utxo.sendFeeUtxos(await forwardAccount.getAddress(), to, amount);
+    const rawTx = await this.rawTxService.Utxo.sendFeeUtxos(await this.forwardWallet.getAddress(), to, amount);
 
     try {
-      return await this.sendFromAccount(forwardAccount, rawTx);
+      return await this.sendFromAccount(this.forwardWallet, rawTx);
     } catch (e) {
       await this.rawTxService.unlockUtxosOf(rawTx);
       throw e;

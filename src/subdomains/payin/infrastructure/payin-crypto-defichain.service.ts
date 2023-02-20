@@ -2,24 +2,27 @@ import { Injectable } from '@nestjs/common';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { Config } from 'src/config/config';
-import { AccountHistory as JellyAccountHistory } from '@defichain/jellyfish-api-core/dist/category/account';
+import { AccountHistory } from '@defichain/jellyfish-api-core/dist/category/account';
 import { PayInTransaction } from '../application/interfaces';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { AssetType } from 'src/shared/models/asset/asset.entity';
+import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 import { PayIn } from '../domain/entities/payin.entity';
+import { JellyfishService } from 'src/blockchain/ain/jellyfish/services/jellyfish.service';
+import { WhaleWalletAccount } from '@defichain/whale-api-wallet';
+import { AssetService } from 'src/shared/models/asset/asset.service';
 
 interface HistoryAmount {
   amount: number;
   asset: string;
+  type: AssetType;
 }
-
-type AccountHistory = Omit<JellyAccountHistory & HistoryAmount & { assetType: AssetType }, 'amounts'>;
 
 @Injectable()
 export class PayInDeFiChainService {
   private client: DeFiClient;
 
+  private readonly forwardAccount: WhaleWalletAccount;
   private readonly utxoTxTypes = ['receive', 'blockReward'];
   private readonly tokenTxTypes = [
     'AccountToAccount',
@@ -29,16 +32,23 @@ export class PayInDeFiChainService {
     'RemovePoolLiquidity',
   ];
 
-  constructor(nodeService: NodeService) {
+  constructor(
+    nodeService: NodeService,
+    jellyfishService: JellyfishService,
+    private readonly assetService: AssetService,
+  ) {
     nodeService.getConnectedNode(NodeType.INPUT).subscribe((client) => (this.client = client));
+
+    this.forwardAccount = jellyfishService.createWallet(Config.payIn.forward.phrase).get(0);
   }
 
   //*** PUBLIC API ***//
 
   async getNewTransactionsSince(lastHeight: number): Promise<PayInTransaction[]> {
+    const supportedAssets = await this.assetService.getAllAssetsForBlockchain(Blockchain.DEFICHAIN);
     const histories = await this.getNewTransactionsHistorySince(lastHeight);
 
-    return this.mapHistoriesToTransactions(histories);
+    return this.mapHistoriesToTransactions(histories, supportedAssets);
   }
 
   async getConfirmedTransactions(unconfirmed: PayIn[]) {
@@ -50,57 +60,65 @@ export class PayInDeFiChainService {
   //*** HELPER METHODS ***//
 
   private async getNewTransactionsHistorySince(lastHeight: number): Promise<AccountHistory[]> {
+    const utxoSpenderAddress = await this.forwardAccount.getAddress();
+
     const { blocks: currentHeight } = await this.client.checkSync();
 
     return this.client
       .listHistory(lastHeight + 1, currentHeight)
+      .then((i) => i.filter((h) => [...this.utxoTxTypes, ...this.tokenTxTypes].includes(h.type)))
       .then((i) => i.filter((h) => h.blockHeight > lastHeight))
-      .then((i) => this.splitHistories(i))
-      .then((i) => i.filter((a) => this.isDFI(a) || this.isDUSD(a)))
-      .then((i) => i.map((a) => ({ ...a, amount: Math.abs(a.amount) })));
+      .then((i) => i.filter((h) => h.owner != utxoSpenderAddress));
   }
 
-  private splitHistories(histories: JellyAccountHistory[]): AccountHistory[] {
-    return histories
-      .map((h) => h.amounts.map((a) => ({ ...h, ...this.parseAmount(a), assetType: this.getAssetType(h) })))
-      .reduce((prev, curr) => prev.concat(curr), []);
+  private mapHistoriesToTransactions(histories: AccountHistory[], supportedAssets: Asset[]): PayInTransaction[] {
+    const inputs: PayInTransaction[] = [];
+
+    for (const history of histories) {
+      const amounts = this.getAmounts(history);
+      for (const amount of amounts) {
+        inputs.push(this.createTransaction(history, amount, supportedAssets));
+      }
+    }
+
+    return inputs.filter(this.isPayInValid);
   }
 
-  private getAssetType(history: JellyAccountHistory): AssetType | undefined {
-    if (this.utxoTxTypes.includes(history.type)) return AssetType.COIN;
-    if (this.tokenTxTypes.includes(history.type)) return AssetType.TOKEN;
+  private createTransaction(
+    history: AccountHistory,
+    { amount, asset, type }: HistoryAmount,
+    supportedAssets: Asset[],
+  ): PayInTransaction {
+    const assetEntity = supportedAssets.find((a) => a.isEqual({ name: asset, type, blockchain: Blockchain.DEFICHAIN }));
+
+    return {
+      address: BlockchainAddress.create(history.owner, Blockchain.DEFICHAIN),
+      txType: history.type,
+      txId: history.txid,
+      blockHeight: history.blockHeight,
+      amount: amount,
+      asset: assetEntity,
+      isConfirmed: history.type != 'blockReward',
+    };
   }
 
-  private isDFI(history: AccountHistory): boolean {
-    return (
-      history.assetType === AssetType.COIN &&
-      history.asset === 'DFI' &&
-      Math.abs(history.amount) >= Config.payIn.min.DeFiChain.DFI
-    );
+  private isPayInValid(tx: PayInTransaction): boolean {
+    if (tx.asset == null) return false;
+
+    const minAmount =
+      tx.asset.type === AssetType.COIN ? Config.payIn.min.DeFiChain.coin : Config.payIn.min.DeFiChain.token;
+    return tx.amount >= minAmount;
   }
 
-  private isDUSD(history: AccountHistory): boolean {
-    return (
-      history.assetType === AssetType.TOKEN &&
-      history.asset === 'DUSD' &&
-      history.amount >= Config.payIn.min.DeFiChain.DUSD
-    );
+  private getAmounts(history: AccountHistory): HistoryAmount[] {
+    const amounts = this.utxoTxTypes.includes(history.type)
+      ? history.amounts.map((a) => this.parseAmount(a, AssetType.COIN))
+      : history.amounts.map((a) => this.parseAmount(a, AssetType.TOKEN)).filter((a) => a.amount > 0);
+
+    return amounts.map((a) => ({ ...a, amount: Math.abs(a.amount) }));
   }
 
-  private mapHistoriesToTransactions(histories: AccountHistory[]): PayInTransaction[] {
-    return histories.map((h) => ({
-      address: BlockchainAddress.create(h.owner, Blockchain.DEFICHAIN),
-      type: h.type,
-      txId: h.txid,
-      blockHeight: h.blockHeight,
-      amount: h.amount,
-      asset: h.asset,
-      assetType: h.assetType,
-      isConfirmed: h.type != 'blockReward',
-    }));
-  }
-
-  private parseAmount(amount: string): HistoryAmount {
-    return { ...this.client.parseAmount(amount) };
+  private parseAmount(amount: string, type: AssetType): HistoryAmount {
+    return { ...this.client.parseAmount(amount), type };
   }
 }
