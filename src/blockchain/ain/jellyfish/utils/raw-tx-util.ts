@@ -221,8 +221,9 @@ export class RawTxUtil {
   ): RawTxDto {
     const tx = RawTxUtil.createTxSegWit(vins, vouts, witnesses);
     const fee = RawTxUtil.calculateFee(tx);
-    const lastElement = vouts[voutFeeIndex];
-    lastElement.value = lastElement.value.minus(fee).minus(operationFee);
+
+    const voutFee = vouts[voutFeeIndex];
+    voutFee.value = voutFee.value.minus(fee).minus(operationFee);
 
     return RawTxUtil.toDto(tx, utxo);
   }
