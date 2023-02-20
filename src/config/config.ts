@@ -154,6 +154,7 @@ export class Configuration {
     forward: {
       phrase: process.env.FORWARD_PHRASE?.split(',') ?? [],
       accountToAccountFee: 0.00000297,
+      accountToUtxoFee: 0.00000297,
       timeout: 300000, // 5 minutes
     },
   };

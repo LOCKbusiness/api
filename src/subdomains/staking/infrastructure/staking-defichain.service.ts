@@ -53,23 +53,35 @@ export class StakingDeFiChainService {
   ): Promise<string> {
     switch (strategy) {
       case StakingStrategy.MASTERNODE:
-        return this.forwardMasternodeDeposit(sourceAddress, amount);
+        return this.forwardMasternodeDeposit(sourceAddress, amount, asset);
       case StakingStrategy.LIQUIDITY_MINING:
         return this.forwardLiquidityMiningDeposit(sourceAddress, amount, asset);
     }
   }
 
-  private async forwardMasternodeDeposit(address: string, amount: number): Promise<string> {
-    const rawTx = await this.rawTxService.Utxo.forward(
-      address,
-      Config.staking.liquidity.address,
-      new BigNumber(amount),
-    );
+  private async forwardMasternodeDeposit(address: string, amount: number, asset: Asset): Promise<string> {
+    const rawTx = await this.getRawTxForwardMasternodeDeposit(address, amount, asset);
+
     return this.send(rawTx);
   }
 
+  private async getRawTxForwardMasternodeDeposit(address: string, amount: number, asset: Asset): Promise<RawTxDto> {
+    if (asset.type === AssetType.TOKEN) {
+      await this.sendFeeUtxoToDepositIfNeeded(address, asset, new BigNumber(Config.payIn.forward.accountToUtxoFee));
+
+      return this.rawTxService.Account.toUtxo(
+        address,
+        Config.staking.liquidity.address,
+        new BigNumber(amount),
+        new BigNumber(Config.payIn.forward.accountToUtxoFee),
+      );
+    } else {
+      return this.rawTxService.Utxo.forward(address, Config.staking.liquidity.address, new BigNumber(amount));
+    }
+  }
+
   private async forwardLiquidityMiningDeposit(address: string, amount: number, asset: Asset): Promise<string> {
-    await this.sendFeeUtxoToDepositIfNeeded(address, asset);
+    await this.sendFeeUtxoToDepositIfNeeded(address, asset, new BigNumber(Config.payIn.forward.accountToAccountFee));
 
     const token = await this.tokenProviderService.get(asset.name);
     const rawTx =
@@ -90,14 +102,13 @@ export class StakingDeFiChainService {
     return this.send(rawTx);
   }
 
-  private async sendFeeUtxoToDepositIfNeeded(address: string, asset: Asset): Promise<void> {
+  private async sendFeeUtxoToDepositIfNeeded(address: string, asset: Asset, feeAmount: BigNumber): Promise<void> {
     if (asset.type === AssetType.COIN) return;
 
-    const accountToAccountUtxo = new BigNumber(Config.payIn.forward.accountToAccountFee);
-    const hasUtxo = await this.utxoProvider.addressHasUtxoExactAmount(address, accountToAccountUtxo);
+    const hasUtxo = await this.utxoProvider.addressHasUtxoExactAmount(address, feeAmount);
 
     if (!hasUtxo) {
-      await this.sendFeeUtxoToDeposit(address, accountToAccountUtxo);
+      await this.sendFeeUtxoToDeposit(address, feeAmount);
     }
   }
 
