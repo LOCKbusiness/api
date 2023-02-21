@@ -23,6 +23,7 @@ export class ChainReportHistoryDtoMapper {
           c.staking.strategy === StakingStrategy.LIQUIDITY_MINING
             ? 'LOCK Yield Machine Deposit'
             : 'LOCK Staking Deposit',
+        isReinvest: null,
       }));
   }
 
@@ -43,6 +44,7 @@ export class ChainReportHistoryDtoMapper {
           c.staking.strategy === StakingStrategy.LIQUIDITY_MINING
             ? 'LOCK Yield Machine Withdrawal'
             : 'LOCK Staking Withdrawal',
+        isReinvest: null,
       }));
   }
 
@@ -66,6 +68,7 @@ export class ChainReportHistoryDtoMapper {
           c.staking.strategy === StakingStrategy.LIQUIDITY_MINING
             ? `${c.referenceAsset.name} LOCK Yield Machine Reward`
             : 'LOCK Staking Reward',
+        isReinvest: c.isReinvest,
       }));
   }
 

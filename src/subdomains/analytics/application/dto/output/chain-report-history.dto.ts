@@ -39,4 +39,7 @@ export class ChainReportCsvHistoryDto {
 
   @ApiPropertyOptional()
   description: string;
+
+  @ApiPropertyOptional()
+  isReinvest: boolean;
 }
