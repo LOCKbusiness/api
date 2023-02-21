@@ -175,7 +175,7 @@ export class StakingDeFiChainService {
   private async getBalanceFor(asset: AssetQuery, address: string): Promise<{ asset: AssetQuery; balance: BigNumber }> {
     const balance =
       asset.type === AssetType.COIN
-        ? await this.whaleClient.getUtxoBalance(address)
+        ? await this.whaleClient.getUtxoBalance(address).then((b) => b.minus(0.1))
         : await this.whaleClient.getTokenBalance(address, asset.name);
 
     return {
@@ -191,7 +191,7 @@ export class StakingDeFiChainService {
     let withdrawalSum = 0;
     for (const withdrawal of sortedWithdrawals) {
       withdrawalSum += withdrawal.amount;
-      if (balance.minus(1).lt(withdrawalSum)) break;
+      if (balance.lt(withdrawalSum)) break;
 
       possibleWithdrawals.push(withdrawal);
     }
