@@ -160,7 +160,13 @@ export class Configuration {
   };
 
   staking = {
-    minimalStake: 1,
+    minDeposits: [
+      { amount: 1, asset: 'DFI' },
+      { amount: 1, asset: 'USDC' },
+      { amount: 1, asset: 'USDT' },
+      { amount: 0.0001, asset: 'BTC' },
+      { amount: 0.0001, asset: 'ETH' },
+    ],
     defaultFee: 0,
     signatureTemplates: {
       signWithdrawalMessage:
