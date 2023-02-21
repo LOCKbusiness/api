@@ -21,6 +21,7 @@ export class StakingOutputDtoMapper {
       asset: balance.asset.name,
       depositAddress: staking.depositAddress.address,
       strategy: staking.strategy,
+      minimalStake: 1, // TODO: remove
       minimalDeposits: Config.staking.minDeposits,
       fee: staking.fee ?? Config.staking.defaultFee,
       balance: balance.balance,

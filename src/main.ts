@@ -10,7 +10,7 @@ import { AllExceptionFilter } from './shared/filters/exception.filter';
 import { json, text } from 'express';
 
 async function bootstrap() {
-  if (process.env.AppInsights_INSTRUMENTATIONKEY) {
+  if (process.env.APPINSIGHTS_INSTRUMENTATIONKEY) {
     AppInsights.setup().setAutoDependencyCorrelation(true).setAutoCollectConsole(true, true);
     AppInsights.defaultClient.context.tags[AppInsights.defaultClient.context.keys.cloudRole] = 'lock-api';
     AppInsights.start();
