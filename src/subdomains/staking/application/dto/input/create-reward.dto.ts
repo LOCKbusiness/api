@@ -37,20 +37,20 @@ export class CreateRewardDto {
   rewardRouteId: number;
 
   @ApiProperty()
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   @Matches(GetConfig().addressFormat)
-  targetAddress: string;
+  targetAddress?: string;
 
   @ApiProperty()
-  @IsNotEmpty()
+  @IsOptional()
   @IsEnum(Blockchain)
-  targetBlockchain: Blockchain;
+  targetBlockchain?: Blockchain;
 
   @ApiProperty()
-  @IsNotEmpty()
+  @IsOptional()
   @IsInt()
-  targetAssetId: number;
+  targetAssetId?: number;
 
   @ApiProperty()
   @IsOptional()
