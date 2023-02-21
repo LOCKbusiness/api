@@ -61,6 +61,14 @@ export class DefiTxHelper {
     });
   }
 
+  static accountToUtxo(from: Script, balances: TokenBalanceUInt32[], mintingOutputsStart: number): OP_DEFI_TX {
+    return OP_CODES.OP_DEFI_TX_ACCOUNT_TO_UTXOS({
+      from,
+      balances,
+      mintingOutputsStart,
+    });
+  }
+
   // --- VAULT --- //
   static createVault(ownerAddress: Script): OP_DEFI_TX {
     const schemeId = JellyfishService.getNetwork() === TestNet ? 'C150' : 'MIN150';

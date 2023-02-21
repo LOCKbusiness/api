@@ -30,6 +30,10 @@ export const StakingTypes: { [key in StakingStrategy]: AssetQuery[] } = {
   [StakingStrategy.LIQUIDITY_MINING]: [
     { name: 'DUSD', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN },
     { name: 'DFI', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN },
+    { name: 'BTC', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN },
+    { name: 'ETH', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN },
+    { name: 'USDT', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN },
+    { name: 'USDC', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN },
   ],
 };
 

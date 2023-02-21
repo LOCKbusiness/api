@@ -47,7 +47,7 @@ export class SupportService {
       .createQueryBuilder()
       .from(query.table, query.table)
       .orderBy(`${query.table}.id`, query.sorting)
-      .take(query.maxLine)
+      .limit(query.maxLine)
       .where(`${query.table}.id >= :id`, { id: query.min })
       .andWhere(`${query.table}.updated >= :updated`, { updated: query.updatedSince });
 

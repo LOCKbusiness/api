@@ -1,13 +1,12 @@
-import { AssetType } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/models/asset/asset.entity';
 import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 
 export interface PayInTransaction {
   address: BlockchainAddress;
-  type: string;
+  txType: string;
   txId: string;
   blockHeight: number;
   amount: number;
-  asset: string;
-  assetType: AssetType;
+  asset?: Asset;
   isConfirmed: boolean;
 }

@@ -27,6 +27,6 @@ export class AuthController {
   @Get('sign-message')
   @ApiOkResponse({ type: SignMessageDto })
   getSignMessage(@Query('address') address: string): SignMessageDto {
-    return this.authService.getSignMessage(address);
+    return this.authService.getSignInfo(address);
   }
 }

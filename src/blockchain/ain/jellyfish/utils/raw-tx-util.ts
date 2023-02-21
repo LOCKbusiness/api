@@ -110,6 +110,11 @@ export class RawTxUtil {
     return RawTxUtil.createDefiTxVout(DefiTxHelper.utxoToAccount(to, balances), amount);
   }
 
+  static createVoutAccountToUtxo(from: Script, amount: BigNumber, mintingOutputsStart: number): Vout {
+    const balances: TokenBalanceUInt32[] = [{ token: 0, amount }];
+    return RawTxUtil.createDefiTxVout(DefiTxHelper.accountToUtxo(from, balances, mintingOutputsStart), amount);
+  }
+
   // --- VAULT VOUTS --- //
 
   static createVoutCreateVault(owner: Script, vaultFee: BigNumber): Vout {
@@ -212,11 +217,13 @@ export class RawTxUtil {
     vouts: Vout[],
     witnesses: Witness[],
     operationFee = new BigNumber(0),
+    voutFeeIndex = vouts.length - 1,
   ): RawTxDto {
     const tx = RawTxUtil.createTxSegWit(vins, vouts, witnesses);
     const fee = RawTxUtil.calculateFee(tx);
-    const lastElement = vouts[vouts.length - 1];
-    lastElement.value = lastElement.value.minus(fee).minus(operationFee);
+
+    const voutFee = vouts[voutFeeIndex];
+    voutFee.value = voutFee.value.minus(fee).minus(operationFee);
 
     return RawTxUtil.toDto(tx, utxo);
   }

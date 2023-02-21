@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Config, Process } from 'src/config/config';
-import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { Lock } from 'src/shared/lock';
 import { Asset } from 'src/shared/models/asset/asset.entity';
-import { AssetService } from 'src/shared/models/asset/asset.service';
 import { PayIn, PayInPurpose, PayInStatus } from '../../domain/entities/payin.entity';
 import { PayInDeFiChainService } from '../../infrastructure/payin-crypto-defichain.service';
 import { PayInFactory } from '../factories/payin.factory';
@@ -19,7 +17,6 @@ export class PayInService {
     private readonly payInRepository: PayInRepository,
     private readonly factory: PayInFactory,
     private readonly deFiChainService: PayInDeFiChainService,
-    private readonly assetService: AssetService,
   ) {}
 
   //*** PUBLIC API ***//
@@ -86,42 +83,15 @@ export class PayInService {
       .then((input) => input?.blockHeight ?? 0);
 
     const newTransactions = await this.deFiChainService.getNewTransactionsSince(lastCheckedBlockHeight);
-    const newPayIns = await this.createNewPayIns(newTransactions);
+    const newPayIns = this.createNewPayIns(newTransactions);
 
     newPayIns.length > 0 && console.log(`New DeFiChain pay ins (${newPayIns.length}):`, newPayIns);
 
     await this.persistPayIns(newPayIns);
   }
 
-  private async createNewPayIns(newTransactions: PayInTransaction[]): Promise<PayIn[]> {
-    const payIns = [];
-
-    for (const tx of newTransactions) {
-      try {
-        payIns.push(await this.createNewPayIn(tx));
-      } catch {
-        continue;
-      }
-    }
-
-    return payIns;
-  }
-
-  private async createNewPayIn(tx: PayInTransaction): Promise<PayIn> {
-    const assetEntity = await this.assetService.getAssetByQuery({
-      name: tx.asset,
-      blockchain: Blockchain.DEFICHAIN,
-      type: tx.assetType,
-    });
-
-    if (!assetEntity) {
-      const message = `Failed to process DeFiChain pay in. No asset ${tx.asset} found. PayInTransaction:`;
-      console.error(message, tx);
-
-      throw new Error(message);
-    }
-
-    return this.factory.createFromTransaction(tx, assetEntity);
+  private createNewPayIns(newTransactions: PayInTransaction[]): PayIn[] {
+    return newTransactions.map((tx) => this.factory.createFromTransaction(tx));
   }
 
   // TODO - consider more reliable solution - in case of DB fail, some PayIns might be lost

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { MasternodeOwnerDto } from '../dto/masternode-owner.dto';
-import * as LocOwners from '../repositories/owner-loc.json';
-import * as DevOwners from '../repositories/owner-dev.json';
-import * as StgOwners from '../repositories/owner-stg.json';
-import * as PrdOwners from '../repositories/owner-prd.json';
+import LocOwners from '../repositories/owner-loc.json';
+import DevOwners from '../repositories/owner-dev.json';
+import StgOwners from '../repositories/owner-stg.json';
+import PrdOwners from '../repositories/owner-prd.json';
 import { Config } from 'src/config/config';
 
 @Injectable()
