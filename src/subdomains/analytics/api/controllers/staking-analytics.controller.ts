@@ -5,6 +5,7 @@ import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { StakingDepositService } from 'src/subdomains/staking/application/services/staking-deposit.service';
 import { StakingWithdrawalService } from 'src/subdomains/staking/application/services/staking-withdrawal.service';
+import { StakingAnalyticsFilterQuery } from '../../application/dto/input/staking-analytics-filter-query.dto';
 import { StakingAnalyticsQuery } from '../../application/dto/input/staking-analytics-query.dto';
 import { StakingAnalyticsUpdateQuery } from '../../application/dto/input/staking-analytics-update-query.dto';
 import { UpdateStakingAnalyticsDto } from '../../application/dto/input/update-staking-analytics.dto';
@@ -27,6 +28,12 @@ export class StakingAnalyticsController {
   @ApiOkResponse({ type: StakingAnalyticsOutputDto })
   async getStakingAnalytics(@Query() query: StakingAnalyticsQuery): Promise<StakingAnalyticsOutputDto> {
     return this.stakingAnalyticsService.getStakingAnalyticsCache(query);
+  }
+
+  @Get('filter')
+  @ApiOkResponse({ type: StakingAnalyticsOutputDto, isArray: true })
+  async getFilteredStakingAnalytics(@Query() query: StakingAnalyticsFilterQuery): Promise<StakingAnalyticsOutputDto[]> {
+    return this.stakingAnalyticsService.getFilteredStakingAnalyticsCache(query);
   }
 
   @Get('transactions')

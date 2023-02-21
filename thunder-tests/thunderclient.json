@@ -489,5 +489,67 @@
       "form": []
     },
     "tests": []
+  },
+  {
+    "_id": "96f4068e-a8e3-4bf7-b411-857b01d36c21",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "d189a736-859d-4994-8bb8-7f444879c97b",
+    "name": "staking specific",
+    "url": "{{url}}/v1/analytics/staking?asset=DFI&strategy=Masternode&blockchain=DeFiChain",
+    "method": "GET",
+    "sortNum": 280000,
+    "created": "2023-02-21T10:56:50.416Z",
+    "modified": "2023-02-21T10:57:41.114Z",
+    "headers": [],
+    "params": [
+      {
+        "name": "asset",
+        "value": "DFI",
+        "isPath": false
+      },
+      {
+        "name": "strategy",
+        "value": "Masternode",
+        "isPath": false
+      },
+      {
+        "name": "blockchain",
+        "value": "DeFiChain",
+        "isPath": false
+      }
+    ],
+    "tests": []
+  },
+  {
+    "_id": "3d81c776-cf34-441f-bf98-42593895f17f",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "d189a736-859d-4994-8bb8-7f444879c97b",
+    "name": "staking filter",
+    "url": "{{url}}/v1/analytics/staking/filter?blockchain=DeFiChain",
+    "method": "GET",
+    "sortNum": 290000,
+    "created": "2023-02-21T10:58:02.406Z",
+    "modified": "2023-02-21T11:32:25.406Z",
+    "headers": [],
+    "params": [
+      {
+        "name": "asset",
+        "value": "DUSD",
+        "isDisabled": true,
+        "isPath": false
+      },
+      {
+        "name": "strategy",
+        "value": "Masternode",
+        "isDisabled": true,
+        "isPath": false
+      },
+      {
+        "name": "blockchain",
+        "value": "DeFiChain",
+        "isPath": false
+      }
+    ],
+    "tests": []
   }
 ]
