@@ -85,7 +85,7 @@ export class RawTxUtxo extends RawTxBase {
     const witness = RawTxUtil.createWitness([RawTxUtil.createWitnessScript(fromPubKeyHash)]);
     const witnesses = new Array(vins.length).fill(witness);
 
-    return RawTxUtil.generateTx(utxo, vins, vouts, witnesses);
+    return RawTxUtil.generateTxAndCalcFee(utxo, vins, vouts, witnesses);
   }
 
   private async createSendAsAccount(from: string, to: string, token: number, amount: BigNumber): Promise<RawTxDto> {
