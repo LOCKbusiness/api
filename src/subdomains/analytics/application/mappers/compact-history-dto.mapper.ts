@@ -20,60 +20,63 @@ export class CompactHistoryDtoMapper {
 
   static mapStakingDeposits(deposits: Deposit[]): CompactHistoryDto[] {
     return deposits
-      .map((c) => ({
+      .map((d) => ({
         type: HistoryTransactionType.DEPOSIT,
-        inputAmount: c.amount,
-        inputAsset: c.asset.name,
+        inputAmount: d.amount,
+        inputAsset: d.asset.name,
         outputAmount: null,
         outputAsset: null,
         feeAmount: null,
         feeAsset: null,
-        amountInEur: c.amountEur,
-        amountInChf: c.amountChf,
-        amountInUsd: c.amountUsd,
-        txId: c.payInTxId,
-        date: c.created,
-        status: this.CompactStatusMapper[c.status],
+        amountInEur: d.amountEur,
+        amountInChf: d.amountChf,
+        amountInUsd: d.amountUsd,
+        txId: d.payInTxId,
+        date: d.created,
+        status: this.CompactStatusMapper[d.status],
+        stakingStrategy: d.staking.strategy,
       }))
       .filter((c) => c.status != null);
   }
 
   static mapStakingWithdrawals(withdrawals: Withdrawal[]): CompactHistoryDto[] {
     return withdrawals
-      .map((c) => ({
+      .map((w) => ({
         type: HistoryTransactionType.WITHDRAWAL,
         inputAmount: null,
         inputAsset: null,
-        outputAmount: c.amount,
-        outputAsset: c.asset.name,
+        outputAmount: w.amount,
+        outputAsset: w.asset.name,
         feeAmount: null,
         feeAsset: null,
-        amountInEur: c.amountEur,
-        amountInChf: c.amountChf,
-        amountInUsd: c.amountUsd,
-        txId: c.withdrawalTxId,
-        date: c.outputDate ?? c.updated,
-        status: this.CompactStatusMapper[c.status],
+        amountInEur: w.amountEur,
+        amountInChf: w.amountChf,
+        amountInUsd: w.amountUsd,
+        txId: w.withdrawalTxId,
+        date: w.outputDate ?? w.updated,
+        status: this.CompactStatusMapper[w.status],
+        stakingStrategy: w.staking.strategy,
       }))
       .filter((c) => c.status != null);
   }
 
   static mapStakingRewards(rewards: Reward[]): CompactHistoryDto[] {
     return rewards
-      .map((c) => ({
+      .map((r) => ({
         type: HistoryTransactionType.REWARD,
-        inputAmount: c.targetAmount,
-        inputAsset: c.targetAsset.name,
+        inputAmount: r.targetAmount,
+        inputAsset: r.targetAsset.name,
         outputAmount: null,
         outputAsset: null,
-        feeAmount: c.feePercent != 0 ? (c.targetAmount * c.feePercent) / (1 - c.feePercent) : null,
-        feeAsset: c.feePercent != 0 ? c.targetAsset.name : null,
-        amountInEur: c.amountEur,
-        amountInChf: c.amountChf,
-        amountInUsd: c.amountUsd,
-        txId: c.txId,
-        date: c.outputDate ?? c.updated,
-        status: this.CompactStatusMapper[c.status],
+        feeAmount: r.feePercent != 0 ? (r.targetAmount * r.feePercent) / (1 - r.feePercent) : null,
+        feeAsset: r.feePercent != 0 ? r.targetAsset.name : null,
+        amountInEur: r.amountEur,
+        amountInChf: r.amountChf,
+        amountInUsd: r.amountUsd,
+        txId: r.txId,
+        date: r.outputDate ?? r.updated,
+        status: this.CompactStatusMapper[r.status],
+        stakingStrategy: r.staking.strategy,
       }))
       .filter((c) => c.status != null);
   }
