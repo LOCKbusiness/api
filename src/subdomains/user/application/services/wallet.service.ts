@@ -12,6 +12,7 @@ import { WalletProvider } from '../../domain/entities/wallet-provider.entity';
 import { WalletDetailedDto } from '../dto/wallet-detailed.dto';
 import { SignUpDto } from '../dto/sign-up.dto';
 import { BlockchainAddress } from 'src/shared/models/blockchain-address';
+import { Util } from 'src/shared/util';
 
 @Injectable()
 export class WalletService {
@@ -47,19 +48,21 @@ export class WalletService {
     return wallet.user.kycId;
   }
   async createWallet(dto: SignUpDto, userIp: string, user?: User): Promise<Wallet> {
-    const walletAddress = BlockchainAddress.create(dto.address, dto.blockchain);
     const wallet = this.walletRepo.create({
+      address: BlockchainAddress.create(dto.address, dto.blockchain),
       signature: dto.signature,
-      address: walletAddress,
+      ip: userIp,
+      ipCountry: await this.checkIpCountry(userIp),
+      walletProvider: await this.checkWalletProvider(dto.walletName),
+      user: user ?? (await this.userService.createUser()),
     });
 
-    wallet.ip = userIp;
-    wallet.ipCountry = await this.checkIpCountry(userIp);
-    wallet.walletProvider = await this.checkWalletProvider(dto.walletName);
-    wallet.ref = await this.getNextRef();
-    wallet.user = user ?? (await this.userService.createUser());
+    // retry (in case of ref conflict)
+    return Util.retry(async () => {
+      wallet.ref = await this.getNextRef();
 
-    return this.walletRepo.save(wallet);
+      return this.walletRepo.save(wallet);
+    }, 3);
   }
 
   private async getNextRef(): Promise<string> {

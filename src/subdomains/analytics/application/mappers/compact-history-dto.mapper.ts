@@ -16,7 +16,6 @@ export class CompactHistoryDtoMapper {
     [WithdrawalStatus.FAILED]: CompactHistoryStatus.FAILED,
     [RewardStatus.CREATED]: CompactHistoryStatus.WAITING,
     [RewardStatus.READY]: CompactHistoryStatus.PENDING,
-    [RewardStatus.PAUSED]: CompactHistoryStatus.PENDING,
   };
 
   static mapStakingDeposits(deposits: Deposit[]): CompactHistoryDto[] {

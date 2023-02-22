@@ -25,7 +25,7 @@ export class AuthService {
   ) {}
 
   async signUp(dto: SignUpDto, userIp: string): Promise<AuthResponseDto> {
-    const existingWallet = await this.walletService.getByAddress(dto.address, true);
+    const existingWallet = await this.walletService.getByAddress(dto.address, false);
     if (existingWallet) throw new ConflictException('User already exists');
 
     if (!this.verifySignature(dto.address, dto.signature)) throw new BadRequestException('Invalid signature');
