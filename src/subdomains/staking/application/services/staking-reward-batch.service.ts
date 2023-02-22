@@ -86,8 +86,9 @@ export class StakingRewardBatchService {
         targetAsset: { id: targetAsset.id },
         status: Not(RewardBatchStatus.COMPLETE),
       });
+      const newBatch = filteredBatches.find((b) => b.targetAsset.id === targetAsset.id);
 
-      if (existingBatch) {
+      if (existingBatch || newBatch) {
         const rewardIds = batch.rewards.map((r) => r.id);
 
         console.info(
