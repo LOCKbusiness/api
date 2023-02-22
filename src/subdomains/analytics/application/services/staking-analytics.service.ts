@@ -89,9 +89,9 @@ export class StakingAnalyticsService implements OnModuleInit {
   }
 
   private async getOperatorCount(type: StakingType): Promise<number | undefined> {
-    if (type.asset.name === 'DFI') {
+    if (type.strategy === StakingStrategy.MASTERNODE) {
       return this.masternodeService.getActiveCount();
-    } else if (type.asset.name === 'DUSD') {
+    } else if (type.strategy === StakingStrategy.LIQUIDITY_MINING) {
       return this.vaultService.getActiveCount();
     }
 

@@ -103,6 +103,7 @@ export class StakingDepositService {
     try {
       const openDeposits = await this.depositRepository.find({
         where: { status: DepositStatus.OPEN, updated: LessThan(Util.hourBefore(1)) },
+        loadEagerRelations: false,
       });
       for (const deposit of openDeposits) {
         const txId = await this.whaleClient.getTx(deposit.payInTxId).catch(() => null);
