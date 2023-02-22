@@ -9,7 +9,7 @@ import { UpdateRewardDto } from '../../application/dto/input/update-reward.dto';
 import { Reward } from '../../domain/entities/reward.entity';
 
 @ApiTags('Reward')
-@Controller('reward')
+@Controller('staking/reward')
 export class RewardController {
   constructor(private readonly stakingRewardService: StakingRewardService) {}
 
