@@ -68,7 +68,7 @@ export class CoinTrackingHistoryDtoMapper {
         sellAsset: null,
         fee: c.feePercent != 0 ? (c.targetAmount * c.feePercent) / (1 - c.feePercent) : null,
         feeAsset: c.feePercent != 0 ? this.getAssetSymbolCT(c.targetAsset) : null,
-        exchange: 'LOCK.space Staking',
+        exchange: c.staking.strategy === StakingStrategy.LIQUIDITY_MINING ? 'LOCK.space YM' : 'LOCK.space Staking',
         tradeGroup: c.staking.strategy === StakingStrategy.LIQUIDITY_MINING ? null : 'Staking',
         comment:
           c.staking.strategy === StakingStrategy.LIQUIDITY_MINING
