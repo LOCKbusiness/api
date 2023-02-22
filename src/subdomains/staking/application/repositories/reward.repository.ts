@@ -10,24 +10,18 @@ export class RewardRepository extends Repository<Reward> {
   }
 
   async getByUserId(userId: number, dateFrom?: Date, dateTo?: Date): Promise<Reward[]> {
-    /**
-     * @note
-     * relations are needed for #find(...) even though field is eager
-     */
     return this.find({
       where: { staking: { userId }, ...this.dateQuery(dateFrom, dateTo) },
-      relations: ['staking'],
+      relations: ['staking', 'referenceAsset', 'targetAsset'],
+      loadEagerRelations: false,
     });
   }
 
   async getByDepositAddress(depositAddress: string, dateFrom?: Date, dateTo?: Date): Promise<Reward[]> {
-    /**
-     * @note
-     * relations are needed for #find(...) even though field is eager
-     */
     return this.find({
       where: { staking: { depositAddress: { address: depositAddress } }, ...this.dateQuery(dateFrom, dateTo) },
-      relations: ['staking'],
+      relations: ['staking', 'referenceAsset', 'targetAsset'],
+      loadEagerRelations: false,
     });
   }
 
