@@ -20,9 +20,6 @@ export class StakingOutputDto {
   @ApiProperty()
   depositAddress: string;
 
-  @ApiProperty({ deprecated: true })
-  minimalStake: number;
-
   @ApiProperty({ type: MinDeposit, isArray: true })
   minimalDeposits: MinDeposit[];
 
