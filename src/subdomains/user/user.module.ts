@@ -25,6 +25,7 @@ import { WalletService } from './application/services/wallet.service';
 import { BlockchainModule } from 'src/blockchain/blockchain.module';
 import { NotificationModule } from 'src/integration/notification/notification.module';
 import { DfxController } from './api/controllers/dfx.controller';
+import { StakingRepository } from '../staking/application/repositories/staking.repository';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { DfxController } from './api/controllers/dfx.controller';
     RefService,
     KycService,
     AuthService,
+    StakingRepository,
   ],
   exports: [UserService, WalletService],
 })

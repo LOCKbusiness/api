@@ -6,10 +6,11 @@ import { UserRepository } from '../repositories/user.repository';
 import { IsNull, Not } from 'typeorm';
 import { Votes } from 'src/subdomains/voting/application/dto/votes.dto';
 import { BlockchainAddress } from 'src/shared/models/blockchain-address';
+import { StakingRepository } from 'src/subdomains/staking/application/repositories/staking.repository';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly userRepo: UserRepository) {}
+  constructor(private readonly userRepo: UserRepository, private readonly stakingRepo: StakingRepository) {}
 
   async createUser(): Promise<User> {
     return this.userRepo.save({
@@ -36,6 +37,11 @@ export class UserService {
     if (!user) throw new NotFoundException('User not found');
 
     return user;
+  }
+
+  async getUserByDepositAddress(address: string): Promise<User> {
+    const staking = await this.stakingRepo.getByDepositAddress(address);
+    return this.getUser(staking[0]?.userId);
   }
 
   async getAllUser(): Promise<User[]> {

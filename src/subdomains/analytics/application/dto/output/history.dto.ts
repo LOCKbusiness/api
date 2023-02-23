@@ -15,7 +15,6 @@ export enum CompactHistoryStatus {
 
 export enum CompactHistoryExchange {
   LOCK = 'LOCK.space',
-  DFX = 'DFX.swiss',
   EXTERNAL = 'External Address',
 }
 
@@ -48,7 +47,7 @@ export class HistoryBaseDto {
   amountInUsd: number;
 
   @ApiProperty()
-  exchange: CompactHistoryExchange;
+  exchange: CompactHistoryExchange | string;
 
   @ApiProperty()
   txId: string;

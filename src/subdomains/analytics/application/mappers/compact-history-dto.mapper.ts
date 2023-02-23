@@ -2,6 +2,7 @@ import { Deposit } from 'src/subdomains/staking/domain/entities/deposit.entity';
 import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
 import { Withdrawal } from 'src/subdomains/staking/domain/entities/withdrawal.entity';
 import { DepositStatus, RewardStatus, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
+import { Wallet } from 'src/subdomains/user/domain/entities/wallet.entity';
 import {
   CompactHistoryDto,
   CompactHistoryExchange,
@@ -66,7 +67,7 @@ export class CompactHistoryDtoMapper {
       .filter((c) => c.status != null);
   }
 
-  static mapStakingRewards(rewards: Reward[]): CompactHistoryDto[] {
+  static mapStakingRewards(rewards: Reward[], wallets: Wallet[]): CompactHistoryDto[] {
     return rewards
       .map((c) => ({
         type: HistoryTransactionType.REWARD,
@@ -82,7 +83,7 @@ export class CompactHistoryDtoMapper {
         exchange: c.isReinvest
           ? CompactHistoryExchange.LOCK
           : c.targetAddress.address === c.staking.withdrawalAddress.address
-          ? CompactHistoryExchange.DFX
+          ? wallets.find((w) => w.address.address === c.targetAddress.address).walletProvider.name
           : CompactHistoryExchange.EXTERNAL,
         txId: c.txId,
         date: c.outputDate ?? c.updated,
