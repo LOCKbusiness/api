@@ -47,7 +47,8 @@ export class RewardRepository extends Repository<Reward> {
         batch: IsNull(),
         status: RewardStatus.READY,
       },
-      relations: ['staking', 'batch'],
+      relations: ['batch', 'staking', 'rewardRoute', 'referenceAsset', 'targetAsset'],
+      loadEagerRelations: false,
     });
   }
 }

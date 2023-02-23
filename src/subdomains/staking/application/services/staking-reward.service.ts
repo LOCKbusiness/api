@@ -38,7 +38,6 @@ export class StakingRewardService {
     private readonly assetService: AssetService,
     private readonly stakingService: StakingService,
     private readonly rewardRouteRepo: RewardRouteRepository,
-    private readonly stakingRepo: StakingRepository,
   ) {}
 
   //*** PUBLIC API ***//
