@@ -25,6 +25,7 @@ import { WalletService } from './application/services/wallet.service';
 import { BlockchainModule } from 'src/blockchain/blockchain.module';
 import { NotificationModule } from 'src/integration/notification/notification.module';
 import { DfxController } from './api/controllers/dfx.controller';
+import { IpLogRepository } from './application/repositories/ip-log.repository';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { DfxController } from './api/controllers/dfx.controller';
     UserRepository,
     WalletProviderRepository,
     WalletRepository,
+    IpLogRepository,
     UserService,
     WalletService,
     CountryService,
