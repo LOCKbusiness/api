@@ -26,10 +26,11 @@ import { BlockchainModule } from 'src/blockchain/blockchain.module';
 import { NotificationModule } from 'src/integration/notification/notification.module';
 import { DfxController } from './api/controllers/dfx.controller';
 import { IpLogRepository } from './application/repositories/ip-log.repository';
+import { IpLog } from './domain/entities/ip-log.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Country, Ref, WalletProvider, Wallet]),
+    TypeOrmModule.forFeature([User, Country, Ref, WalletProvider, Wallet, IpLog]),
     SharedModule,
     BlockchainModule,
     NotificationModule,
