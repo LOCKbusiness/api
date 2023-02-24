@@ -163,7 +163,10 @@ export class NodeHealthObserver extends MetricObserver<NodesState> {
   }
 
   private async loadState(): Promise<NodesState | undefined> {
-    const state = await this.monitoringService.loadState();
-    return state?.[this.subsystem]?.[this.metric]?.data as NodePoolState[];
+    const state = await this.load();
+
+    state?.forEach((p) => p.nodes.forEach((n) => (n.downSince = n.downSince ? new Date(n.downSince) : undefined)));
+
+    return state;
   }
 }
