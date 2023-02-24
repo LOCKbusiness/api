@@ -3,16 +3,16 @@ import { Entity, Column } from 'typeorm';
 
 @Entity()
 export class IpLog extends IEntity {
-  @Column({ length: 256 })
+  @Column()
   address: string;
 
-  @Column({ length: 256 })
+  @Column()
   ip: string;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ nullable: true })
   country: string;
 
-  @Column({ length: 256 })
+  @Column()
   url: string;
 
   @Column()
