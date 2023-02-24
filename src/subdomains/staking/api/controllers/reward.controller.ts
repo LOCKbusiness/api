@@ -1,10 +1,9 @@
-import { Controller, UseGuards, Body, Post, Param, Put } from '@nestjs/common';
+import { Controller, UseGuards, Body, Param, Put, Post } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { StakingRewardService } from '../../application/services/staking-reward.service';
-import { CreateRewardDto } from '../../application/dto/input/create-reward.dto';
 import { UpdateRewardDto } from '../../application/dto/input/update-reward.dto';
 import { Reward } from '../../domain/entities/reward.entity';
 
@@ -17,8 +16,8 @@ export class RewardController {
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
-  async createReward(@Body() dto: CreateRewardDto): Promise<void> {
-    await this.stakingRewardService.createReward(dto);
+  async createDailyRewards(): Promise<Reward[]> {
+    return this.stakingRewardService.createDailyRewards();
   }
 
   @Put(':id')

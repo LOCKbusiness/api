@@ -232,7 +232,8 @@ export class Configuration {
     return /^(.{87}=|[a-f0-9]{130}|[a-f0-9x]{132})$/;
   }
 
-  processDisabled = (processName: Process) => (process.env.DISABLED_PROCESSES?.split(',') ?? []).includes(processName);
+  processDisabled = (processName: Process) =>
+    process.env.DISABLED_PROCESSES === '*' || (process.env.DISABLED_PROCESSES?.split(',') ?? []).includes(processName);
 }
 
 @Injectable()

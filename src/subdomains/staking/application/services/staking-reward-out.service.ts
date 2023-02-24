@@ -109,11 +109,6 @@ export class StakingRewardOutService {
         if (isComplete) {
           r.complete(payoutTxId);
           await this.rewardRepo.save(r);
-          /**
-           * @note
-           * potential case of updateRewardsAmount failure is tolerated
-           */
-          await this.stakingService.updateRewardsAmount(r.staking.id);
         }
       } catch (e) {
         console.error(`Error on validating reward completion. ID: ${r.id}.`, e);

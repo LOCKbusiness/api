@@ -5,10 +5,10 @@ import { Config, Process } from 'src/config/config';
 import { Lock } from 'src/shared/lock';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { Reward } from '../../domain/entities/reward.entity';
-import { RewardStatus, StakingStrategy } from '../../domain/enums';
+import { StakingBalance } from '../../domain/entities/staking-balance.entity';
+import { RewardStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { CreateRewardRouteDto } from '../dto/input/create-reward-route.dto';
-import { CreateRewardDto } from '../dto/input/create-reward.dto';
 import { UpdateRewardDto } from '../dto/input/update-reward.dto';
 import { RewardRouteOutputDto } from '../dto/output/reward-route.output.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
@@ -30,53 +30,56 @@ export class StakingRewardService {
   constructor(
     private readonly authorize: StakingAuthorizeService,
     private readonly factory: StakingFactory,
-    private readonly repository: StakingRepository,
-    private readonly rewardRepository: RewardRepository,
+    private readonly stakingRepo: StakingRepository,
+    private readonly rewardRepo: RewardRepository,
     private readonly batchService: StakingRewardBatchService,
     private readonly dexService: StakingRewardDexService,
     private readonly outService: StakingRewardOutService,
     private readonly assetService: AssetService,
     private readonly stakingService: StakingService,
     private readonly rewardRouteRepo: RewardRouteRepository,
-    private readonly stakingRepo: StakingRepository,
   ) {}
 
-  //*** PUBLIC API ***//
+  // --- PUBLIC API --- //
 
-  async createReward(dto: CreateRewardDto): Promise<void> {
-    const rewardRoute = await this.rewardRouteRepo.findOne({
-      where: { id: dto.rewardRouteId },
-      relations: ['strategy', 'strategy.stakings'],
-    });
+  async createDailyRewards(): Promise<Reward[]> {
+    // load all active routes with active stakings (balance > 0)
+    const activeRoutes = await this.rewardRouteRepo
+      .createQueryBuilder('route')
+      .leftJoinAndSelect('route.targetAsset', 'targetAsset')
+      .innerJoinAndSelect('route.strategy', 'strategy')
+      .innerJoinAndSelect('strategy.stakings', 'staking')
+      .innerJoinAndSelect('staking.balances', 'balance')
+      .innerJoinAndSelect('balance.asset', 'asset')
+      .where('route.rewardPercent > 0')
+      .andWhere('balance.balance > 0')
+      .getMany();
 
-    const strategy = dto.referenceAssetId === 1 ? StakingStrategy.MASTERNODE : StakingStrategy.LIQUIDITY_MINING;
-    const staking = rewardRoute.strategy.stakings.find((s) => s.strategy === strategy);
+    // create a reward per active route and active balance
+    const rewards: Reward[] = [];
 
-    const targetAddress = rewardRoute.isDefault ? staking.depositAddress : rewardRoute.targetAddress;
+    for (const route of activeRoutes) {
+      const balances = route.strategy.stakings.reduce(
+        (prev, curr) => prev.concat(curr.balances),
+        [] as StakingBalance[],
+      );
 
-    dto.targetAddress ??= targetAddress.address;
-    dto.targetBlockchain ??= targetAddress.blockchain;
-    dto.targetAssetId ??= rewardRoute.isDefault ? dto.referenceAssetId : rewardRoute.targetAsset.id;
-
-    const reward = await this.factory.createReward(staking, dto);
-    await this.rewardRepository.save(reward);
-
-    if (reward.status === RewardStatus.CONFIRMED) {
-      /**
-       * @note
-       * potential case of updateRewardsAmount failure is tolerated
-       */
-      await this.stakingService.updateRewardsAmount(staking.id);
+      for (const { asset } of balances) {
+        rewards.push(this.factory.createReward(route, asset));
+      }
     }
+
+    // save in one transaction
+    return this.rewardRepo.saveMany(rewards);
   }
 
   async updateReward(rewardId: number, dto: UpdateRewardDto): Promise<Reward> {
-    const entity = await this.rewardRepository.findOneBy({ id: rewardId });
+    const entity = await this.rewardRepo.findOneBy({ id: rewardId });
     if (!entity) throw new NotFoundException('Reward not found');
-    if (entity.status != RewardStatus.CREATED || dto.status != RewardStatus.READY)
+    if (entity.status != RewardStatus.CREATED || (dto.status && dto.status != RewardStatus.READY))
       throw new BadRequestException('Reward update not allowed');
 
-    return this.rewardRepository.save({ ...entity, ...dto });
+    return this.rewardRepo.save({ ...entity, ...dto });
   }
 
   async setRewardRoutes(userId: number, stakingId: number, dtos: CreateRewardRouteDto[]): Promise<StakingOutputDto> {
@@ -86,7 +89,7 @@ export class StakingRewardService {
     const supportedAssets = await this.assetService.getAllAssetsForBlockchain(staking.blockchain);
     const rewardRoutes = dtos.map((dto) => this.factory.createRewardRoute(dto, supportedAssets));
 
-    const updatedStaking = await this.repository.saveWithLock(
+    const updatedStaking = await this.stakingRepo.saveWithLock(
       stakingId,
       (staking) => staking.setRewardRoutes(rewardRoutes),
       [
@@ -108,7 +111,18 @@ export class StakingRewardService {
     return RewardRouteOutputDtoMapper.entityToDtos(staking);
   }
 
-  //*** JOBS ***//
+  // --- JOBS --- //
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async createRewards(): Promise<void> {
+    if (Config.processDisabled(Process.STAKING_REWARD_PAYOUT)) return;
+
+    try {
+      await this.createDailyRewards();
+    } catch (e) {
+      console.error('Error while creating rewards', e);
+    }
+  }
 
   @Cron(CronExpression.EVERY_10_MINUTES)
   async prepareRewards(): Promise<void> {
