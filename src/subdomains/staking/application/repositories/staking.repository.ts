@@ -11,7 +11,7 @@ export class StakingRepository extends LockedRepository<Staking> {
   }
 
   async getByStrategy(strategy: StakingStrategy): Promise<Staking[]> {
-    return this.find({ where: { strategy }, loadEagerRelations: false });
+    return this.find({ where: { strategy }, relations: ['balances'], loadEagerRelations: false });
   }
 
   async getByUserId(userId: number): Promise<Staking[]> {
