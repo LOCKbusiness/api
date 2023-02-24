@@ -64,9 +64,6 @@ export class Staking extends IEntity {
   @ManyToOne(() => RewardStrategy, (strategy) => strategy.stakings, { nullable: false, eager: true, cascade: true })
   rewardStrategy: RewardStrategy;
 
-  @Column({ type: 'float', nullable: false, default: 0 })
-  rewardsAmount: number;
-
   @Column({ type: 'float', nullable: true })
   fee: number;
 
@@ -107,12 +104,6 @@ export class Staking extends IEntity {
 
   block(): this {
     this.status = StakingStatus.BLOCKED;
-
-    return this;
-  }
-
-  updateRewardsAmount(rewardsAmount: number): this {
-    this.rewardsAmount = rewardsAmount;
 
     return this;
   }

@@ -27,16 +27,16 @@ export class Reward extends IEntity {
   @ManyToOne(() => Asset, { eager: true, nullable: false })
   referenceAsset: Asset;
 
-  @Column({ type: 'float', nullable: false, default: 0 })
+  @Column({ type: 'float', nullable: true })
   inputReferenceAmount: number;
 
-  @Column({ type: 'float', nullable: false, default: 0 })
+  @Column({ type: 'float', nullable: true })
   outputReferenceAmount: number;
 
-  @Column({ type: 'float', nullable: false, default: 0 })
+  @Column({ type: 'float', nullable: true })
   feePercent: number;
 
-  @Column({ type: 'float', nullable: false, default: 0 })
+  @Column({ type: 'float', nullable: true })
   feeAmount: number;
 
   @ManyToOne(() => RewardRoute, { eager: true, nullable: true })
@@ -80,34 +80,19 @@ export class Reward extends IEntity {
   static create(
     staking: Staking,
     referenceAsset: Asset,
-    inputReferenceAmount: number,
-    outputReferenceAmount: number,
-    feePercent: number,
-    feeAmount: number,
     rewardRoute: RewardRoute,
     targetAddress: BlockchainAddress,
     targetAsset: Asset,
     status?: RewardStatus,
-    targetAmount?: number,
-    txId?: string,
-    outputDate?: Date,
   ): Reward {
     const reward = new Reward();
 
     reward.status = status ?? RewardStatus.CREATED;
     reward.staking = staking;
     reward.referenceAsset = referenceAsset;
-    reward.inputReferenceAmount = inputReferenceAmount;
-    reward.outputReferenceAmount = outputReferenceAmount;
-    reward.feePercent = feePercent;
-    reward.feeAmount = feeAmount;
     reward.rewardRoute = rewardRoute;
     reward.targetAddress = targetAddress;
     reward.targetAsset = targetAsset;
-
-    reward.targetAmount = targetAmount;
-    reward.txId = txId;
-    reward.outputDate = outputDate;
 
     reward.isReinvest = rewardRoute.isDefault || rewardRoute.targetAddress.isEqual(staking.depositAddress);
 

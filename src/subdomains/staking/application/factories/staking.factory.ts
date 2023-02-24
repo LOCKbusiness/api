@@ -6,7 +6,6 @@ import { ReservableBlockchainAddress } from '../../../address-pool/domain/entiti
 import { Staking, StakingTypes } from '../../domain/entities/staking.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { CreateDepositDto } from '../dto/input/create-deposit.dto';
-import { CreateRewardDto } from '../dto/input/create-reward.dto';
 import { CreateWithdrawalDraftDto } from '../dto/input/create-withdrawal-draft.dto';
 import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 import { CreateRewardRouteDto } from '../dto/input/create-reward-route.dto';
@@ -17,11 +16,10 @@ import { StakingStrategy } from '../../domain/enums';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { Util } from 'src/shared/util';
 import { RewardStrategy } from '../../domain/entities/reward-strategy.entity';
-import { RewardRouteRepository } from '../repositories/reward-route.repository';
 
 @Injectable()
 export class StakingFactory {
-  constructor(private readonly assetService: AssetService, private readonly rewardRouteRepo: RewardRouteRepository) {}
+  constructor(private readonly assetService: AssetService) {}
 
   async createStaking(
     userId: number,
@@ -62,55 +60,15 @@ export class StakingFactory {
     return RewardStrategy.create(userId);
   }
 
-  async createReward(staking: Staking, dto: CreateRewardDto): Promise<Reward> {
-    const {
-      referenceAssetId,
-      inputReferenceAmount,
-      outputReferenceAmount,
-      feePercent,
-      feeAmount,
-      rewardRouteId,
-      targetAddress: targetAddressName,
-      targetBlockchain,
-      targetAssetId,
-      status,
-      targetAmount,
-      txId,
-      outputDate,
-    } = dto;
+  createReward(route: RewardRoute, referenceAsset: Asset): Reward {
+    const strategy = referenceAsset.id === 1 ? StakingStrategy.MASTERNODE : StakingStrategy.LIQUIDITY_MINING;
 
-    const referenceAsset = await this.assetService.getAssetById(referenceAssetId);
-    const rewardRoute = await this.rewardRouteRepo.findOneBy({ id: rewardRouteId });
-    const targetAsset = await this.assetService.getAssetById(targetAssetId);
-    const targetAddress = BlockchainAddress.create(targetAddressName, targetBlockchain);
+    const staking = route.strategy.stakings.find((s) => s.strategy === strategy);
 
-    if (!referenceAsset) {
-      throw new BadRequestException(
-        `Cannot create reward. Provided reference asset ID ${referenceAssetId} not found in the database.`,
-      );
-    }
+    const targetAddress = route.isDefault ? staking.depositAddress : route.targetAddress;
+    const targetAsset = route.isDefault ? referenceAsset : route.targetAsset;
 
-    if (!rewardRoute) {
-      throw new BadRequestException(
-        `Cannot create reward. Provided reward route ID ${rewardRouteId} not found in the database.`,
-      );
-    }
-
-    return Reward.create(
-      staking,
-      referenceAsset,
-      inputReferenceAmount,
-      outputReferenceAmount,
-      feePercent,
-      feeAmount,
-      rewardRoute,
-      targetAddress,
-      targetAsset,
-      status,
-      targetAmount,
-      txId,
-      outputDate,
-    );
+    return Reward.create(staking, referenceAsset, route, targetAddress, targetAsset);
   }
 
   createRewardRoute(dto: CreateRewardRouteDto, supportedAssets: Asset[]): RewardRoute {
