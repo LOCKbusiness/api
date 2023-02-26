@@ -13,11 +13,6 @@ export enum CompactHistoryStatus {
   FAILED = 'Failed',
 }
 
-export enum CompactHistoryExchange {
-  LOCK = 'LOCK.space',
-  EXTERNAL = 'External Address',
-}
-
 export class HistoryBaseDto {
   @ApiPropertyOptional()
   inputAmount: number;
@@ -47,7 +42,7 @@ export class HistoryBaseDto {
   amountInUsd: number;
 
   @ApiProperty()
-  exchange: CompactHistoryExchange | string;
+  exchange: string;
 
   @ApiProperty()
   txId: string;

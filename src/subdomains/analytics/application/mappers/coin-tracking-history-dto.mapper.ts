@@ -3,8 +3,8 @@ import { Deposit } from 'src/subdomains/staking/domain/entities/deposit.entity';
 import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
 import { Withdrawal } from 'src/subdomains/staking/domain/entities/withdrawal.entity';
 import { DepositStatus, RewardStatus, StakingStrategy, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
-import { Wallet } from 'src/subdomains/user/domain/entities/wallet.entity';
 import { CoinTrackingCsvHistoryDto, CoinTrackingTransactionType } from '../dto/output/coin-tracking-history.dto';
+import { WalletProviderAddressPair } from '../services/staking-history.service';
 
 export class CoinTrackingHistoryDtoMapper {
   static mapStakingDeposits(deposits: Deposit[]): CoinTrackingCsvHistoryDto[] {
@@ -55,7 +55,7 @@ export class CoinTrackingHistoryDtoMapper {
       }));
   }
 
-  static mapStakingRewards(rewards: Reward[], wallets: Wallet[]): CoinTrackingCsvHistoryDto[] {
+  static mapStakingRewards(rewards: Reward[], wallets: WalletProviderAddressPair[]): CoinTrackingCsvHistoryDto[] {
     return rewards
       .filter((c) => c.status === RewardStatus.CONFIRMED)
       .map((c) => ({
@@ -72,7 +72,7 @@ export class CoinTrackingHistoryDtoMapper {
         exchange: c.isReinvest
           ? 'LOCK.space Staking'
           : c.targetAddress.address === c.staking.withdrawalAddress.address
-          ? wallets.find((w) => w.address.address === c.targetAddress.address).walletProvider.name
+          ? wallets.find((w) => w.targetAddress === c.targetAddress.address).walletProvider
           : 'External Wallet',
         tradeGroup: c.staking.strategy === StakingStrategy.LIQUIDITY_MINING ? null : 'Staking',
         comment:

@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Config } from 'src/config/config';
-import { Like } from 'typeorm';
+import { In, Like } from 'typeorm';
 import { User } from '../../domain/entities/user.entity';
 import { Wallet } from '../../domain/entities/wallet.entity';
 import { WalletRepository } from '../repositories/wallet.repository';
@@ -35,6 +35,10 @@ export class WalletService {
       where: { address: { address } },
       relations: needsRelation ? ['user', 'walletProvider'] : [],
     });
+  }
+
+  async getWalletsByAddresses(addresses: BlockchainAddress[]): Promise<Wallet[]> {
+    return this.walletRepo.find({ where: { address: In(addresses) }, relations: ['walletProvider'] });
   }
 
   async getKycIdByAddress(address: string): Promise<string> {

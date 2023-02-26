@@ -2,13 +2,8 @@ import { Deposit } from 'src/subdomains/staking/domain/entities/deposit.entity';
 import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
 import { Withdrawal } from 'src/subdomains/staking/domain/entities/withdrawal.entity';
 import { DepositStatus, RewardStatus, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
-import { Wallet } from 'src/subdomains/user/domain/entities/wallet.entity';
-import {
-  CompactHistoryDto,
-  CompactHistoryExchange,
-  CompactHistoryStatus,
-  HistoryTransactionType,
-} from '../dto/output/history.dto';
+import { CompactHistoryDto, CompactHistoryStatus, HistoryTransactionType } from '../dto/output/history.dto';
+import { WalletProviderAddressPair } from '../services/staking-history.service';
 
 export class CompactHistoryDtoMapper {
   private static CompactStatusMapper: {
@@ -38,7 +33,7 @@ export class CompactHistoryDtoMapper {
         amountInEur: c.amountEur,
         amountInChf: c.amountChf,
         amountInUsd: c.amountUsd,
-        exchange: CompactHistoryExchange.LOCK,
+        exchange: 'LOCK.space',
         txId: c.payInTxId,
         date: c.created,
         status: this.CompactStatusMapper[c.status],
@@ -59,7 +54,7 @@ export class CompactHistoryDtoMapper {
         amountInEur: c.amountEur,
         amountInChf: c.amountChf,
         amountInUsd: c.amountUsd,
-        exchange: CompactHistoryExchange.LOCK,
+        exchange: 'LOCK.space',
         txId: c.withdrawalTxId,
         date: c.outputDate ?? c.updated,
         status: this.CompactStatusMapper[c.status],
@@ -67,7 +62,7 @@ export class CompactHistoryDtoMapper {
       .filter((c) => c.status != null);
   }
 
-  static mapStakingRewards(rewards: Reward[], wallets: Wallet[]): CompactHistoryDto[] {
+  static mapStakingRewards(rewards: Reward[], wallets: WalletProviderAddressPair[]): CompactHistoryDto[] {
     return rewards
       .map((c) => ({
         type: HistoryTransactionType.REWARD,
@@ -81,10 +76,10 @@ export class CompactHistoryDtoMapper {
         amountInChf: c.amountChf,
         amountInUsd: c.amountUsd,
         exchange: c.isReinvest
-          ? CompactHistoryExchange.LOCK
+          ? 'LOCK.space'
           : c.targetAddress.address === c.staking.withdrawalAddress.address
-          ? wallets.find((w) => w.address.address === c.targetAddress.address).walletProvider.name
-          : CompactHistoryExchange.EXTERNAL,
+          ? wallets.find((w) => w.targetAddress === c.targetAddress.address).walletProvider
+          : 'External Address',
         txId: c.txId,
         date: c.outputDate ?? c.updated,
         status: this.CompactStatusMapper[c.status],
