@@ -1,9 +1,8 @@
 import { Deposit } from 'src/subdomains/staking/domain/entities/deposit.entity';
 import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
 import { Withdrawal } from 'src/subdomains/staking/domain/entities/withdrawal.entity';
-import { DepositStatus, RewardStatus, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
+import { DepositStatus, RewardStatus, StakingStrategy, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
 import { CompactHistoryDto, CompactHistoryStatus, HistoryTransactionType } from '../dto/output/history.dto';
-import { WalletProviderAddressPair } from '../services/staking-history.service';
 
 export class CompactHistoryDtoMapper {
   private static CompactStatusMapper: {
@@ -22,67 +21,69 @@ export class CompactHistoryDtoMapper {
 
   static mapStakingDeposits(deposits: Deposit[]): CompactHistoryDto[] {
     return deposits
-      .map((c) => ({
+      .map((d) => ({
         type: HistoryTransactionType.DEPOSIT,
-        inputAmount: c.amount,
-        inputAsset: c.asset.name,
+        inputAmount: d.amount,
+        inputAsset: d.asset.name,
         outputAmount: null,
         outputAsset: null,
         feeAmount: null,
         feeAsset: null,
-        amountInEur: c.amountEur,
-        amountInChf: c.amountChf,
-        amountInUsd: c.amountUsd,
+        amountInEur: d.amountEur,
+        amountInChf: d.amountChf,
+        amountInUsd: d.amountUsd,
         exchange: 'LOCK.space',
-        txId: c.payInTxId,
-        date: c.created,
-        status: this.CompactStatusMapper[c.status],
+        txId: d.payInTxId,
+        date: d.created,
+        status: this.CompactStatusMapper[d.status],
       }))
       .filter((c) => c.status != null);
   }
 
   static mapStakingWithdrawals(withdrawals: Withdrawal[]): CompactHistoryDto[] {
     return withdrawals
-      .map((c) => ({
+      .map((w) => ({
         type: HistoryTransactionType.WITHDRAWAL,
         inputAmount: null,
         inputAsset: null,
-        outputAmount: c.amount,
-        outputAsset: c.asset.name,
+        outputAmount: w.amount,
+        outputAsset: w.asset.name,
         feeAmount: null,
         feeAsset: null,
-        amountInEur: c.amountEur,
-        amountInChf: c.amountChf,
-        amountInUsd: c.amountUsd,
+        amountInEur: w.amountEur,
+        amountInChf: w.amountChf,
+        amountInUsd: w.amountUsd,
         exchange: 'LOCK.space',
-        txId: c.withdrawalTxId,
-        date: c.outputDate ?? c.updated,
-        status: this.CompactStatusMapper[c.status],
+        txId: w.withdrawalTxId,
+        date: w.outputDate ?? w.updated,
+        status: this.CompactStatusMapper[w.status],
       }))
       .filter((c) => c.status != null);
   }
 
-  static mapStakingRewards(rewards: Reward[], wallets: WalletProviderAddressPair[]): CompactHistoryDto[] {
+  static mapStakingRewards(rewards: Reward[], providerMap: Map<string, string>): CompactHistoryDto[] {
     return rewards
-      .map((c) => ({
+      .map((r) => ({
         type: HistoryTransactionType.REWARD,
-        inputAmount: c.targetAmount,
-        inputAsset: c.targetAsset.name,
+        inputAmount: r.targetAmount,
+        inputAsset: r.targetAsset.name,
         outputAmount: null,
         outputAsset: null,
-        feeAmount: c.feePercent != 0 ? (c.targetAmount * c.feePercent) / (1 - c.feePercent) : null,
-        feeAsset: c.feePercent != 0 ? c.targetAsset.name : null,
-        amountInEur: c.amountEur,
-        amountInChf: c.amountChf,
-        amountInUsd: c.amountUsd,
-        exchange: c.isReinvest
-          ? 'LOCK.space'
-          : c.targetAddress.address === c.staking.withdrawalAddress.address
-          ? wallets.find((w) => w.targetAddress === c.targetAddress.address).walletProvider
+        feeAmount: r.feePercent != 0 ? (r.targetAmount * r.feePercent) / (1 - r.feePercent) : null,
+        feeAsset: r.feePercent != 0 ? r.targetAsset.name : null,
+        amountInEur: r.amountEur,
+        amountInChf: r.amountChf,
+        amountInUsd: r.amountUsd,
+        exchange: r.isReinvest
+          ? r.staking.strategy === StakingStrategy.MASTERNODE
+            ? 'LOCK.space Staking'
+            : 'LOCK.space YM'
+          : r.targetAddress.isEqual(r.staking.withdrawalAddress)
+          ? providerMap.get(r.targetAddress.address)
           : 'External Address',
-        txId: c.txId,
-        date: c.outputDate ?? c.updated,
-        status: this.CompactStatusMapper[c.status],
+        txId: r.txId,
+        date: r.outputDate ?? r.updated,
+        status: this.CompactStatusMapper[r.status],
       }))
       .filter((c) => c.status != null);
   }

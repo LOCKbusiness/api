@@ -27,11 +27,6 @@ export enum ExportType {
   CHAIN_REPORT = 'ChainReport',
 }
 
-export interface WalletProviderAddressPair {
-  targetAddress: string;
-  walletProvider: string;
-}
-
 @Injectable()
 export class StakingHistoryService {
   constructor(
@@ -62,10 +57,10 @@ export class StakingHistoryService {
 
     const wallets = await this.walletService.getWalletsByAddresses(uniqueTargetAddresses);
 
-    const providerMap: WalletProviderAddressPair[] = wallets.map((w) => ({
-      targetAddress: w.address.address,
-      walletProvider: w.walletProvider.name,
-    }));
+    const providerMap = wallets.reduce(
+      (map, w) => map.set(w.address.address, w.walletProvider.name),
+      new Map<string, string>(),
+    );
 
     switch (exportFormat) {
       case ExportType.COIN_TRACKING:
@@ -115,12 +110,12 @@ export class StakingHistoryService {
     deposits: Deposit[],
     withdrawals: Withdrawal[],
     rewards: Reward[],
-    wallets: WalletProviderAddressPair[],
+    providerMap: Map<string, string>,
   ): CoinTrackingCsvHistoryDto[] {
     const transactions: CoinTrackingCsvHistoryDto[] = [
       CoinTrackingHistoryDtoMapper.mapStakingDeposits(deposits),
       CoinTrackingHistoryDtoMapper.mapStakingWithdrawals(withdrawals),
-      CoinTrackingHistoryDtoMapper.mapStakingRewards(rewards, wallets),
+      CoinTrackingHistoryDtoMapper.mapStakingRewards(rewards, providerMap),
     ]
       .reduce((prev, curr) => prev.concat(curr), [])
       .sort((tx1, tx2) => (tx1.date.getTime() > tx2.date.getTime() ? -1 : 1));
@@ -148,12 +143,12 @@ export class StakingHistoryService {
     deposits: Deposit[],
     withdrawals: Withdrawal[],
     rewards: Reward[],
-    wallets: WalletProviderAddressPair[],
+    providerMap: Map<string, string>,
   ): CompactHistoryDto[] {
     const transactions: CompactHistoryDto[] = [
       CompactHistoryDtoMapper.mapStakingDeposits(deposits),
       CompactHistoryDtoMapper.mapStakingWithdrawals(withdrawals),
-      CompactHistoryDtoMapper.mapStakingRewards(rewards, wallets),
+      CompactHistoryDtoMapper.mapStakingRewards(rewards, providerMap),
     ]
       .reduce((prev, curr) => prev.concat(curr), [])
       .sort((tx1, tx2) => (tx1.date.getTime() > tx2.date.getTime() ? -1 : 1));

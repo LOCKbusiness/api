@@ -37,7 +37,6 @@ export interface StakingBalances {
 export class StakingService {
   constructor(
     private readonly repository: StakingRepository,
-    private readonly rewardRepository: RewardRepository,
     private readonly depositRepository: DepositRepository,
     private readonly withdrawalRepository: WithdrawalRepository,
     private readonly userService: UserService,
@@ -88,10 +87,6 @@ export class StakingService {
 
   private getBalanceDtos(stakings: Staking[]): BalanceOutputDto[] {
     return stakings.map(StakingBalanceDtoMapper.entityToDtos).reduce((prev, curr) => prev.concat(curr), []);
-  }
-
-  async getStakingsByDepositAddress(address: string): Promise<Staking> {
-    return this.repository.getByDepositAddress(address);
   }
 
   async getStakingsByUserAddress(address: string): Promise<Staking[]> {
