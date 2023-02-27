@@ -11,10 +11,6 @@ export class DepositRepository extends Repository<Deposit> {
     super(Deposit, manager);
   }
 
-  async getConfirmed(stakingId: number): Promise<Deposit[]> {
-    return this.getByStatuses([DepositStatus.CONFIRMED], stakingId);
-  }
-
   async getPending(stakingId: number): Promise<Deposit[]> {
     return this.getByStatuses([DepositStatus.PENDING], stakingId);
   }
@@ -23,7 +19,7 @@ export class DepositRepository extends Repository<Deposit> {
     return this.getByStatuses([DepositStatus.OPEN, DepositStatus.PENDING], stakingId);
   }
 
-  async getByStatuses(statuses: DepositStatus[], stakingId: number): Promise<Deposit[]> {
+  private async getByStatuses(statuses: DepositStatus[], stakingId: number): Promise<Deposit[]> {
     /**
      * @note
      * relations are needed for #find(...) even though field is eager
