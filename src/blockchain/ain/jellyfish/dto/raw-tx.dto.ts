@@ -5,5 +5,4 @@ export class RawTxDto {
   hex: string;
   prevouts: Prevout[];
   scriptHex: string;
-  isInternal: boolean;
 }

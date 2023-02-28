@@ -33,7 +33,7 @@ export class Transaction extends IEntity {
     tx.chainId = id;
     tx.rawTx = JSON.stringify(rawTx);
     tx.issuerSignature = issuerSignature;
-    if (rawTx.isInternal) tx.verifierSignature = issuerSignature;
+    if ('isIncoming' in payload && payload.isIncoming) tx.verifierSignature = issuerSignature;
     tx.payload = payload && JSON.stringify(payload);
     tx.invalidationReason = null;
     return tx;

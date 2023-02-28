@@ -5,7 +5,6 @@ import {
   Witness,
   WitnessScript,
   Script,
-  OPCode,
   OP_CODES,
   OP_DEFI_TX,
   Vin,
@@ -209,11 +208,7 @@ export class RawTxUtil {
 
   static generateTx(utxo: UtxoInformation, vins: Vin[], vouts: Vout[], witnesses: Witness[]): RawTxDto {
     const tx = RawTxUtil.createTxSegWit(vins, vouts, witnesses);
-    const [isInternal, defiTxType] = this.isInternalTx(vouts);
-    console.info(
-      `# of vins: ${vins.length}, # of vouts: ${vouts.length}, DEFI TX: ${defiTxType} => isInternal? ${isInternal}`,
-    );
-    return RawTxUtil.toDto(tx, utxo, isInternal);
+    return RawTxUtil.toDto(tx, utxo);
   }
 
   static generateTxAndCalcFee(
@@ -230,11 +225,7 @@ export class RawTxUtil {
     const voutFee = vouts[voutFeeIndex];
     voutFee.value = voutFee.value.minus(fee).minus(operationFee);
 
-    const [isInternal, defiTxType] = this.isInternalTx(vouts);
-    console.info(
-      `# of vins: ${vins.length}, # of vouts: ${vouts.length}, DEFI TX: ${defiTxType} => isInternal? ${isInternal}`,
-    );
-    return RawTxUtil.toDto(tx, utxo, isInternal);
+    return RawTxUtil.toDto(tx, utxo);
   }
 
   static generateDefiTx(
@@ -253,41 +244,13 @@ export class RawTxUtil {
     return RawTxUtil.generateTxAndCalcFee(utxo, vins, vouts, witnesses, operationFee);
   }
 
-  static externalTxTypes = ['OP_DEFI_TX_ANY_ACCOUNT_TO_ACCOUNT'];
-  private static isInternalTx(vouts: Vout[]): [boolean, string | undefined] {
-    const defiTxType = this.retrieveTxType(vouts[0]);
-    const [liqScript] = this.parseAddress(Config.staking.liquidity.address);
-    return [
-      (defiTxType && !this.externalTxTypes.includes(defiTxType)) ||
-        (!defiTxType && vouts.every((v) => this.scriptIsEqual(v, liqScript))),
-      defiTxType,
-    ];
-  }
-
-  private static retrieveTxType(vout: Vout): string | undefined {
-    const opDefiTx = vout.script.stack.find((opCode) => (opCode as OP_DEFI_TX)?.type === 'OP_DEFI_TX');
-    if (!opDefiTx) return undefined;
-    if ('tx' in opDefiTx) {
-      return (opDefiTx as OP_DEFI_TX).tx.name;
-    }
-    return undefined;
-  }
-
-  private static scriptIsEqual(vout: Vout, script: Script): boolean {
-    if (vout.script.stack.length !== script.stack.length) return false;
-    return vout.script.stack.every(
-      (code, index) => code.asBuffer().toString() === script.stack[index].asBuffer().toString(),
-    );
-  }
-
-  private static toDto(tx: TransactionSegWit, utxo: UtxoInformation, isInternal: boolean): RawTxDto {
+  private static toDto(tx: TransactionSegWit, utxo: UtxoInformation): RawTxDto {
     const txObj = new CTransactionSegWit(tx);
     return {
       id: txObj.txId,
       hex: txObj.toHex(),
       scriptHex: utxo.scriptHex,
       prevouts: utxo.prevouts,
-      isInternal,
     };
   }
 }

@@ -34,6 +34,7 @@ import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/domain/enums';
 import { RawTxService } from 'src/blockchain/ain/jellyfish/services/raw-tx.service';
 import { TransactionCacheService } from './transaction-cache.service';
 import { AssetType } from 'src/shared/models/asset/asset.entity';
+import { RawTxCheck } from 'src/blockchain/ain/jellyfish/utils/raw-tx-check';
 
 @Injectable()
 export class TransactionExecutionService {
@@ -56,17 +57,26 @@ export class TransactionExecutionService {
 
   async createMasternode(data: CreateMasternodeData): Promise<string> {
     const rawTx = await this.rawTxService.Masternode.create(data.masternode);
-    return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.CREATE_MASTERNODE));
+    return this.signAndBroadcast(
+      rawTx,
+      this.createPayloadFor(data, TransactionType.CREATE_MASTERNODE, RawTxCheck.isIncoming(rawTx)),
+    );
   }
 
   async resignMasternode(data: ResignMasternodeData): Promise<string> {
     const rawTx = await this.rawTxService.Masternode.resign(data.masternode);
-    return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.RESIGN_MASTERNODE));
+    return this.signAndBroadcast(
+      rawTx,
+      this.createPayloadFor(data, TransactionType.RESIGN_MASTERNODE, RawTxCheck.isIncoming(rawTx)),
+    );
   }
 
   async voteMasternode(data: VoteMasternodeData): Promise<string> {
     const rawTx = await this.rawTxService.Masternode.vote(data.masternode, data.proposalId, data.voteDecision);
-    return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.VOTE_MASTERNODE));
+    return this.signAndBroadcast(
+      rawTx,
+      this.createPayloadFor(data, TransactionType.VOTE_MASTERNODE, RawTxCheck.isIncoming(rawTx)),
+    );
   }
 
   async sendFromLiq(data: SendFromLiqData): Promise<string> {
@@ -76,12 +86,18 @@ export class TransactionExecutionService {
       data.amount,
       data.sizePriority,
     );
-    return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.SEND_FROM_LIQ));
+    return this.signAndBroadcast(
+      rawTx,
+      this.createPayloadFor(data, TransactionType.SEND_FROM_LIQ, RawTxCheck.isIncoming(rawTx)),
+    );
   }
 
   async sendToLiq(data: SendToLiqData): Promise<string> {
     const rawTx = await this.rawTxService.Utxo.forward(data.from, Config.staking.liquidity.address, data.amount);
-    return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.SEND_TO_LIQ));
+    return this.signAndBroadcast(
+      rawTx,
+      this.createPayloadFor(data, TransactionType.SEND_TO_LIQ, RawTxCheck.isIncoming(rawTx)),
+    );
   }
 
   async sendWithdrawal(data: SendCoinWithdrawalData | SendTokenWithdrawalData): Promise<string> {
@@ -101,6 +117,7 @@ export class TransactionExecutionService {
         ...this.createPayloadFor(
           { ownerWallet: config.wallet, accountIndex: config.account },
           TransactionType.WITHDRAWAL,
+          RawTxCheck.isIncoming(rawTx),
         ),
       },
       false,
@@ -119,32 +136,50 @@ export class TransactionExecutionService {
 
   async sendToken(data: SendTokenData): Promise<string> {
     const rawTx = await this.rawTxService.Account.send(data.from, data.to, data.balance.token, data.balance.amount);
-    return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.ACCOUNT_TO_ACCOUNT));
+    return this.signAndBroadcast(
+      rawTx,
+      this.createPayloadFor(data, TransactionType.ACCOUNT_TO_ACCOUNT, RawTxCheck.isIncoming(rawTx)),
+    );
   }
 
   async createVault(data: CreateVaultData): Promise<string> {
     const rawTx = await this.rawTxService.Vault.create(data.owner);
-    return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.CREATE_VAULT));
+    return this.signAndBroadcast(
+      rawTx,
+      this.createPayloadFor(data, TransactionType.CREATE_VAULT, RawTxCheck.isIncoming(rawTx)),
+    );
   }
 
   async depositToVault(data: DepositToVaultData): Promise<string> {
     const rawTx = await this.rawTxService.Vault.deposit(data.from, data.vault, data.token, data.amount);
-    return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.DEPOSIT_TO_VAULT));
+    return this.signAndBroadcast(
+      rawTx,
+      this.createPayloadFor(data, TransactionType.DEPOSIT_TO_VAULT, RawTxCheck.isIncoming(rawTx)),
+    );
   }
 
   async withdrawFromVault(data: WithdrawFromVaultData): Promise<string> {
     const rawTx = await this.rawTxService.Vault.withdraw(data.to, data.vault, data.token, data.amount);
-    return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.WITHDRAW_FROM_VAULT));
+    return this.signAndBroadcast(
+      rawTx,
+      this.createPayloadFor(data, TransactionType.WITHDRAW_FROM_VAULT, RawTxCheck.isIncoming(rawTx)),
+    );
   }
 
   async takeLoan(data: TakeLoanData): Promise<string> {
     const rawTx = await this.rawTxService.Vault.takeLoan(data.to, data.vault, data.token, data.amount);
-    return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.TAKE_LOAN));
+    return this.signAndBroadcast(
+      rawTx,
+      this.createPayloadFor(data, TransactionType.TAKE_LOAN, RawTxCheck.isIncoming(rawTx)),
+    );
   }
 
   async paybackLoan(data: PaybackLoanData): Promise<string> {
     const rawTx = await this.rawTxService.Vault.paybackLoan(data.from, data.vault, data.token, data.amount);
-    return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.PAYBACK_LOAN));
+    return this.signAndBroadcast(
+      rawTx,
+      this.createPayloadFor(data, TransactionType.PAYBACK_LOAN, RawTxCheck.isIncoming(rawTx)),
+    );
   }
 
   async addPoolLiquidity(data: AddPoolLiquidityData): Promise<string> {
@@ -155,12 +190,18 @@ export class TransactionExecutionService {
       data.partB.token,
       data.partB.amount,
     );
-    return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.POOL_ADD_LIQUIDITY));
+    return this.signAndBroadcast(
+      rawTx,
+      this.createPayloadFor(data, TransactionType.POOL_ADD_LIQUIDITY, RawTxCheck.isIncoming(rawTx)),
+    );
   }
 
   async removePoolLiquidity(data: RemovePoolLiquidityData): Promise<string> {
     const rawTx = await this.rawTxService.Pool.remove(data.from, data.token, data.amount);
-    return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.POOL_REMOVE_LIQUIDITY));
+    return this.signAndBroadcast(
+      rawTx,
+      this.createPayloadFor(data, TransactionType.POOL_REMOVE_LIQUIDITY, RawTxCheck.isIncoming(rawTx)),
+    );
   }
 
   async compositeSwap(data: CompositeSwapData): Promise<string> {
@@ -170,7 +211,10 @@ export class TransactionExecutionService {
       data.source.amount,
       data.destination.token,
     );
-    return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.COMPOSITE_SWAP));
+    return this.signAndBroadcast(
+      rawTx,
+      this.createPayloadFor(data, TransactionType.COMPOSITE_SWAP, RawTxCheck.isIncoming(rawTx)),
+    );
   }
 
   // --- HELPER METHODS --- //
@@ -185,11 +229,12 @@ export class TransactionExecutionService {
     return this.transactionCache.set(type, correlationId, await create());
   }
 
-  private createPayloadFor(data: WalletBaseData, type: TransactionType): any {
+  private createPayloadFor(data: WalletBaseData, type: TransactionType, isIncoming: boolean): any {
     return {
       type,
       ownerWallet: data.ownerWallet,
       accountIndex: data.accountIndex,
+      isIncoming,
     };
   }
 
@@ -198,6 +243,7 @@ export class TransactionExecutionService {
       const signature = await this.receiveSignatureFor(rawTx);
       const hex = await this.transactionService.sign(rawTx, signature, payload);
       console.info(`${rawTx.id} broadcasting`);
+      if (!RawTxCheck.isAllowed(rawTx, payload.isIncoming)) throw new Error(`${rawTx.id} is not allowed`);
       return await this.whaleClient.sendRaw(hex);
     } catch (e) {
       if (unlockUtxoOnFail) await this.rawTxService.unlockUtxosOf(rawTx);
