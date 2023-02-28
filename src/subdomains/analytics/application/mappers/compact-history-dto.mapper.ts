@@ -1,8 +1,13 @@
 import { Deposit } from 'src/subdomains/staking/domain/entities/deposit.entity';
 import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
 import { Withdrawal } from 'src/subdomains/staking/domain/entities/withdrawal.entity';
-import { DepositStatus, RewardStatus, StakingStrategy, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
-import { CompactHistoryDto, CompactHistoryStatus, HistoryTransactionType } from '../dto/output/history.dto';
+import { DepositStatus, RewardStatus, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
+import {
+  CompactHistoryDto,
+  CompactHistoryStatus,
+  CompactHistoryTarget,
+  HistoryTransactionType,
+} from '../dto/output/history.dto';
 
 export class CompactHistoryDtoMapper {
   private static CompactStatusMapper: {
@@ -31,7 +36,7 @@ export class CompactHistoryDtoMapper {
         amountInEur: d.amountEur,
         amountInChf: d.amountChf,
         amountInUsd: d.amountUsd,
-        exchange: 'LOCK.space',
+        payoutTarget: null,
         txId: d.payInTxId,
         date: d.created,
         status: this.CompactStatusMapper[d.status],
@@ -53,7 +58,7 @@ export class CompactHistoryDtoMapper {
         amountInEur: w.amountEur,
         amountInChf: w.amountChf,
         amountInUsd: w.amountUsd,
-        exchange: 'LOCK.space',
+        payoutTarget: CompactHistoryTarget.WALLET,
         txId: w.withdrawalTxId,
         date: w.outputDate ?? w.updated,
         status: this.CompactStatusMapper[w.status],
@@ -62,7 +67,7 @@ export class CompactHistoryDtoMapper {
       .filter((c) => c.status != null);
   }
 
-  static mapStakingRewards(rewards: Reward[], providerMap: Map<string, string>): CompactHistoryDto[] {
+  static mapStakingRewards(rewards: Reward[]): CompactHistoryDto[] {
     return rewards
       .map((r) => ({
         type: HistoryTransactionType.REWARD,
@@ -75,13 +80,11 @@ export class CompactHistoryDtoMapper {
         amountInEur: r.amountEur,
         amountInChf: r.amountChf,
         amountInUsd: r.amountUsd,
-        exchange: r.isReinvest
-          ? r.staking.strategy === StakingStrategy.MASTERNODE
-            ? 'LOCK.space Staking'
-            : 'LOCK.space YM'
+        payoutTarget: r.isReinvest
+          ? CompactHistoryTarget.REINVEST
           : r.targetAddress.isEqual(r.staking.withdrawalAddress)
-          ? providerMap.get(r.targetAddress.address)
-          : 'External Address',
+          ? CompactHistoryTarget.WALLET
+          : CompactHistoryTarget.EXTERNAL,
         txId: r.txId,
         date: r.outputDate ?? r.updated,
         status: this.CompactStatusMapper[r.status],

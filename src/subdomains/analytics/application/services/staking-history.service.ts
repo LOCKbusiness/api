@@ -50,25 +50,25 @@ export class StakingHistoryService {
     const withdrawals = await this.getWithdrawalsByUserOrAddress(userId, query.depositAddress, query.from, query.to);
     const rewards = await this.getRewardsByUserOrAddress(userId, query.depositAddress, query.from, query.to);
 
-    const uniqueTargetAddresses = withdrawals
-      .map((w) => w.staking.withdrawalAddress.address)
-      .concat(rewards.filter((r) => !r.isReinvest).map((r) => r.targetAddress.address))
-      .filter((a1, i, self) => i === self.findIndex((a2) => a1 === a2));
-
-    const wallets = await this.walletService.getWalletsByAddresses(uniqueTargetAddresses);
-
-    const providerMap = wallets.reduce(
-      (map, w) => map.set(w.address.address, w.walletProvider.name),
-      new Map<string, string>(),
-    );
-
     switch (exportFormat) {
       case ExportType.COIN_TRACKING:
+        const uniqueTargetAddresses = withdrawals
+          .map((w) => w.staking.withdrawalAddress.address)
+          .concat(rewards.filter((r) => !r.isReinvest).map((r) => r.targetAddress.address))
+          .filter((a1, i, self) => i === self.findIndex((a2) => a1 === a2));
+
+        const wallets = await this.walletService.getWalletsByAddresses(uniqueTargetAddresses);
+
+        const providerMap = wallets.reduce(
+          (map, w) => map.set(w.address.address, w.walletProvider.name),
+          new Map<string, string>(),
+        );
+
         return this.getHistoryCT(deposits, withdrawals, rewards, providerMap) as HistoryDto<T>[];
       case ExportType.CHAIN_REPORT:
         return this.getHistoryChainReport(deposits, withdrawals, rewards) as HistoryDto<T>[];
       case ExportType.COMPACT:
-        return this.getHistoryCompact(deposits, withdrawals, rewards, providerMap) as HistoryDto<T>[];
+        return this.getHistoryCompact(deposits, withdrawals, rewards) as HistoryDto<T>[];
     }
   }
 
@@ -139,16 +139,11 @@ export class StakingHistoryService {
     return this.filterDuplicateTxChainReport(transactions);
   }
 
-  private getHistoryCompact(
-    deposits: Deposit[],
-    withdrawals: Withdrawal[],
-    rewards: Reward[],
-    providerMap: Map<string, string>,
-  ): CompactHistoryDto[] {
+  private getHistoryCompact(deposits: Deposit[], withdrawals: Withdrawal[], rewards: Reward[]): CompactHistoryDto[] {
     const transactions: CompactHistoryDto[] = [
       CompactHistoryDtoMapper.mapStakingDeposits(deposits),
       CompactHistoryDtoMapper.mapStakingWithdrawals(withdrawals),
-      CompactHistoryDtoMapper.mapStakingRewards(rewards, providerMap),
+      CompactHistoryDtoMapper.mapStakingRewards(rewards),
     ]
       .reduce((prev, curr) => prev.concat(curr), [])
       .sort((tx1, tx2) => (tx1.date.getTime() > tx2.date.getTime() ? -1 : 1));

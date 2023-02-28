@@ -14,7 +14,13 @@ export enum CompactHistoryStatus {
   FAILED = 'Failed',
 }
 
-export class HistoryBaseDto {
+export enum CompactHistoryTarget {
+  REINVEST = 'Reinvest',
+  WALLET = 'Wallet',
+  EXTERNAL = 'External',
+}
+
+export class CompactHistoryDto {
   @ApiPropertyOptional()
   inputAmount: number;
 
@@ -42,17 +48,15 @@ export class HistoryBaseDto {
   @ApiPropertyOptional()
   amountInUsd: number;
 
-  @ApiProperty()
-  exchange: string;
+  @ApiPropertyOptional()
+  payoutTarget: CompactHistoryTarget;
 
   @ApiProperty()
   txId: string;
 
   @ApiProperty()
   date: Date;
-}
 
-export class CompactHistoryDto extends HistoryBaseDto {
   @ApiProperty({ enum: HistoryTransactionType })
   type: HistoryTransactionType;
 
