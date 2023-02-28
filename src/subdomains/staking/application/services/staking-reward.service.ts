@@ -4,6 +4,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Config, Process } from 'src/config/config';
 import { Lock } from 'src/shared/lock';
 import { AssetService } from 'src/shared/models/asset/asset.service';
+import { Util } from 'src/shared/util';
 import { Reward } from '../../domain/entities/reward.entity';
 import { StakingBalance } from '../../domain/entities/staking-balance.entity';
 import { RewardStatus } from '../../domain/enums';
@@ -41,6 +42,18 @@ export class StakingRewardService {
   ) {}
 
   // --- PUBLIC API --- //
+
+  async getRewardVolumeAt(date: Date): Promise<number> {
+    const from = new Date(date);
+    from.setHours(0, 0, 0, 0);
+    const to = Util.daysAfter(1, from);
+
+    const volume = await this.dexService.getRewardVolumeBetween(from, to);
+
+    console.log(`Reward volume between ${from.toISOString()} and ${to.toISOString()}: ${volume}`);
+
+    return volume;
+  }
 
   async createDailyRewards(): Promise<Reward[]> {
     // load all active routes with active stakings (balance > 0)
