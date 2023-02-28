@@ -112,7 +112,7 @@ export class RawTxUtil {
 
   static createVoutAccountToUtxo(from: Script, amount: BigNumber, mintingOutputsStart: number): Vout {
     const balances: TokenBalanceUInt32[] = [{ token: 0, amount }];
-    return RawTxUtil.createDefiTxVout(DefiTxHelper.accountToUtxo(from, balances, mintingOutputsStart), amount);
+    return RawTxUtil.createDefiTxVout(DefiTxHelper.accountToUtxo(from, balances, mintingOutputsStart));
   }
 
   // --- VAULT VOUTS --- //
