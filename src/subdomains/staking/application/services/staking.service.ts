@@ -71,10 +71,10 @@ export class StakingService {
   }
 
   async getDepositAddressBalances(address: string): Promise<BalanceOutputDto[]> {
-    const stakingEntities = await this.repository.getByDepositAddress(address);
-    if (stakingEntities.length == 0) throw new NotFoundException('No staking for deposit address found');
+    const stakingEntity = await this.repository.getByDepositAddress(address);
+    if (!stakingEntity) throw new NotFoundException('No staking for deposit address found');
 
-    return this.getBalanceDtos(stakingEntities);
+    return this.getBalanceDtos([stakingEntity]);
   }
 
   async getUserAddressBalances(address: string): Promise<BalanceOutputDto[]> {

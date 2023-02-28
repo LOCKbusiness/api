@@ -18,8 +18,8 @@ export class StakingRepository extends LockedRepository<Staking> {
     return this.findBy({ userId });
   }
 
-  async getByDepositAddress(depositAddress: string): Promise<Staking[]> {
-    return this.findBy({ depositAddress: { address: depositAddress } });
+  async getByDepositAddress(depositAddress: string): Promise<Staking> {
+    return this.findOneBy({ depositAddress: { address: depositAddress } });
   }
 
   async getCurrentTotalStakingBalance({ asset, strategy }: StakingType): Promise<number> {

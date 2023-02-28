@@ -2,7 +2,12 @@ import { Deposit } from 'src/subdomains/staking/domain/entities/deposit.entity';
 import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
 import { Withdrawal } from 'src/subdomains/staking/domain/entities/withdrawal.entity';
 import { DepositStatus, RewardStatus, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
-import { CompactHistoryDto, CompactHistoryStatus, HistoryTransactionType } from '../dto/output/history.dto';
+import {
+  CompactHistoryDto,
+  CompactHistoryStatus,
+  CompactHistoryTarget,
+  HistoryTransactionType,
+} from '../dto/output/history.dto';
 
 export class CompactHistoryDtoMapper {
   private static CompactStatusMapper: {
@@ -31,6 +36,7 @@ export class CompactHistoryDtoMapper {
         amountInEur: d.amountEur,
         amountInChf: d.amountChf,
         amountInUsd: d.amountUsd,
+        payoutTarget: null,
         txId: d.payInTxId,
         date: d.created,
         status: this.CompactStatusMapper[d.status],
@@ -52,6 +58,7 @@ export class CompactHistoryDtoMapper {
         amountInEur: w.amountEur,
         amountInChf: w.amountChf,
         amountInUsd: w.amountUsd,
+        payoutTarget: CompactHistoryTarget.WALLET,
         txId: w.withdrawalTxId,
         date: w.outputDate ?? w.updated,
         status: this.CompactStatusMapper[w.status],
@@ -73,6 +80,11 @@ export class CompactHistoryDtoMapper {
         amountInEur: r.amountEur,
         amountInChf: r.amountChf,
         amountInUsd: r.amountUsd,
+        payoutTarget: r.isReinvest
+          ? CompactHistoryTarget.REINVEST
+          : r.targetAddress.isEqual(r.staking.withdrawalAddress)
+          ? CompactHistoryTarget.WALLET
+          : CompactHistoryTarget.EXTERNAL,
         txId: r.txId,
         date: r.outputDate ?? r.updated,
         status: this.CompactStatusMapper[r.status],

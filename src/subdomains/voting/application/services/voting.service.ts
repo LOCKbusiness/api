@@ -214,7 +214,7 @@ export class VotingService implements OnModuleInit {
         proposalId: vote.proposalId,
         voteDecision: this.VoteMap[vote.decision],
       });
-      await this.voteRepo.update(vote.id, { txId, status: VoteStatus.COMPLETED });
+      await this.voteRepo.update(vote.id, { txId, status: VoteStatus.COMPLETE });
     } catch (e) {
       console.error(`Failed to process vote ${vote.id}:`, e);
     }

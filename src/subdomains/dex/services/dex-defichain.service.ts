@@ -176,7 +176,7 @@ export class DexDeFiChainService {
       return Util.round(swapAmount + swapAmount * 0.05, 8);
     }
 
-    return this.#dexClient.testCompositeSwap(referenceAsset.name, swapAsset.name, referenceAmount);
+    return this.testSwap(referenceAsset, swapAsset, referenceAmount);
   }
 
   async getAssetAvailability(asset: Asset): Promise<number> {
@@ -202,9 +202,7 @@ export class DexDeFiChainService {
   // *** HELPER METHODS *** //
 
   private async getTargetAmount(sourceAsset: Asset, sourceAmount: number, targetAsset: Asset): Promise<number> {
-    return targetAsset.id === sourceAsset.id
-      ? sourceAmount
-      : this.#dexClient.testCompositeSwap(sourceAsset.name, targetAsset.name, sourceAmount);
+    return targetAsset.id === sourceAsset.id ? sourceAmount : this.testSwap(sourceAsset, targetAsset, sourceAmount);
   }
 
   private async checkAssetAvailability(asset: Asset, requiredAmount: number): Promise<void> {
@@ -234,7 +232,7 @@ export class DexDeFiChainService {
 
       if (!availableAmount) return 0;
 
-      return await this.#dexClient.testCompositeSwap(swapAsset.name, targetAsset.name, availableAmount);
+      return await this.testSwap(swapAsset, targetAsset, availableAmount);
     } catch (e) {
       console.warn(
         `Could not find purchasable amount for swapAsset: ${swapAsset.name}, targetAsset: ${targetAsset.name}`,
@@ -301,11 +299,7 @@ export class DexDeFiChainService {
     // how much of sourceAsset you going to pay for 1 unit of targetAsset, caution - only indicative calculation
     return (
       1 /
-      ((await this.#dexClient.testCompositeSwap(
-        sourceAsset.name,
-        targetAsset.name,
-        this.getMinimalPriceReferenceAmount(sourceAsset.name),
-      )) /
+      ((await this.testSwap(sourceAsset, targetAsset, this.getMinimalPriceReferenceAmount(sourceAsset.name))) /
         this.getMinimalPriceReferenceAmount(sourceAsset.name))
     );
   }
@@ -316,5 +310,15 @@ export class DexDeFiChainService {
 
   private getMinimalPriceReferenceAmount(sourceAsset: string): number {
     return sourceAsset === 'BTC' ? 0.001 : 1;
+  }
+
+  private async testSwap(sourceAsset: Asset, targetAsset: Asset, amount: number): Promise<number> {
+    if (sourceAsset.category !== targetAsset.category) {
+      // always use DFI-DUSD pool
+      const dfiAmount = await this.#dexClient.testCompositeSwap(sourceAsset.name, 'DFI', amount);
+      return this.#dexClient.testCompositeSwap('DFI', targetAsset.name, dfiAmount);
+    } else {
+      return this.#dexClient.testCompositeSwap(sourceAsset.name, targetAsset.name, amount);
+    }
   }
 }

@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { AssetRepository } from 'src/shared/models/asset/asset.repository';
 import { Asset, AssetType } from './asset.entity';
+import { UpdateAssetDto } from './update-asset.dto';
 
 export interface AssetQuery {
   name: string;
@@ -12,6 +13,13 @@ export interface AssetQuery {
 @Injectable()
 export class AssetService {
   constructor(private assetRepo: AssetRepository) {}
+
+  async updateAsset(assetId: number, dto: UpdateAssetDto): Promise<Asset> {
+    const entity = await this.assetRepo.findOneBy({ id: assetId });
+    if (!entity) throw new NotFoundException('Asset not found');
+
+    return this.assetRepo.save({ ...entity, ...dto });
+  }
 
   async getAllAssets(): Promise<Asset[]> {
     return this.assetRepo.find();
