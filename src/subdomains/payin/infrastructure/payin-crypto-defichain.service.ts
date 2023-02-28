@@ -30,6 +30,7 @@ export class PayInDeFiChainService {
     'WithdrawFromVault',
     'PoolSwap',
     'RemovePoolLiquidity',
+    'ProposalFeeRedistribution',
   ];
 
   constructor(
