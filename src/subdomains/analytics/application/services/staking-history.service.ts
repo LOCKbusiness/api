@@ -52,19 +52,7 @@ export class StakingHistoryService {
 
     switch (exportFormat) {
       case ExportType.COIN_TRACKING:
-        const uniqueTargetAddresses = withdrawals
-          .map((w) => w.staking.withdrawalAddress.address)
-          .concat(rewards.filter((r) => !r.isReinvest).map((r) => r.targetAddress.address))
-          .filter((a1, i, self) => i === self.findIndex((a2) => a1 === a2));
-
-        const wallets = await this.walletService.getWalletsByAddresses(uniqueTargetAddresses);
-
-        const providerMap = wallets.reduce(
-          (map, w) => map.set(w.address.address, w.walletProvider.name),
-          new Map<string, string>(),
-        );
-
-        return this.getHistoryCT(deposits, withdrawals, rewards, providerMap) as HistoryDto<T>[];
+        return (await this.getHistoryCT(deposits, withdrawals, rewards)) as HistoryDto<T>[];
       case ExportType.CHAIN_REPORT:
         return this.getHistoryChainReport(deposits, withdrawals, rewards) as HistoryDto<T>[];
       case ExportType.COMPACT:
@@ -106,12 +94,23 @@ export class StakingHistoryService {
       : this.repos.reward.getByDepositAddress(depositAddress, dateFrom, dateTo);
   }
 
-  private getHistoryCT(
+  private async getHistoryCT(
     deposits: Deposit[],
     withdrawals: Withdrawal[],
     rewards: Reward[],
-    providerMap: Map<string, string>,
-  ): CoinTrackingCsvHistoryDto[] {
+  ): Promise<CoinTrackingCsvHistoryDto[]> {
+    const uniqueTargetAddresses = withdrawals
+      .map((w) => w.staking.withdrawalAddress.address)
+      .concat(rewards.filter((r) => !r.isReinvest).map((r) => r.targetAddress.address))
+      .filter((a1, i, self) => i === self.findIndex((a2) => a1 === a2));
+
+    const wallets = await this.walletService.getWalletsByAddresses(uniqueTargetAddresses);
+
+    const providerMap = wallets.reduce(
+      (map, w) => map.set(w.address.address, w.walletProvider.name),
+      new Map<string, string>(),
+    );
+
     const transactions: CoinTrackingCsvHistoryDto[] = [
       CoinTrackingHistoryDtoMapper.mapStakingDeposits(deposits),
       CoinTrackingHistoryDtoMapper.mapStakingWithdrawals(withdrawals),

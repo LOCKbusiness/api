@@ -48,10 +48,10 @@ export class CompactHistoryDto {
   @ApiPropertyOptional()
   amountInUsd: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ enum: CompactHistoryTarget })
   payoutTarget: CompactHistoryTarget;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   txId: string;
 
   @ApiProperty()
