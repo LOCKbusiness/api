@@ -14,7 +14,6 @@ import { StakingRepository } from '../repositories/staking.repository';
 import { ReservableBlockchainAddressService } from '../../../address-pool/application/services/reservable-blockchain-address.service';
 import { BlockchainAddressReservationPurpose } from 'src/subdomains/address-pool/domain/enums';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { RewardRepository } from '../repositories/reward.repository';
 import { DepositRepository } from '../repositories/deposit.repository';
 import { WithdrawalRepository } from '../repositories/withdrawal.repository';
 import { EntityManager } from 'typeorm';
@@ -118,12 +117,6 @@ export class StakingService {
       stakingId,
       async (staking, manager) => staking.updateBalance(await this.getBalances(manager, staking.id, asset.id), asset),
       ['balances', 'balances.asset'],
-    );
-  }
-
-  async updateRewardsAmount(stakingId: number): Promise<Staking> {
-    return this.repository.saveWithLock(stakingId, async (staking, manager) =>
-      staking.updateRewardsAmount(await new RewardRepository(manager).getRewardsAmount(staking.id)),
     );
   }
 

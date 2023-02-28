@@ -25,14 +25,10 @@ export class AuthService {
   ) {}
 
   async signUp(dto: SignUpDto, userIp: string): Promise<AuthResponseDto> {
-    const existingWallet = await this.walletService.getByAddress(dto.address, true);
-    if (existingWallet) {
-      throw new ConflictException('User already exists');
-    }
+    const existingWallet = await this.walletService.getByAddress(dto.address, false);
+    if (existingWallet) throw new ConflictException('User already exists');
 
-    if (!this.verifySignature(dto.address, dto.signature)) {
-      throw new BadRequestException('Invalid signature');
-    }
+    if (!this.verifySignature(dto.address, dto.signature)) throw new BadRequestException('Invalid signature');
 
     const wallet = await this.walletService.createWallet(dto, userIp);
     return { accessToken: this.generateToken(wallet) };
@@ -42,23 +38,25 @@ export class AuthService {
     const wallet = await this.walletService.getByAddress(address, true);
     if (!wallet) throw new NotFoundException('User not found');
 
-    const credentialsValid = this.verifySignature(address, signature);
-    if (!credentialsValid) throw new UnauthorizedException('Invalid credentials');
+    if (!this.verifySignature(address, signature)) throw new UnauthorizedException('Invalid credentials');
 
     return { accessToken: this.generateToken(wallet) };
   }
 
-  getSignMessage(address: string): SignMessageDto {
-    const blockchains = this.cryptoService.getBlockchainsBasedOn(address);
+  getSignInfo(address: string): SignMessageDto {
     return {
-      message: Config.auth.signMessage + address,
-      blockchains,
+      message: this.getSignMessage(address),
+      blockchains: this.cryptoService.getBlockchainsBasedOn(address),
     };
   }
 
+  private getSignMessage(address: string): string {
+    return Config.auth.signMessage + address;
+  }
+
   private verifySignature(address: string, signature: string): boolean {
-    const signatureMessage = this.getSignMessage(address);
-    return this.cryptoService.verifySignature(signatureMessage.message, address, signature);
+    const message = this.getSignMessage(address);
+    return this.cryptoService.verifySignature(message, address, signature);
   }
 
   private generateToken(wallet: Wallet): string {

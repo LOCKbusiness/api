@@ -7,5 +7,5 @@ export enum VoteDecision {
 export enum VoteStatus {
   CREATED = 'Created',
   FEE_SENT = 'FeeSent',
-  COMPLETED = 'Completed',
+  COMPLETE = 'Complete',
 }

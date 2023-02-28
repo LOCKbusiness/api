@@ -17,10 +17,6 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
     return this.find({ where: { status: WithdrawalStatus.PENDING }, relations: ['staking'] });
   }
 
-  async getPending(stakingId: number): Promise<Withdrawal[]> {
-    return this.getByStatuses([WithdrawalStatus.PENDING], stakingId);
-  }
-
   async getPayingOut(stakingId: number): Promise<Withdrawal[]> {
     return this.getByStatuses([WithdrawalStatus.PAYING_OUT], stakingId);
   }
@@ -33,7 +29,7 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
     return this.getByStatuses([WithdrawalStatus.PENDING, WithdrawalStatus.PAYING_OUT], stakingId);
   }
 
-  async getByStatuses(statuses: WithdrawalStatus[], stakingId: number): Promise<Withdrawal[]> {
+  private async getByStatuses(statuses: WithdrawalStatus[], stakingId: number): Promise<Withdrawal[]> {
     /**
      * @note
      * relations are needed for #find(...) even though field is eager
@@ -42,35 +38,27 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
   }
 
   async getByUserId(userId: number, dateFrom?: Date, dateTo?: Date): Promise<Withdrawal[]> {
-    /**
-     * @note
-     * relations are needed for #find(...) even though field is eager
-     */
     return this.find({
       where: { staking: { userId }, ...this.dateQuery(dateFrom, dateTo) },
-      relations: ['staking'],
+      relations: ['staking', 'asset'],
+      loadEagerRelations: false,
     });
   }
 
   async getByDepositAddress(depositAddress: string, dateFrom?: Date, dateTo?: Date): Promise<Withdrawal[]> {
-    /**
-     * @note
-     * relations are needed for #find(...) even though field is eager
-     */
     return this.find({
       where: { staking: { depositAddress: { address: depositAddress } }, ...this.dateQuery(dateFrom, dateTo) },
-      relations: ['staking'],
+      relations: ['staking', 'asset'],
+      loadEagerRelations: false,
     });
   }
 
   async getStakingIdsForPayingOut(): Promise<number[]> {
-    /**
-     * @note
-     * relations are needed for #find(...) even though field is eager
-     */
-    return this.find({ where: { status: WithdrawalStatus.PAYING_OUT }, relations: ['staking'] }).then((s) =>
-      s.map((i) => i.staking.id),
-    );
+    return this.find({
+      where: { status: WithdrawalStatus.PAYING_OUT },
+      relations: ['staking'],
+      loadEagerRelations: false,
+    }).then((s) => s.map((i) => i.staking.id));
   }
 
   async getConfirmedAmount(stakingId: number, assetId: number): Promise<number> {

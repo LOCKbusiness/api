@@ -45,9 +45,13 @@ export class StakingDepositService {
   //*** PUBLIC API ***//
 
   async getDeposits(dateFrom: Date = new Date(0), dateTo: Date = new Date()): Promise<TransactionDto[]> {
-    const deposits = await this.depositRepository.findBy({
-      created: Between(dateFrom, dateTo),
-      status: DepositStatus.CONFIRMED,
+    const deposits = await this.depositRepository.find({
+      where: {
+        created: Between(dateFrom, dateTo),
+        status: DepositStatus.CONFIRMED,
+      },
+      relations: ['staking', 'asset'],
+      loadEagerRelations: false,
     });
 
     return deposits.map((v) => ({
@@ -103,6 +107,7 @@ export class StakingDepositService {
     try {
       const openDeposits = await this.depositRepository.find({
         where: { status: DepositStatus.OPEN, updated: LessThan(Util.hourBefore(1)) },
+        loadEagerRelations: false,
       });
       for (const deposit of openDeposits) {
         const txId = await this.whaleClient.getTx(deposit.payInTxId).catch(() => null);

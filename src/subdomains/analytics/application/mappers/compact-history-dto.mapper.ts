@@ -16,7 +16,6 @@ export class CompactHistoryDtoMapper {
     [WithdrawalStatus.FAILED]: CompactHistoryStatus.FAILED,
     [RewardStatus.CREATED]: CompactHistoryStatus.WAITING,
     [RewardStatus.READY]: CompactHistoryStatus.PENDING,
-    [RewardStatus.PAUSED]: CompactHistoryStatus.PENDING,
   };
 
   static mapStakingDeposits(deposits: Deposit[]): CompactHistoryDto[] {
@@ -36,6 +35,7 @@ export class CompactHistoryDtoMapper {
         txId: d.payInTxId,
         date: d.created,
         status: this.CompactStatusMapper[d.status],
+        stakingStrategy: d.staking.strategy,
       }))
       .filter((c) => c.status != null);
   }
@@ -57,6 +57,7 @@ export class CompactHistoryDtoMapper {
         txId: w.withdrawalTxId,
         date: w.outputDate ?? w.updated,
         status: this.CompactStatusMapper[w.status],
+        stakingStrategy: w.staking.strategy,
       }))
       .filter((c) => c.status != null);
   }
@@ -84,6 +85,7 @@ export class CompactHistoryDtoMapper {
         txId: r.txId,
         date: r.outputDate ?? r.updated,
         status: this.CompactStatusMapper[r.status],
+        stakingStrategy: r.staking.strategy,
       }))
       .filter((c) => c.status != null);
   }

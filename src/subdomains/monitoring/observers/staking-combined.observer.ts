@@ -5,7 +5,13 @@ import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { Config, Process } from 'src/config/config';
 import { RepositoryFactory } from 'src/shared/repositories/repository.factory';
 import { Util } from 'src/shared/util';
-import { DepositStatus, MasternodeState, StakingStrategy, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
+import {
+  DepositStatus,
+  MasternodeState,
+  RewardStatus,
+  StakingStrategy,
+  WithdrawalStatus,
+} from 'src/subdomains/staking/domain/enums';
 import { In, IsNull, Not } from 'typeorm';
 import { MonitoringService } from '../application/services/monitoring.service';
 import { MetricObserver } from '../metric.observer';
@@ -16,6 +22,7 @@ interface StakingData {
   freeDepositAddresses: number;
   openDeposits: number;
   openWithdrawals: number;
+  openRewards: number;
   lastOutputDates: LastOutputDates;
 }
 
@@ -66,6 +73,7 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
       openWithdrawals: await this.repos.withdrawal.countBy({
         status: In([WithdrawalStatus.PENDING, WithdrawalStatus.PAYING_OUT]),
       }),
+      openRewards: await this.repos.reward.countBy({ status: In([RewardStatus.READY, RewardStatus.PAYING_OUT]) }),
       lastOutputDates: await this.getLastOutputDates(),
     };
   }

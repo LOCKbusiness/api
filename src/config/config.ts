@@ -1,7 +1,7 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { I18nOptions } from 'nestjs-i18n';
-import * as path from 'path';
+import { join } from 'path';
 import { MailOptions } from 'src/integration/notification/services/mail.service';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { NetworkName } from '@defichain/jellyfish-network';
@@ -50,7 +50,7 @@ export class Configuration {
   i18n: I18nOptions = {
     fallbackLanguage: this.defaultLanguage,
     loaderOptions: {
-      path: path.join(__dirname, '../shared/i18n/'),
+      path: join(__dirname, '../shared/i18n/'),
       watch: true,
     },
     resolvers: [{ resolve: () => this.defaultLanguage }],
@@ -71,7 +71,7 @@ export class Configuration {
         },
       },
       template: {
-        dir: path.join(__dirname, '../shared/assets/mails'),
+        dir: join(__dirname, '../shared/assets/mails'),
         adapter: new HandlebarsAdapter(),
         options: {
           strict: true,
@@ -160,7 +160,13 @@ export class Configuration {
   };
 
   staking = {
-    minimalStake: 1,
+    minDeposits: [
+      { amount: 1, asset: 'DFI' },
+      { amount: 1, asset: 'USDC' },
+      { amount: 1, asset: 'USDT' },
+      { amount: 0.0001, asset: 'BTC' },
+      { amount: 0.0001, asset: 'ETH' },
+    ],
     defaultFee: 0,
     signatureTemplates: {
       signWithdrawalMessage:
@@ -226,7 +232,8 @@ export class Configuration {
     return /^(.{87}=|[a-f0-9]{130}|[a-f0-9x]{132})$/;
   }
 
-  processDisabled = (processName: Process) => (process.env.DISABLED_PROCESSES?.split(',') ?? []).includes(processName);
+  processDisabled = (processName: Process) =>
+    process.env.DISABLED_PROCESSES === '*' || (process.env.DISABLED_PROCESSES?.split(',') ?? []).includes(processName);
 }
 
 @Injectable()

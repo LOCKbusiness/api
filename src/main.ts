@@ -1,9 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
-import * as morgan from 'morgan';
-import * as cors from 'cors';
-import * as appInsights from 'applicationinsights';
+import morgan from 'morgan';
+import cors from 'cors';
+import * as AppInsights from 'applicationinsights';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { AllExceptionFilter } from './shared/filters/exception.filter';
@@ -11,9 +11,9 @@ import { json, text } from 'express';
 
 async function bootstrap() {
   if (process.env.APPINSIGHTS_INSTRUMENTATIONKEY) {
-    appInsights.setup().setAutoDependencyCorrelation(true).setAutoCollectConsole(true, true);
-    appInsights.defaultClient.context.tags[appInsights.defaultClient.context.keys.cloudRole] = 'lock-api';
-    appInsights.start();
+    AppInsights.setup().setAutoDependencyCorrelation(true).setAutoCollectConsole(true, true);
+    AppInsights.defaultClient.context.tags[AppInsights.defaultClient.context.keys.cloudRole] = 'lock-api';
+    AppInsights.start();
   }
 
   const app = await NestFactory.create(AppModule);

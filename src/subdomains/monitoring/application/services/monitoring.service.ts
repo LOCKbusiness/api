@@ -25,6 +25,10 @@ export class MonitoringService implements OnModuleInit {
     readonly notificationService: NotificationService,
   ) {}
 
+  onModuleInit() {
+    void this.initState();
+  }
+
   // *** PUBLIC API *** //
 
   async getState(subsystem: string, metric: string): Promise<SystemState | SubsystemState | Metric> {
@@ -63,6 +67,11 @@ export class MonitoringService implements OnModuleInit {
     }
   }
 
+  async loadStateFor<T>(subsystem: string, metric: string): Promise<T | undefined> {
+    const state = await this.loadState();
+    return state?.[subsystem]?.[metric]?.data as T;
+  }
+
   // *** WEBHOOK *** //
 
   async onWebhook(subsystem: string, metric: string, data: unknown) {
@@ -89,11 +98,7 @@ export class MonitoringService implements OnModuleInit {
 
   // *** HELPER METHODS *** /
 
-  onModuleInit() {
-    void this.init();
-  }
-
-  private async init() {
+  private async initState() {
     const state = await this.loadState();
     state && this.#$state.next(state);
 

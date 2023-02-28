@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
 
 export enum HistoryTransactionType {
   DEPOSIT = 'Deposit',
@@ -57,4 +58,7 @@ export class CompactHistoryDto extends HistoryBaseDto {
 
   @ApiProperty({ enum: CompactHistoryStatus })
   status: CompactHistoryStatus;
+
+  @ApiProperty({ enum: StakingStrategy })
+  stakingStrategy: StakingStrategy;
 }

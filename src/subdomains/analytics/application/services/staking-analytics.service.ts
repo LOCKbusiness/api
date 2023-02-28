@@ -15,6 +15,7 @@ import { StakingAnalyticsRepository } from '../repositories/staking-analytics.re
 import { RepositoryFactory } from 'src/shared/repositories/repository.factory';
 import { UpdateStakingAnalyticsDto } from '../dto/input/update-staking-analytics.dto';
 import { StakingAnalyticsUpdateQuery } from '../dto/input/staking-analytics-update-query.dto';
+import { StakingAnalyticsFilterQuery } from '../dto/input/staking-analytics-filter-query.dto';
 
 @Injectable()
 export class StakingAnalyticsService implements OnModuleInit {
@@ -39,6 +40,16 @@ export class StakingAnalyticsService implements OnModuleInit {
     if (!analytics) throw new NotFoundException();
 
     return StakingAnalyticsOutputDtoMapper.entityToDto(analytics);
+  }
+
+  async getFilteredStakingAnalyticsCache({
+    strategy,
+    asset,
+    blockchain,
+  }: StakingAnalyticsFilterQuery): Promise<StakingAnalyticsOutputDto[]> {
+    return this.repository
+      .getByFilter(strategy, asset, blockchain)
+      .then((analytics) => analytics.map((a) => StakingAnalyticsOutputDtoMapper.entityToDto(a)));
   }
 
   async update(query: StakingAnalyticsUpdateQuery, dto: UpdateStakingAnalyticsDto): Promise<StakingAnalytics> {
@@ -78,9 +89,9 @@ export class StakingAnalyticsService implements OnModuleInit {
   }
 
   private async getOperatorCount(type: StakingType): Promise<number | undefined> {
-    if (type.asset.name === 'DFI') {
+    if (type.strategy === StakingStrategy.MASTERNODE) {
       return this.masternodeService.getActiveCount();
-    } else if (type.asset.name === 'DUSD') {
+    } else if (type.strategy === StakingStrategy.LIQUIDITY_MINING) {
       return this.vaultService.getActiveCount();
     }
 

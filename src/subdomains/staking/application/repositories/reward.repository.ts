@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Util } from 'src/shared/util';
 import { Between, EntityManager, FindOperator, IsNull, Not, Repository } from 'typeorm';
 import { Reward } from '../../domain/entities/reward.entity';
 import { RewardStatus } from '../../domain/enums';
@@ -9,25 +10,26 @@ export class RewardRepository extends Repository<Reward> {
     super(Reward, manager);
   }
 
+  async saveMany(rewards: Reward[]): Promise<Reward[]> {
+    return this.manager.transaction(async (manager) => {
+      const batches = await Util.doInBatches(rewards, (r) => manager.save(r), 100);
+      return batches.reduce((prev, curr) => prev.concat(curr));
+    });
+  }
+
   async getByUserId(userId: number, dateFrom?: Date, dateTo?: Date): Promise<Reward[]> {
-    /**
-     * @note
-     * relations are needed for #find(...) even though field is eager
-     */
     return this.find({
       where: { staking: { userId }, ...this.dateQuery(dateFrom, dateTo) },
-      relations: ['staking'],
+      relations: ['staking', 'referenceAsset', 'targetAsset'],
+      loadEagerRelations: false,
     });
   }
 
   async getByDepositAddress(depositAddress: string, dateFrom?: Date, dateTo?: Date): Promise<Reward[]> {
-    /**
-     * @note
-     * relations are needed for #find(...) even though field is eager
-     */
     return this.find({
       where: { staking: { depositAddress: { address: depositAddress } }, ...this.dateQuery(dateFrom, dateTo) },
-      relations: ['staking'],
+      relations: ['staking', 'referenceAsset', 'targetAsset'],
+      loadEagerRelations: false,
     });
   }
 
@@ -53,7 +55,8 @@ export class RewardRepository extends Repository<Reward> {
         batch: IsNull(),
         status: RewardStatus.READY,
       },
-      relations: ['staking', 'batch'],
+      relations: ['batch', 'staking', 'rewardRoute', 'referenceAsset', 'targetAsset'],
+      loadEagerRelations: false,
     });
   }
 }
