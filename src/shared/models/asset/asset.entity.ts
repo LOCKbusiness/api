@@ -40,6 +40,9 @@ export class Asset extends IEntity {
   @Column({ default: false })
   sellable: boolean;
 
+  @Column({ type: 'float', nullable: true })
+  approxPriceUsd: number;
+
   isEqual(asset: AssetQuery): boolean {
     return this.name === asset.name && this.type === asset.type && this.blockchain === asset.blockchain;
   }
