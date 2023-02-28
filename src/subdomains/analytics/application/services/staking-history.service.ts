@@ -51,9 +51,9 @@ export class StakingHistoryService {
     const rewards = await this.getRewardsByUserOrAddress(userId, query.depositAddress, query.from, query.to);
 
     const uniqueTargetAddresses = withdrawals
-      .map((w) => w.staking.withdrawalAddress)
-      .concat(rewards.filter((r) => !r.isReinvest).map((r) => r.targetAddress))
-      .filter((a1, i, self) => i === self.findIndex((a2) => a1.isEqual(a2)));
+      .map((w) => w.staking.withdrawalAddress.address)
+      .concat(rewards.filter((r) => !r.isReinvest).map((r) => r.targetAddress.address))
+      .filter((a1, i, self) => i === self.findIndex((a2) => a1 === a2));
 
     const wallets = await this.walletService.getWalletsByAddresses(uniqueTargetAddresses);
 
