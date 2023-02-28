@@ -43,6 +43,9 @@ export class HistoryBaseDto {
   amountInUsd: number;
 
   @ApiProperty()
+  exchange: string;
+
+  @ApiProperty()
   txId: string;
 
   @ApiProperty()

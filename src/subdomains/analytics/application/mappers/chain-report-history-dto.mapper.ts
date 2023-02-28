@@ -8,64 +8,67 @@ import { ChainReportCsvHistoryDto, ChainReportTransactionType } from '../dto/out
 export class ChainReportHistoryDtoMapper {
   static mapStakingDeposits(deposits: Deposit[]): ChainReportCsvHistoryDto[] {
     return deposits
-      .filter((c) => c.status === DepositStatus.CONFIRMED)
-      .map((c) => ({
-        timestamp: c.created,
+      .filter((d) => d.status === DepositStatus.CONFIRMED)
+      .map((d) => ({
+        timestamp: d.created,
         transactionType: ChainReportTransactionType.DEPOSIT,
-        inputAmount: c.amount,
-        inputAsset: this.getAssetSymbolChainReport(c.asset),
+        inputAmount: d.amount,
+        inputAsset: this.getAssetSymbolChainReport(d.asset),
         outputAmount: null,
         outputAsset: null,
         feeAmount: null,
         feeAsset: null,
-        txId: c.payInTxId,
+        txId: d.payInTxId,
         description:
-          c.staking.strategy === StakingStrategy.LIQUIDITY_MINING
+          d.staking.strategy === StakingStrategy.LIQUIDITY_MINING
             ? 'LOCK Yield Machine Deposit'
             : 'LOCK Staking Deposit',
+        isReinvest: null,
       }));
   }
 
   static mapStakingWithdrawals(withdrawals: Withdrawal[]): ChainReportCsvHistoryDto[] {
     return withdrawals
-      .filter((c) => c.status === WithdrawalStatus.CONFIRMED)
-      .map((c) => ({
-        timestamp: c.outputDate ?? c.updated,
+      .filter((w) => w.status === WithdrawalStatus.CONFIRMED)
+      .map((w) => ({
+        timestamp: w.outputDate ?? w.updated,
         transactionType: ChainReportTransactionType.WITHDRAWAL,
         inputAmount: null,
         inputAsset: null,
-        outputAmount: c.amount,
-        outputAsset: this.getAssetSymbolChainReport(c.asset),
+        outputAmount: w.amount,
+        outputAsset: this.getAssetSymbolChainReport(w.asset),
         feeAmount: null,
         feeAsset: null,
-        txId: c.withdrawalTxId,
+        txId: w.withdrawalTxId,
         description:
-          c.staking.strategy === StakingStrategy.LIQUIDITY_MINING
+          w.staking.strategy === StakingStrategy.LIQUIDITY_MINING
             ? 'LOCK Yield Machine Withdrawal'
             : 'LOCK Staking Withdrawal',
+        isReinvest: null,
       }));
   }
 
   static mapStakingRewards(rewards: Reward[]): ChainReportCsvHistoryDto[] {
     return rewards
-      .filter((c) => c.status === RewardStatus.CONFIRMED)
-      .map((c) => ({
-        timestamp: c.outputDate ?? c.updated,
+      .filter((r) => r.status === RewardStatus.CONFIRMED)
+      .map((r) => ({
+        timestamp: r.outputDate ?? r.updated,
         transactionType:
-          c.staking.strategy === StakingStrategy.LIQUIDITY_MINING
+          r.staking.strategy === StakingStrategy.LIQUIDITY_MINING
             ? ChainReportTransactionType.LM
             : ChainReportTransactionType.STAKING,
-        inputAmount: c.targetAmount,
-        inputAsset: this.getAssetSymbolChainReport(c.targetAsset),
+        inputAmount: r.targetAmount,
+        inputAsset: this.getAssetSymbolChainReport(r.targetAsset),
         outputAmount: null,
         outputAsset: null,
-        feeAmount: c.feePercent != 0 ? (c.targetAmount * c.feePercent) / (1 - c.feePercent) : null,
-        feeAsset: c.feePercent != 0 ? this.getAssetSymbolChainReport(c.targetAsset) : null,
-        txId: c.txId,
+        feeAmount: r.feePercent != 0 ? (r.targetAmount * r.feePercent) / (1 - r.feePercent) : null,
+        feeAsset: r.feePercent != 0 ? this.getAssetSymbolChainReport(r.targetAsset) : null,
+        txId: r.txId,
         description:
-          c.staking.strategy === StakingStrategy.LIQUIDITY_MINING
-            ? `${c.referenceAsset.name} LOCK Yield Machine Reward`
+          r.staking.strategy === StakingStrategy.LIQUIDITY_MINING
+            ? `${r.referenceAsset.name} LOCK Yield Machine Reward`
             : 'LOCK Staking Reward',
+        isReinvest: r.isReinvest,
       }));
   }
 

@@ -13,6 +13,7 @@ import { ChainReportHistoryDtoMapper } from '../mappers/chain-report-history-dto
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { HistoryQuery } from '../dto/input/history-query.dto';
 import { RepositoryFactory } from 'src/shared/repositories/repository.factory';
+import { WalletService } from 'src/subdomains/user/application/services/wallet.service';
 
 export type HistoryDto<T> = T extends ExportType.COMPACT
   ? CompactHistoryDto
@@ -28,7 +29,11 @@ export enum ExportType {
 
 @Injectable()
 export class StakingHistoryService {
-  constructor(private readonly repos: RepositoryFactory, private readonly userService: UserService) {}
+  constructor(
+    private readonly repos: RepositoryFactory,
+    private readonly userService: UserService,
+    private readonly walletService: WalletService,
+  ) {}
 
   async getHistoryCsv(query: HistoryQuery, exportType: ExportType): Promise<StreamableFile> {
     const tx = await this.getHistory(query, exportType);
@@ -45,13 +50,25 @@ export class StakingHistoryService {
     const withdrawals = await this.getWithdrawalsByUserOrAddress(userId, query.depositAddress, query.from, query.to);
     const rewards = await this.getRewardsByUserOrAddress(userId, query.depositAddress, query.from, query.to);
 
+    const uniqueTargetAddresses = withdrawals
+      .map((w) => w.staking.withdrawalAddress.address)
+      .concat(rewards.filter((r) => !r.isReinvest).map((r) => r.targetAddress.address))
+      .filter((a1, i, self) => i === self.findIndex((a2) => a1 === a2));
+
+    const wallets = await this.walletService.getWalletsByAddresses(uniqueTargetAddresses);
+
+    const providerMap = wallets.reduce(
+      (map, w) => map.set(w.address.address, w.walletProvider.name),
+      new Map<string, string>(),
+    );
+
     switch (exportFormat) {
       case ExportType.COIN_TRACKING:
-        return this.getHistoryCT(deposits, withdrawals, rewards) as HistoryDto<T>[];
+        return this.getHistoryCT(deposits, withdrawals, rewards, providerMap) as HistoryDto<T>[];
       case ExportType.CHAIN_REPORT:
         return this.getHistoryChainReport(deposits, withdrawals, rewards) as HistoryDto<T>[];
       case ExportType.COMPACT:
-        return this.getHistoryCompact(deposits, withdrawals, rewards) as HistoryDto<T>[];
+        return this.getHistoryCompact(deposits, withdrawals, rewards, providerMap) as HistoryDto<T>[];
     }
   }
 
@@ -89,11 +106,16 @@ export class StakingHistoryService {
       : this.repos.reward.getByDepositAddress(depositAddress, dateFrom, dateTo);
   }
 
-  private getHistoryCT(deposits: Deposit[], withdrawals: Withdrawal[], rewards: Reward[]): CoinTrackingCsvHistoryDto[] {
+  private getHistoryCT(
+    deposits: Deposit[],
+    withdrawals: Withdrawal[],
+    rewards: Reward[],
+    providerMap: Map<string, string>,
+  ): CoinTrackingCsvHistoryDto[] {
     const transactions: CoinTrackingCsvHistoryDto[] = [
       CoinTrackingHistoryDtoMapper.mapStakingDeposits(deposits),
       CoinTrackingHistoryDtoMapper.mapStakingWithdrawals(withdrawals),
-      CoinTrackingHistoryDtoMapper.mapStakingRewards(rewards),
+      CoinTrackingHistoryDtoMapper.mapStakingRewards(rewards, providerMap),
     ]
       .reduce((prev, curr) => prev.concat(curr), [])
       .sort((tx1, tx2) => (tx1.date.getTime() > tx2.date.getTime() ? -1 : 1));
@@ -117,11 +139,16 @@ export class StakingHistoryService {
     return this.filterDuplicateTxChainReport(transactions);
   }
 
-  private getHistoryCompact(deposits: Deposit[], withdrawals: Withdrawal[], rewards: Reward[]): CompactHistoryDto[] {
+  private getHistoryCompact(
+    deposits: Deposit[],
+    withdrawals: Withdrawal[],
+    rewards: Reward[],
+    providerMap: Map<string, string>,
+  ): CompactHistoryDto[] {
     const transactions: CompactHistoryDto[] = [
       CompactHistoryDtoMapper.mapStakingDeposits(deposits),
       CompactHistoryDtoMapper.mapStakingWithdrawals(withdrawals),
-      CompactHistoryDtoMapper.mapStakingRewards(rewards),
+      CompactHistoryDtoMapper.mapStakingRewards(rewards, providerMap),
     ]
       .reduce((prev, curr) => prev.concat(curr), [])
       .sort((tx1, tx2) => (tx1.date.getTime() > tx2.date.getTime() ? -1 : 1));
