@@ -48,11 +48,7 @@ export class StakingRewardService {
     from.setHours(0, 0, 0, 0);
     const to = Util.daysAfter(1, from);
 
-    const volume = await this.dexService.getRewardVolumeBetween(from, to);
-
-    console.log(`Reward volume between ${from.toISOString()} and ${to.toISOString()}: ${volume}`);
-
-    return volume;
+    return this.dexService.getRewardVolumeBetween(from, to);
   }
 
   async createDailyRewards(): Promise<Reward[]> {
