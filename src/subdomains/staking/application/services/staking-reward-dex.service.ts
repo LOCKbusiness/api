@@ -41,7 +41,7 @@ export class StakingRewardDexService {
     const history = await this.#rewClient.listHistory(
       fromBlock - 10,
       toBlock + 10,
-      Config.blockchain.default.rew.stakingAddress,
+      Config.blockchain.default.rew.address,
     );
 
     const rewards = history
@@ -105,7 +105,7 @@ export class StakingRewardDexService {
   }
 
   private async swapDfiToken(dfiAmount: number): Promise<void> {
-    const swapTxId = await this.#rewClient.toToken(Config.blockchain.default.rew.stakingAddress, dfiAmount);
+    const swapTxId = await this.#rewClient.toToken(Config.blockchain.default.rew.address, dfiAmount);
 
     console.log(`Reward payout process: swapped ${dfiAmount} DFI UTXO to token: ${swapTxId}`);
   }
