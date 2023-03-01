@@ -3,7 +3,6 @@ import { Config } from 'src/config/config';
 import { RawTxDto } from '../dto/raw-tx.dto';
 import { RawTxUtil } from './raw-tx-util';
 import { SmartBuffer } from 'smart-buffer';
-import { TransactionType } from 'src/integration/transaction/domain/enums';
 
 export class RawTxCheck {
   static incomingTxTypes = [
@@ -23,7 +22,9 @@ export class RawTxCheck {
 
   static isAllowed(rawTx: RawTxDto, expectedIsIncoming: boolean): boolean {
     const [, vouts] = this.parseInAndOutputs(rawTx.hex);
+    if (vouts.length === 0) return false;
     const [isIncoming, defiTxType] = this.isIncomingBasedOn(vouts);
+
     return (
       expectedIsIncoming === isIncoming &&
       this.isOnCorrectList(defiTxType, isIncoming ? this.incomingTxTypes : this.outgoingTxTypes, isIncoming)
@@ -37,6 +38,7 @@ export class RawTxCheck {
 
   static isIncoming(rawTx: RawTxDto): boolean {
     const [vins, vouts] = this.parseInAndOutputs(rawTx.hex);
+    if (vins.length === 0 || vouts.length === 0) return false;
     const [isIncoming, defiTxType] = this.isIncomingBasedOn(vouts);
     console.info(
       `# of vins: ${vins.length}, # of vouts: ${vouts.length}, DEFI TX: ${defiTxType} => isIncoming? ${isIncoming}`,
@@ -44,42 +46,8 @@ export class RawTxCheck {
     return isIncoming;
   }
 
-  private static toDefiTxType(type: TransactionType): string | undefined {
-    switch (type) {
-      case TransactionType.CREATE_MASTERNODE:
-        return 'OP_DEFI_TX_CREATE_MASTER_NODE';
-      case TransactionType.RESIGN_MASTERNODE:
-        return 'OP_DEFI_TX_RESIGN_MASTER_NODE';
-      case TransactionType.VOTE_MASTERNODE:
-        return 'OP_DEFI_TX_VOTE';
-      case TransactionType.CREATE_VAULT:
-        return 'OP_DEFI_TX_CREATE_VAULT';
-      case TransactionType.DEPOSIT_TO_VAULT:
-        return 'OP_DEFI_TX_DEPOSIT_TO_VAULT';
-      case TransactionType.TAKE_LOAN:
-        return 'OP_DEFI_TX_TAKE_LOAN';
-      case TransactionType.POOL_ADD_LIQUIDITY:
-        return 'OP_DEFI_TX_POOL_ADD_LIQUIDITY';
-      case TransactionType.PAYBACK_LOAN:
-        return 'OP_DEFI_TX_PAYBACK_LOAN';
-      case TransactionType.WITHDRAW_FROM_VAULT:
-        return 'OP_DEFI_TX_WITHDRAW_FROM_VAULT';
-      case TransactionType.POOL_REMOVE_LIQUIDITY:
-        return 'OP_DEFI_TX_POOL_REMOVE_LIQUIDITY';
-      case TransactionType.ACCOUNT_TO_ACCOUNT:
-        return 'OP_DEFI_TX_ANY_ACCOUNT_TO_ACCOUNT';
-      case TransactionType.COMPOSITE_SWAP:
-        return 'OP_DEFI_TX_COMPOSITE_SWAP';
-      case TransactionType.SEND_FROM_LIQ:
-      case TransactionType.SEND_TO_LIQ:
-      case TransactionType.WITHDRAWAL:
-      case TransactionType.UTXO_MERGE:
-      case TransactionType.UTXO_SPLIT:
-        return undefined;
-    }
-  }
-
   private static parseInAndOutputs(hex: string): [Vin[], Vout[]] {
+    if (!/^[a-f0-9]*$/.test(hex)) return [[], []];
     const tx = new CTransactionSegWit(SmartBuffer.fromBuffer(Buffer.from(hex, 'hex')));
     return [tx.vin, tx.vout];
   }

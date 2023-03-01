@@ -240,10 +240,10 @@ export class TransactionExecutionService {
 
   private async signAndBroadcast(rawTx: RawTxDto, payload: any, unlockUtxoOnFail = true): Promise<string> {
     try {
+      if (!RawTxCheck.isAllowed(rawTx, payload.isIncoming)) throw new Error(`${rawTx.id} is not allowed`);
       const signature = await this.receiveSignatureFor(rawTx);
       const hex = await this.transactionService.sign(rawTx, signature, payload);
       console.info(`${rawTx.id} broadcasting`);
-      if (!RawTxCheck.isAllowed(rawTx, payload.isIncoming)) throw new Error(`${rawTx.id} is not allowed`);
       return await this.whaleClient.sendRaw(hex);
     } catch (e) {
       if (unlockUtxoOnFail) await this.rawTxService.unlockUtxosOf(rawTx);

@@ -5,6 +5,7 @@ import { BehaviorSubject } from 'rxjs';
 import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/domain/enums';
 import { createCustomRawTxDto } from 'src/blockchain/ain/jellyfish/dto/__mocks__/raw-tx.dto.mock';
 import { RawTxService } from 'src/blockchain/ain/jellyfish/services/raw-tx.service';
+import { RawTxCheck } from 'src/blockchain/ain/jellyfish/utils/raw-tx-check';
 import { RawTxMasternode } from 'src/blockchain/ain/jellyfish/utils/raw-tx-masternode';
 import { RawTxUtxo } from 'src/blockchain/ain/jellyfish/utils/raw-tx-utxo';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
@@ -68,6 +69,9 @@ describe('TransactionExecutionService', () => {
 
     TestUtil.setProperty(rawTxService, 'Masternode', rawTxMasternode);
     TestUtil.setProperty(rawTxService, 'Utxo', rawTxUtxo);
+
+    const mockIsAllowed = jest.fn().mockReturnValue(true);
+    RawTxCheck.isAllowed = mockIsAllowed;
 
     const module: TestingModule = await Test.createTestingModule({
       imports: [],
@@ -139,6 +143,7 @@ describe('TransactionExecutionService', () => {
       ownerWallet: 'cold-wallet-a',
       accountIndex: 1,
       type: TransactionType.CREATE_MASTERNODE,
+      isIncoming: false,
     });
     expect(whaleClient.sendRaw).toBeCalledWith('signed-raw-tx-hex');
   });
@@ -160,6 +165,7 @@ describe('TransactionExecutionService', () => {
       ownerWallet: 'cold-wallet-a',
       accountIndex: 1,
       type: TransactionType.RESIGN_MASTERNODE,
+      isIncoming: false,
     });
     expect(whaleClient.sendRaw).toBeCalledWith('signed-raw-tx-hex');
   });
@@ -192,6 +198,7 @@ describe('TransactionExecutionService', () => {
       id: withdrawal.withdrawalId,
       assetType: AssetType.COIN,
       type: TransactionType.WITHDRAWAL,
+      isIncoming: false,
     });
     expect(whaleClient.sendRaw).toBeCalledWith('signed-raw-tx-hex');
   });
@@ -215,6 +222,7 @@ describe('TransactionExecutionService', () => {
       id: withdrawal.withdrawalId,
       assetType: AssetType.COIN,
       type: TransactionType.WITHDRAWAL,
+      isIncoming: false,
     });
     expect(whaleClient.sendRaw).toBeCalledWith('signed-raw-tx-hex');
   });
@@ -243,6 +251,7 @@ describe('TransactionExecutionService', () => {
       ownerWallet: 'cold-wallet-a',
       accountIndex: 1,
       type: TransactionType.SEND_FROM_LIQ,
+      isIncoming: false,
     });
     expect(whaleClient.sendRaw).toBeCalledWith('signed-raw-tx-hex');
   });
@@ -265,6 +274,7 @@ describe('TransactionExecutionService', () => {
       ownerWallet: 'cold-wallet-a',
       accountIndex: 1,
       type: TransactionType.SEND_TO_LIQ,
+      isIncoming: false,
     });
     expect(whaleClient.sendRaw).toBeCalledWith('signed-raw-tx-hex');
   });
@@ -288,6 +298,7 @@ describe('TransactionExecutionService', () => {
       ownerWallet: 'cold-wallet-a',
       accountIndex: 1,
       type: TransactionType.CREATE_MASTERNODE,
+      isIncoming: false,
     });
     expect(whaleClient.sendRaw).toBeCalledTimes(0);
     expect(rawTxService.unlockUtxosOf).toBeCalledWith(rawTxCreateMasternode);
@@ -320,6 +331,7 @@ describe('TransactionExecutionService', () => {
       id: withdrawal.withdrawalId,
       assetType: AssetType.COIN,
       type: TransactionType.WITHDRAWAL,
+      isIncoming: false,
     });
     expect(whaleClient.sendRaw).toBeCalledTimes(0);
     expect(rawTxService.unlockUtxosOf).toBeCalledTimes(0);
