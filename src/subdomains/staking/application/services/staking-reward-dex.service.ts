@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
+import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
+import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { Config } from 'src/config/config';
+import { Util } from 'src/shared/util';
 import { LiquidityOrderContext } from 'src/subdomains/dex/entities/liquidity-order.entity';
 import { LiquidityOrderNotReadyException } from 'src/subdomains/dex/exceptions/liquidity-order-not-ready.exception';
 import { NotEnoughLiquidityException } from 'src/subdomains/dex/exceptions/not-enough-liquidity.exception';
@@ -16,14 +19,38 @@ import { StakingRewardNotificationService } from './staking-reward-notification.
 @Injectable()
 export class StakingRewardDexService {
   #rewClient: DeFiClient;
+  #whaleClient: WhaleClient;
 
   constructor(
     private readonly rewardBatchRepo: RewardBatchRepository,
     private readonly rewardNotificationService: StakingRewardNotificationService,
     private readonly dexService: DexService,
     nodeService: NodeService,
+    whaleService: WhaleService,
   ) {
     nodeService.getConnectedNode(NodeType.REW).subscribe((client) => (this.#rewClient = client));
+    whaleService.getClient().subscribe((client) => (this.#whaleClient = client));
+  }
+
+  async getRewardVolumeBetween(from: Date, to: Date): Promise<number> {
+    const [fromBlock, toBlock] = await Promise.all([
+      this.#whaleClient.getNearestBlockAt(from),
+      this.#whaleClient.getNearestBlockAt(to),
+    ]);
+
+    const history = await this.#rewClient.listHistory(
+      fromBlock - 10,
+      toBlock + 10,
+      Config.blockchain.default.rew.stakingAddress,
+    );
+
+    const rewards = history
+      .filter(
+        (h) => h.type === 'blockReward' && new Date(h.blockTime * 1000) > from && new Date(h.blockTime * 1000) < to,
+      )
+      .map((r) => +r.amounts[0].split('@')[0]);
+
+    return Util.sum(rewards);
   }
 
   async prepareDfiToken(): Promise<void> {
