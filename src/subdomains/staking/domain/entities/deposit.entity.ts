@@ -42,7 +42,7 @@ export class Deposit extends IEntity {
 
   //*** FACTORY METHODS ***//
 
-  static create(staking: Staking, amount: number, payInTxId: string, asset: Asset): Deposit {
+  static create(staking: Staking, asset: Asset, amount: number, payInTxId: string, payInTxSequence?: number): Deposit {
     if (!payInTxId) throw new BadRequestException('TxID must be provided when creating a staking deposit');
 
     const deposit = new Deposit();
@@ -52,6 +52,7 @@ export class Deposit extends IEntity {
     deposit.asset = asset;
     deposit.amount = amount;
     deposit.payInTxId = payInTxId;
+    deposit.payInTxSequence = payInTxSequence;
 
     return deposit;
   }
@@ -65,11 +66,12 @@ export class Deposit extends IEntity {
     return this;
   }
 
-  updatePreCreatedDeposit(payInTxId: string, amount: number, asset: Asset) {
+  updatePreCreatedDeposit(payInTxId: string, payInTxSequence: number, amount: number, asset: Asset) {
     if (this.payInTxId !== payInTxId) {
       throw new BadRequestException('Provided wrong payInTxId for deposit, payInTxId does not match.');
     }
 
+    this.payInTxSequence = payInTxSequence;
     this.amount = amount;
     this.asset = asset;
     this.status = DepositStatus.PENDING;

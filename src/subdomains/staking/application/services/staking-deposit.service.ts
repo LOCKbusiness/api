@@ -11,7 +11,7 @@ import { PayIn, PayInPurpose } from 'src/subdomains/payin/domain/entities/payin.
 import { Between, LessThan } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Staking, StakingReference } from '../../domain/entities/staking.entity';
-import { DepositStatus, StakingStatus, StakingStrategy } from '../../domain/enums';
+import { DepositStatus, StakingStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingDeFiChainService } from '../../infrastructure/staking-defichain.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
@@ -67,16 +67,14 @@ export class StakingDepositService {
     userId: number,
     walletId: number,
     stakingId: number,
-    dto: CreateDepositDto,
+    { asset, amount, txId }: CreateDepositDto,
   ): Promise<StakingOutputDto> {
     await this.kycCheck.check(userId, walletId);
 
     const staking = await this.authorize.authorize(userId, stakingId);
     if (staking.isBlocked) throw new BadRequestException('Staking is blocked');
 
-    dto.asset ??= staking.strategy === StakingStrategy.LIQUIDITY_MINING ? 'DUSD' : 'DFI';
-
-    const deposit = await this.factory.createDeposit(staking, dto);
+    const deposit = await this.factory.createDeposit(staking, asset, amount, txId);
 
     await this.depositRepository.save(deposit);
 
@@ -250,12 +248,17 @@ export class StakingDepositService {
     const newDeposit = await this.createNewDeposit(staking, payIn);
 
     const deposit = existingDeposit ?? newDeposit;
-    deposit.updatePreCreatedDeposit(newDeposit.payInTxId, newDeposit.amount, newDeposit.asset);
+    deposit.updatePreCreatedDeposit(
+      newDeposit.payInTxId,
+      newDeposit.payInTxSequence,
+      newDeposit.amount,
+      newDeposit.asset,
+    );
 
     await this.depositRepository.save(deposit);
   }
 
   private async createNewDeposit(staking: Staking, payIn: PayIn): Promise<Deposit> {
-    return this.factory.createDeposit(staking, { amount: payIn.amount, txId: payIn.txId, asset: payIn.asset.name });
+    return this.factory.createDeposit(staking, payIn.asset.name, payIn.amount, payIn.txId, payIn.txSequence);
   }
 }
