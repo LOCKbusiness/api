@@ -25,9 +25,9 @@ export class PayInService {
     return this.payInRepository.findBy({ status: PayInStatus.CONFIRMED });
   }
 
-  async getPayInAsset(address: string, txId: string): Promise<Asset> {
-    const payIn = await this.payInRepository.findOneBy({ address: { address: address }, txId });
-    if (!payIn) throw new Error(`Pay in ${txId} on ${address} not found`);
+  async getPayInAsset(address: string, txId: string, txSequence: number): Promise<Asset> {
+    const payIn = await this.payInRepository.findOneBy({ address: { address }, txId, txSequence });
+    if (!payIn) throw new Error(`Pay in ${txId} (${txSequence}) on ${address} not found`);
 
     return payIn.asset;
   }

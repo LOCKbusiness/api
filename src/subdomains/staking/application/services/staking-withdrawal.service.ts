@@ -3,7 +3,7 @@ import { BadRequestException, Injectable, NotFoundException, UnauthorizedExcepti
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
-import { StakingStrategy, WithdrawalStatus } from '../../domain/enums';
+import { WithdrawalStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingDeFiChainService } from '../../infrastructure/staking-defichain.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
@@ -42,15 +42,13 @@ export class StakingWithdrawalService {
     userId: number,
     walletId: number,
     stakingId: number,
-    dto: CreateWithdrawalDraftDto,
+    { asset, amount }: CreateWithdrawalDraftDto,
   ): Promise<WithdrawalDraftOutputDto> {
     await this.kycCheck.check(userId, walletId);
 
     const staking = await this.authorize.authorize(userId, stakingId);
 
-    dto.asset ??= staking.strategy === StakingStrategy.LIQUIDITY_MINING ? 'DUSD' : 'DFI';
-
-    const withdrawal = await this.factory.createWithdrawalDraft(staking, dto);
+    const withdrawal = await this.factory.createWithdrawalDraft(staking, asset, amount);
 
     const pendingWithdrawalsAmount = await this.withdrawalRepo.getInProgressAmount(stakingId, withdrawal.asset.id);
     staking.checkWithdrawalDraftOrThrow(withdrawal, pendingWithdrawalsAmount);

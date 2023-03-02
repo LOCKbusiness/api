@@ -551,5 +551,44 @@
       }
     ],
     "tests": []
+  },
+  {
+    "_id": "ed1b3061-7741-4748-9cc1-6fc6ac7818a7",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "1386d368-b3e9-4903-a2cb-e21d7c02bee4",
+    "name": "Get Volume",
+    "url": "{{url}}/v1/staking/reward/volume?date=2022-12-01",
+    "method": "GET",
+    "sortNum": 240000,
+    "created": "2023-02-28T23:29:27.131Z",
+    "modified": "2023-03-02T00:48:15.575Z",
+    "headers": [],
+    "params": [
+      {
+        "name": "date",
+        "value": "2022-12-01",
+        "isPath": false
+      }
+    ],
+    "tests": []
+  },
+  {
+    "_id": "d7bec366-1454-46f3-aac5-da10fb867f6d",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "d1d01f25-f78e-465a-ac6c-baaf4d3d7970",
+    "name": "Create",
+    "url": "{{url}}/v1/staking/18/deposit",
+    "method": "POST",
+    "sortNum": 300000,
+    "created": "2023-03-02T22:53:37.690Z",
+    "modified": "2023-03-02T22:56:26.596Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"amount\": 1,\n  \"asset\": \"DFI\",\n  \"txId\": \"tx-id\"\n}",
+      "form": []
+    },
+    "tests": []
   }
 ]
