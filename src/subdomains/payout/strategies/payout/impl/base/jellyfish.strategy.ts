@@ -113,15 +113,21 @@ export abstract class JellyfishStrategy extends PayoutStrategy {
   ): Promise<string>;
 
   protected async send(context: PayoutOrderContext, orders: PayoutOrder[], outputAssetName: string): Promise<void> {
+    let ordersToPayout = [];
     let payoutTxId: string;
 
     try {
       const payout = this.aggregatePayout(orders);
+      // ignoring orders that sum up to less than 8 decimals until next round
+      ordersToPayout = this.filterFinalPayoutOrders(orders, payout);
 
-      await this.designatePayout(orders);
+      await this.designatePayout(ordersToPayout);
       payoutTxId = await this.dispatchPayout(context, payout, outputAssetName);
     } catch (e) {
-      console.error(`Error on sending ${outputAssetName} for payout. Order ID(s): ${orders.map((o) => o.id)}`, e);
+      console.error(
+        `Error on sending ${outputAssetName} for payout. Order ID(s): ${ordersToPayout.map((o) => o.id)}`,
+        e,
+      );
 
       if (e.message.includes('timeout')) throw e;
       if (
@@ -131,7 +137,7 @@ export abstract class JellyfishStrategy extends PayoutStrategy {
         throw e;
       }
 
-      await this.rollbackPayoutDesignation(orders);
+      await this.rollbackPayoutDesignation(ordersToPayout);
 
       /**
        * @note
@@ -140,7 +146,7 @@ export abstract class JellyfishStrategy extends PayoutStrategy {
       return;
     }
 
-    for (const order of orders) {
+    for (const order of ordersToPayout) {
       try {
         const paidOrder = order.pendingPayout(payoutTxId);
         await this.payoutOrderRepo.save(paidOrder);
@@ -157,7 +163,13 @@ export abstract class JellyfishStrategy extends PayoutStrategy {
     // sum up duplicated addresses, so that orders to same address and asset end up in one payment round
     const payouts = Util.aggregate<PayoutOrder>(orders, 'destinationAddress', 'amount');
 
-    return Object.entries(payouts).map(([addressTo, amount]) => ({ addressTo, amount: Util.round(amount, 8) }));
+    return Object.entries(payouts)
+      .map(([addressTo, amount]) => ({ addressTo, amount: Util.floor(amount, 8) }))
+      .filter(({ amount }) => amount !== 0);
+  }
+
+  protected filterFinalPayoutOrders(orders: PayoutOrder[], group: PayoutGroup): PayoutOrder[] {
+    return orders.filter((o) => group.find(({ addressTo }) => addressTo === o.destinationAddress));
   }
 
   protected async designatePayout(orders: PayoutOrder[]): Promise<void> {

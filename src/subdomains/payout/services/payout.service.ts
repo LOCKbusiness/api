@@ -72,16 +72,41 @@ export class PayoutService {
     if (!this.processOrdersLock.acquire()) return;
 
     try {
+      await this.waitForStableInput();
       await this.checkExistingOrders();
       await this.prepareNewOrders();
       await this.payoutOrders();
       await this.processFailedOrders();
+    } catch (e) {
+      console.error('Error while processing payout orders', e);
     } finally {
       this.processOrdersLock.release();
     }
   }
 
   //*** HELPER METHODS ***//
+
+  private async waitForStableInput(): Promise<void> {
+    const result = await Util.poll(
+      () => this.getLatestOrderDate(),
+      (date) => this.verifyDebounceTime(date),
+      5000,
+      60000,
+      true,
+    );
+
+    if (!this.verifyDebounceTime(result)) {
+      throw new Error('Incoming payout API is too busy, waiting for orders to stabilize');
+    }
+  }
+
+  private async getLatestOrderDate(): Promise<Date> {
+    return this.payoutOrderRepo.findOne({ where: {}, order: { created: 'DESC' } }).then((o) => o?.created);
+  }
+
+  private verifyDebounceTime(date: Date): boolean {
+    return Util.secondsDiff(date, new Date()) - 3600 > 5;
+  }
 
   private async checkExistingOrders(): Promise<void> {
     await this.checkPreparationCompletion();

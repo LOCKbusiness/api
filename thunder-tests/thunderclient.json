@@ -551,5 +551,24 @@
       }
     ],
     "tests": []
+  },
+  {
+    "_id": "0a096a04-b1d7-40eb-ac42-4fd53e2630c0",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "1386d368-b3e9-4903-a2cb-e21d7c02bee4",
+    "name": "Set Status",
+    "url": "{{url}}/v1/staking/reward/status",
+    "method": "PATCH",
+    "sortNum": 300000,
+    "created": "2023-03-02T18:06:00.856Z",
+    "modified": "2023-03-02T18:11:14.251Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"status\": \"Confirmed\",\n  \"ids\": [579, 581, 583]\n}\n",
+      "form": []
+    },
+    "tests": []
   }
 ]
