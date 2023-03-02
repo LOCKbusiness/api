@@ -147,7 +147,11 @@ export class StakingDepositService {
 
     for (const deposit of deposits) {
       try {
-        const payInAsset = await this.payInService.getPayInAsset(staking.depositAddress.address, deposit.payInTxId);
+        const payInAsset = await this.payInService.getPayInAsset(
+          staking.depositAddress.address,
+          deposit.payInTxId,
+          deposit.payInTxSequence,
+        );
         const txId = await this.deFiChainStakingService.forwardDeposit(
           staking.depositAddress.address,
           deposit.amount,
@@ -242,7 +246,7 @@ export class StakingDepositService {
   }
 
   private async createOrUpdateDeposit(staking: Staking, payIn: PayIn): Promise<void> {
-    const existingDeposit = await this.depositRepository.getByPayInTxId(staking.id, payIn.txId);
+    const existingDeposit = await this.depositRepository.getByPayInTx(staking.id, payIn.txId, payIn.txSequence);
     const newDeposit = await this.createNewDeposit(staking, payIn);
 
     const deposit = existingDeposit ?? newDeposit;

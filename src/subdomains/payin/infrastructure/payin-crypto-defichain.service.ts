@@ -99,6 +99,7 @@ export class PayInDeFiChainService {
       address: BlockchainAddress.create(history.owner, Blockchain.DEFICHAIN),
       txType: history.type,
       txId: history.txid,
+      txSequence: history.txn,
       blockHeight: history.blockHeight,
       amount: amount,
       asset: assetEntity,

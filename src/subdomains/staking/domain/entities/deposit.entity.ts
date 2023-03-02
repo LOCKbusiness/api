@@ -26,6 +26,9 @@ export class Deposit extends IEntity {
   payInTxId: string;
 
   @Column({ nullable: true })
+  payInTxSequence: number;
+
+  @Column({ nullable: true })
   forwardTxId: string;
 
   @Column({ type: 'float', nullable: true, default: null })

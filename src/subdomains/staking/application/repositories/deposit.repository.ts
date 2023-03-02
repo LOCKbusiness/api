@@ -27,8 +27,8 @@ export class DepositRepository extends Repository<Deposit> {
     return this.find({ where: { status: In(statuses), staking: { id: stakingId } }, relations: ['staking'] });
   }
 
-  async getByPayInTxId(stakingId: number, payInTxId: string): Promise<Deposit> {
-    return this.findOneBy({ staking: { id: stakingId }, payInTxId });
+  async getByPayInTx(stakingId: number, payInTxId: string, payInTxSequence: number): Promise<Deposit> {
+    return this.findOneBy({ staking: { id: stakingId }, payInTxId, payInTxSequence });
   }
 
   async getByUserId(userId: number, dateFrom?: Date, dateTo?: Date): Promise<Deposit[]> {
