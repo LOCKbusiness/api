@@ -35,6 +35,7 @@ import { RawTxService } from 'src/blockchain/ain/jellyfish/services/raw-tx.servi
 import { TransactionCacheService } from './transaction-cache.service';
 import { AssetType } from 'src/shared/models/asset/asset.entity';
 import { RawTxCheck } from 'src/blockchain/ain/jellyfish/utils/raw-tx-check';
+import { VaultService } from 'src/integration/vault/application/services/vault.service';
 
 @Injectable()
 export class TransactionExecutionService {
@@ -46,6 +47,7 @@ export class TransactionExecutionService {
   constructor(
     private readonly transactionService: TransactionService,
     private readonly transactionCache: TransactionCacheService,
+    private readonly vaultService: VaultService,
     private readonly rawTxService: RawTxService,
     private readonly cryptoService: CryptoService,
     whaleService: WhaleService,
@@ -126,12 +128,12 @@ export class TransactionExecutionService {
 
   async splitBiggestUtxo(data: SplitData): Promise<string> {
     const rawTx = await this.rawTxService.Utxo.split(data.address, data.split);
-    return this.signAndBroadcast(rawTx, { type: TransactionType.UTXO_SPLIT });
+    return this.signAndBroadcast(rawTx, { type: TransactionType.UTXO_SPLIT, isIncoming: RawTxCheck.isIncoming(rawTx) });
   }
 
   async mergeSmallestUtxos(data: MergeData): Promise<string> {
     const rawTx = await this.rawTxService.Utxo.merge(data.address, data.merge);
-    return this.signAndBroadcast(rawTx, { type: TransactionType.UTXO_MERGE });
+    return this.signAndBroadcast(rawTx, { type: TransactionType.UTXO_MERGE, isIncoming: RawTxCheck.isIncoming(rawTx) });
   }
 
   async sendToken(data: SendTokenData): Promise<string> {
@@ -154,7 +156,11 @@ export class TransactionExecutionService {
     const rawTx = await this.rawTxService.Vault.deposit(data.from, data.vault, data.token, data.amount);
     return this.signAndBroadcast(
       rawTx,
-      this.createPayloadFor(data, TransactionType.DEPOSIT_TO_VAULT, RawTxCheck.isIncoming(rawTx)),
+      this.createPayloadFor(
+        data,
+        TransactionType.DEPOSIT_TO_VAULT,
+        RawTxCheck.isIncoming(rawTx, await this.vaultService.getAllIds()),
+      ),
     );
   }
 
@@ -162,7 +168,11 @@ export class TransactionExecutionService {
     const rawTx = await this.rawTxService.Vault.withdraw(data.to, data.vault, data.token, data.amount);
     return this.signAndBroadcast(
       rawTx,
-      this.createPayloadFor(data, TransactionType.WITHDRAW_FROM_VAULT, RawTxCheck.isIncoming(rawTx)),
+      this.createPayloadFor(
+        data,
+        TransactionType.WITHDRAW_FROM_VAULT,
+        RawTxCheck.isIncoming(rawTx, await this.vaultService.getAllIds()),
+      ),
     );
   }
 
@@ -170,7 +180,11 @@ export class TransactionExecutionService {
     const rawTx = await this.rawTxService.Vault.takeLoan(data.to, data.vault, data.token, data.amount);
     return this.signAndBroadcast(
       rawTx,
-      this.createPayloadFor(data, TransactionType.TAKE_LOAN, RawTxCheck.isIncoming(rawTx)),
+      this.createPayloadFor(
+        data,
+        TransactionType.TAKE_LOAN,
+        RawTxCheck.isIncoming(rawTx, await this.vaultService.getAllIds()),
+      ),
     );
   }
 
@@ -178,7 +192,11 @@ export class TransactionExecutionService {
     const rawTx = await this.rawTxService.Vault.paybackLoan(data.from, data.vault, data.token, data.amount);
     return this.signAndBroadcast(
       rawTx,
-      this.createPayloadFor(data, TransactionType.PAYBACK_LOAN, RawTxCheck.isIncoming(rawTx)),
+      this.createPayloadFor(
+        data,
+        TransactionType.PAYBACK_LOAN,
+        RawTxCheck.isIncoming(rawTx, await this.vaultService.getAllIds()),
+      ),
     );
   }
 
@@ -240,7 +258,8 @@ export class TransactionExecutionService {
 
   private async signAndBroadcast(rawTx: RawTxDto, payload: any, unlockUtxoOnFail = true): Promise<string> {
     try {
-      if (!RawTxCheck.isAllowed(rawTx, payload.isIncoming)) throw new Error(`${rawTx.id} is not allowed`);
+      if (!RawTxCheck.isAllowed(rawTx, payload.isIncoming, await this.vaultService.getAllIds()))
+        throw new Error(`${rawTx.id} is not allowed`);
       const signature = await this.receiveSignatureFor(rawTx);
       const hex = await this.transactionService.sign(rawTx, signature, payload);
       console.info(`${rawTx.id} broadcasting`);

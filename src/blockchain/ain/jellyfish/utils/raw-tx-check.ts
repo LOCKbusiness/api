@@ -3,6 +3,8 @@ import { Config } from 'src/config/config';
 import { RawTxDto } from '../dto/raw-tx.dto';
 import { RawTxUtil } from './raw-tx-util';
 import { SmartBuffer } from 'smart-buffer';
+import { MasternodeOwnerService } from 'src/integration/masternode/application/services/masternode-owner.service';
+import { VaultService } from 'src/integration/vault/application/services/vault.service';
 
 export class RawTxCheck {
   static incomingTxTypes = [
@@ -17,29 +19,29 @@ export class RawTxCheck {
     'OP_DEFI_TX_WITHDRAW_FROM_VAULT',
     'OP_DEFI_TX_POOL_REMOVE_LIQUIDITY',
     'OP_DEFI_TX_COMPOSITE_SWAP',
+    'OP_DEFI_TX_ANY_ACCOUNT_TO_ACCOUNT',
   ];
   static outgoingTxTypes = ['OP_DEFI_TX_ANY_ACCOUNT_TO_ACCOUNT'];
 
-  static isAllowed(rawTx: RawTxDto, expectedIsIncoming: boolean): boolean {
+  static isAllowed(rawTx: RawTxDto, expectedIsIncoming: boolean, listOfVaults: string[] = []): boolean {
     const [, vouts] = this.parseInAndOutputs(rawTx.hex);
     if (vouts.length === 0) return false;
-    const [isIncoming, defiTxType] = this.isIncomingBasedOn(vouts);
-
+    const [isIncoming, defiTxType] = this.isIncomingBasedOn(vouts, listOfVaults);
     return (
       expectedIsIncoming === isIncoming &&
-      this.isOnCorrectList(defiTxType, isIncoming ? this.incomingTxTypes : this.outgoingTxTypes, isIncoming)
+      this.isOnCorrectList(defiTxType, isIncoming ? this.incomingTxTypes : this.outgoingTxTypes)
     );
   }
 
-  private static isOnCorrectList(defiTxType: string | undefined, txTypes: string[], isIncoming: boolean): boolean {
-    if (!defiTxType) return isIncoming;
+  private static isOnCorrectList(defiTxType: string | undefined, txTypes: string[]): boolean {
+    if (!defiTxType) return true;
     return txTypes.includes(defiTxType);
   }
 
-  static isIncoming(rawTx: RawTxDto): boolean {
+  static isIncoming(rawTx: RawTxDto, listOfVaults: string[] = []): boolean {
     const [vins, vouts] = this.parseInAndOutputs(rawTx.hex);
     if (vins.length === 0 || vouts.length === 0) return false;
-    const [isIncoming, defiTxType] = this.isIncomingBasedOn(vouts);
+    const [isIncoming, defiTxType] = this.isIncomingBasedOn(vouts, listOfVaults);
     console.info(
       `# of vins: ${vins.length}, # of vouts: ${vouts.length}, DEFI TX: ${defiTxType} => isIncoming? ${isIncoming}`,
     );
@@ -52,16 +54,9 @@ export class RawTxCheck {
     return [tx.vin, tx.vout];
   }
 
-  private static isIncomingBasedOn(vouts: Vout[]): [boolean, string | undefined] {
+  private static isIncomingBasedOn(vouts: Vout[], listOfVaults: string[]): [boolean, string | undefined] {
     const defiTxType = this.retrieveTxType(vouts[0]);
-    const [stakingLiqScript] = RawTxUtil.parseAddress(Config.staking.liquidity.address);
-    const [yieldMachineLiqScript] = RawTxUtil.parseAddress(Config.yieldMachine.liquidity.address);
-    return [
-      (defiTxType && !this.outgoingTxTypes.includes(defiTxType)) ||
-        (!defiTxType &&
-          vouts.every((v) => this.scriptIsEqual(v, stakingLiqScript) || this.scriptIsEqual(v, yieldMachineLiqScript))),
-      defiTxType,
-    ];
+    return [this.isBeneficiaryInternal(vouts, listOfVaults, defiTxType), defiTxType];
   }
 
   private static retrieveTxType(vout: Vout): string | undefined {
@@ -73,10 +68,86 @@ export class RawTxCheck {
     return undefined;
   }
 
-  private static scriptIsEqual(vout: Vout, script: Script): boolean {
-    if (vout.script.stack.length !== script.stack.length) return false;
-    return vout.script.stack.every(
-      (code, index) => code.asBuffer().toString() === script.stack[index].asBuffer().toString(),
+  private static isBeneficiaryInternal(vouts: Vout[], listOfVaults: string[], defiTxType?: string): boolean {
+    switch (defiTxType) {
+      case 'OP_DEFI_TX_CREATE_MASTER_NODE':
+        const ownerScript = vouts[1].script;
+        return this.isInternalAddress(RawTxUtil.parseAddressFromScript(ownerScript));
+      case 'OP_DEFI_TX_CREATE_VAULT': {
+        const vaultOwnerScript = (vouts[0].script.stack[1] as OP_DEFI_TX).tx.data.ownerAddress;
+        const changeScript = vouts[1].script;
+        return (
+          this.isInternalAddress(RawTxUtil.parseAddressFromScript(vaultOwnerScript)) &&
+          this.isInternalAddress(RawTxUtil.parseAddressFromScript(changeScript))
+        );
+      }
+      case 'OP_DEFI_TX_PAYBACK_LOAN':
+      case 'OP_DEFI_TX_DEPOSIT_TO_VAULT': {
+        const vaultId = (vouts[0].script.stack[1] as OP_DEFI_TX).tx.data.vaultId;
+        const changeScript = vouts[1].script;
+        return listOfVaults.includes(vaultId) && this.isInternalAddress(RawTxUtil.parseAddressFromScript(changeScript));
+      }
+      case 'OP_DEFI_TX_WITHDRAW_FROM_VAULT':
+      case 'OP_DEFI_TX_TAKE_LOAN': {
+        const defiTxData = (vouts[0].script.stack[1] as OP_DEFI_TX).tx.data;
+        const changeScript = vouts[1].script;
+        return (
+          listOfVaults.includes(defiTxData.vaultId) &&
+          this.isInternalAddress(RawTxUtil.parseAddressFromScript(defiTxData.to)) &&
+          this.isInternalAddress(RawTxUtil.parseAddressFromScript(changeScript))
+        );
+      }
+      case 'OP_DEFI_TX_POOL_ADD_LIQUIDITY': {
+        const ownerScript = (vouts[0].script.stack[1] as OP_DEFI_TX).tx.data.shareAddress;
+        const changeScript = vouts[1].script;
+        return (
+          this.isInternalAddress(RawTxUtil.parseAddressFromScript(ownerScript)) &&
+          this.isInternalAddress(RawTxUtil.parseAddressFromScript(changeScript))
+        );
+      }
+      case 'OP_DEFI_TX_POOL_REMOVE_LIQUIDITY': {
+        const ownerScript = (vouts[0].script.stack[1] as OP_DEFI_TX).tx.data.script;
+        const changeScript = vouts[1].script;
+        return (
+          this.isInternalAddress(RawTxUtil.parseAddressFromScript(ownerScript)) &&
+          this.isInternalAddress(RawTxUtil.parseAddressFromScript(changeScript))
+        );
+      }
+      case 'OP_DEFI_TX_COMPOSITE_SWAP': {
+        const toScript = (vouts[0].script.stack[1] as OP_DEFI_TX).tx.data.poolSwap.toScript;
+        const changeScript = vouts[1].script;
+        return (
+          this.isInternalAddress(RawTxUtil.parseAddressFromScript(toScript)) &&
+          this.isInternalAddress(RawTxUtil.parseAddressFromScript(changeScript))
+        );
+      }
+      case 'OP_DEFI_TX_ANY_ACCOUNT_TO_ACCOUNT': {
+        const toScript = (vouts[0].script.stack[1] as OP_DEFI_TX).tx.data.to[0].script;
+        const changeScript = vouts.length === 2 ? vouts[1].script : undefined;
+        return (
+          this.isInternalAddress(RawTxUtil.parseAddressFromScript(toScript)) &&
+          (changeScript ? this.isInternalAddress(RawTxUtil.parseAddressFromScript(changeScript)) : true)
+        );
+      }
+      case 'OP_DEFI_TX_RESIGN_MASTER_NODE':
+      case 'OP_DEFI_TX_VOTE':
+        return true;
+      case undefined:
+        // check UTXO based
+        return vouts.every((v) => {
+          const address = RawTxUtil.parseAddressFromScript(v.script);
+          return this.isInternalAddress(address);
+        });
+      default:
+        return false;
+    }
+  }
+
+  private static isInternalAddress(address: string): boolean {
+    return (
+      [Config.staking.liquidity.address, Config.yieldMachine.liquidity.address].includes(address) ||
+      MasternodeOwnerService.isOnList(address) ||
+      VaultService.isOnList(address)
     );
   }
 }

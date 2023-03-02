@@ -16,6 +16,7 @@ import { CryptoService } from 'src/blockchain/shared/services/crypto.service';
 import { Config } from 'src/config/config';
 import { createDefaultMasternode } from 'src/integration/masternode/domain/entities/__mocks__/masternode.entity.mock';
 import { TransactionType } from 'src/integration/transaction/domain/enums';
+import { VaultService } from 'src/integration/vault/application/services/vault.service';
 import { AssetType } from 'src/shared/models/asset/asset.entity';
 import { TestUtil } from 'src/shared/__tests__/test-util';
 import { SendCoinWithdrawalData } from '../../types/creation-data';
@@ -34,6 +35,7 @@ describe('TransactionExecutionService', () => {
 
   let transactionService: TransactionService;
   let transactionCache: TransactionCacheService;
+  let vaultService: VaultService;
   let rawTxService: RawTxService;
   let cryptoService: CryptoService;
   let whaleService: WhaleService;
@@ -48,6 +50,7 @@ describe('TransactionExecutionService', () => {
   beforeEach(async () => {
     transactionService = createMock<TransactionService>();
     transactionCache = createMock<TransactionCacheService>();
+    vaultService = createMock<VaultService>();
     rawTxService = createMock<RawTxService>();
     cryptoService = createMock<CryptoService>();
     whaleService = createMock<WhaleService>();
@@ -79,6 +82,7 @@ describe('TransactionExecutionService', () => {
         TransactionExecutionService,
         { provide: TransactionService, useValue: transactionService },
         { provide: TransactionCacheService, useValue: transactionCache },
+        { provide: VaultService, useValue: vaultService },
         { provide: RawTxService, useValue: rawTxService },
         { provide: CryptoService, useValue: cryptoService },
         { provide: WhaleService, useValue: whaleService },
