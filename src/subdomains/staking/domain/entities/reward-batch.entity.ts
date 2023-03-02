@@ -37,7 +37,7 @@ export class RewardBatch extends IEntity {
 
     this.rewards = [...(this.rewards ?? []), reward];
 
-    this.outputReferenceAmount = Util.round((this.outputReferenceAmount ?? 0) + reward.outputReferenceAmount, 8);
+    this.outputReferenceAmount = Util.round((this.outputReferenceAmount ?? 0) + reward.outputReferenceAmount, 16);
 
     return this;
   }
@@ -97,7 +97,7 @@ export class RewardBatch extends IEntity {
 
       this.rewards.forEach((r) => {
         if (remainsToDistribute !== 0) {
-          r.targetAmount = Util.round(r.targetAmount + correction, 8);
+          r.targetAmount = Util.round(r.targetAmount + correction, 16);
           adjustedTransactions.push(r);
           remainsToDistribute = Util.round(remainsToDistribute - correction, 8);
         }

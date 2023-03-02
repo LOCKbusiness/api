@@ -80,15 +80,20 @@ export class StakingRewardBatchService {
     const filteredBatches: RewardBatch[] = [];
 
     for (const batch of batches) {
-      const { targetAsset } = batch;
+      const { outputReferenceAsset, targetAsset } = batch;
 
       const existingBatch = await this.rewardBatchRepo.findOneBy({
+        outputReferenceAsset: { id: outputReferenceAsset.id },
         targetAsset: { id: targetAsset.id },
         status: Not(RewardBatchStatus.COMPLETE),
       });
-      const newBatch = filteredBatches.find((b) => b.targetAsset.id === targetAsset.id);
 
-      if (existingBatch || newBatch) {
+      // double check to avoid more than one batch for reference/target asset pair
+      const currentBatch = filteredBatches.find(
+        (b) => b.outputReferenceAsset.id === outputReferenceAsset.id && b.targetAsset.id === targetAsset.id,
+      );
+
+      if (existingBatch || currentBatch) {
         const rewardIds = batch.rewards.map((r) => r.id);
 
         console.info(

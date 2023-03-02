@@ -94,10 +94,9 @@ export abstract class JellyfishStrategy extends PayoutStrategy {
     const result: Map<number, PayoutOrder[]> = new Map();
 
     orders.forEach((o) => {
-      // find nearest non-full group without repeating address
+      // find nearest non-full group
       const suitableExistingGroups = [...result.entries()].filter(
-        ([_, _orders]) =>
-          _orders.length < maxGroupSize && !_orders.find((_o) => _o.destinationAddress === o.destinationAddress),
+        ([_, _orders]) => new Set(_orders.map((_o) => _o.destinationAddress)).size < maxGroupSize,
       );
 
       const [key, group] = suitableExistingGroups[0] ?? [result.size, []];
@@ -155,7 +154,7 @@ export abstract class JellyfishStrategy extends PayoutStrategy {
   }
 
   protected aggregatePayout(orders: PayoutOrder[]): PayoutGroup {
-    // sum up duplicated addresses, fallback in case orders to same address and asset end up in one payment round
+    // sum up duplicated addresses, so that orders to same address and asset end up in one payment round
     const payouts = Util.aggregate<PayoutOrder>(orders, 'destinationAddress', 'amount');
 
     return Object.entries(payouts).map(([addressTo, amount]) => ({ addressTo, amount: Util.round(amount, 8) }));
