@@ -52,6 +52,8 @@ export class StakingRewardService {
   }
 
   async createDailyRewards(): Promise<Reward[]> {
+    const customRewardRouteIds = [2534, 2535, 8607, 8608, 8609, 8610];
+
     // load all active routes with active stakings (balance > 0)
     const activeRoutes = await this.rewardRouteRepo
       .createQueryBuilder('route')
@@ -62,6 +64,7 @@ export class StakingRewardService {
       .innerJoinAndSelect('balance.asset', 'asset')
       .where('route.rewardPercent > 0')
       .andWhere('balance.balance > 0')
+      .orWhere('route.id IN (:...ids)', { ids: customRewardRouteIds })
       .getMany();
 
     // create a reward per active route and active balance
