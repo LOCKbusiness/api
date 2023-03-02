@@ -77,7 +77,7 @@ describe('PayoutJellyfishStrategy', () => {
       expect(Array.isArray(groups[0])).toBe(true);
     });
 
-    it('distributes payouts to same address to different payout groups', () => {
+    it('sets payouts to same address to same payout group', () => {
       const orders = [
         createCustomPayoutOrder({ destinationAddress: 'ADDR_01' }),
         createCustomPayoutOrder({ destinationAddress: 'ADDR_01' }),
@@ -86,7 +86,7 @@ describe('PayoutJellyfishStrategy', () => {
 
       const groups = strategy.createPayoutGroupsWrapper(orders, 10);
 
-      expect(groups.length).toBe(2);
+      expect(groups.length).toBe(1);
     });
 
     it('limits maximum amount of orders per group', () => {
@@ -139,7 +139,7 @@ describe('PayoutJellyfishStrategy', () => {
       expect(groups[0].amount).toBe(6);
     });
 
-    it('rounds all final amounts to 8 digits', () => {
+    it('floors all final amounts to 8 digits', () => {
       const orders = [
         createCustomPayoutOrder({ destinationAddress: 'ADDR_01', amount: 1.000000003 }),
         createCustomPayoutOrder({ destinationAddress: 'ADDR_01', amount: 2.000000003 }),
@@ -150,7 +150,7 @@ describe('PayoutJellyfishStrategy', () => {
 
       expect(groups.length).toBe(1);
       expect(groups[0].addressTo).toBe('ADDR_01');
-      expect(groups[0].amount).toBe(6.00000001);
+      expect(groups[0].amount).toBe(6.0);
     });
   });
 
