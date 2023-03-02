@@ -11,6 +11,7 @@ import { Lock } from 'src/shared/lock';
 import { Util } from 'src/shared/util';
 
 export class WhaleClient {
+  private readonly secondsPerBlock = 30;
   private readonly client: WhaleApiClient;
   private readonly transactions = new AsyncMap<string, string>();
   private readonly txLock = new Lock(300);
@@ -40,6 +41,26 @@ export class WhaleClient {
     return this.getTokenBalances(address)
       .then((tb) => tb.find((b) => b.symbol === token)?.amount ?? 0)
       .then(BigNumber);
+  }
+
+  async getNearestBlockAt(date: Date): Promise<number> {
+    let targetTime = new Date();
+    let targetHeight = await this.getBlockHeight();
+
+    if (date > targetTime) return targetHeight;
+
+    // iterative search
+    for (let i = 0; i < 10 && Math.abs(Util.minutesDiff(targetTime, date)) > 10; i++) {
+      const timeDiff = Util.secondsDiff(date, targetTime);
+
+      targetHeight = Util.round(targetHeight - timeDiff / this.secondsPerBlock, 0);
+      const targetBlock = await this.client.blocks.get(`${targetHeight}`);
+      targetTime = new Date(targetBlock.time * 1000);
+    }
+
+    // get nearest block from range
+    const blocks = await this.client.blocks.list(100, `${targetHeight + 50}`);
+    return blocks.find((b) => new Date(b.time * 1000) < date)?.height;
   }
 
   async getBlockHeight(): Promise<number> {

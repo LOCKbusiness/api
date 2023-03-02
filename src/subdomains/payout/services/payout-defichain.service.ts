@@ -48,7 +48,7 @@ export class PayoutDeFiChainService extends PayoutJellyfishService {
   }
 
   getWalletAddress(_: PayoutOrderContext): string {
-    return Config.blockchain.default.rew.stakingAddress;
+    return Config.blockchain.default.rew.address;
   }
 
   isLightWalletAddress(address: string): boolean {

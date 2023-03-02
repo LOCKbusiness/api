@@ -75,9 +75,9 @@ export class DexDeFiChainService {
 
     try {
       return await this.#dexClient.compositeSwap(
-        Config.blockchain.default.rew.stakingAddress,
+        Config.blockchain.default.rew.address,
         swapAsset.name,
-        Config.blockchain.default.rew.stakingAddress,
+        Config.blockchain.default.rew.address,
         targetAsset.name,
         swapAmount,
         [],
@@ -95,11 +95,11 @@ export class DexDeFiChainService {
   }
 
   async sellDfiCoin(amount: number): Promise<string> {
-    return this.#dexClient.toToken(Config.blockchain.default.rew.stakingAddress, amount);
+    return this.#dexClient.toToken(Config.blockchain.default.rew.address, amount);
   }
 
   async addPoolLiquidity(poolPair: [string, string]): Promise<string> {
-    return this.#dexClient.addPoolLiquidity(Config.blockchain.default.rew.stakingAddress, poolPair);
+    return this.#dexClient.addPoolLiquidity(Config.blockchain.default.rew.address, poolPair);
   }
 
   async transferLiquidity(addressFrom: string, addressTo: string, asset: string, amount: number): Promise<string> {
@@ -108,7 +108,7 @@ export class DexDeFiChainService {
 
   async transferMinimalUtxo(address: string): Promise<string> {
     return this.#dexClient.sendToken(
-      Config.blockchain.default.rew.stakingAddress,
+      Config.blockchain.default.rew.address,
       address,
       'DFI',
       Config.payIn.min.DeFiChain.coin / 2,
@@ -125,7 +125,7 @@ export class DexDeFiChainService {
     const historyEntry = await this.deFiChainUtil.getHistoryEntryForTx(
       txId,
       this.#dexClient,
-      Config.blockchain.default.rew.stakingAddress,
+      Config.blockchain.default.rew.address,
     );
 
     if (!historyEntry) {
@@ -187,7 +187,7 @@ export class DexDeFiChainService {
     const availableAmount = await this.deFiChainUtil.getAvailableTokenAmount(
       asset.name,
       this.#dexClient,
-      Config.blockchain.default.rew.stakingAddress,
+      Config.blockchain.default.rew.address,
     );
 
     return Util.round(availableAmount - pendingAmount, 8);
@@ -196,7 +196,7 @@ export class DexDeFiChainService {
   //*** GETTERS ***//
 
   get stakingWalletAddress(): string {
-    return Config.blockchain.default.rew.stakingAddress;
+    return Config.blockchain.default.rew.address;
   }
 
   // *** HELPER METHODS *** //

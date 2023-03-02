@@ -24,6 +24,7 @@ interface StakingData {
   openWithdrawals: number;
   openRewards: number;
   lastOutputDates: LastOutputDates;
+  rewardLiquidity: { [token: string]: number };
 }
 
 type LastOutputDates = {
@@ -75,6 +76,10 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
       }),
       openRewards: await this.repos.reward.countBy({ status: In([RewardStatus.READY, RewardStatus.PAYING_OUT]) }),
       lastOutputDates: await this.getLastOutputDates(),
+      rewardLiquidity: {
+        DFI: await this.getRewardLiquidity('DFI'),
+        DUSD: await this.getRewardLiquidity('DUSD'),
+      },
     };
   }
 
@@ -103,7 +108,6 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
     });
 
     // calculate should balance (database balance - unpaid creation fees)
-
     const should = dbBalance - unpaidMasternodes * Config.masternode.fee;
 
     // calculate difference
@@ -129,5 +133,9 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
         relations: ['staking'],
       })
       .then((b) => b?.outputDate);
+  }
+
+  private async getRewardLiquidity(token: string): Promise<number> {
+    return this.client.getTokenBalance(Config.blockchain.default.rew.address, token).then((b) => b.toNumber());
   }
 }

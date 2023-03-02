@@ -1,4 +1,4 @@
-import { Controller, UseGuards, Body, Param, Put, Post } from '@nestjs/common';
+import { Controller, UseGuards, Body, Param, Put, Post, Get, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from 'src/shared/auth/role.guard';
@@ -11,6 +11,14 @@ import { Reward } from '../../domain/entities/reward.entity';
 @Controller('staking/reward')
 export class RewardController {
   constructor(private readonly stakingRewardService: StakingRewardService) {}
+
+  @Get('volume')
+  @ApiBearerAuth()
+  @ApiExcludeEndpoint()
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
+  async getRewardVolume(@Query('date') date: string): Promise<number> {
+    return this.stakingRewardService.getRewardVolumeAt(new Date(date));
+  }
 
   @Post()
   @ApiBearerAuth()
