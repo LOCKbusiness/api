@@ -1,10 +1,11 @@
-import { CTransactionSegWit, Script, OP_DEFI_TX, Vin, Vout } from '@defichain/jellyfish-transaction';
+import { CTransactionSegWit, OP_DEFI_TX, Vin, Vout } from '@defichain/jellyfish-transaction';
 import { Config } from 'src/config/config';
 import { RawTxDto } from '../dto/raw-tx.dto';
 import { RawTxUtil } from './raw-tx-util';
 import { SmartBuffer } from 'smart-buffer';
 import { MasternodeOwnerService } from 'src/integration/masternode/application/services/masternode-owner.service';
 import { VaultService } from 'src/integration/vault/application/services/vault.service';
+import { TransactionType } from 'src/integration/transaction/domain/enums';
 
 export class RawTxCheck {
   static incomingTxTypes = [
@@ -23,12 +24,13 @@ export class RawTxCheck {
   ];
   static outgoingTxTypes = ['OP_DEFI_TX_ANY_ACCOUNT_TO_ACCOUNT'];
 
-  static isAllowed(rawTx: RawTxDto, expectedIsIncoming: boolean, listOfVaults: string[] = []): boolean {
+  static isAllowed(rawTx: RawTxDto, payload: any, listOfVaults: string[] = []): boolean {
     const [, vouts] = this.parseInAndOutputs(rawTx.hex);
     if (vouts.length === 0) return false;
+    const expectedIsIncoming = this.getExpectedIsIncoming(payload.type);
     const [isIncoming, defiTxType] = this.isIncomingBasedOn(vouts, listOfVaults);
     return (
-      expectedIsIncoming === isIncoming &&
+      (expectedIsIncoming !== undefined ? expectedIsIncoming === isIncoming : true) &&
       this.isOnCorrectList(defiTxType, isIncoming ? this.incomingTxTypes : this.outgoingTxTypes)
     );
   }
@@ -149,5 +151,30 @@ export class RawTxCheck {
       MasternodeOwnerService.isOnList(address) ||
       VaultService.isOnList(address)
     );
+  }
+
+  private static getExpectedIsIncoming(type: TransactionType): boolean | undefined {
+    switch (type) {
+      case TransactionType.CREATE_MASTERNODE:
+      case TransactionType.RESIGN_MASTERNODE:
+      case TransactionType.VOTE_MASTERNODE:
+      case TransactionType.UTXO_MERGE:
+      case TransactionType.UTXO_SPLIT:
+      case TransactionType.SEND_TO_LIQ:
+      case TransactionType.CREATE_VAULT:
+      case TransactionType.DEPOSIT_TO_VAULT:
+      case TransactionType.WITHDRAW_FROM_VAULT:
+      case TransactionType.TAKE_LOAN:
+      case TransactionType.PAYBACK_LOAN:
+      case TransactionType.POOL_ADD_LIQUIDITY:
+      case TransactionType.POOL_REMOVE_LIQUIDITY:
+      case TransactionType.COMPOSITE_SWAP:
+        return true;
+      case TransactionType.WITHDRAWAL:
+        return false;
+      case TransactionType.SEND_FROM_LIQ:
+      case TransactionType.ACCOUNT_TO_ACCOUNT:
+        return undefined;
+    }
   }
 }

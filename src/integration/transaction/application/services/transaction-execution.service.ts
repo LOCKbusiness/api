@@ -258,7 +258,7 @@ export class TransactionExecutionService {
 
   private async signAndBroadcast(rawTx: RawTxDto, payload: any, unlockUtxoOnFail = true): Promise<string> {
     try {
-      if (!RawTxCheck.isAllowed(rawTx, payload.isIncoming, await this.vaultService.getAllIds()))
+      if (!RawTxCheck.isAllowed(rawTx, payload, await this.vaultService.getAllIds()))
         throw new Error(`${rawTx.id} is not allowed`);
       const signature = await this.receiveSignatureFor(rawTx);
       const hex = await this.transactionService.sign(rawTx, signature, payload);
