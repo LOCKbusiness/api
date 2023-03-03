@@ -39,7 +39,7 @@ export class StakingRewardBatchService {
   }
 
   private checkForStableInput(rewardsInput: Reward[]): boolean {
-    return rewardsInput.every((r) => Util.secondsDiff(r.created, new Date()) > 5);
+    return rewardsInput.every((r) => Util.minutesDiff(r.updated, new Date()) > 5);
   }
 
   private async createBatches(rewards: Reward[]): Promise<RewardBatch[]> {
