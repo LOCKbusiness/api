@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, StreamableFile } from '@nestjs/common';
 import { Readable } from 'stream';
-import { HistoryTransactionType, CompactHistoryDto } from '../dto/output/history.dto';
+import { CompactHistoryTransactionType, CompactHistoryDto } from '../dto/output/history.dto';
 import { Deposit } from 'src/subdomains/staking/domain/entities/deposit.entity';
 import { Withdrawal } from 'src/subdomains/staking/domain/entities/withdrawal.entity';
 import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
@@ -167,37 +167,70 @@ export class StakingHistoryService {
   }
 
   private filterDuplicateTxChainReport(transactions: ChainReportCsvHistoryDto[]): ChainReportCsvHistoryDto[] {
-    Array.from(Util.groupBy(transactions, 'txId'))
-      .map(([_, transactions]) => transactions)
-      .filter((r) => r.length > 1)
-      .forEach((transactions) =>
-        transactions.forEach(
-          (r, _) => (r.txId = r.transactionType === ChainReportTransactionType.DEPOSIT ? 'remove' : r.txId),
-        ),
-      );
-
-    return transactions.filter((r) => r.txId !== 'remove');
+    return (
+      Array.from(Util.groupBy(transactions, 'txId').values())
+        // filter out reward-deposits
+        .map((transactions) =>
+          transactions.some((t) => t.transactionType === ChainReportTransactionType.DEPOSIT) &&
+          transactions.some(
+            (t) =>
+              t.transactionType === ChainReportTransactionType.STAKING ||
+              t.transactionType === ChainReportTransactionType.LM,
+          )
+            ? transactions.filter(
+                (t) =>
+                  t.transactionType === ChainReportTransactionType.STAKING ||
+                  t.transactionType === ChainReportTransactionType.LM,
+              )
+            : transactions,
+        )
+        // enumerate duplicate TX IDs
+        .map((transactions) =>
+          transactions.length === 1
+            ? transactions
+            : transactions.map((t, i) => Object.assign(t, { txId: i == 0 ? t.txId : `${t.txId}-${i}` })),
+        )
+        .reduce((prev, curr) => prev.concat(curr), [])
+    );
   }
 
   private filterDuplicateTxCT(transactions: CoinTrackingCsvHistoryDto[]): CoinTrackingCsvHistoryDto[] {
-    Array.from(Util.groupBy(transactions, 'txId'))
-      .map(([_, transactions]) => transactions)
-      .filter((r) => r.length > 1)
-      .forEach((transactions) =>
-        transactions.forEach((r, _) => (r.txId = r.type === CoinTrackingTransactionType.DEPOSIT ? 'remove' : r.txId)),
-      );
-
-    return transactions.filter((r) => r.txId !== 'remove');
+    return (
+      Array.from(Util.groupBy(transactions, 'txId').values())
+        // filter out reward-deposits
+        .map((transactions) =>
+          transactions.some((t) => t.type === CoinTrackingTransactionType.DEPOSIT) &&
+          transactions.some(
+            (t) =>
+              t.type === CoinTrackingTransactionType.STAKING || t.type === CoinTrackingTransactionType.REWARD_BONUS,
+          )
+            ? transactions.filter(
+                (t) =>
+                  t.type === CoinTrackingTransactionType.STAKING || t.type === CoinTrackingTransactionType.REWARD_BONUS,
+              )
+            : transactions,
+        )
+        // enumerate duplicate TX IDs
+        .map((transactions) =>
+          transactions.length === 1
+            ? transactions
+            : transactions.map((t, i) => Object.assign(t, { txId: i == 0 ? t.txId : `${t.txId}-${i}` })),
+        )
+        .reduce((prev, curr) => prev.concat(curr), [])
+    );
   }
 
   private filterDuplicateTxCompact(transactions: CompactHistoryDto[]): CompactHistoryDto[] {
-    Array.from(Util.groupBy(transactions, 'txId'))
-      .map(([_, transactions]) => transactions)
-      .filter((r) => r.length > 1)
-      .forEach((transactions) =>
-        transactions.forEach((r, _) => (r.txId = r.type === HistoryTransactionType.DEPOSIT ? 'remove' : r.txId)),
-      );
-
-    return transactions.filter((r) => r.txId !== 'remove');
+    return (
+      Array.from(Util.groupBy(transactions, 'txId').values())
+        // filter out reward-deposits
+        .map((transactions) =>
+          transactions.some((t) => t.type === CompactHistoryTransactionType.DEPOSIT) &&
+          transactions.some((t) => t.type === CompactHistoryTransactionType.REWARD)
+            ? transactions.filter((t) => t.type === CompactHistoryTransactionType.REWARD)
+            : transactions,
+        )
+        .reduce((prev, curr) => prev.concat(curr), [])
+    );
   }
 }
