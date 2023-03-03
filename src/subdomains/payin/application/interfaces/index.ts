@@ -5,6 +5,7 @@ export interface PayInTransaction {
   address: BlockchainAddress;
   txType: string;
   txId: string;
+  txSequence: number;
   blockHeight: number;
   amount: number;
   asset?: Asset;
