@@ -10,6 +10,7 @@ import { StakingBalance } from '../../domain/entities/staking-balance.entity';
 import { RewardStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { CreateRewardRouteDto } from '../dto/input/create-reward-route.dto';
+import { SetRewardsStatusDto } from '../dto/input/set-rewards-status.dto';
 import { UpdateRewardDto } from '../dto/input/update-reward.dto';
 import { RewardRouteOutputDto } from '../dto/output/reward-route.output.dto';
 import { StakingOutputDto } from '../dto/output/staking.output.dto';
@@ -83,6 +84,10 @@ export class StakingRewardService {
 
     // save in one transaction
     return this.rewardRepo.saveMany(rewards);
+  }
+
+  async setRewardsStatus({ ids, status }: SetRewardsStatusDto): Promise<void> {
+    await this.rewardRepo.update(ids, { status });
   }
 
   async updateReward(rewardId: number, dto: UpdateRewardDto): Promise<Reward> {

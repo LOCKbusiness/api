@@ -28,6 +28,7 @@ export class StakingRewardOutService {
         return;
       }
 
+      // check batches for completion
       for (const batch of batches) {
         if (batch.status === RewardBatchStatus.PAYING_OUT) {
           try {
@@ -36,30 +37,33 @@ export class StakingRewardOutService {
             console.error(`Error on checking pervious payout for a batch ID: ${batch.id}`, e);
             continue;
           }
-
-          if (batch.status !== RewardBatchStatus.PAYING_OUT) {
-            continue;
-          }
+        } else {
+          batch.payingOut();
+          await this.rewardBatchRepo.save(batch);
         }
-
-        batch.payingOut();
-        await this.rewardBatchRepo.save(batch);
-
-        const successfulRequests = [];
-
-        for (const reward of batch.rewards.filter((r) => r.status === RewardStatus.READY)) {
-          try {
-            await this.doPayout(reward);
-            successfulRequests.push(reward);
-          } catch (e) {
-            console.error(`Failed to initiate buy-crypto payout. Transaction ID: ${reward.id}`);
-            // continue with next transaction in case payout initiation failed
-            continue;
-          }
-        }
-
-        this.logRewardsPayouts(successfulRequests);
       }
+
+      // pay out rewards
+      const payingOutBatches = batches.filter((b) => b.status === RewardBatchStatus.PAYING_OUT);
+      const rewardsToPayout = payingOutBatches
+        .reduce((prev: Reward[], curr) => prev.concat(curr.rewards), [])
+        .filter((r) => r.status === RewardStatus.READY)
+        .sort((a, b) => (a.targetAddress > b.targetAddress ? 1 : -1));
+
+      const successfulRequests = [];
+
+      for (const reward of rewardsToPayout) {
+        try {
+          await this.doPayout(reward);
+          successfulRequests.push(reward);
+        } catch (e) {
+          console.error(`Failed to initiate buy-crypto payout. Transaction ID: ${reward.id}`);
+          // continue with next transaction in case payout initiation failed
+          continue;
+        }
+      }
+
+      this.logRewardsPayouts(successfulRequests);
     } catch (e) {
       console.error('Failed to payout rewards:', e);
     }
