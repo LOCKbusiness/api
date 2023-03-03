@@ -22,7 +22,7 @@ export class PayIn extends IEntity {
   @Column()
   txId: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, type: 'bigint' })
   txSequence: number;
 
   @Column()
