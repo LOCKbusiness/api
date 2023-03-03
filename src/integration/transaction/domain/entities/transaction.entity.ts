@@ -34,13 +34,14 @@ export class Transaction extends IEntity {
     rawTx: RawTxDto,
     payload: any,
     issuerSignature: string,
-    direction: TransactionDirection,
+    _direction: TransactionDirection,
   ): Transaction {
     const tx = new Transaction();
     tx.chainId = id;
     tx.rawTx = JSON.stringify(rawTx);
     tx.issuerSignature = issuerSignature;
-    if (direction === TransactionDirection.INCOMING) tx.verifierSignature = issuerSignature;
+    // deactivated until other parts are up-to-date
+    // if (direction === TransactionDirection.INCOMING) tx.verifierSignature = issuerSignature;
     tx.payload = payload && JSON.stringify(payload);
     tx.invalidationReason = null;
     return tx;

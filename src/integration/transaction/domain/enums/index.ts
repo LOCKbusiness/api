@@ -26,6 +26,6 @@ export enum TransactionType {
 }
 
 export enum TransactionDirection {
-  INCOMING,
-  OUTGOING,
+  INCOMING = 1,
+  OUTGOING = 2,
 }
