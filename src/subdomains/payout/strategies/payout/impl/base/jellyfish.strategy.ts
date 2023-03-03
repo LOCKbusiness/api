@@ -95,9 +95,11 @@ export abstract class JellyfishStrategy extends PayoutStrategy {
 
     orders.forEach((o) => {
       // find nearest non-full group
-      const suitableExistingGroups = [...result.entries()].filter(
-        ([_, _orders]) => new Set(_orders.map((_o) => _o.destinationAddress)).size < maxGroupSize,
-      );
+      const suitableExistingGroups = [...result.entries()].filter(([_, _orders]) => {
+        const set = new Set(_orders.map((_o) => _o.destinationAddress));
+
+        return set.has(o.destinationAddress) || set.size < maxGroupSize;
+      });
 
       const [key, group] = suitableExistingGroups[0] ?? [result.size, []];
       result.set(key, [...group, o]);

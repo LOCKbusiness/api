@@ -84,11 +84,7 @@ export class StakingRewardService {
   }
 
   async setRewardsStatus({ ids, status }: SetRewardsStatusDto): Promise<void> {
-    await this.rewardRepo
-      .createQueryBuilder('reward')
-      .where(`reward.id IN (:...ids)`, { ids })
-      .update({ status })
-      .execute();
+    await this.rewardRepo.update(ids, { status });
   }
 
   async updateReward(rewardId: number, dto: UpdateRewardDto): Promise<Reward> {

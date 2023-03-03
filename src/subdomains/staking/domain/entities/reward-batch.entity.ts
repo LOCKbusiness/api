@@ -37,7 +37,7 @@ export class RewardBatch extends IEntity {
 
     this.rewards = [...(this.rewards ?? []), reward];
 
-    this.outputReferenceAmount = Util.round((this.outputReferenceAmount ?? 0) + reward.outputReferenceAmount, 16);
+    this.outputReferenceAmount = Util.round((this.outputReferenceAmount ?? 0) + reward.outputReferenceAmount, 8);
 
     return this;
   }
@@ -84,7 +84,7 @@ export class RewardBatch extends IEntity {
   private fixRoundingMismatch(): void {
     const transactionsTotal = Util.sumObj<Reward>(this.rewards, 'targetAmount');
 
-    const mismatch = Util.round(this.targetAmount - transactionsTotal, 8);
+    const mismatch = Util.round(this.targetAmount - transactionsTotal, 16);
 
     if (mismatch === 0) {
       return;
@@ -92,14 +92,14 @@ export class RewardBatch extends IEntity {
 
     if (Math.abs(mismatch) < 0.00001) {
       let remainsToDistribute = mismatch;
-      const correction = remainsToDistribute > 0 ? 0.00000001 : -0.00000001;
+      const correction = remainsToDistribute > 0 ? 1e-16 : -1e-16;
       const adjustedTransactions = [];
 
       this.rewards.forEach((r) => {
         if (remainsToDistribute !== 0) {
           r.targetAmount = Util.round(r.targetAmount + correction, 16);
           adjustedTransactions.push(r);
-          remainsToDistribute = Util.round(remainsToDistribute - correction, 8);
+          remainsToDistribute = Util.round(remainsToDistribute - correction, 16);
         }
       });
 

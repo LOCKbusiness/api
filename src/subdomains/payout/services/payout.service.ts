@@ -72,7 +72,6 @@ export class PayoutService {
     if (!this.processOrdersLock.acquire()) return;
 
     try {
-      await this.waitForStableInput();
       await this.checkExistingOrders();
       await this.prepareNewOrders();
       await this.payoutOrders();
@@ -86,18 +85,10 @@ export class PayoutService {
 
   //*** HELPER METHODS ***//
 
-  private async waitForStableInput(): Promise<void> {
-    const result = await Util.poll(
-      () => this.getLatestOrderDate(),
-      (date) => this.verifyDebounceTime(date),
-      5000,
-      60000,
-      true,
-    );
+  private async waitForStableInput(): Promise<boolean> {
+    const latestDate = await this.getLatestOrderDate();
 
-    if (!this.verifyDebounceTime(result)) {
-      throw new Error('Incoming payout API is too busy, waiting for orders to stabilize');
-    }
+    return this.verifyDebounceTime(latestDate);
   }
 
   private async getLatestOrderDate(): Promise<Date> {
@@ -162,6 +153,10 @@ export class PayoutService {
   }
 
   private async prepareNewOrders(): Promise<void> {
+    const stable = await this.waitForStableInput();
+
+    if (!stable) return;
+
     const orders = await this.payoutOrderRepo.findBy({ status: PayoutOrderStatus.CREATED });
     const groups = this.groupByStrategies(orders, this.prepareStrategies.getPrepareStrategyAlias);
 
