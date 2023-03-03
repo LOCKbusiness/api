@@ -5,7 +5,7 @@ import { RawTxUtil } from './raw-tx-util';
 import { SmartBuffer } from 'smart-buffer';
 import { MasternodeOwnerService } from 'src/integration/masternode/application/services/masternode-owner.service';
 import { VaultService } from 'src/integration/vault/application/services/vault.service';
-import { TransactionType } from 'src/integration/transaction/domain/enums';
+import { TransactionDirection } from 'src/integration/transaction/domain/enums';
 
 export class RawTxCheck {
   static incomingTxTypes = [
@@ -24,30 +24,18 @@ export class RawTxCheck {
   ];
   static outgoingTxTypes = ['OP_DEFI_TX_ANY_ACCOUNT_TO_ACCOUNT'];
 
-  static isAllowed(rawTx: RawTxDto, payload: any, listOfVaults: string[] = []): boolean {
+  static direction(rawTx: RawTxDto, listOfVaults: string[] = []): TransactionDirection | undefined {
     const [, vouts] = this.parseInAndOutputs(rawTx.hex);
-    if (vouts.length === 0) return false;
-    const expectedIsIncoming = this.getExpectedIsIncoming(payload.type);
+    if (vouts.length === 0) return undefined;
     const [isIncoming, defiTxType] = this.isIncomingBasedOn(vouts, listOfVaults);
-    return (
-      (expectedIsIncoming !== undefined ? expectedIsIncoming === isIncoming : true) &&
-      this.isOnCorrectList(defiTxType, isIncoming ? this.incomingTxTypes : this.outgoingTxTypes)
-    );
+    const isAllowed = this.isOnCorrectList(defiTxType, isIncoming ? this.incomingTxTypes : this.outgoingTxTypes);
+    return isAllowed ? (isIncoming ? TransactionDirection.INCOMING : TransactionDirection.OUTGOING) : undefined;
   }
 
   private static isOnCorrectList(defiTxType: string | undefined, txTypes: string[]): boolean {
+    // if no defiTxType it is UTXO based
     if (!defiTxType) return true;
     return txTypes.includes(defiTxType);
-  }
-
-  static isIncoming(rawTx: RawTxDto, listOfVaults: string[] = []): boolean {
-    const [vins, vouts] = this.parseInAndOutputs(rawTx.hex);
-    if (vins.length === 0 || vouts.length === 0) return false;
-    const [isIncoming, defiTxType] = this.isIncomingBasedOn(vouts, listOfVaults);
-    console.info(
-      `# of vins: ${vins.length}, # of vouts: ${vouts.length}, DEFI TX: ${defiTxType} => isIncoming? ${isIncoming}`,
-    );
-    return isIncoming;
   }
 
   private static parseInAndOutputs(hex: string): [Vin[], Vout[]] {
@@ -151,30 +139,5 @@ export class RawTxCheck {
       MasternodeOwnerService.isOnList(address) ||
       VaultService.isOnList(address)
     );
-  }
-
-  private static getExpectedIsIncoming(type: TransactionType): boolean | undefined {
-    switch (type) {
-      case TransactionType.CREATE_MASTERNODE:
-      case TransactionType.RESIGN_MASTERNODE:
-      case TransactionType.VOTE_MASTERNODE:
-      case TransactionType.UTXO_MERGE:
-      case TransactionType.UTXO_SPLIT:
-      case TransactionType.SEND_TO_LIQ:
-      case TransactionType.CREATE_VAULT:
-      case TransactionType.DEPOSIT_TO_VAULT:
-      case TransactionType.WITHDRAW_FROM_VAULT:
-      case TransactionType.TAKE_LOAN:
-      case TransactionType.PAYBACK_LOAN:
-      case TransactionType.POOL_ADD_LIQUIDITY:
-      case TransactionType.POOL_REMOVE_LIQUIDITY:
-      case TransactionType.COMPOSITE_SWAP:
-        return true;
-      case TransactionType.WITHDRAWAL:
-        return false;
-      case TransactionType.SEND_FROM_LIQ:
-      case TransactionType.ACCOUNT_TO_ACCOUNT:
-        return undefined;
-    }
   }
 }

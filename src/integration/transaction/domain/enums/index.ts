@@ -24,3 +24,8 @@ export enum TransactionType {
   ACCOUNT_TO_ACCOUNT = 'AccountToAccount',
   COMPOSITE_SWAP = 'CompositeSwap',
 }
+
+export enum TransactionDirection {
+  INCOMING,
+  OUTGOING,
+}

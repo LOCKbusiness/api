@@ -1,6 +1,7 @@
 import { RawTxDto } from 'src/blockchain/ain/jellyfish/dto/raw-tx.dto';
 import { IEntity } from 'src/shared/models/entity';
 import { Column, Entity } from 'typeorm';
+import { TransactionDirection } from '../enums';
 
 @Entity()
 export class Transaction extends IEntity {
@@ -28,12 +29,18 @@ export class Transaction extends IEntity {
   @Column({ nullable: true })
   invalidationReason: string;
 
-  static create(id: string, rawTx: RawTxDto, payload: any, issuerSignature: string): Transaction {
+  static create(
+    id: string,
+    rawTx: RawTxDto,
+    payload: any,
+    issuerSignature: string,
+    direction: TransactionDirection,
+  ): Transaction {
     const tx = new Transaction();
     tx.chainId = id;
     tx.rawTx = JSON.stringify(rawTx);
     tx.issuerSignature = issuerSignature;
-    if ('isIncoming' in payload && payload.isIncoming) tx.verifierSignature = issuerSignature;
+    if (direction === TransactionDirection.INCOMING) tx.verifierSignature = issuerSignature;
     tx.payload = payload && JSON.stringify(payload);
     tx.invalidationReason = null;
     return tx;
