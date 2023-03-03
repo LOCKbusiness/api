@@ -66,6 +66,7 @@ export class StakingRewardService {
       .where('route.rewardPercent > 0')
       .andWhere('balance.balance > 0')
       .orWhere('route.id IN (:...ids)', { ids: customRewardRouteIds })
+      .andWhere('targetAsset.id = asset.id')
       .getMany();
 
     // create a reward per active route and active balance

@@ -92,7 +92,7 @@ export abstract class DeFiChainNonPoolPairStrategy extends PurchaseLiquidityStra
     for (const descriptor of this.prioritySwapAssetDescriptors) {
       const prioritySwapAsset = await this.getSwapAsset(descriptor);
 
-      if (!(targetAsset.name === 'DUSD' && prioritySwapAsset.name === 'DUSD')) {
+      if (!(targetAsset.id === prioritySwapAsset.id)) {
         try {
           return {
             asset: prioritySwapAsset,
