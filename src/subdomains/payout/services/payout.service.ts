@@ -76,12 +76,28 @@ export class PayoutService {
       await this.prepareNewOrders();
       await this.payoutOrders();
       await this.processFailedOrders();
+    } catch (e) {
+      console.error('Error while processing payout orders', e);
     } finally {
       this.processOrdersLock.release();
     }
   }
 
   //*** HELPER METHODS ***//
+
+  private async waitForStableInput(): Promise<boolean> {
+    const latestDate = await this.getLatestOrderDate();
+
+    return this.verifyDebounceTime(latestDate);
+  }
+
+  private async getLatestOrderDate(): Promise<Date> {
+    return this.payoutOrderRepo.findOne({ where: {}, order: { created: 'DESC' } }).then((o) => o?.created);
+  }
+
+  private verifyDebounceTime(date: Date): boolean {
+    return Util.secondsDiff(date, new Date()) > 5;
+  }
 
   private async checkExistingOrders(): Promise<void> {
     await this.checkPreparationCompletion();
@@ -137,6 +153,10 @@ export class PayoutService {
   }
 
   private async prepareNewOrders(): Promise<void> {
+    const stable = await this.waitForStableInput();
+
+    if (!stable) return;
+
     const orders = await this.payoutOrderRepo.findBy({ status: PayoutOrderStatus.CREATED });
     const groups = this.groupByStrategies(orders, this.prepareStrategies.getPrepareStrategyAlias);
 

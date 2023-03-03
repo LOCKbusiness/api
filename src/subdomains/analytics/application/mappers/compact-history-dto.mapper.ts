@@ -6,7 +6,7 @@ import {
   CompactHistoryDto,
   CompactHistoryStatus,
   CompactHistoryTarget,
-  HistoryTransactionType,
+  CompactHistoryTransactionType,
 } from '../dto/output/history.dto';
 
 export class CompactHistoryDtoMapper {
@@ -26,7 +26,7 @@ export class CompactHistoryDtoMapper {
   static mapStakingDeposits(deposits: Deposit[]): CompactHistoryDto[] {
     return deposits
       .map((d) => ({
-        type: HistoryTransactionType.DEPOSIT,
+        type: CompactHistoryTransactionType.DEPOSIT,
         inputAmount: d.amount,
         inputAsset: d.asset.name,
         outputAmount: null,
@@ -48,7 +48,7 @@ export class CompactHistoryDtoMapper {
   static mapStakingWithdrawals(withdrawals: Withdrawal[]): CompactHistoryDto[] {
     return withdrawals
       .map((w) => ({
-        type: HistoryTransactionType.WITHDRAWAL,
+        type: CompactHistoryTransactionType.WITHDRAWAL,
         inputAmount: null,
         inputAsset: null,
         outputAmount: w.amount,
@@ -70,7 +70,7 @@ export class CompactHistoryDtoMapper {
   static mapStakingRewards(rewards: Reward[]): CompactHistoryDto[] {
     return rewards
       .map((r) => ({
-        type: HistoryTransactionType.REWARD,
+        type: CompactHistoryTransactionType.REWARD,
         inputAmount: r.targetAmount,
         inputAsset: r.targetAsset.name,
         outputAmount: null,
