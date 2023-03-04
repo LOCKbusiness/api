@@ -12,17 +12,6 @@ import { SupportService } from '../../application/services/support.service';
 export class SupportController {
   constructor(private readonly supportService: SupportService) {}
 
-  @Get('db')
-  @ApiBearerAuth()
-  @ApiExcludeEndpoint()
-  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
-  async getRawDataDeprecated(
-    @Query()
-    query: DbQueryDto,
-  ): Promise<{ keys: any; values: any }> {
-    return this.supportService.getRawDataDeprecated(query);
-  }
-
   @Post('db')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()

@@ -33,33 +33,6 @@ export class SupportService {
     private readonly stakingService: StakingService,
   ) {}
 
-  async getRawDataDeprecated(query: DbQueryDto): Promise<{ keys: any; values: any }> {
-    const id = query.min ? +query.min : 1;
-    const maxResult = query.maxLine ? +query.maxLine : undefined;
-    const updated = query.updatedSince ? new Date(query.updatedSince) : new Date(0);
-
-    const data = await this.dataSource
-      .createQueryBuilder()
-      .select(query.filterCols)
-      .from(query.table, query.table)
-      .where('id >= :id', { id })
-      .andWhere('updated >= :updated', { updated })
-      .orderBy('id', query.sorting)
-      .take(maxResult)
-      .getRawMany()
-      .catch((e: Error) => {
-        throw new BadRequestException(e.message);
-      });
-
-    // transform to array
-    return data.length > 0
-      ? {
-          keys: Object.keys(data[0]),
-          values: data.map((e) => Object.values(e)),
-        }
-      : undefined;
-  }
-
   async getRawData(query: DbQueryDto): Promise<any> {
     const request = this.dataSource
       .createQueryBuilder()
