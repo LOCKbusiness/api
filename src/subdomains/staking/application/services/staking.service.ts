@@ -70,6 +70,14 @@ export class StakingService {
     return StakingOutputDtoMapper.entityToDto(staking, deposits, withdrawals, asset);
   }
 
+  async getStakingByKey(key: string, value: any): Promise<Staking> {
+    return this.repository
+      .createQueryBuilder('staking')
+      .select('staking')
+      .where(`staking.${key} = :param`, { param: value })
+      .getOne();
+  }
+
   async getDepositAddressBalances(address: string): Promise<BalanceOutputDto[]> {
     const stakingEntity = await this.repository.getByDepositAddress(address);
     if (!stakingEntity) throw new NotFoundException('No staking for deposit address found');

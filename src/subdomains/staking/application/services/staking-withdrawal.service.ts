@@ -147,6 +147,15 @@ export class StakingWithdrawalService {
     }));
   }
 
+  async getWithdrawalByKey(key: string, value: any): Promise<Withdrawal> {
+    return this.withdrawalRepo
+      .createQueryBuilder('withdrawal')
+      .select('withdrawal')
+      .leftJoinAndSelect('withdrawal.staking', 'staking')
+      .where(`withdrawal.${key} = :param`, { param: value })
+      .getOne();
+  }
+
   async getByIdOrThrow(withdrawalId: number): Promise<Withdrawal> {
     const withdrawal = await this.withdrawalRepo.findOneBy({ id: withdrawalId });
 

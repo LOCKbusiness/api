@@ -87,6 +87,15 @@ export class StakingRewardService {
     return this.rewardRepo.saveMany(rewards);
   }
 
+  async getRewardByKey(key: string, value: any): Promise<Reward> {
+    return this.rewardRepo
+      .createQueryBuilder('reward')
+      .select('reward')
+      .leftJoinAndSelect('reward.staking', 'staking')
+      .where(`reward.${key} = :param`, { param: value })
+      .getOne();
+  }
+
   async setRewardsStatus({ ids, status }: SetRewardsStatusDto): Promise<void> {
     await this.rewardRepo.update(ids, { status });
   }
