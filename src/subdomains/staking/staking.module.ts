@@ -112,6 +112,7 @@ import { RewardStrategyRepository } from './application/repositories/reward-stra
     StakingService,
     StakingDepositService,
     StakingWithdrawalService,
+    StakingRewardService,
     StakingDeFiChainService,
     { provide: PRICE_PROVIDER, useClass: CoinGeckoService },
   ],

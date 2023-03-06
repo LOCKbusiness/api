@@ -24,7 +24,16 @@ export class UserService {
   }
 
   async getUser(userId: number): Promise<User> {
-    return this.userRepo.findOne({ where: { id: userId }, relations: ['wallets'] });
+    return !userId ? null : this.userRepo.findOne({ where: { id: userId }, relations: ['wallets'] });
+  }
+
+  async getUserByKey(key: string, value: any): Promise<User> {
+    return this.userRepo
+      .createQueryBuilder('user')
+      .select('user')
+      .leftJoinAndSelect('user.wallets', 'wallets')
+      .where(`user.${key} = :param`, { param: value })
+      .getOne();
   }
 
   async getUserByKycId(kycId: string): Promise<User> {

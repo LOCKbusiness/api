@@ -1,11 +1,20 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { RepositoryFactory } from 'src/shared/repositories/repository.factory';
-import { Deposit } from 'src/subdomains/staking/domain/entities/deposit.entity';
-import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
-import { Withdrawal } from 'src/subdomains/staking/domain/entities/withdrawal.entity';
 import { DbQueryDto } from 'src/subdomains/support/application/dto/db-query.dto';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
+import { WalletService } from 'src/subdomains/user/application/services/wallet.service';
+import { User } from 'src/subdomains/user/domain/entities/user.entity';
 import { DataSource } from 'typeorm';
+import { SupportDataQuery, SupportReturnData } from '../dto/support-data.dto';
+
+export enum SupportTable {
+  USER = 'user',
+  WALLET = 'wallet',
+  DEPOSIT = 'deposit',
+  WITHDRAWAL = 'withdrawal',
+  REWARD = 'reward',
+  STAKING = 'staking',
+}
 
 @Injectable()
 export class SupportService {
@@ -13,34 +22,8 @@ export class SupportService {
     private readonly repos: RepositoryFactory,
     private readonly userService: UserService,
     private readonly dataSource: DataSource,
+    private readonly walletService: WalletService,
   ) {}
-
-  async getRawDataDeprecated(query: DbQueryDto): Promise<{ keys: any; values: any }> {
-    const id = query.min ? +query.min : 1;
-    const maxResult = query.maxLine ? +query.maxLine : undefined;
-    const updated = query.updatedSince ? new Date(query.updatedSince) : new Date(0);
-
-    const data = await this.dataSource
-      .createQueryBuilder()
-      .select(query.filterCols)
-      .from(query.table, query.table)
-      .where('id >= :id', { id })
-      .andWhere('updated >= :updated', { updated })
-      .orderBy('id', query.sorting)
-      .take(maxResult)
-      .getRawMany()
-      .catch((e: Error) => {
-        throw new BadRequestException(e.message);
-      });
-
-    // transform to array
-    return data.length > 0
-      ? {
-          keys: Object.keys(data[0]),
-          values: data.map((e) => Object.values(e)),
-        }
-      : undefined;
-  }
 
   async getRawData(query: DbQueryDto): Promise<any> {
     const request = this.dataSource
@@ -69,30 +52,48 @@ export class SupportService {
     return this.transformResultArray(data, query.table);
   }
 
-  async getSupportData(userId: number): Promise<{
-    staking: {
-      deposits: Deposit[];
-      withdrawals: Withdrawal[];
-      rewards: Reward[];
-    };
-  }> {
-    const user = await this.userService.getUser(userId);
+  async getSupportData(query: SupportDataQuery): Promise<SupportReturnData> {
+    const user = await this.getUser(query);
     if (!user) throw new NotFoundException('User not found');
 
-    const deposits = await this.repos.deposit.getByUserId(userId);
-    const withdrawals = await this.repos.withdrawal.getByUserId(userId);
-    const rewards = await this.repos.reward.getByUserId(userId);
+    const deposits = await this.repos.deposit.getByUserId(user.id);
+    const withdrawals = await this.repos.withdrawal.getByUserId(user.id);
+    const rewards = await this.repos.reward.getByUserId(user.id);
 
     return {
-      staking: {
-        deposits,
-        withdrawals,
-        rewards,
-      },
+      user,
+      deposits,
+      withdrawals,
+      rewards,
     };
   }
 
   //*** HELPER METHODS ***//
+
+  private async getUser(query: SupportDataQuery): Promise<User> {
+    switch (query.table) {
+      case SupportTable.USER:
+        return this.userService.getUserByKey(query.key, query.value);
+      case SupportTable.WALLET:
+        return this.walletService.getWalletByKey(query.key, query.value).then((wallet) => wallet?.user);
+      case SupportTable.DEPOSIT:
+        return this.repos.deposit
+          .getDepositByKey(query.key, query.value)
+          .then((d) => this.userService.getUser(d?.staking.userId));
+      case SupportTable.WITHDRAWAL:
+        return this.repos.withdrawal
+          .getWithdrawalByKey(query.key, query.value)
+          .then((w) => this.userService.getUser(w?.staking.userId));
+      case SupportTable.REWARD:
+        return this.repos.reward
+          .getRewardByKey(query.key, query.value)
+          .then((r) => this.userService.getUser(r?.staking.userId));
+      case SupportTable.STAKING:
+        return this.repos.staking
+          .getStakingByKey(query.key, query.value)
+          .then((s) => this.userService.getUser(s?.userId));
+    }
+  }
 
   private transformResultArray(
     data: any[],

@@ -34,6 +34,14 @@ export class DepositRepository extends Repository<Deposit> {
     ]);
   }
 
+  async getDepositByKey(key: string, value: any): Promise<Deposit> {
+    return this.createQueryBuilder('deposit')
+      .select('deposit')
+      .leftJoinAndSelect('deposit.staking', 'staking')
+      .where(`deposit.${key} = :param`, { param: value })
+      .getOne();
+  }
+
   async getByUserId(userId: number, dateFrom?: Date, dateTo?: Date): Promise<Deposit[]> {
     return this.find({
       where: { staking: { userId }, ...this.dateQuery(dateFrom, dateTo) },

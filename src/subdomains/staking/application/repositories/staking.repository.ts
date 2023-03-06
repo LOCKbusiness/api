@@ -10,6 +10,13 @@ export class StakingRepository extends LockedRepository<Staking> {
     super(Staking, manager);
   }
 
+  async getStakingByKey(key: string, value: any): Promise<Staking> {
+    return this.createQueryBuilder('staking')
+      .select('staking')
+      .where(`staking.${key} = :param`, { param: value })
+      .getOne();
+  }
+
   async getByStrategy(strategy: StakingStrategy): Promise<Staking[]> {
     return this.find({ where: { strategy }, relations: ['balances'], loadEagerRelations: false });
   }
