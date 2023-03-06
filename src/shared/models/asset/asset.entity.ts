@@ -19,6 +19,9 @@ export enum AssetCategory {
   unique: true,
 })
 export class Asset extends IEntity {
+  @Column({ nullable: true })
+  chainId: string;
+
   @Column()
   name: string;
 
