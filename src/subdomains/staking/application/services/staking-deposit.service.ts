@@ -63,15 +63,6 @@ export class StakingDepositService {
     }));
   }
 
-  async getDepositByKey(key: string, value: any): Promise<Deposit> {
-    return this.depositRepository
-      .createQueryBuilder('deposit')
-      .select('deposit')
-      .leftJoinAndSelect('deposit.staking', 'staking')
-      .where(`deposit.${key} = :param`, { param: value })
-      .getOne();
-  }
-
   async createDeposit(
     userId: number,
     walletId: number,
