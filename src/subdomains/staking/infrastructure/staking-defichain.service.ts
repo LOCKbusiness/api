@@ -13,7 +13,6 @@ import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { StakingStrategy } from '../domain/enums';
 import { WhaleWalletAccount } from '@defichain/whale-api-wallet';
 import { JellyfishService } from 'src/blockchain/ain/jellyfish/services/jellyfish.service';
-import { TokenProviderService } from 'src/blockchain/ain/whale/token-provider.service';
 import { UtxoProviderService } from 'src/blockchain/ain/jellyfish/services/utxo-provider.service';
 import { RawTxService } from 'src/blockchain/ain/jellyfish/services/raw-tx.service';
 import { RawTxDto } from 'src/blockchain/ain/jellyfish/dto/raw-tx.dto';
@@ -32,7 +31,6 @@ export class StakingDeFiChainService {
     private readonly transactionExecutionService: TransactionExecutionService,
     private readonly jellyfishService: JellyfishService,
     private readonly rawTxService: RawTxService,
-    private readonly tokenProviderService: TokenProviderService,
     private readonly utxoProvider: UtxoProviderService,
   ) {
     nodeService.getConnectedNode(NodeType.INPUT).subscribe((client) => (this.inputClient = client));
@@ -83,20 +81,19 @@ export class StakingDeFiChainService {
   private async forwardLiquidityMiningDeposit(address: string, amount: number, asset: Asset): Promise<string> {
     await this.sendFeeUtxoToDepositIfNeeded(address, asset, new BigNumber(Config.payIn.forward.accountToAccountFee));
 
-    const token = await this.tokenProviderService.get(asset.name);
     const rawTx =
       asset.type === AssetType.TOKEN
         ? await this.rawTxService.Account.send(
             address,
             Config.yieldMachine.liquidity.address,
-            +token.id,
+            +asset.chainId,
             new BigNumber(amount),
             new BigNumber(Config.payIn.forward.accountToAccountFee),
           )
         : await this.rawTxService.Utxo.sendAsAccount(
             address,
             Config.yieldMachine.liquidity.address,
-            +token.id,
+            +asset.chainId,
             new BigNumber(amount),
           );
     return this.send(rawTx);
@@ -200,13 +197,11 @@ export class StakingDeFiChainService {
   }
 
   async sendWithdrawal(withdrawal: Withdrawal): Promise<string> {
-    const token = await this.tokenProviderService.get(withdrawal.asset.name);
-
     return this.transactionExecutionService.sendWithdrawal({
       to: withdrawal.staking.withdrawalAddress.address,
       amount: new BigNumber(withdrawal.amount),
       type: withdrawal.asset.type,
-      tokenId: +token?.id,
+      tokenId: +withdrawal.asset.chainId,
       withdrawalId: withdrawal.id,
     });
   }
