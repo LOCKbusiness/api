@@ -12,10 +12,13 @@ class QueueItem<T> {
   constructor(private readonly action: () => Promise<T>, timeout?: number) {
     this.promise = new Promise((resolve, reject) => {
       this.resolve = (v) => {
-        resolve(v);
         if (this.timeout) clearTimeout(this.timeout);
+        resolve(v);
       };
-      this.reject = reject;
+      this.reject = (e) => {
+        if (this.timeout) clearTimeout(this.timeout);
+        reject(e);
+      };
     });
     if (timeout) this.timeout = setTimeout(() => this.reject(new Error('Queue timed out')), timeout);
   }
