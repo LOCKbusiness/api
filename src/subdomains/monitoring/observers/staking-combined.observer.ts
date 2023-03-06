@@ -101,14 +101,16 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
       .getRawOne<{ balance: number }>()
       .then((b) => b.balance);
 
-    // get unpaid masternodes
-    const unpaidMasternodes = await this.repos.masternode.countBy({
+    // get unpaid masternode count
+    const createdMasternodeCount = await this.repos.masternode.countBy({
       creationHash: Not(IsNull()),
-      creationFeePaid: false,
+    });
+    const paidMasternodeCount = await this.repos.masternode.countBy({
+      creationFeePaid: true,
     });
 
     // calculate should balance (database balance - unpaid creation fees)
-    const should = dbBalance - unpaidMasternodes * Config.masternode.fee;
+    const should = dbBalance - (createdMasternodeCount - paidMasternodeCount) * Config.masternode.fee;
 
     // calculate difference
     const difference = Util.round(actual - should, Config.defaultVolumeDecimal);

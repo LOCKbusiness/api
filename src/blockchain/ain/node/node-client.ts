@@ -43,6 +43,10 @@ export class NodeClient {
     this.getInfo().catch((e) => console.error('Failed to get chain info: ', e));
   }
 
+  clearRequestQueue() {
+    this.queue.clear();
+  }
+
   // common
   async getInfo(): Promise<BlockchainInfo> {
     return this.callNode((c) => c.blockchain.getBlockchainInfo());

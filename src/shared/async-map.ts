@@ -32,8 +32,8 @@ export class AsyncMap<K, T> {
   public resolve(id: K, value: T) {
     const subscriber = this.subscribers.get(id);
     if (subscriber) {
-      subscriber.resolve(value);
       clearTimeout(subscriber.timer);
+      subscriber.resolve(value);
       this.subscribers.delete(id);
     }
   }
@@ -41,8 +41,8 @@ export class AsyncMap<K, T> {
   public reject(id: K, reason: string) {
     const subscriber = this.subscribers.get(id);
     if (subscriber) {
-      subscriber.reject(new Error(reason));
       clearTimeout(subscriber.timer);
+      subscriber.reject(new Error(reason));
       this.subscribers.delete(id);
     }
   }

@@ -3,15 +3,23 @@ import { ApiProperty } from '@nestjs/swagger';
 import { VoteDecision } from '../../domain/enums';
 import { Distribution } from './distribution.dto';
 
-export interface CfpDto {
+export interface CfpInfoDto {
   number: string;
   title: string;
   type: 'cfp' | 'dfip';
   endDate: string;
+  endHeight: number;
   status: ProposalStatus;
 }
 
 export class CfpInfo {
+  id: string;
+  name: string;
+  endDate: Date;
+  endHeight: number;
+}
+
+class CfpDto {
   @ApiProperty()
   id: string;
 
@@ -19,7 +27,7 @@ export class CfpInfo {
   name: string;
 }
 
-export class CfpVoteDto extends CfpInfo {
+export class CfpVoteDto extends CfpDto {
   @ApiProperty({ enum: VoteDecision })
   vote: VoteDecision;
 }
@@ -35,7 +43,7 @@ export class CfpVotesDto {
   votes: CfpVoteDto[];
 }
 
-export class CfpResultDto extends CfpInfo {
+export class CfpResultDto extends CfpDto {
   @ApiProperty({ type: Distribution })
   result: Distribution;
 }

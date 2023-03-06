@@ -12,6 +12,9 @@ import {
 import { SystemStateSnapshotRepository } from '../repositories/system-state-snapshot.repository';
 import { NotificationService } from 'src/integration/notification/services/notification.service';
 import { MailType } from 'src/integration/notification/enums';
+import { getHeapStatistics } from 'v8';
+import { Util } from 'src/shared/util';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 type SubsystemObservers = Map<MetricName, MetricObserver<unknown>>;
 
@@ -27,6 +30,23 @@ export class MonitoringService implements OnModuleInit {
 
   onModuleInit() {
     void this.initState();
+  }
+
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  public printHeapStats() {
+    try {
+      const heapStats = getHeapStatistics();
+      const used = this.toMega(heapStats.used_heap_size);
+      const limit = this.toMega(heapStats.heap_size_limit);
+
+      console.log(`Heap size used: ${used}/${limit} MB (${Util.round((used / limit) * 100, 1)}%)`);
+    } catch (e) {
+      console.error(`Exception during heap stats printing:`, e);
+    }
+  }
+
+  private toMega(size: number): number {
+    return Util.round(size / (1024 * 1024), 0);
   }
 
   // *** PUBLIC API *** //

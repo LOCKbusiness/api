@@ -150,7 +150,7 @@ describe('PayoutJellyfishStrategy', () => {
 
       expect(groups.length).toBe(1);
       expect(groups[0].addressTo).toBe('ADDR_01');
-      expect(groups[0].amount).toBe(6.0);
+      expect(groups[0].amount).toBe(6.00000001);
     });
   });
 

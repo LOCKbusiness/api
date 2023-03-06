@@ -14,10 +14,6 @@ export class Util {
     return Math.round(amount * Math.pow(10, decimals)) / Math.pow(10, decimals);
   }
 
-  static floor(amount: number, decimals: number): number {
-    return Math.floor(amount * Math.pow(10, decimals)) / Math.pow(10, decimals);
-  }
-
   static sum(list: number[]): number {
     return list.reduce((prev, curr) => prev + curr, 0);
   }

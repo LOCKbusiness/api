@@ -37,6 +37,14 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
     return this.find({ where: { status: In(statuses), staking: { id: stakingId } }, relations: ['staking'] });
   }
 
+  async getWithdrawalByKey(key: string, value: any): Promise<Withdrawal> {
+    return this.createQueryBuilder('withdrawal')
+      .select('withdrawal')
+      .leftJoinAndSelect('withdrawal.staking', 'staking')
+      .where(`withdrawal.${key} = :param`, { param: value })
+      .getOne();
+  }
+
   async getByUserId(userId: number, dateFrom?: Date, dateTo?: Date): Promise<Withdrawal[]> {
     return this.find({
       where: { staking: { userId }, ...this.dateQuery(dateFrom, dateTo) },
