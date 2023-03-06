@@ -30,6 +30,10 @@ class QueueItem<T> {
   public async doWork() {
     await this.action().then(this.resolve).catch(this.reject);
   }
+
+  public abort() {
+    this.reject?.(new Error('Queue aborted'));
+  }
 }
 
 export class QueueHandler {
@@ -47,7 +51,13 @@ export class QueueHandler {
     return item.wait();
   }
 
-  async doWork() {
+  clear() {
+    for (const item of this.queue) {
+      item.abort();
+    }
+  }
+
+  private async doWork() {
     if (!this.lock.acquire()) return;
 
     try {
