@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { Price } from 'src/shared/models/price';
 import { PriceProvider } from '../application/interfaces';
@@ -26,9 +26,10 @@ export class CoinGeckoService implements PriceProvider {
   async getFiatPrice(fiat: Currency | Fiat, assetId: number): Promise<Price> {
     const { name, coinGeckoId } = await this.getAssetInfo(assetId);
 
-    const { data } = await this.client.simple.price({ ids: coinGeckoId, vs_currencies: fiat });
+    const { data } = await this.callApi((c) => c.simple.price({ ids: coinGeckoId, vs_currencies: fiat }));
 
-    const price = data[coinGeckoId.toLowerCase()][fiat.toLowerCase()];
+    const price = data[coinGeckoId.toLowerCase()]?.[fiat.toLowerCase()];
+    if (!price) throw new ServiceUnavailableException(`Failed to get price for ${fiat} -> ${name}`);
 
     return Price.create(fiat, name, price);
   }
@@ -40,11 +41,13 @@ export class CoinGeckoService implements PriceProvider {
   async getAvgFiatPrice(fiat: Currency | Fiat, assetId: number, from: Date, to: Date): Promise<Price> {
     const { name, coinGeckoId } = await this.getAssetInfo(assetId);
 
-    const { data } = await this.client.coins.fetchMarketChartRange(coinGeckoId, {
-      vs_currency: fiat,
-      from: from.getTime() / 1000,
-      to: to.getTime() / 1000,
-    });
+    const { data } = await this.callApi((c) =>
+      c.coins.fetchMarketChartRange(coinGeckoId, {
+        vs_currency: fiat,
+        from: from.getTime() / 1000,
+        to: to.getTime() / 1000,
+      }),
+    );
 
     const price = Util.avg(data.prices.map((p) => p[1]));
 
@@ -90,5 +93,9 @@ export class CoinGeckoService implements PriceProvider {
 
   private joinPrices(from: Price, to: Price): Price {
     return Price.create(from.target, to.target, to.price / from.price);
+  }
+
+  private callApi<T>(call: (c: CoinGeckoClient) => Promise<T>): Promise<T> {
+    return Util.retry(() => call(this.client), 3);
   }
 }
