@@ -166,7 +166,7 @@ export abstract class JellyfishStrategy extends PayoutStrategy {
     const payouts = Util.aggregate<PayoutOrder>(orders, 'destinationAddress', 'amount');
 
     return Object.entries(payouts)
-      .map(([addressTo, amount]) => ({ addressTo, amount: Util.floor(amount, 8) }))
+      .map(([addressTo, amount]) => ({ addressTo, amount: Util.round(amount, 8) }))
       .filter(({ amount }) => amount !== 0);
   }
 
