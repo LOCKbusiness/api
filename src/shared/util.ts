@@ -57,7 +57,7 @@ export class Util {
   }
 
   static fixRoundingMismatch<T>(list: T[], key: KeyType<T, number>, targetAmount: number, precision = 8): T[] {
-    const listTotal = Util.sumObj<T>(list, key);
+    const listTotal = Util.round(Util.sumObj<T>(list, key), precision);
     const mismatch = Util.round(targetAmount - listTotal, precision);
     const maxMismatchThreshold = 10 ** -precision * list.length;
 
