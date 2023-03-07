@@ -47,6 +47,7 @@ export class DepositRepository extends Repository<Deposit> {
       where: { staking: { userId }, ...this.dateQuery(dateFrom, dateTo) },
       relations: ['staking', 'asset'],
       loadEagerRelations: false,
+      order: { id: 'DESC' },
     });
   }
 

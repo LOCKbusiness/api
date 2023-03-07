@@ -50,6 +50,7 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
       where: { staking: { userId }, ...this.dateQuery(dateFrom, dateTo) },
       relations: ['staking', 'asset'],
       loadEagerRelations: false,
+      order: { id: 'DESC' },
     });
   }
 

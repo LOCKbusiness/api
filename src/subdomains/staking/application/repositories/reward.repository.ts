@@ -30,6 +30,7 @@ export class RewardRepository extends Repository<Reward> {
       where: { staking: { userId }, ...this.dateQuery(dateFrom, dateTo) },
       relations: ['staking', 'referenceAsset', 'targetAsset'],
       loadEagerRelations: false,
+      order: { id: 'DESC' },
     });
   }
 
