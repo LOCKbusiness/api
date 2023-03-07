@@ -184,14 +184,25 @@ export class DexDeFiChainService {
     const pendingOrders = (await this.liquidityOrderRepo.findBy({ isComplete: false })).filter(
       (o) => o.targetAsset.name === asset.name && o.targetAsset.blockchain === Blockchain.DEFICHAIN,
     );
-    const pendingAmount = Util.sumObj<LiquidityOrder>(pendingOrders, 'targetAmount');
+    const pendingAmount = Util.sumObj<LiquidityOrder>(pendingOrders, 'estimatedTargetAmount');
     const availableAmount = await this.deFiChainUtil.getAvailableTokenAmount(
       asset.name,
       this.#dexClient,
       Config.blockchain.default.rew.address,
     );
 
-    return Util.round(availableAmount - pendingAmount, 8);
+    // adding a small cap to pendingAmount in case testSwap results got slightly outdated by the moment current check is done
+    return Util.round(availableAmount - pendingAmount * 1.05, 8);
+  }
+
+  async testSwap(sourceAsset: Asset, targetAsset: Asset, amount: number): Promise<number> {
+    if (sourceAsset.category !== targetAsset.category) {
+      // always use DFI-DUSD pool
+      const dfiAmount = await this.#dexClient.testCompositeSwap(sourceAsset.name, 'DFI', amount);
+      return this.#dexClient.testCompositeSwap('DFI', targetAsset.name, dfiAmount);
+    } else {
+      return this.#dexClient.testCompositeSwap(sourceAsset.name, targetAsset.name, amount);
+    }
   }
 
   //*** GETTERS ***//
@@ -311,15 +322,5 @@ export class DexDeFiChainService {
 
   private getMinimalPriceReferenceAmount(sourceAsset: string): number {
     return sourceAsset === 'BTC' ? 0.001 : 1;
-  }
-
-  private async testSwap(sourceAsset: Asset, targetAsset: Asset, amount: number): Promise<number> {
-    if (sourceAsset.category !== targetAsset.category) {
-      // always use DFI-DUSD pool
-      const dfiAmount = await this.#dexClient.testCompositeSwap(sourceAsset.name, 'DFI', amount);
-      return this.#dexClient.testCompositeSwap('DFI', targetAsset.name, dfiAmount);
-    } else {
-      return this.#dexClient.testCompositeSwap(sourceAsset.name, targetAsset.name, amount);
-    }
   }
 }
