@@ -198,20 +198,19 @@ export class MasternodeService {
 
   // get unpaid fee in DFI
   async getUnpaidFee(): Promise<number> {
-    const unpaidMasternodeFee = await this.repository.countBy({ creationHash: Not(IsNull()), creationFeePaid: false });
-    return unpaidMasternodeFee * Config.masternode.fee;
+    const createdMasternodeCount = await this.repository.countBy({ creationHash: Not(IsNull()) });
+    const paidMasternodeCount = await this.repository.countBy({ creationFeePaid: true });
+
+    return (createdMasternodeCount - paidMasternodeCount) * Config.masternode.fee;
   }
 
   // add masternode creationFee
   async addFee(paidFee: number): Promise<void> {
-    const unpaidMasternodes = await this.repository.find({
-      where: { creationHash: Not(IsNull()), creationFeePaid: false },
-    });
-
     const paidMasternodeCount = Math.floor(paidFee / Config.masternode.fee);
     if (paidMasternodeCount !== paidFee / Config.masternode.fee)
       throw new BadRequestException(`Fee amount not divisible by ${Config.masternode.fee}`);
 
+    const unpaidMasternodes = await this.repository.findBy({ creationFeePaid: false });
     for (const mn of unpaidMasternodes.slice(0, paidMasternodeCount)) {
       await this.repository.update(mn.id, { creationFeePaid: true });
     }

@@ -50,6 +50,7 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
       where: { staking: { userId }, ...this.dateQuery(dateFrom, dateTo) },
       relations: ['staking', 'asset'],
       loadEagerRelations: false,
+      order: { id: 'DESC' },
     });
   }
 
@@ -83,10 +84,16 @@ export class WithdrawalRepository extends Repository<Withdrawal> {
     return this.createQueryBuilder('withdrawal')
       .select('SUM(amount)', 'amount')
       .where('stakingId = :stakingId', { stakingId })
-      .andWhere('status IN (:pending, :payingOut)', {
-        pending: WithdrawalStatus.PENDING,
-        payingOut: WithdrawalStatus.PAYING_OUT,
-      })
+      .andWhere('status IN (:...statusList)', { statusList: [WithdrawalStatus.PENDING, WithdrawalStatus.PAYING_OUT] })
+      .andWhere('withdrawal.assetId = :id', { id: assetId })
+      .getRawOne<{ amount: number }>()
+      .then((r) => r.amount ?? 0);
+  }
+
+  async getPendingAmount(assetId: number): Promise<number> {
+    return this.createQueryBuilder('withdrawal')
+      .select('SUM(amount)', 'amount')
+      .where('status IN (:...statusList)', { statusList: [WithdrawalStatus.PENDING, WithdrawalStatus.PAYING_OUT] })
       .andWhere('withdrawal.assetId = :id', { id: assetId })
       .getRawOne<{ amount: number }>()
       .then((r) => r.amount ?? 0);

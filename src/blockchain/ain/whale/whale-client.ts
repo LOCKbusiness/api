@@ -1,4 +1,4 @@
-import { ApiPagedResponse, WhaleApiClient } from '@defichain/whale-api-client';
+import { ApiPagedResponse, WhaleApiClient, WhaleApiError } from '@defichain/whale-api-client';
 import { AddressToken, AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
 import { CollateralToken, LoanVaultActive, LoanVaultState } from '@defichain/whale-api-client/dist/api/loan';
 import { TokenData } from '@defichain/whale-api-client/dist/api/tokens';
@@ -93,8 +93,11 @@ export class WhaleClient {
     return this.transactions.wait(txId, timeout);
   }
 
-  async getTx(txId: string): Promise<Transaction> {
-    return this.client.transactions.get(txId);
+  async getTx(txId: string): Promise<Transaction | undefined> {
+    return this.client.transactions.get(txId).catch((e: WhaleApiError) => {
+      if (e.code === 404) return undefined;
+      throw e;
+    });
   }
 
   async getTxVins(txId: string): Promise<TransactionVin[]> {

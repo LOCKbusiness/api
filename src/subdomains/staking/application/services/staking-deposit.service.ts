@@ -108,7 +108,7 @@ export class StakingDepositService {
         loadEagerRelations: false,
       });
       for (const deposit of openDeposits) {
-        const txId = await this.whaleClient.getTx(deposit.payInTxId).catch(() => null);
+        const txId = await this.whaleClient.getTx(deposit.payInTxId);
         if (!txId) await this.depositRepository.update(deposit.id, { status: DepositStatus.FAILED });
       }
     } catch (e) {
