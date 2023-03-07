@@ -94,10 +94,7 @@ export class PayInService {
     return newTransactions.map((tx) => this.factory.createFromTransaction(tx));
   }
 
-  // TODO - consider more reliable solution - in case of DB fail, some PayIns might be lost
   private async persistPayIns(payIns: PayIn[]): Promise<void> {
-    for (const payIn of payIns) {
-      await this.payInRepository.save(payIn);
-    }
+    await this.payInRepository.saveMany(payIns);
   }
 }

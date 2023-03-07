@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { EntityManager, In, Repository } from 'typeorm';
+import { BaseRepository } from 'src/shared/repositories/base.repository';
+import { EntityManager, In } from 'typeorm';
 import { Vote } from '../../domain/entities/vote.entity';
 import { VoteStatus } from '../../domain/enums';
 
 @Injectable()
-export class VoteRepository extends Repository<Vote> {
+export class VoteRepository extends BaseRepository<Vote> {
   constructor(manager: EntityManager) {
     super(Vote, manager);
   }

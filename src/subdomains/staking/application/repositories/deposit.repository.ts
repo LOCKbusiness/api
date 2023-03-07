@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
+import { BaseRepository } from 'src/shared/repositories/base.repository';
 import { Util } from 'src/shared/util';
-import { Between, EntityManager, FindOperator, In, IsNull, Repository } from 'typeorm';
+import { Between, EntityManager, FindOperator, In, IsNull } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { StakingReference } from '../../domain/entities/staking.entity';
 import { DepositStatus } from '../../domain/enums';
 
 @Injectable()
-export class DepositRepository extends Repository<Deposit> {
+export class DepositRepository extends BaseRepository<Deposit> {
   constructor(manager: EntityManager) {
     super(Deposit, manager);
   }

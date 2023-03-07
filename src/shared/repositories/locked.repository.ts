@@ -1,7 +1,8 @@
 import { NotFoundException } from '@nestjs/common';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager } from 'typeorm';
+import { BaseRepository } from './base.repository';
 
-export abstract class LockedRepository<T> extends Repository<T> {
+export abstract class LockedRepository<T> extends BaseRepository<T> {
   async updateWithLock(id: number, update: Partial<T>, relations: string[] = []): Promise<T> {
     return this.saveWithLock(id, (staking) => Object.assign(staking, update), relations);
   }

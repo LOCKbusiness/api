@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
+import { BaseRepository } from 'src/shared/repositories/base.repository';
 import { Util } from 'src/shared/util';
-import { Between, EntityManager, FindOperator, IsNull, Not, Repository } from 'typeorm';
+import { Between, EntityManager, FindOperator, IsNull, Not } from 'typeorm';
 import { Reward } from '../../domain/entities/reward.entity';
 import { RewardStatus } from '../../domain/enums';
 
 @Injectable()
-export class RewardRepository extends Repository<Reward> {
+export class RewardRepository extends BaseRepository<Reward> {
   constructor(manager: EntityManager) {
     super(Reward, manager);
   }

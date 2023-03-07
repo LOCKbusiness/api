@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { AssetQuery } from 'src/shared/models/asset/asset.service';
+import { BaseRepository } from 'src/shared/repositories/base.repository';
 import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import { StakingAnalytics } from '../../domain/staking-analytics.entity';
 
 @Injectable()
-export class StakingAnalyticsRepository extends Repository<StakingAnalytics> {
+export class StakingAnalyticsRepository extends BaseRepository<StakingAnalytics> {
   constructor(manager: EntityManager) {
     super(StakingAnalytics, manager);
   }
