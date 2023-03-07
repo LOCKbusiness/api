@@ -143,8 +143,8 @@ export class MasternodeService {
     return this.repository.countBy({ creationHash: Not(IsNull()), resignHash: IsNull() });
   }
 
-  async getActive(): Promise<Masternode[]> {
-    return this.repository.find({ where: { creationHash: Not(IsNull()), resignHash: IsNull() } });
+  async getRunning(): Promise<Masternode[]> {
+    return this.repository.findBy({ resignHash: IsNull() });
   }
 
   async getAllVoters(): Promise<Masternode[]> {
@@ -170,15 +170,22 @@ export class MasternodeService {
   }
 
   async getOrderedForResigning(): Promise<Masternode[]> {
-    const activeMasternodes = await this.getActive();
+    const runningMasternodes = await this.getRunning();
+    const activeMasternodes = runningMasternodes.filter(
+      (mn) => mn.creationHash != null && mn.state === MasternodeState.ENABLED,
+    );
+
+    const mnsByServer = Util.groupBy<Masternode, string>(runningMasternodes, 'server');
 
     // get TMS info
     const tmsInfo = await Promise.all(activeMasternodes.map((mn) => this.getMasternodeTms(mn.creationHash)));
 
     return activeMasternodes.sort((a, b) => {
-      // 1. order by server
-      if (a.server > b.server) return 1;
-      if (a.server < b.server) return -1;
+      // 1. order by server (server with least running nodes)
+      const aCount = mnsByServer.get(a.server).length;
+      const bCount = mnsByServer.get(b.server).length;
+      if (aCount > bCount) return 1;
+      if (aCount < bCount) return -1;
 
       // 2. order by TMS
       return (
