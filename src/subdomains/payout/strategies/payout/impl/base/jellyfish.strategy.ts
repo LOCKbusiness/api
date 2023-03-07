@@ -164,13 +164,21 @@ export abstract class JellyfishStrategy extends PayoutStrategy {
   protected aggregatePayout(orders: PayoutOrder[]): PayoutGroup {
     // sum up duplicated addresses, so that orders to same address and asset end up in one payment round
     const payouts = Util.aggregate<PayoutOrder>(orders, 'destinationAddress', 'amount');
-
-    return Object.entries(payouts)
+    const roundedPayouts = Object.entries(payouts)
       .map(([addressTo, amount]) => ({ addressTo, amount: Util.round(amount, 8) }))
       .filter(({ amount }) => amount !== 0);
+
+    return this.fixRoundingMismatch(orders, roundedPayouts);
+  }
+
+  private fixRoundingMismatch(orders: PayoutOrder[], roundedPayouts: PayoutGroup): PayoutGroup {
+    const payoutTotal = Util.round(Util.sumObj(orders, 'amount'), 8);
+
+    return Util.fixRoundingMismatch(roundedPayouts, 'amount', payoutTotal);
   }
 
   protected filterFinalPayoutOrders(orders: PayoutOrder[], group: PayoutGroup): PayoutOrder[] {
+    // leave only those orders that ended up in payout group (non-zero)
     return orders.filter((o) => group.find(({ addressTo }) => addressTo === o.destinationAddress));
   }
 
