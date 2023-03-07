@@ -21,6 +21,7 @@ import { TransactionDto } from 'src/subdomains/analytics/application/dto/output/
 import { Config, Process } from 'src/config/config';
 import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 import { StakingService } from './staking.service';
+import { Asset } from 'src/shared/models/asset/asset.entity';
 
 @Injectable()
 export class StakingWithdrawalService {
@@ -164,8 +165,8 @@ export class StakingWithdrawalService {
     return draftWithdrawals.map((w) => WithdrawalDraftOutputDtoMapper.entityToDto(w));
   }
 
-  async getPendingWithdrawals(): Promise<Withdrawal[]> {
-    return this.withdrawalRepo.getAllPending();
+  async getPendingAmount(asset: Asset): Promise<number> {
+    return this.withdrawalRepo.getPendingAmount(asset.id);
   }
 
   async getPendingWithdrawalDtos(): Promise<WithdrawalOutputDto[]> {
@@ -180,7 +181,7 @@ export class StakingWithdrawalService {
     if (!this.lock.acquire()) return;
 
     try {
-      const withdrawals = await this.getPendingWithdrawals();
+      const withdrawals = await this.withdrawalRepo.getAllPending();
       if (withdrawals.length <= 0) return;
 
       const possibleWithdrawals = await this.deFiChainService.getPossibleWithdrawals(withdrawals);
