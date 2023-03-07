@@ -198,12 +198,8 @@ export class MasternodeService {
 
   // get unpaid fee in DFI
   async getUnpaidFee(): Promise<number> {
-    const createdMasternodeCount = await this.repository.countBy({
-      creationHash: Not(IsNull()),
-    });
-    const paidMasternodeCount = await this.repository.countBy({
-      creationFeePaid: true,
-    });
+    const createdMasternodeCount = await this.repository.countBy({ creationHash: Not(IsNull()) });
+    const paidMasternodeCount = await this.repository.countBy({ creationFeePaid: true });
 
     return (createdMasternodeCount - paidMasternodeCount) * Config.masternode.fee;
   }

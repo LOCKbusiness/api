@@ -213,7 +213,6 @@ export class StakingDeFiChainService {
 
   async isWithdrawalTxComplete(withdrawalTxId: string): Promise<boolean> {
     const transaction = await this.whaleClient.getTx(withdrawalTxId);
-
-    return transaction && transaction.block.hash != null;
+    return transaction?.block?.hash != null;
   }
 }

@@ -28,12 +28,8 @@ export class TransactionService {
     try {
       const txs = await this.repository.getUndecidedTransactions();
       for (const tx of txs) {
-        try {
-          await this.client.getTx(tx.chainId);
-          await this.repository.save(tx.foundOnBlockchain());
-        } catch {
-          await this.repository.save(tx.notFoundOnBlockchain());
-        }
+        const chainTx = await this.client.getTx(tx.chainId);
+        await this.repository.save(chainTx ? tx.foundOnBlockchain() : tx.notFoundOnBlockchain());
       }
     } catch (e) {
       console.error('Exception during transaction check:', e);
