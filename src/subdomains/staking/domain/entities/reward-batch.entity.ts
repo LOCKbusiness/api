@@ -82,6 +82,6 @@ export class RewardBatch extends IEntity {
   //*** HELPER METHODS ***//
 
   private fixRoundingMismatch(): void {
-    this.rewards = Util.fixRoundingMismatch(this.rewards, 'targetAmount', this.targetAmount, 16);
+    this.rewards = Util.fixRoundingMismatch(this.rewards, 'targetAmount', this.targetAmount, 10);
   }
 }
