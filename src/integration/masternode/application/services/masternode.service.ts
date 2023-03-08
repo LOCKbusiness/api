@@ -181,13 +181,17 @@ export class MasternodeService {
     const tmsInfo = await Promise.all(activeMasternodes.map((mn) => this.getMasternodeTms(mn.creationHash)));
 
     return activeMasternodes.sort((a, b) => {
-      // 1. order by server (server with least running nodes)
+      // 1. order by count of running nodes
       const aCount = mnsByServer.get(a.server).length;
       const bCount = mnsByServer.get(b.server).length;
       if (aCount > bCount) return 1;
       if (aCount < bCount) return -1;
 
-      // 2. order by TMS
+      // 2. order by server name
+      if (a.server > b.server) return 1;
+      if (a.server < b.server) return -1;
+
+      // 3. order by TMS
       return (
         tmsInfo.find((tms) => tms.hash === a.creationHash).tms - tmsInfo.find((tms) => tms.hash === b.creationHash).tms
       );
