@@ -8,6 +8,8 @@ import { NetworkName } from '@defichain/jellyfish-network';
 
 export enum Process {
   PAY_IN = 'PayIn',
+  DEX = 'Dex',
+  PAY_OUT = 'PayOut',
   STAKING_DEPOSIT = 'StakingDeposit',
   STAKING_WITHDRAWAL = 'StakingWithdrawal',
   STAKING_LIQUIDITY_MANAGEMENT = 'StakingLiquidityManagement',
