@@ -80,10 +80,26 @@ describe('MasternodeService', () => {
       { id: 13, server: 'serverE', state: MasternodeState.IDLE },
       { id: 14, server: 'serverE', state: MasternodeState.IDLE },
       { id: 15, server: 'serverE', state: MasternodeState.IDLE },
+      { id: 16, server: 'serverC', state: MasternodeState.IDLE },
     ]);
 
     const masternodes = await service.getOrderedForResigning();
 
     expect(masternodes.map((m) => m.id)).toMatchObject([12, 2, 8, 9, 1, 3]);
+  });
+
+  it('should return order alphabetically if running node count is the same', async () => {
+    Setup.MasternodesToResign([
+      { id: 1, creationHash: 'hash1', server: 'serverA', tms: [5], state: MasternodeState.ENABLED },
+      { id: 2, creationHash: 'hash2', server: 'serverC', tms: [0], state: MasternodeState.ENABLED },
+      { id: 3, creationHash: 'hash3', server: 'serverB', tms: [23], state: MasternodeState.ENABLED },
+      { id: 4, creationHash: 'hash4', server: 'serverA', tms: [2], state: MasternodeState.ENABLED },
+      { id: 5, creationHash: 'hash5', server: 'serverC', tms: [10], state: MasternodeState.ENABLED },
+      { id: 6, creationHash: 'hash6', server: 'serverB', tms: [42], state: MasternodeState.ENABLED },
+    ]);
+
+    const masternodes = await service.getOrderedForResigning();
+
+    expect(masternodes.map((m) => m.id)).toMatchObject([4, 1, 3, 6, 2, 5]);
   });
 });
