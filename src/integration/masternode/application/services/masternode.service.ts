@@ -43,26 +43,44 @@ export class MasternodeService {
     try {
       if (!Config.mydefichain.username) return;
 
-      const masternodeOperators = await this.repository.find({
-        select: ['operator'],
-      });
+      // update/create operators
+      const masternodes = await this.getAll();
+      const currentOperators = await this.getCurrentOperators();
 
-      const masternodeServerList = await this.settingService.get('masternodeServerList');
-
-      for (const server of masternodeServerList.split(',')) {
-        const operators = await this.callApi<string[]>(`http://${server}.mydefichain.com/api/operatoraddresses`, 'GET');
-        const missingOperators = operators.filter(
-          (item) => masternodeOperators.map((masternode) => masternode.operator).indexOf(item) < 0,
-        );
-
-        for (const operator of missingOperators) {
-          const newOperator = this.repository.create({ operator, server });
-          await this.repository.save(newOperator);
+      for (const [server, operators] of currentOperators.entries()) {
+        for (const operator of operators) {
+          const masternode = masternodes.find((o) => o.operator === operator);
+          if (!masternode) {
+            // create new masternode
+            const newMasternode = this.repository.create({ operator, server });
+            await this.repository.save(newMasternode);
+          } else if (masternode.server !== server) {
+            // update server
+            await this.repository.update(masternode.id, { server });
+          }
         }
       }
+
+      // delete removed operators
+      const allOperators = Array.from(currentOperators.values()).reduce((prev, curr) => prev.concat(curr), []);
+      const idleMasternodes = await this.getAllWithStates([MasternodeState.IDLE]);
+      const masternodesToDelete = idleMasternodes.filter((mn) => !allOperators.some((o) => o === mn.operator));
+      await this.repository.delete(masternodesToDelete.map((mn) => mn.id));
     } catch (e) {
       console.error('Exception during masternode sync:', e);
     }
+  }
+
+  private async getCurrentOperators(): Promise<Map<string, string[]>> {
+    const servers = new Map<string, string[]>();
+
+    const masternodeServerList = await this.settingService.get('masternodeServerList');
+    for (const server of masternodeServerList.split(',')) {
+      const operators = await this.callApi<string[]>(`http://${server}.mydefichain.com/api/operatoraddresses`, 'GET');
+      servers.set(server, operators);
+    }
+
+    return servers;
   }
 
   // --- MASTERNODE BLOCK CHECK --- //
