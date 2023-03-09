@@ -35,9 +35,9 @@ export class MasternodeService {
     nodeService.getConnectedNode(NodeType.REW).subscribe((c) => (this.client = c));
   }
 
-  // --- MASTERNODE SYNC --- //
+  // --- OPERATOR SYNC --- //
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
-  async syncMasternodes(): Promise<void> {
+  async syncOperators(): Promise<void> {
     if (Config.processDisabled(Process.MASTERNODE)) return;
 
     try {

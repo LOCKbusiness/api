@@ -25,6 +25,14 @@ export class MasternodeController {
 
   // --- ADMIN --- //
 
+  @Post('operator-sync')
+  @ApiBearerAuth()
+  @ApiExcludeEndpoint()
+  @UseGuards(AuthGuard(), new RoleGuard(WalletRole.ADMIN))
+  async syncOperators() {
+    await this.masternodeService.syncOperators();
+  }
+
   @Get('unpaid-fee')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
