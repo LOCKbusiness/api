@@ -212,7 +212,6 @@ export class Configuration {
     amount: {
       max: 300, // quantity of UTXOs
     },
-    split: 100, // UTXO
     merge: 100, // UTXO
   };
 
