@@ -89,6 +89,16 @@ describe('UtxoManagementService', () => {
     expect(transactionExecutionService.splitBiggestUtxo).toBeCalledTimes(0);
   });
 
+  it('should not merge if count is above 300 and merge amount would result in a split by 100', async () => {
+    const unspent = new Array(400).fill(1).map(() => createUnspent(19801));
+    Setup.Unspent(unspent);
+
+    await service.checkUtxos();
+
+    expect(transactionExecutionService.mergeSmallestUtxos).toBeCalledTimes(0);
+    expect(transactionExecutionService.splitBiggestUtxo).toBeCalledTimes(0);
+  });
+
   it('should split by 2 if more than 300 UTXOs and biggest is 20001', async () => {
     const unspent = new Array(400).fill(1).map((_, i) => createUnspent(i === 345 ? 20001 : i));
     Setup.Unspent(unspent);

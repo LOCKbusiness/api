@@ -1,7 +1,7 @@
+import { AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import BigNumber from 'bignumber.js';
-import { UtxoStatistics } from 'src/blockchain/ain/jellyfish/domain/entities/utxo-statistics';
 import { UtxoProviderService } from 'src/blockchain/ain/jellyfish/services/utxo-provider.service';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
@@ -44,16 +44,20 @@ export class UtxoManagementService {
       return;
     }
 
-    const { quantity, biggest } = await this.getStatistics(Config.staking.liquidity.address);
+    const unspent = await this.getUnspentSortedBySize(Config.staking.liquidity.address);
+
+    const biggest = new BigNumber(unspent[0]?.vout.value);
+    const quantity = unspent.length;
+    const possibleMergeAmount = this.sum(unspent.slice(-Config.utxo.merge));
 
     if (biggest.gte(Config.utxo.minSplitValue)) {
-      const splitBy = Math.ceil(biggest.div(Config.utxo.minSplitValue).toNumber());
-
+      // split biggest UTXO
       await this.transactionExecutionService.splitBiggestUtxo({
         address: Config.staking.liquidity.address,
-        split: splitBy,
+        split: this.getSplitCount(biggest),
       });
-    } else if (quantity > Config.utxo.amount.max) {
+    } else if (quantity > Config.utxo.amount.max && this.getSplitCount(possibleMergeAmount) < Config.utxo.merge) {
+      // merge smallest UTXOs
       await this.transactionExecutionService.mergeSmallestUtxos({
         address: Config.staking.liquidity.address,
         merge: Config.utxo.merge,
@@ -61,10 +65,16 @@ export class UtxoManagementService {
     }
   }
 
-  private async getStatistics(address: string): Promise<UtxoStatistics> {
+  private async getUnspentSortedBySize(address: string): Promise<AddressUnspent[]> {
     const unspent = await this.utxoProviderService.retrieveAllUnspent(address);
-    const sortedUnspent = unspent?.sort(UtxoProviderService.orderDescending);
+    return unspent?.sort(UtxoProviderService.orderDescending) ?? [];
+  }
 
-    return { quantity: unspent?.length ?? 0, biggest: new BigNumber(sortedUnspent?.[0]?.vout.value) };
+  private getSplitCount(amount: BigNumber): number {
+    return Math.ceil(amount.div(Config.utxo.minSplitValue).toNumber());
+  }
+
+  private sum(unspent: AddressUnspent[]): BigNumber {
+    return BigNumber.sum(...unspent.map((u) => new BigNumber(u.vout.value)));
   }
 }
