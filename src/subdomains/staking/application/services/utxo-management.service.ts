@@ -1,4 +1,3 @@
-import { AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import BigNumber from 'bignumber.js';
@@ -45,17 +44,16 @@ export class UtxoManagementService {
       return;
     }
 
-    const utxoStatistics = await this.getStatistics(Config.staking.liquidity.address);
-    if (utxoStatistics.biggest.gte(Config.utxo.minSplitValue)) {
+    const { quantity, biggest } = await this.getStatistics(Config.staking.liquidity.address);
+
+    if (biggest.gte(Config.utxo.minSplitValue)) {
+      const splitBy = Math.ceil(biggest.div(Config.utxo.minSplitValue).toNumber());
+
       await this.transactionExecutionService.splitBiggestUtxo({
         address: Config.staking.liquidity.address,
-        split: Config.utxo.split,
+        split: splitBy,
       });
-    } else if (utxoStatistics.quantity > Config.utxo.amount.max) {
-      if (utxoStatistics.amountOfMerged && utxoStatistics.amountOfMerged.gt(Config.utxo.minSplitValue)) {
-        console.log(`Merge would exceed limit of ${utxoStatistics.amountOfMerged.toString()}`);
-        return;
-      }
+    } else if (quantity > Config.utxo.amount.max) {
       await this.transactionExecutionService.mergeSmallestUtxos({
         address: Config.staking.liquidity.address,
         merge: Config.utxo.merge,
@@ -65,16 +63,8 @@ export class UtxoManagementService {
 
   private async getStatistics(address: string): Promise<UtxoStatistics> {
     const unspent = await this.utxoProviderService.retrieveAllUnspent(address);
-    const quantity = unspent?.length ?? 0;
     const sortedUnspent = unspent?.sort(UtxoProviderService.orderDescending);
-    const biggest = new BigNumber(sortedUnspent?.[0]?.vout.value);
-    const amountOfMerged =
-      (unspent?.length ?? 0) > Config.utxo.merge ? this.sum(sortedUnspent?.slice(-Config.utxo.merge)) : undefined;
 
-    return { quantity, biggest, amountOfMerged };
-  }
-
-  private sum(unspent: AddressUnspent[]): BigNumber {
-    return new BigNumber(unspent.map((u) => +u.vout.value).reduce((curr, prev) => curr + prev));
+    return { quantity: unspent?.length ?? 0, biggest: new BigNumber(sortedUnspent?.[0]?.vout.value) };
   }
 }
