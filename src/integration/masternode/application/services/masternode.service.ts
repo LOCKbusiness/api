@@ -65,9 +65,10 @@ export class MasternodeService {
       const allOperators = Array.from(currentOperators.values()).reduce((prev, curr) => prev.concat(curr), []);
       const idleMasternodes = await this.getAllWithStates([MasternodeState.IDLE]);
       const masternodesToDelete = idleMasternodes.filter((mn) => !allOperators.some((o) => o === mn.operator));
-      await this.repository.delete(masternodesToDelete.map((mn) => mn.id));
+
+      if (masternodesToDelete.length > 0) await this.repository.delete(masternodesToDelete.map((mn) => mn.id));
     } catch (e) {
-      console.error('Exception during masternode sync:', e);
+      console.error('Exception during operator sync:', e);
     }
   }
 
