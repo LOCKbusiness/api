@@ -186,6 +186,6 @@ export class Staking extends IEntity {
       throw new Error(`Cannot calculate reference Fiat amount of ${assetName}/${fiatName} , price value is 0`);
     }
 
-    return Util.round(assetAmount * price.price, 2);
+    return Util.round(assetAmount * price.price, 8);
   }
 }
