@@ -4,7 +4,6 @@ import { createMock } from '@golevelup/ts-jest';
 import { TokenData, Tokens } from '@defichain/whale-api-client/dist/api/tokens';
 import { TestUtil } from 'src/shared/__tests__/test-util';
 import { Transaction, Transactions } from '@defichain/whale-api-client/dist/api/transactions';
-import { Stats, StatsData } from '@defichain/whale-api-client/dist/api/stats';
 import { SchedulerRegistry } from '@nestjs/schedule';
 
 describe('WhaleClient', () => {
@@ -14,20 +13,17 @@ describe('WhaleClient', () => {
   let apiClient: WhaleApiClient;
   let tokens = createMock<Tokens>();
   let transactions = createMock<Transactions>();
-  let stats = createMock<Stats>();
 
   beforeEach(async () => {
     scheduler = createMock<SchedulerRegistry>();
     apiClient = createMock<WhaleApiClient>();
     tokens = createMock<Tokens>();
     transactions = createMock<Transactions>();
-    stats = createMock<Stats>();
 
     jest.spyOn(scheduler, 'addInterval').mockImplementation((_, interval: NodeJS.Timer) => clearInterval(interval));
 
     TestUtil.setProperty(apiClient, 'tokens', tokens);
     TestUtil.setProperty(apiClient, 'transactions', transactions);
-    TestUtil.setProperty(apiClient, 'stats', stats);
 
     client = new WhaleClient(scheduler, apiClient);
   });
@@ -64,41 +60,34 @@ describe('WhaleClient', () => {
     expect(tokenResult).toStrictEqual([{ id: '1' }, { id: '2' }, { id: '3' }]);
   });
 
-  it('should poll transactions', async () => {
-    jest.spyOn(stats, 'get').mockResolvedValue({ count: { blocks: 1 } } as StatsData);
+  it('should check transactions', async () => {
     jest.spyOn(transactions, 'get').mockResolvedValue({ id: 'tx-id' } as Transaction);
 
-    setTimeout(() => client['pollTransactions']());
+    setTimeout(() => client['checkTransactions']());
 
     const tokenResult = await client.waitForTx('tx-id');
     expect(tokenResult).toEqual('tx-id');
   });
 
-  it('should not poll on same block height', async () => {
-    jest.spyOn(stats, 'get').mockResolvedValue({ count: { blocks: 0 } } as StatsData);
+  it('should not check, if no transactions', async () => {
+    await client['checkTransactions']();
 
-    setTimeout(() => client['pollTransactions']());
-
-    await client.waitForTx('tx-id', 1).catch(() => undefined);
-
-    expect(transactions.get).toHaveBeenCalledTimes(0);
+    expect(transactions.get).toBeCalledTimes(0);
   });
 
-  it('should poll multiple transactions', async () => {
-    jest.spyOn(stats, 'get').mockResolvedValue({ count: { blocks: 1 } } as StatsData);
+  it('should check multiple transactions', async () => {
     jest.spyOn(transactions, 'get').mockResolvedValue({ id: 'tx-id' } as Transaction);
 
-    setTimeout(() => client['pollTransactions']());
+    setTimeout(() => client['checkTransactions']());
 
     const tokenResult = await Promise.all([client.waitForTx('tx-id-1'), client.waitForTx('tx-id-2')]);
     expect(tokenResult).toHaveLength(2);
   });
 
-  it('should poll multiple same transactions', async () => {
-    jest.spyOn(stats, 'get').mockResolvedValue({ count: { blocks: 1 } } as StatsData);
+  it('should check multiple same transactions', async () => {
     jest.spyOn(transactions, 'get').mockResolvedValue({ id: 'tx-id' } as Transaction);
 
-    setTimeout(() => client['pollTransactions']());
+    setTimeout(() => client['checkTransactions']());
 
     const tokenResult = await Promise.all([client.waitForTx('tx-id'), client.waitForTx('tx-id')]);
     expect(tokenResult).toHaveLength(2);
@@ -106,11 +95,5 @@ describe('WhaleClient', () => {
 
   it('should throw on timeout', async () => {
     await expect(client.waitForTx('tx-id', 1)).rejects.toThrowError('tx-id timed out');
-  });
-
-  it('should not fetch block height, if no transactions', async () => {
-    await client['pollTransactions']();
-
-    expect(stats.get).toBeCalledTimes(0);
   });
 });
