@@ -143,7 +143,7 @@ export class Configuration {
   whale = {
     version: 'v0',
     network: this.network,
-    url: 'https://ocean.mydefichain.com',
+    url: process.env.OCEAN_URLS?.split(',')[0],
   };
 
   payIn = {

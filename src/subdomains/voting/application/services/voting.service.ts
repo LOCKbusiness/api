@@ -164,7 +164,7 @@ export class VotingService implements OnModuleInit {
     if (Config.processDisabled(Process.MASTERNODE)) return;
 
     try {
-      const currentBlock = await this.client.getBlockHeight();
+      const currentBlock = this.client.currentBlockHeight;
       const currentProposals = await this.getCfpList();
       const existingProposals = await this.voteRepo
         .createQueryBuilder('vote')

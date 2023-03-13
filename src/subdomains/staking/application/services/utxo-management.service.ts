@@ -71,6 +71,7 @@ export class UtxoManagementService {
   }
 
   private getSplitCount(amount: BigNumber): number {
+    // split to get below min. split value
     return Math.ceil(amount.div(Config.utxo.minSplitValue).toNumber());
   }
 
