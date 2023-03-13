@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { BaseRepository } from 'src/shared/repositories/base.repository';
 import { Util } from 'src/shared/util';
-import { EntityManager, IsNull, LessThan, Not, Repository } from 'typeorm';
+import { EntityManager, IsNull, LessThan, Not } from 'typeorm';
 import { Transaction } from '../../domain/entities/transaction.entity';
 
 @Injectable()
-export class TransactionRepository extends Repository<Transaction> {
+export class TransactionRepository extends BaseRepository<Transaction> {
   constructor(manager: EntityManager) {
     super(Transaction, manager);
   }

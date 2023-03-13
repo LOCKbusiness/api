@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { Between, EntityManager, FindOperator, In, Repository } from 'typeorm';
+import { BaseRepository } from 'src/shared/repositories/base.repository';
+import { Between, EntityManager, FindOperator, In } from 'typeorm';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { WithdrawalStatus } from '../../domain/enums';
 
 @Injectable()
-export class WithdrawalRepository extends Repository<Withdrawal> {
+export class WithdrawalRepository extends BaseRepository<Withdrawal> {
   constructor(manager: EntityManager) {
     super(Withdrawal, manager);
   }
