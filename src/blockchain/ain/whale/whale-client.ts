@@ -14,7 +14,7 @@ import { Util } from 'src/shared/util';
 export class WhaleClient {
   private readonly secondsPerBlock = 30;
   private readonly client: WhaleApiClient;
-  private readonly transactions = new AsyncMap<string, string>();
+  private readonly transactions = new AsyncMap<string, string>(this.constructor.name);
   private readonly txLock = new Lock(300);
 
   readonly #blockHeight: BehaviorSubject<number>;
