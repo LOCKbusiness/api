@@ -15,8 +15,6 @@ import { WithdrawalRepository } from '../repositories/withdrawal.repository';
 
 @Injectable()
 export class StakingFiatReferenceService {
-  private readonly lock = new Lock(7200);
-
   constructor(
     private readonly depositRepo: DepositRepository,
     private readonly withdrawalRepo: WithdrawalRepository,
@@ -27,22 +25,15 @@ export class StakingFiatReferenceService {
   //*** JOBS ***//
 
   @Cron(CronExpression.EVERY_MINUTE)
+  @Lock(7200)
   async calculateFiatReferenceAmounts(): Promise<void> {
-    if (!this.lock.acquire()) return;
+    const deposits = await this.getDepositsWithoutFiatReferences();
+    const withdrawals = await this.getWithdrawalsWithoutFiatReferences();
+    const rewards = await this.getRewardsWithoutFiatReferences();
 
-    try {
-      const deposits = await this.getDepositsWithoutFiatReferences();
-      const withdrawals = await this.getWithdrawalsWithoutFiatReferences();
-      const rewards = await this.getRewardsWithoutFiatReferences();
-
-      const relevantAssets = this.defineRelevantAssets(deposits, withdrawals, rewards);
-      const prices = await this.getReferencePrices(relevantAssets);
-      await this.calculateFiatReferences(deposits, withdrawals, rewards, prices);
-    } catch (e) {
-      console.error('Exception during staking deposits, withdrawals and rewards fiat reference calculation:', e);
-    } finally {
-      this.lock.release();
-    }
+    const relevantAssets = this.defineRelevantAssets(deposits, withdrawals, rewards);
+    const prices = await this.getReferencePrices(relevantAssets);
+    await this.calculateFiatReferences(deposits, withdrawals, rewards, prices);
   }
 
   //*** HELPER METHODS ***//

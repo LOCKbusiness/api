@@ -18,8 +18,6 @@ import { Config, Process } from 'src/config/config';
 
 @Injectable()
 export class PayoutService {
-  private readonly processOrdersLock = new Lock(7200);
-
   constructor(
     private readonly payoutStrategies: PayoutStrategiesFacade,
     private readonly prepareStrategies: PrepareStrategiesFacade,
@@ -69,20 +67,14 @@ export class PayoutService {
   //*** JOBS ***//
 
   @Cron(CronExpression.EVERY_30_SECONDS)
+  @Lock(7200)
   async processOrders(): Promise<void> {
     if (Config.processDisabled(Process.PAY_OUT)) return;
-    if (!this.processOrdersLock.acquire()) return;
 
-    try {
-      await this.checkExistingOrders();
-      await this.prepareNewOrders();
-      await this.payoutOrders();
-      await this.processFailedOrders();
-    } catch (e) {
-      console.error('Error while processing payout orders', e);
-    } finally {
-      this.processOrdersLock.release();
-    }
+    await this.checkExistingOrders();
+    await this.prepareNewOrders();
+    await this.payoutOrders();
+    await this.processFailedOrders();
   }
 
   //*** HELPER METHODS ***//

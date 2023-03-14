@@ -25,7 +25,6 @@ import { StakingService } from './staking.service';
 
 @Injectable()
 export class StakingDepositService {
-  private readonly lock = new Lock(7200);
   private whaleClient?: WhaleClient;
 
   constructor(
@@ -84,18 +83,12 @@ export class StakingDepositService {
   //*** JOBS ***//
 
   @Cron(CronExpression.EVERY_MINUTE)
+  @Lock(7200)
   async checkBlockchainDepositInputs(): Promise<void> {
     if (Config.processDisabled(Process.STAKING_DEPOSIT)) return;
-    if (!this.lock.acquire()) return;
 
-    try {
-      await this.recordDepositTransactions();
-      await this.forwardDepositsToStaking();
-    } catch (e) {
-      console.error('Exception during staking deposit checks:', e);
-    } finally {
-      this.lock.release();
-    }
+    await this.recordDepositTransactions();
+    await this.forwardDepositsToStaking();
   }
 
   @Cron(CronExpression.EVERY_HOUR)
