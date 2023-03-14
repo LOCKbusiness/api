@@ -26,9 +26,6 @@ import { StakingService } from './staking.service';
 
 @Injectable()
 export class StakingRewardService {
-  private readonly prepareLock = new Lock(7200);
-  private readonly processLock = new Lock(7200);
-
   constructor(
     private readonly authorize: StakingAuthorizeService,
     private readonly factory: StakingFactory,
@@ -143,32 +140,20 @@ export class StakingRewardService {
   }
 
   @Cron(CronExpression.EVERY_10_MINUTES)
+  @Lock(7200)
   async prepareRewards(): Promise<void> {
     if (Config.processDisabled(Process.STAKING_REWARD_PAYOUT)) return;
-    if (!this.prepareLock.acquire()) return;
 
-    try {
-      await this.dexService.prepareDfiToken();
-      await this.batchService.batchRewardsByAssets();
-    } catch (e) {
-      console.error('Error while preparing rewards', e);
-    } finally {
-      this.prepareLock.release();
-    }
+    await this.dexService.prepareDfiToken();
+    await this.batchService.batchRewardsByAssets();
   }
 
   @Cron(CronExpression.EVERY_MINUTE)
+  @Lock(7200)
   async processRewards(): Promise<void> {
     if (Config.processDisabled(Process.STAKING_REWARD_PAYOUT)) return;
-    if (!this.processLock.acquire()) return;
 
-    try {
-      await this.dexService.secureLiquidity();
-      await this.outService.payoutRewards();
-    } catch (e) {
-      console.error('Error while processing rewards', e);
-    } finally {
-      this.processLock.release();
-    }
+    await this.dexService.secureLiquidity();
+    await this.outService.payoutRewards();
   }
 }

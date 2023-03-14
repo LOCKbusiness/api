@@ -27,8 +27,6 @@ import { Config, Process } from 'src/config/config';
 
 @Injectable()
 export class DexService {
-  private readonly verifyPurchaseOrdersLock = new Lock(1800);
-
   constructor(
     private readonly checkStrategies: CheckLiquidityStrategies,
     private readonly purchaseStrategies: PurchaseLiquidityStrategies,
@@ -235,20 +233,16 @@ export class DexService {
   //*** JOBS ***//
 
   @Cron(CronExpression.EVERY_30_SECONDS)
+  @Lock(1800)
   async finalizePurchaseOrders(): Promise<void> {
     if (Config.processDisabled(Process.DEX)) return;
-    if (!this.verifyPurchaseOrdersLock.acquire()) return;
 
-    try {
-      const standingOrders = await this.liquidityOrderRepo.findBy({
-        isReady: false,
-        txId: Not(IsNull()),
-      });
+    const standingOrders = await this.liquidityOrderRepo.findBy({
+      isReady: false,
+      txId: Not(IsNull()),
+    });
 
-      await this.addPurchaseDataToOrders(standingOrders);
-    } finally {
-      this.verifyPurchaseOrdersLock.release();
-    }
+    await this.addPurchaseDataToOrders(standingOrders);
   }
 
   // *** HELPER METHODS *** //

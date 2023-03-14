@@ -17,8 +17,6 @@ import { AssetService } from 'src/shared/models/asset/asset.service';
 
 @Injectable()
 export class LiquidityManagementService {
-  private readonly lock = new Lock(1800);
-
   private client: WhaleClient;
 
   constructor(
@@ -32,18 +30,12 @@ export class LiquidityManagementService {
   }
 
   @Cron(CronExpression.EVERY_MINUTE)
+  @Lock(1800)
   async doTasks() {
     if (Config.processDisabled(Process.STAKING_LIQUIDITY_MANAGEMENT)) return;
-    if (!this.lock.acquire()) return;
 
-    try {
-      await this.checkMasternodesInProcess();
-      await this.checkLiquidity();
-    } catch (e) {
-      console.error('Exception during masternodes cronjob:', e);
-    } finally {
-      this.lock.release();
-    }
+    await this.checkMasternodesInProcess();
+    await this.checkLiquidity();
   }
 
   // --- LIQUIDITY MANAGEMENT --- //

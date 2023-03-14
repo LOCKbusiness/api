@@ -15,7 +15,6 @@ export class WhaleClient {
   private readonly secondsPerBlock = 30;
   private readonly client: WhaleApiClient;
   private readonly transactions = new AsyncMap<string, string>(this.constructor.name);
-  private readonly txLock = new Lock(300);
 
   readonly #blockHeight: BehaviorSubject<number>;
 
@@ -133,18 +132,11 @@ export class WhaleClient {
     }
   }
 
+  @Lock(300)
   private async checkTransactions() {
-    if (!this.txLock.acquire()) return;
+    if (this.transactions.get().length === 0) return;
 
-    try {
-      if (this.transactions.get().length === 0) return;
-
-      await Util.doInBatches(this.transactions.get(), (txIds) => Promise.all(txIds.map((tx) => this.checkTx(tx))), 10);
-    } catch (e) {
-      console.error('Exception during transaction polling:', e);
-    } finally {
-      this.txLock.release();
-    }
+    await Util.doInBatches(this.transactions.get(), (txIds) => Promise.all(txIds.map((tx) => this.checkTx(tx))), 10);
   }
 
   private async checkTx(txId: string) {

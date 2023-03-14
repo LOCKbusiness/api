@@ -25,8 +25,6 @@ import { Asset } from 'src/shared/models/asset/asset.entity';
 
 @Injectable()
 export class StakingWithdrawalService {
-  private readonly lock = new Lock(1800);
-
   constructor(
     private readonly withdrawalRepo: WithdrawalRepository,
     private readonly authorize: StakingAuthorizeService,
@@ -176,27 +174,21 @@ export class StakingWithdrawalService {
   // --- JOBS --- //
 
   @Cron(CronExpression.EVERY_MINUTE)
+  @Lock(1800)
   async doWithdrawals() {
     if (Config.processDisabled(Process.STAKING_WITHDRAWAL)) return;
-    if (!this.lock.acquire()) return;
 
-    try {
-      const withdrawals = await this.withdrawalRepo.getAllPending();
-      if (withdrawals.length <= 0) return;
+    const withdrawals = await this.withdrawalRepo.getAllPending();
+    if (withdrawals.length <= 0) return;
 
-      const possibleWithdrawals = await this.deFiChainService.getPossibleWithdrawals(withdrawals);
-      if (possibleWithdrawals.length <= 0) return;
+    const possibleWithdrawals = await this.deFiChainService.getPossibleWithdrawals(withdrawals);
+    if (possibleWithdrawals.length <= 0) return;
 
-      await Promise.all(
-        possibleWithdrawals.map((w) =>
-          this.payoutWithdrawal(w.id).catch((e) => console.error(`Failed to payout withdrawal ${w.id}:`, e)),
-        ),
-      );
-    } catch (e) {
-      console.error('Exception during withdrawals cronjob:', e);
-    } finally {
-      this.lock.release();
-    }
+    await Promise.all(
+      possibleWithdrawals.map((w) =>
+        this.payoutWithdrawal(w.id).catch((e) => console.error(`Failed to payout withdrawal ${w.id}:`, e)),
+      ),
+    );
   }
 
   @Cron(CronExpression.EVERY_MINUTE)

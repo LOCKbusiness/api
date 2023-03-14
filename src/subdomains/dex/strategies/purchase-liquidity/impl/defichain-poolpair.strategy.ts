@@ -23,8 +23,6 @@ import { Config, Process } from 'src/config/config';
 
 @Injectable()
 export class DeFiChainPoolPairStrategy extends PurchaseLiquidityStrategy {
-  private readonly verifyDerivedOrdersLock = new Lock(1800);
-
   constructor(
     readonly notificationService: NotificationService,
     private readonly settingService: SettingService,
@@ -66,10 +64,9 @@ export class DeFiChainPoolPairStrategy extends PurchaseLiquidityStrategy {
   }
 
   @Cron(CronExpression.EVERY_30_SECONDS)
+  @Lock(1800)
   async verifyDerivedOrders(): Promise<void> {
     if (Config.processDisabled(Process.DEX)) return;
-    if ((await this.settingService.get('purchase-poolpair-liquidity')) !== 'on') return;
-    if (!this.verifyDerivedOrdersLock.acquire()) return;
 
     const pendingParentOrders = await this.liquidityOrderRepo.findBy({
       context: Not(LiquidityOrderContext.CREATE_POOL_PAIR),
@@ -94,8 +91,6 @@ export class DeFiChainPoolPairStrategy extends PurchaseLiquidityStrategy {
         continue;
       }
     }
-
-    this.verifyDerivedOrdersLock.release();
   }
 
   protected getFeeAsset(): Promise<Asset> {
