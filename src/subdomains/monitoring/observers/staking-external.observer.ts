@@ -13,8 +13,15 @@ export class StakingExternalObserver extends MetricObserver<StakingExternalData>
     super(monitoringService, 'staking', 'external');
   }
 
+  init(data: StakingExternalData) {
+    // map to date objects
+    Object.keys(data).forEach((key) => (data[key] = new Date(data[key])));
+
+    this.emit(data);
+  }
+
   async onWebhook(deviceId: string): Promise<void> {
-    const data = { ...this.$data.value, [deviceId]: new Date() };
+    const data = { ...this.data, [deviceId]: new Date() };
 
     this.emit(data);
   }
