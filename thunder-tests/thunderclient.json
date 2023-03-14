@@ -609,5 +609,19 @@
       "form": []
     },
     "tests": []
+  },
+  {
+    "_id": "107bca9c-3678-4466-9f8d-920bf812720f",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "6a988eeb-70ef-4bf8-87fb-d8891ce8400f",
+    "name": "Sync operators",
+    "url": "{{url}}/v1/masternode/operator-sync",
+    "method": "POST",
+    "sortNum": 100000,
+    "created": "2023-03-09T23:41:31.893Z",
+    "modified": "2023-03-09T23:41:58.062Z",
+    "headers": [],
+    "params": [],
+    "tests": []
   }
 ]
