@@ -74,19 +74,21 @@ export class StakingFiatReferenceService {
 
   private async getReferencePrices(uniqueAssetIds: number[]): Promise<Price[]> {
     const prices = [];
+    const errors = [];
 
     for (const assetId of uniqueAssetIds) {
       for (const fiatName of Object.values(Fiat)) {
         try {
           const price = await this.priceProvider.getFiatPrice(fiatName, assetId);
-
           prices.push(price);
         } catch (e) {
-          console.error(`Could not find fiat price for assetId ${assetId} and fiat '${fiatName}'`, e);
-          continue;
+          console.debug(`Could not find fiat price for assetId ${assetId} and fiat '${fiatName}':`, e);
+          errors.push(`${assetId}->${fiatName}`);
         }
       }
     }
+
+    if (errors.length > 0) console.error('Could not find following fiat prices:', errors);
 
     return prices;
   }
