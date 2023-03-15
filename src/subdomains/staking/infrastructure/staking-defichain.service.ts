@@ -18,6 +18,7 @@ import { RawTxService } from 'src/blockchain/ain/jellyfish/services/raw-tx.servi
 import { RawTxDto } from 'src/blockchain/ain/jellyfish/dto/raw-tx.dto';
 import { StakingTypes } from '../domain/entities/staking.entity';
 import { AssetQuery } from 'src/shared/models/asset/asset.service';
+import { Util } from 'src/shared/util';
 
 @Injectable()
 export class StakingDeFiChainService {
@@ -182,11 +183,15 @@ export class StakingDeFiChainService {
   }
 
   private getPossibleWithdrawalsFor(balance: BigNumber, asset: AssetQuery, withdrawals: Withdrawal[]): Withdrawal[] {
+    const priorityThreshold = Util.daysBefore(1);
+
     const sortedWithdrawals = withdrawals.filter((w) => w.asset.isEqual(asset)).sort((a, b) => a.amount - b.amount);
+    const priorityWithdrawals = sortedWithdrawals.filter((w) => w.created <= priorityThreshold);
+    const standardWithdrawals = sortedWithdrawals.filter((w) => w.created > priorityThreshold);
 
     const possibleWithdrawals = [];
     let withdrawalSum = 0;
-    for (const withdrawal of sortedWithdrawals) {
+    for (const withdrawal of [...priorityWithdrawals, ...standardWithdrawals]) {
       withdrawalSum += withdrawal.amount;
       if (balance.lt(withdrawalSum)) break;
 
