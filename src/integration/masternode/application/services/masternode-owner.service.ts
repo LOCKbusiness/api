@@ -9,11 +9,15 @@ import { Config } from 'src/config/config';
 @Injectable()
 export class MasternodeOwnerService {
   provide(amount: number, usedOwners: string[]): MasternodeOwnerDto[] {
-    const filteredList = this.ownersAsList().filter((owner) => !usedOwners.includes(owner.address));
+    const filteredList = MasternodeOwnerService.ownersAsList().filter((owner) => !usedOwners.includes(owner.address));
     return filteredList.slice(0, amount);
   }
 
-  private ownersAsList(): MasternodeOwnerDto[] {
+  static isOnList(owner: string): boolean {
+    return this.ownersAsList().find((o) => o.address === owner) !== undefined;
+  }
+
+  private static ownersAsList(): MasternodeOwnerDto[] {
     switch (Config.environment) {
       case 'loc':
         return LocOwners as MasternodeOwnerDto[];

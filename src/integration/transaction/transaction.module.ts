@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BlockchainModule } from 'src/blockchain/blockchain.module';
 import { SharedModule } from 'src/shared/shared.module';
 import { MonitoringModule } from 'src/subdomains/monitoring/monitoring.module';
+import { VaultModule } from '../vault/vault.module';
 import { TransactionController } from './api/controllers/transaction.controller';
 import { TransactionCacheRepository } from './application/repositories/transaction-cache.repository';
 import { TransactionRepository } from './application/repositories/transaction.repository';
@@ -18,6 +19,7 @@ import { Transaction } from './domain/entities/transaction.entity';
     SharedModule,
     BlockchainModule,
     MonitoringModule,
+    VaultModule,
   ],
   controllers: [TransactionController],
   providers: [
