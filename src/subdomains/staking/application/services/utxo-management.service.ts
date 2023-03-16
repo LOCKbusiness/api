@@ -11,8 +11,6 @@ import { Lock } from 'src/shared/lock';
 
 @Injectable()
 export class UtxoManagementService {
-  private readonly lockUtxoManagement = new Lock(1800);
-
   private client: WhaleClient;
 
   constructor(
@@ -24,17 +22,11 @@ export class UtxoManagementService {
   }
 
   @Cron(CronExpression.EVERY_MINUTE)
+  @Lock(1800)
   async doUtxoManagement() {
     if (Config.processDisabled(Process.UTXO_MANAGEMENT)) return;
-    if (!this.lockUtxoManagement.acquire()) return;
 
-    try {
-      await this.checkUtxos();
-    } catch (e) {
-      console.error('Exception during utxo-management cronjob:', e);
-    } finally {
-      this.lockUtxoManagement.release();
-    }
+    await this.checkUtxos();
   }
 
   async checkUtxos(): Promise<void> {
@@ -71,6 +63,7 @@ export class UtxoManagementService {
   }
 
   private getSplitCount(amount: BigNumber): number {
+    // split to get below min. split value
     return Math.ceil(amount.div(Config.utxo.minSplitValue).toNumber());
   }
 

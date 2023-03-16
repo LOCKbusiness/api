@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import BigNumber from 'bignumber.js';
 import { TokenProviderService } from 'src/blockchain/ain/whale/token-provider.service';
 import { Config } from 'src/config/config';
@@ -34,19 +34,6 @@ export class YieldMachineService {
     const vault = await this.retrieveVault(parameters);
     if (!isSendFromLiq && !vault) throw new NotFoundException('Vault or address not found');
 
-    // additional checks for account to account txs
-    if (command === TransactionCommand.ACCOUNT_TO_ACCOUNT) {
-      const allowedAddresses = [
-        Config.yieldMachine.liquidity.address,
-        Config.blockchain.default.rew.address,
-        Config.yieldMachine.rewardAddress,
-        ...(await this.vaultService.getAllAddresses()),
-      ];
-
-      if (!this.isSendAllowed(parameters, allowedAddresses))
-        throw new ForbiddenException('Send parameters are not allowed');
-    }
-
     switch (command) {
       case TransactionCommand.ACCOUNT_TO_ACCOUNT:
         const token = await this.tokenProviderService.get(parameters.token);
@@ -74,13 +61,6 @@ export class YieldMachineService {
         const toToken = await this.tokenProviderService.get(parameters.toToken);
         return this.compositeSwap(parameters, +fromToken.id, +toToken.id, vault.wallet, vault.accountIndex);
     }
-  }
-
-  private isSendAllowed(parameters: SendTokenParameters, allowedAddresses: string[]): boolean {
-    return (
-      (parameters.token === 'DFI' && allowedAddresses.includes(parameters.from)) ||
-      (allowedAddresses.includes(parameters.from) && allowedAddresses.includes(parameters.to))
-    );
   }
 
   private sendToken(

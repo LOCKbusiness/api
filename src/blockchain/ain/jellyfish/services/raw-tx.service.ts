@@ -32,11 +32,11 @@ export class RawTxService {
   }
 
   async unlockUtxosOf(rawTx: RawTxDto): Promise<void> {
-    return this.call(() => Promise.resolve(this.executeUnlockUtxos(rawTx.prevouts, rawTx.scriptHex)));
+    return this.call(() => this.executeUnlockUtxos(rawTx.prevouts, rawTx.scriptHex));
   }
 
-  private executeUnlockUtxos(prevouts: Prevout[], scriptHex: string) {
-    this.utxoProvider.unlockSpentBasedOn(prevouts, RawTxUtil.parseAddressFromScriptHex(scriptHex));
+  private async executeUnlockUtxos(prevouts: Prevout[], scriptHex: string): Promise<void> {
+    await this.utxoProvider.unlockSpentBasedOn(RawTxUtil.parseAddressFromScriptHex(scriptHex), prevouts);
   }
 
   // --- HELPER METHODS --- //

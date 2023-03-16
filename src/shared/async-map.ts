@@ -8,6 +8,8 @@ export interface Subscriber<T> {
 export class AsyncMap<K, T> {
   private readonly subscribers = new Map<K, Subscriber<T>>();
 
+  constructor(public readonly name?: string) {}
+
   public wait(id: K, timeout: number): Promise<T> {
     const existing = this.subscribers.get(id);
     if (existing) return existing.promise;
@@ -16,7 +18,10 @@ export class AsyncMap<K, T> {
     const promise = new Promise<T>((resolve, reject) => {
       subscriber.resolve = resolve;
       subscriber.reject = reject;
-      subscriber.timer = setTimeout(() => this.reject(id, `${id} timed out`), timeout);
+      subscriber.timer = setTimeout(
+        () => this.reject(id, `${id} timed out` + (this.name ? ` in ${this.name}` : '')),
+        timeout,
+      );
     });
     subscriber.promise = promise;
 

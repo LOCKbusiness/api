@@ -12,7 +12,7 @@ import {
   TokenBalanceUInt32,
   PoolSwap,
 } from '@defichain/jellyfish-transaction';
-import { fromAddress, fromScriptHex } from '@defichain/jellyfish-address';
+import { fromAddress, fromScript, fromScriptHex } from '@defichain/jellyfish-address';
 import { Prevout, calculateFeeP2WPKH } from '@defichain/jellyfish-transaction-builder';
 import BigNumber from 'bignumber.js';
 import { Config } from 'src/config/config';
@@ -50,6 +50,13 @@ export class RawTxUtil {
     const network = JellyfishService.getNetwork();
     const decodedAddress = fromScriptHex(scriptHex, network.name);
     if (!decodedAddress?.address) throw new Error('Could not parse address of scriptHex');
+    return decodedAddress.address;
+  }
+
+  static parseAddressFromScript(script: Script): string {
+    const network = JellyfishService.getNetwork();
+    const decodedAddress = fromScript(script, network.name);
+    if (!decodedAddress?.address) throw new Error('Could not parse address of script');
     return decodedAddress.address;
   }
 

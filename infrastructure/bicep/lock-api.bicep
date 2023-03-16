@@ -2,6 +2,7 @@
 param location string
 param env string
 param network string
+param oceanUrls string
 
 param dbAllowAllIps bool
 param dbAdminLogin string
@@ -54,7 +55,7 @@ param yieldMachineRewardAddress string
 @secure()
 param forwardPhrase string
 
-param kycWalletId int
+param kycWalletId string
 
 param azureSubscriptionId string
 param azureTenantId string
@@ -267,6 +268,10 @@ resource apiAppService 'Microsoft.Web/sites@2018-11-01' = if (env != 'loc') {
         {
           name: 'NETWORK'
           value: network
+        }
+        {
+          name: 'OCEAN_URLS'
+          value: oceanUrls
         }
         {
           name: 'SQL_HOST'

@@ -33,7 +33,6 @@ export class VotingService implements OnModuleInit {
   };
 
   private currentResults: CfpResultDto[] = [];
-  private votingLock = new Lock(86400);
   private client: WhaleClient;
 
   constructor(
@@ -164,7 +163,7 @@ export class VotingService implements OnModuleInit {
     if (Config.processDisabled(Process.MASTERNODE)) return;
 
     try {
-      const currentBlock = await this.client.getBlockHeight();
+      const currentBlock = this.client.currentBlockHeight;
       const currentProposals = await this.getCfpList();
       const existingProposals = await this.voteRepo
         .createQueryBuilder('vote')
@@ -187,18 +186,12 @@ export class VotingService implements OnModuleInit {
   }
 
   @Cron(CronExpression.EVERY_5_MINUTES)
+  @Lock(86400)
   async processPendingVotes() {
     if (Config.processDisabled(Process.MASTERNODE)) return;
-    if (!this.votingLock.acquire()) return;
 
-    try {
-      await this.sendFeeUtxos();
-      await this.doVote();
-    } catch (e) {
-      console.error(`Exception during vote processing:`, e);
-    } finally {
-      this.votingLock.release();
-    }
+    await this.sendFeeUtxos();
+    await this.doVote();
   }
 
   private async sendFeeUtxos() {

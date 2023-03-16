@@ -1,151 +1,65 @@
-import { AddressUnspent as JellyfishAddressUnspent } from '@defichain/whale-api-client/dist/api/address';
+import { AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
 import { Prevout } from '@defichain/jellyfish-transaction-builder';
 import BigNumber from 'bignumber.js';
 import { SmartBuffer } from 'smart-buffer';
 import { toOPCodes } from '@defichain/jellyfish-transaction';
-import { WhaleClient } from '../../whale/whale-client';
-import { WhaleService } from '../../whale/whale.service';
 import { Injectable } from '@nestjs/common';
 import { Config } from 'src/config/config';
-import { Util } from 'src/shared/util';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { Lock } from 'src/shared/lock';
 import { UtxoSizePriority } from '../domain/enums';
 import { UtxoInformation } from '../domain/entities/utxo-information';
 import { UtxoConfig } from '../domain/entities/utxo-config';
-
-interface AddressUnspent extends JellyfishAddressUnspent {
-  id: string;
-}
-
-interface BlockedUtxo {
-  unlockAt: Date;
-  unspent: AddressUnspent;
-  address: string;
-}
+import { UtxoManagerService } from './utxo-manager.service';
 
 @Injectable()
 export class UtxoProviderService {
-  private readonly lockUtxo = new Lock(1800);
-  private addressToBlockHeight = new Map<string, number>();
-  private unspent = new Map<string, AddressUnspent[]>();
-  private spent = new Map<string, BlockedUtxo[]>();
+  constructor(private readonly utxoManager: UtxoManagerService) {}
 
-  private whaleClient?: WhaleClient;
-
-  constructor(whaleService: WhaleService) {
-    whaleService.getClient().subscribe((client) => (this.whaleClient = client));
-  }
-
-  @Cron(CronExpression.EVERY_MINUTE)
-  async doUnlockChecks() {
-    if (!this.lockUtxo.acquire()) return;
-
-    try {
-      for (const [address, blockedUtxos] of this.spent) {
-        this.spent.set(
-          address,
-          blockedUtxos.filter((b) => b.unlockAt > new Date()),
-        );
-      }
-    } catch (e) {
-      console.error('Exception during UTXO unlocking:', e);
-    } finally {
-      this.lockUtxo.release();
-    }
-  }
-
-  unlockSpentBasedOn(prevouts: Prevout[], address: string): void {
-    const idsToUnlock = prevouts.map(UtxoProviderService.idForPrevout);
-    const spentToUnlock = this.spent
-      .get(address)
-      ?.filter((blocked) => idsToUnlock.includes(blocked.unspent.id))
-      .map((blocked) => blocked.unspent);
-    this.unspent.set(address, (this.unspent.get(address) ?? []).concat(spentToUnlock));
-
-    const newSpent = this.spent.get(address)?.filter((blocked) => !idsToUnlock.includes(blocked.unspent.id));
-    this.spent.set(address, newSpent);
+  async retrieveAllUnspent(address: string): Promise<AddressUnspent[]> {
+    return this.utxoManager.get(address);
   }
 
   async addressHasUtxoExactAmount(address: string, amount: BigNumber): Promise<boolean> {
-    const unspent = await this.retrieveUnspent(address);
-    return unspent.find((u) => amount.isEqualTo(new BigNumber(u.vout.value))) != null;
+    const unspent = await this.retrieveAllUnspent(address);
+    return unspent.some((u) => amount.isEqualTo(new BigNumber(u.vout.value)));
   }
 
   async provideExactAmount(address: string, amount: BigNumber): Promise<UtxoInformation> {
-    const unspent = await this.retrieveUnspent(address);
-    return UtxoProviderService.parseUnspent(
-      this.markUsed(address, UtxoProviderService.provideExactAmount(address, unspent, amount)),
-    );
+    return this.provide(address, (unspent) => UtxoProviderService.provideExactAmount(address, unspent, amount));
   }
 
   async provideUntilAmount(address: string, amount: BigNumber, config: UtxoConfig): Promise<UtxoInformation> {
-    const unspent = await this.retrieveUnspent(address);
-    return UtxoProviderService.parseUnspent(
-      this.markUsed(address, UtxoProviderService.provideUntilAmount(unspent, amount, config)),
-    );
+    return this.provide(address, (unspent) => UtxoProviderService.provideUntilAmount(unspent, amount, config));
   }
 
   async provideNumber(address: string, numberOfUtxos: number, config: UtxoConfig): Promise<UtxoInformation> {
-    const unspent = await this.retrieveUnspent(address);
-    return UtxoProviderService.parseUnspent(
-      this.markUsed(address, UtxoProviderService.provideNumber(unspent, numberOfUtxos, config)),
-    );
+    return this.provide(address, (unspent) => UtxoProviderService.provideNumber(unspent, numberOfUtxos, config));
   }
 
   async provideForDefiTx(address: string): Promise<UtxoInformation> {
-    const unspent = await this.retrieveUnspent(address);
-    return UtxoProviderService.parseUnspent(
-      this.markUsed(
-        address,
-        UtxoProviderService.provideUntilAmount(unspent, new BigNumber(0), {
-          useFeeBuffer: true,
-          sizePriority: UtxoSizePriority.FITTING,
-          customFeeBuffer: Config.blockchain.minDefiTxFeeBuffer,
-        }),
-      ),
+    return this.provide(address, (unspent) =>
+      UtxoProviderService.provideUntilAmount(unspent, new BigNumber(0), {
+        useFeeBuffer: true,
+        sizePriority: UtxoSizePriority.FITTING,
+        customFeeBuffer: Config.blockchain.minDefiTxFeeBuffer,
+      }),
     );
   }
 
-  async retrieveAllUnspent(address: string): Promise<AddressUnspent[]> {
-    return this.retrieveUnspent(address);
+  async unlockSpentBasedOn(address: string, prevouts: Prevout[]): Promise<void> {
+    await this.utxoManager.unlock(address, prevouts);
   }
 
   // --- HELPER METHODS --- //
-  private markUsed(address: string, unspent: AddressUnspent[]): AddressUnspent[] {
-    const newSpent = unspent.map((u) => {
-      return { unlockAt: Util.hoursAfter(1), unspent: u, address };
-    });
-    this.spent.set(address, (this.spent.get(address) ?? []).concat(newSpent));
-    this.unspent.set(
-      address,
-      this.unspent.get(address)?.filter((u) => !unspent.map((us) => us.id).includes(u.id)),
-    );
+  private async provide(
+    address: string,
+    utxoFilter: (unspent: AddressUnspent[]) => AddressUnspent[],
+  ): Promise<UtxoInformation> {
+    const unspent = await this.retrieveAllUnspent(address);
+    const used = utxoFilter(unspent);
 
-    return unspent;
-  }
+    await this.utxoManager.lock(address, used);
 
-  private async retrieveUnspent(address: string): Promise<AddressUnspent[]> {
-    await this.checkBlockAndInvalidate(address);
-    return this.unspent.get(address);
-  }
-
-  private async checkBlockAndInvalidate(address: string) {
-    const storedBlockHeight = this.addressToBlockHeight.get(address);
-    const currentBlockHeight = await this.whaleClient.getBlockHeight();
-    if (storedBlockHeight === currentBlockHeight) return;
-
-    const currentUnspent = await this.whaleClient
-      .getAllUnspent(address)
-      .then((unspent) => unspent.map((u) => ({ ...u, id: UtxoProviderService.idForUnspent(u) })));
-    this.unspent.set(
-      address,
-      currentUnspent.filter(
-        (u) => !(this.spent.get(address) ?? []).map((blocked) => blocked.unspent.id).includes(u.id),
-      ),
-    );
-
-    this.addressToBlockHeight.set(address, currentBlockHeight);
+    return UtxoProviderService.parseUnspent(used);
   }
 
   private static provideExactAmount(
@@ -208,14 +122,6 @@ export class UtxoProviderService {
   ): AddressUnspent[] {
     unspent = unspent.sort(sizePriority === UtxoSizePriority.BIG ? this.orderDescending : this.orderAscending);
     return unspent.slice(0, numberOfUtxos);
-  }
-
-  private static idForUnspent(unspent: AddressUnspent): string {
-    return `${unspent.vout.txid}|${unspent.vout.n}`;
-  }
-
-  private static idForPrevout(prevout: Prevout): string {
-    return `${prevout.txid}|${prevout.vout}`;
   }
 
   private static orderAscending(a: AddressUnspent, b: AddressUnspent): number {

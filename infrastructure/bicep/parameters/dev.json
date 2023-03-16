@@ -11,6 +11,9 @@
     "network": {
       "value": "testnet"
     },
+    "oceanUrls": {
+      "value": "https://testnet-ocean.mydefichain.com:8443,https://ocean.defichain.com"
+    },
     "dbAllowAllIps": {
       "value": true
     },
@@ -114,7 +117,7 @@
       "value": "xxx"
     },
     "kycWalletId": {
-      "value": 7
+      "value": "7"
     }
   }
 }

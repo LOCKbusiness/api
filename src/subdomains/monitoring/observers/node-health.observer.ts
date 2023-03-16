@@ -27,11 +27,8 @@ interface NodeState {
 
 type NodesState = NodePoolState[];
 
-// --------- //
 @Injectable()
 export class NodeHealthObserver extends MetricObserver<NodesState> {
-  private readonly lock = new Lock(360);
-
   constructor(
     readonly monitoringService: MonitoringService,
     private readonly nodeService: NodeService,
@@ -41,25 +38,27 @@ export class NodeHealthObserver extends MetricObserver<NodesState> {
     super(monitoringService, 'node', 'health');
   }
 
+  init(data: NodesState) {
+    // map to date objects
+    data?.forEach((p) => p.nodes.forEach((n) => (n.downSince = n.downSince ? new Date(n.downSince) : undefined)));
+
+    this.emit(data);
+  }
+
   @Cron(CronExpression.EVERY_MINUTE)
+  @Lock(360)
   async fetch(): Promise<NodesState> {
     if (Config.processDisabled(Process.MONITORING)) return;
-    if (!this.lock.acquire()) return;
 
-    try {
-      const previousState = this.$data.value ?? (await this.loadState());
-      let state = await this.getState(previousState);
+    const previousState = this.data;
 
-      state = await this.handleErrors(state, previousState);
+    let state = await this.getState(previousState);
 
-      this.emit(state);
+    state = await this.handleErrors(state, previousState);
 
-      return state;
-    } catch (e) {
-      console.error('Exception in node health observer:', e);
-    } finally {
-      this.lock.release();
-    }
+    this.emit(state);
+
+    return state;
   }
 
   private async getState(previousState: NodesState): Promise<NodesState> {
@@ -170,13 +169,5 @@ export class NodeHealthObserver extends MetricObserver<NodesState> {
 
   private getNodeStateInPool(state: NodePoolState | undefined, mode: NodeMode): NodeState | undefined {
     return state?.nodes.find((n) => n.mode === mode);
-  }
-
-  private async loadState(): Promise<NodesState | undefined> {
-    const state = await this.load();
-
-    state?.forEach((p) => p.nodes.forEach((n) => (n.downSince = n.downSince ? new Date(n.downSince) : undefined)));
-
-    return state;
   }
 }
