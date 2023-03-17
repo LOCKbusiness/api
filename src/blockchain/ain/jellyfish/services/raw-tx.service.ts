@@ -22,7 +22,7 @@ export class RawTxService {
   public readonly Vault: RawTxVault;
 
   constructor(private readonly utxoProvider: UtxoProviderService, scheduler: SchedulerRegistry) {
-    this.queue = new QueueHandler(scheduler, 900000);
+    this.queue = new QueueHandler(scheduler, 900000, 60000);
 
     this.Account = new RawTxAccount((c) => this.call(c), utxoProvider);
     this.Masternode = new RawTxMasternode((c) => this.call(c), utxoProvider);
