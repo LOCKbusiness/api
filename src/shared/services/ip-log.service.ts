@@ -28,7 +28,7 @@ export class IpLogService {
   private async checkIpCountry(userIp: string): Promise<{ country: string; result: boolean }> {
     if (Config.environment === 'loc') return { country: 'INTERN', result: true };
     const country = await this.geoLocationService.getCountry(userIp);
-    if (!country) return { country, result: false };
+    if (!country) return { country, result: true };
     const countryObject = await this.countryService.getCountryBySymbol(country);
 
     return { country, result: countryObject?.ipEnable };
