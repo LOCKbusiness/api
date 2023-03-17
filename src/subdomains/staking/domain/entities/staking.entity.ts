@@ -34,6 +34,7 @@ export const StakingTypes: { [key in StakingStrategy]: AssetQuery[] } = {
     { name: 'ETH', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN },
     { name: 'USDT', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN },
     { name: 'USDC', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN },
+    { name: 'EUROC', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN },
   ],
 };
 

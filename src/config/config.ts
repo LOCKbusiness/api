@@ -166,6 +166,7 @@ export class Configuration {
       { amount: 1, asset: 'DFI' },
       { amount: 1, asset: 'USDC' },
       { amount: 1, asset: 'USDT' },
+      { amount: 1, asset: 'EUROC' },
       { amount: 0.0001, asset: 'BTC' },
       { amount: 0.0001, asset: 'ETH' },
     ],
