@@ -40,7 +40,7 @@ export class StakingAnalyticsController {
 
   @Get('transactions')
   @UseGuards(RateLimitGuard)
-  @Throttle(24)
+  @Throttle(24, 864000)
   @ApiOkResponse({ type: StakingTransactionDto })
   async getTransactions(@Query() { dateFrom, dateTo }: TimeSpanDto): Promise<StakingTransactionDto> {
     return {
