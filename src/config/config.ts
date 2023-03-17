@@ -222,6 +222,11 @@ export class Configuration {
     voteFee: 0.00000297,
   };
 
+  request = {
+    knownIps: process.env.REQUEST_KNOWN_IPS?.split(',') ?? [],
+    limitCheck: process.env.REQUEST_LIMIT_CHECK === 'true',
+  };
+
   get addressFormat(): RegExp {
     return this.environment === 'prd'
       ? /^(8\w{33}|d\w{33}|d\w{41}|0x\w{40}|(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39})$/

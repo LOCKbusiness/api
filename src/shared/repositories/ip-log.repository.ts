@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { EntityManager, Repository } from 'typeorm';
-import { Country } from '../../domain/entities/country.entity';
+import { IpLog } from '../models/ip-log.entity';
 
 @Injectable()
-export class CountryRepository extends Repository<Country> {
+export class IpLogRepository extends Repository<IpLog> {
   constructor(manager: EntityManager) {
-    super(Country, manager);
+    super(IpLog, manager);
   }
 }

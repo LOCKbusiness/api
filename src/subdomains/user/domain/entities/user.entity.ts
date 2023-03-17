@@ -3,7 +3,7 @@ import { Votes } from 'src/subdomains/voting/application/dto/votes.dto';
 import { Column, Entity, Index, ManyToOne, OneToMany } from 'typeorm';
 import { KycStatus } from '../enums';
 import { KycCompleted, KycFulfills } from '../utils';
-import { Country } from './country.entity';
+import { Country } from '../../../../shared/models/country.entity';
 import { Wallet } from './wallet.entity';
 
 @Entity()

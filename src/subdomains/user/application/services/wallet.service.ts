@@ -4,7 +4,7 @@ import { In, Like } from 'typeorm';
 import { User } from '../../domain/entities/user.entity';
 import { Wallet } from '../../domain/entities/wallet.entity';
 import { WalletRepository } from '../repositories/wallet.repository';
-import { CountryService } from './country.service';
+import { CountryService } from '../../../../shared/services/country.service';
 import { GeoLocationService } from './geo-location.service';
 import { UserService } from './user.service';
 import { WalletProviderService } from './wallet-provider.service';

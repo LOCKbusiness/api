@@ -1,6 +1,8 @@
 import { Body, Controller, Get, Put, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiExcludeEndpoint, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
+import { RateLimitGuard } from 'src/shared/auth/rate-limit.guard';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { StakingDepositService } from 'src/subdomains/staking/application/services/staking-deposit.service';
@@ -37,6 +39,8 @@ export class StakingAnalyticsController {
   }
 
   @Get('transactions')
+  @UseGuards(RateLimitGuard)
+  @Throttle(24)
   @ApiOkResponse({ type: StakingTransactionDto })
   async getTransactions(@Query() { dateFrom, dateTo }: TimeSpanDto): Promise<StakingTransactionDto> {
     return {
