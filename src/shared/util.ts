@@ -180,6 +180,12 @@ export class Util {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
+  static async timeout<T>(promise: Promise<T>, timeout: number): Promise<T> {
+    const timeoutPromise = new Promise<T>((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout));
+
+    return Promise.race([promise, timeoutPromise]);
+  }
+
   static removeNullFields(entity: any): void {
     Object.keys(entity).forEach((k) => !entity[k] && delete entity[k]);
   }

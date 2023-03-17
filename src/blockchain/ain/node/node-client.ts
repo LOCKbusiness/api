@@ -37,7 +37,7 @@ export class NodeClient {
     mode: NodeMode,
   ) {
     this.client = this.createJellyfishClient();
-    this.queue = new QueueHandler(scheduler, 180000);
+    this.queue = new QueueHandler(scheduler, 180000, 60000);
     this.#mode = mode;
 
     this.getInfo().catch((e) => console.error('Failed to get chain info: ', e));
