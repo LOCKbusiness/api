@@ -34,6 +34,7 @@ export const StakingTypes: { [key in StakingStrategy]: AssetQuery[] } = {
     { name: 'ETH', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN },
     { name: 'USDT', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN },
     { name: 'USDC', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN },
+    { name: 'EUROC', blockchain: Blockchain.DEFICHAIN, type: AssetType.TOKEN },
   ],
 };
 
@@ -186,6 +187,6 @@ export class Staking extends IEntity {
       throw new Error(`Cannot calculate reference Fiat amount of ${assetName}/${fiatName} , price value is 0`);
     }
 
-    return Util.round(assetAmount * price.price, 2);
+    return Util.round(assetAmount * price.price, 8);
   }
 }

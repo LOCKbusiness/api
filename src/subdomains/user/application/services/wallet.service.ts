@@ -42,6 +42,16 @@ export class WalletService {
     return this.walletRepo.find({ where: { address: { address: In(addresses) } }, relations: ['walletProvider'] });
   }
 
+  async getWalletByKey(key: string, value: any): Promise<Wallet> {
+    return this.walletRepo
+      .createQueryBuilder('wallet')
+      .select('wallet')
+      .leftJoinAndSelect('wallet.user', 'user')
+      .leftJoinAndSelect('user.wallets', 'wallets')
+      .where(`wallet.${key} = :param`, { param: value })
+      .getOne();
+  }
+
   async getKycIdByAddress(address: string): Promise<string> {
     const wallet = await this.walletRepo.findOne({
       where: { address: { address } },

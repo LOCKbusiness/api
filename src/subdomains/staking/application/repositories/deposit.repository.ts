@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
+import { BaseRepository } from 'src/shared/repositories/base.repository';
 import { Util } from 'src/shared/util';
-import { Between, EntityManager, FindOperator, In, Repository } from 'typeorm';
+import { Between, EntityManager, FindOperator, In, IsNull } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { StakingReference } from '../../domain/entities/staking.entity';
 import { DepositStatus } from '../../domain/enums';
 
 @Injectable()
-export class DepositRepository extends Repository<Deposit> {
+export class DepositRepository extends BaseRepository<Deposit> {
   constructor(manager: EntityManager) {
     super(Deposit, manager);
   }
@@ -27,8 +28,19 @@ export class DepositRepository extends Repository<Deposit> {
     return this.find({ where: { status: In(statuses), staking: { id: stakingId } }, relations: ['staking'] });
   }
 
-  async getByPayInTxId(stakingId: number, payInTxId: string): Promise<Deposit> {
-    return this.findOneBy({ staking: { id: stakingId }, payInTxId });
+  async getByPayInTx(stakingId: number, payInTxId: string, payInTxSequence: number): Promise<Deposit> {
+    return this.findOneBy([
+      { staking: { id: stakingId }, payInTxId, payInTxSequence },
+      { staking: { id: stakingId }, payInTxId, payInTxSequence: IsNull() },
+    ]);
+  }
+
+  async getDepositByKey(key: string, value: any): Promise<Deposit> {
+    return this.createQueryBuilder('deposit')
+      .select('deposit')
+      .leftJoinAndSelect('deposit.staking', 'staking')
+      .where(`deposit.${key} = :param`, { param: value })
+      .getOne();
   }
 
   async getByUserId(userId: number, dateFrom?: Date, dateTo?: Date): Promise<Deposit[]> {
@@ -36,6 +48,7 @@ export class DepositRepository extends Repository<Deposit> {
       where: { staking: { userId }, ...this.dateQuery(dateFrom, dateTo) },
       relations: ['staking', 'asset'],
       loadEagerRelations: false,
+      order: { id: 'DESC' },
     });
   }
 

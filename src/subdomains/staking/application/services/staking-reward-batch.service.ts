@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Util } from 'src/shared/util';
 import { Not } from 'typeorm';
 import { RewardBatch, RewardBatchStatus } from '../../domain/entities/reward-batch.entity';
 import { Reward } from '../../domain/entities/reward.entity';
@@ -13,9 +14,10 @@ export class StakingRewardBatchService {
   async batchRewardsByAssets(): Promise<void> {
     try {
       const rewardsInput = await this.rewardRepo.getNewRewards();
-      if (rewardsInput.length === 0) {
-        return;
-      }
+      if (rewardsInput.length === 0) return;
+
+      const stable = this.checkForStableInput(rewardsInput);
+      if (!stable) return;
 
       console.info(
         `Reward input. Processing ${rewardsInput.length} reward(s). Reward ID(s):`,
@@ -34,6 +36,10 @@ export class StakingRewardBatchService {
     } catch (e) {
       console.error('Failed to batch rewards:', e);
     }
+  }
+
+  private checkForStableInput(rewardsInput: Reward[]): boolean {
+    return rewardsInput.every((r) => Util.minutesDiff(r.updated, new Date()) > 5);
   }
 
   private async createBatches(rewards: Reward[]): Promise<RewardBatch[]> {
@@ -80,15 +86,20 @@ export class StakingRewardBatchService {
     const filteredBatches: RewardBatch[] = [];
 
     for (const batch of batches) {
-      const { targetAsset } = batch;
+      const { outputReferenceAsset, targetAsset } = batch;
 
       const existingBatch = await this.rewardBatchRepo.findOneBy({
+        outputReferenceAsset: { id: outputReferenceAsset.id },
         targetAsset: { id: targetAsset.id },
         status: Not(RewardBatchStatus.COMPLETE),
       });
-      const newBatch = filteredBatches.find((b) => b.targetAsset.id === targetAsset.id);
 
-      if (existingBatch || newBatch) {
+      // double check to avoid more than one batch for reference/target asset pair
+      const currentBatch = filteredBatches.find(
+        (b) => b.outputReferenceAsset.id === outputReferenceAsset.id && b.targetAsset.id === targetAsset.id,
+      );
+
+      if (existingBatch || currentBatch) {
         const rewardIds = batch.rewards.map((r) => r.id);
 
         console.info(

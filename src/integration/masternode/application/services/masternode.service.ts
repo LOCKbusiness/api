@@ -35,34 +35,53 @@ export class MasternodeService {
     nodeService.getConnectedNode(NodeType.REW).subscribe((c) => (this.client = c));
   }
 
-  // --- MASTERNODE SYNC --- //
+  // --- OPERATOR SYNC --- //
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
-  async syncMasternodes(): Promise<void> {
+  async syncOperators(): Promise<void> {
     if (Config.processDisabled(Process.MASTERNODE)) return;
 
     try {
       if (!Config.mydefichain.username) return;
 
-      const masternodeOperators = await this.repository.find({
-        select: ['operator'],
-      });
+      // update/create operators
+      const masternodes = await this.getAll();
+      const currentOperators = await this.getCurrentOperators();
 
-      const masternodeServerList = await this.settingService.get('masternodeServerList');
-
-      for (const server of masternodeServerList.split(',')) {
-        const operators = await this.callApi<string[]>(`http://${server}.mydefichain.com/api/operatoraddresses`, 'GET');
-        const missingOperators = operators.filter(
-          (item) => masternodeOperators.map((masternode) => masternode.operator).indexOf(item) < 0,
-        );
-
-        for (const operator of missingOperators) {
-          const newOperator = this.repository.create({ operator, server });
-          await this.repository.save(newOperator);
+      for (const [server, operators] of currentOperators.entries()) {
+        for (const operator of operators) {
+          const masternode = masternodes.find((o) => o.operator === operator);
+          if (!masternode) {
+            // create new masternode
+            const newMasternode = this.repository.create({ operator, server });
+            await this.repository.save(newMasternode);
+          } else if (masternode.server !== server) {
+            // update server
+            await this.repository.update(masternode.id, { server });
+          }
         }
       }
+
+      // delete removed operators
+      const allOperators = Array.from(currentOperators.values()).reduce((prev, curr) => prev.concat(curr), []);
+      const idleMasternodes = await this.getAllWithStates([MasternodeState.IDLE]);
+      const masternodesToDelete = idleMasternodes.filter((mn) => !allOperators.some((o) => o === mn.operator));
+
+      if (masternodesToDelete.length > 0) await this.repository.delete(masternodesToDelete.map((mn) => mn.id));
     } catch (e) {
-      console.error('Exception during masternode sync:', e);
+      console.error('Exception during operator sync:', e);
     }
+  }
+
+  private async getCurrentOperators(): Promise<Map<string, string[]>> {
+    const servers = new Map<string, string[]>();
+
+    const masternodeServerList = await this.settingService.get('masternodeServerList');
+    for (const server of masternodeServerList.split(',')) {
+      const operators = await this.callApi<string[]>(`http://${server}.mydefichain.com/api/operatoraddresses`, 'GET');
+      servers.set(server, operators);
+    }
+
+    return servers;
   }
 
   // --- MASTERNODE BLOCK CHECK --- //
@@ -143,8 +162,8 @@ export class MasternodeService {
     return this.repository.countBy({ creationHash: Not(IsNull()), resignHash: IsNull() });
   }
 
-  async getActive(): Promise<Masternode[]> {
-    return this.repository.find({ where: { creationHash: Not(IsNull()), resignHash: IsNull() } });
+  async getRunning(): Promise<Masternode[]> {
+    return this.repository.findBy({ resignHash: IsNull() });
   }
 
   async getAllVoters(): Promise<Masternode[]> {
@@ -170,17 +189,28 @@ export class MasternodeService {
   }
 
   async getOrderedForResigning(): Promise<Masternode[]> {
-    const activeMasternodes = await this.getActive();
+    const runningMasternodes = await this.getRunning();
+    const activeMasternodes = runningMasternodes.filter(
+      (mn) => mn.creationHash != null && mn.state === MasternodeState.ENABLED,
+    );
+
+    const mnsByServer = Util.groupBy<Masternode, string>(runningMasternodes, 'server');
 
     // get TMS info
     const tmsInfo = await Promise.all(activeMasternodes.map((mn) => this.getMasternodeTms(mn.creationHash)));
 
     return activeMasternodes.sort((a, b) => {
-      // 1. order by server
+      // 1. order by count of running nodes
+      const aCount = mnsByServer.get(a.server).length;
+      const bCount = mnsByServer.get(b.server).length;
+      if (aCount > bCount) return 1;
+      if (aCount < bCount) return -1;
+
+      // 2. order by server name
       if (a.server > b.server) return 1;
       if (a.server < b.server) return -1;
 
-      // 2. order by TMS
+      // 3. order by TMS
       return (
         tmsInfo.find((tms) => tms.hash === a.creationHash).tms - tmsInfo.find((tms) => tms.hash === b.creationHash).tms
       );
@@ -198,20 +228,19 @@ export class MasternodeService {
 
   // get unpaid fee in DFI
   async getUnpaidFee(): Promise<number> {
-    const unpaidMasternodeFee = await this.repository.countBy({ creationHash: Not(IsNull()), creationFeePaid: false });
-    return unpaidMasternodeFee * Config.masternode.fee;
+    const createdMasternodeCount = await this.repository.countBy({ creationHash: Not(IsNull()) });
+    const paidMasternodeCount = await this.repository.countBy({ creationFeePaid: true });
+
+    return (createdMasternodeCount - paidMasternodeCount) * Config.masternode.fee;
   }
 
   // add masternode creationFee
   async addFee(paidFee: number): Promise<void> {
-    const unpaidMasternodes = await this.repository.find({
-      where: { creationHash: Not(IsNull()), creationFeePaid: false },
-    });
-
     const paidMasternodeCount = Math.floor(paidFee / Config.masternode.fee);
     if (paidMasternodeCount !== paidFee / Config.masternode.fee)
       throw new BadRequestException(`Fee amount not divisible by ${Config.masternode.fee}`);
 
+    const unpaidMasternodes = await this.repository.findBy({ creationFeePaid: false });
     for (const mn of unpaidMasternodes.slice(0, paidMasternodeCount)) {
       await this.repository.update(mn.id, { creationFeePaid: true });
     }

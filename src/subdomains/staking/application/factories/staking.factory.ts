@@ -5,8 +5,6 @@ import { Reward } from '../../domain/entities/reward.entity';
 import { ReservableBlockchainAddress } from '../../../address-pool/domain/entities/reservable-blockchain-address.entity';
 import { Staking, StakingTypes } from '../../domain/entities/staking.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
-import { CreateDepositDto } from '../dto/input/create-deposit.dto';
-import { CreateWithdrawalDraftDto } from '../dto/input/create-withdrawal-draft.dto';
 import { BlockchainAddress } from 'src/shared/models/blockchain-address';
 import { CreateRewardRouteDto } from '../dto/input/create-reward-route.dto';
 import { RewardRoute } from '../../domain/entities/reward-route.entity';
@@ -44,16 +42,22 @@ export class StakingFactory {
     );
   }
 
-  async createDeposit(staking: Staking, dto: CreateDepositDto): Promise<Deposit> {
-    const assetSpec = StakingStrategyValidator.validate(staking.strategy, dto.asset, staking.blockchain);
-    const asset = await this.assetService.getAssetByQuery(assetSpec);
-    return Deposit.create(staking, dto.amount, dto.txId, asset);
+  async createDeposit(
+    staking: Staking,
+    asset: string,
+    amount: number,
+    payInTxId: string,
+    payInTxSequence?: number,
+  ): Promise<Deposit> {
+    const assetSpec = StakingStrategyValidator.validate(staking.strategy, asset, staking.blockchain);
+    const assetInst = await this.assetService.getAssetByQuery(assetSpec);
+    return Deposit.create(staking, assetInst, amount, payInTxId, payInTxSequence);
   }
 
-  async createWithdrawalDraft(staking: Staking, dto: CreateWithdrawalDraftDto): Promise<Withdrawal> {
-    const assetSpec = StakingStrategyValidator.validate(staking.strategy, dto.asset, staking.blockchain);
-    const asset = await this.assetService.getAssetByQuery(assetSpec);
-    return Withdrawal.create(staking, dto.amount, asset);
+  async createWithdrawalDraft(staking: Staking, asset: string, amount: number): Promise<Withdrawal> {
+    const assetSpec = StakingStrategyValidator.validate(staking.strategy, asset, staking.blockchain);
+    const assetInst = await this.assetService.getAssetByQuery(assetSpec);
+    return Withdrawal.create(staking, amount, assetInst);
   }
 
   createRewardStrategy(userId: number): RewardStrategy {

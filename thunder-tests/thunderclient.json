@@ -228,12 +228,12 @@
     "method": "POST",
     "sortNum": 170000,
     "created": "2022-11-04T11:38:16.712Z",
-    "modified": "2022-11-04T11:49:15.086Z",
+    "modified": "2023-03-15T15:08:25.262Z",
     "headers": [],
     "params": [],
     "body": {
       "type": "json",
-      "raw": "{\n  \"command\": \"COMPOSITE_SWAP\",\n  \"parameters\": {\n    \"address\": \"tf1qyva5z5e7s5pzr0yhc3kk9ksn70lhhx6yxyuv2e\",\n    \"fromToken\": \"GOOGL\",\n    \"amount\": 0.06,\n    \"toToken\": \"DUSD\"\n  }\n}",
+      "raw": "{\n  \"command\": \"POOL_ADD_LIQUIDITY\",\n  \"parameters\": {\n    \"address\": \"tf1q8n5rly23k60eluu85r7yytya563r949nrnkkmf\",\n    \"partAAmount\": 0.001,\n    \"partBAmount\": 0.07107049\n  },\n  \"templates\": [\n    {\n      \"command\": \"ACCOUNT_TO_ACCOUNT\",\n      \"parameters\": {\n        \"from\": \"tf1qwas8k7fuyz4lypyn7lhdjw354p5wmzhy58glht\",\n        \"to\": \"tf1q8n5rly23k60eluu85r7yytya563r949nrnkkmf\",\n        \"token\": \"DUSD\",\n        \"amount\": 1\n      }\n    },\n    {\n      \"command\": \"TAKE_LOAN\",\n      \"parameters\": {\n        \"address\": \"tf1q8n5rly23k60eluu85r7yytya563r949nrnkkmf\",\n        \"vault\": \"b96404aed18e96276ff4e36eb79232c64b704568e6487deb7a6b1b0d4ff61a97\",\n        \"amount\": 0.001\n      }\n    },\n    {\n      \"command\": \"PAYBACK_LOAN\",\n      \"parameters\": {\n        \"address\": \"tf1q8n5rly23k60eluu85r7yytya563r949nrnkkmf\",\n        \"vault\": \"b96404aed18e96276ff4e36eb79232c64b704568e6487deb7a6b1b0d4ff61a97\",\n        \"amount\": 0.001\n      }\n    },\n    {\n      \"command\": \"POOL_ADD_LIQUIDITY\",\n      \"parameters\": {\n        \"address\": \"tf1q8n5rly23k60eluu85r7yytya563r949nrnkkmf\",\n        \"partAAmount\": 0,\n        \"partBAmount\": 0\n      }\n    },\n    {\n      \"command\": \"POOL_REMOVE_LIQUIDITY\",\n      \"parameters\": {\n        \"address\": \"tf1q8n5rly23k60eluu85r7yytya563r949nrnkkmf\",\n        \"amount\": 0.01\n      }\n    },\n    {\n      \"command\": \"COMPOSITE_SWAP\",\n      \"parameters\": {\n        \"address\": \"tf1qyva5z5e7s5pzr0yhc3kk9ksn70lhhx6yxyuv2e\",\n        \"fromToken\": \"GOOGL\",\n        \"amount\": 0.001,\n        \"toToken\": \"DUSD\"\n      }\n    }\n  ]\n}",
       "form": []
     },
     "tests": []
@@ -550,6 +550,78 @@
         "isPath": false
       }
     ],
+    "tests": []
+  },
+  {
+    "_id": "ed1b3061-7741-4748-9cc1-6fc6ac7818a7",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "1386d368-b3e9-4903-a2cb-e21d7c02bee4",
+    "name": "Get Volume",
+    "url": "{{url}}/v1/staking/reward/volume?date=2022-12-01",
+    "method": "GET",
+    "sortNum": 240000,
+    "created": "2023-02-28T23:29:27.131Z",
+    "modified": "2023-03-02T00:48:15.575Z",
+    "headers": [],
+    "params": [
+      {
+        "name": "date",
+        "value": "2022-12-01",
+        "isPath": false
+      }
+    ],
+    "tests": []
+  },
+  {
+    "_id": "0a096a04-b1d7-40eb-ac42-4fd53e2630c0",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "1386d368-b3e9-4903-a2cb-e21d7c02bee4",
+    "name": "Set Status",
+    "url": "{{url}}/v1/staking/reward/status",
+    "method": "PATCH",
+    "sortNum": 300000,
+    "created": "2023-03-02T18:06:00.856Z",
+    "modified": "2023-03-02T18:11:14.251Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"status\": \"Confirmed\",\n  \"ids\": [579, 581, 583]\n}\n",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "d7bec366-1454-46f3-aac5-da10fb867f6d",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "d1d01f25-f78e-465a-ac6c-baaf4d3d7970",
+    "name": "Create",
+    "url": "{{url}}/v1/staking/18/deposit",
+    "method": "POST",
+    "sortNum": 300000,
+    "created": "2023-03-02T22:53:37.690Z",
+    "modified": "2023-03-02T22:56:26.596Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"amount\": 1,\n  \"asset\": \"DFI\",\n  \"txId\": \"tx-id\"\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "107bca9c-3678-4466-9f8d-920bf812720f",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "6a988eeb-70ef-4bf8-87fb-d8891ce8400f",
+    "name": "Sync operators",
+    "url": "{{url}}/v1/masternode/operator-sync",
+    "method": "POST",
+    "sortNum": 100000,
+    "created": "2023-03-09T23:41:31.893Z",
+    "modified": "2023-03-09T23:41:58.062Z",
+    "headers": [],
+    "params": [],
     "tests": []
   }
 ]

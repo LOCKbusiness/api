@@ -35,6 +35,8 @@ export abstract class DeFiChainNonPoolPairStrategy extends PurchaseLiquidityStra
 
     try {
       await this.bookLiquiditySwap(order);
+      await this.estimateTargetAmount(order);
+
       await this.liquidityOrderRepo.save(order);
     } catch (e) {
       await this.handlePurchaseLiquidityError(e, request);
@@ -92,7 +94,7 @@ export abstract class DeFiChainNonPoolPairStrategy extends PurchaseLiquidityStra
     for (const descriptor of this.prioritySwapAssetDescriptors) {
       const prioritySwapAsset = await this.getSwapAsset(descriptor);
 
-      if (!(targetAsset.name === 'DUSD' && prioritySwapAsset.name === 'DUSD')) {
+      if (!(targetAsset.id === prioritySwapAsset.id)) {
         try {
           return {
             asset: prioritySwapAsset,
@@ -136,5 +138,13 @@ export abstract class DeFiChainNonPoolPairStrategy extends PurchaseLiquidityStra
     throw new Error(
       `Swap Asset reference not found. Query: name - ${name}, type - ${type}, blockchain - ${Blockchain.DEFICHAIN}.`,
     );
+  }
+
+  private async estimateTargetAmount(order: LiquidityOrder): Promise<void> {
+    const { referenceAsset, referenceAmount, targetAsset } = order;
+
+    const estimatedTargetAmount = await this.dexDeFiChainService.testSwap(referenceAsset, targetAsset, referenceAmount);
+
+    order.addEstimatedTargetAmount(estimatedTargetAmount);
   }
 }

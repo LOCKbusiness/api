@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Interval } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { Lock } from 'src/shared/lock';
 import { PayoutOrder, PayoutOrderContext, PayoutOrderStatus } from '../entities/payout-order.entity';
 import { PayoutOrderFactory } from '../factories/payout-order.factory';
@@ -14,11 +14,10 @@ import { MailRequest } from 'src/integration/notification/interfaces';
 import { NotificationService } from 'src/integration/notification/services/notification.service';
 import { Asset } from 'src/shared/models/asset/asset.entity';
 import { IsNull, Not } from 'typeorm';
+import { Config, Process } from 'src/config/config';
 
 @Injectable()
 export class PayoutService {
-  private readonly processOrdersLock = new Lock(7200);
-
   constructor(
     private readonly payoutStrategies: PayoutStrategiesFacade,
     private readonly prepareStrategies: PrepareStrategiesFacade,
@@ -67,21 +66,32 @@ export class PayoutService {
 
   //*** JOBS ***//
 
-  @Interval(30000)
+  @Cron(CronExpression.EVERY_30_SECONDS)
+  @Lock(7200)
   async processOrders(): Promise<void> {
-    if (!this.processOrdersLock.acquire()) return;
+    if (Config.processDisabled(Process.PAY_OUT)) return;
 
-    try {
-      await this.checkExistingOrders();
-      await this.prepareNewOrders();
-      await this.payoutOrders();
-      await this.processFailedOrders();
-    } finally {
-      this.processOrdersLock.release();
-    }
+    await this.checkExistingOrders();
+    await this.prepareNewOrders();
+    await this.payoutOrders();
+    await this.processFailedOrders();
   }
 
   //*** HELPER METHODS ***//
+
+  private async waitForStableInput(): Promise<boolean> {
+    const latestDate = await this.getLatestOrderDate();
+
+    return this.verifyDebounceTime(latestDate);
+  }
+
+  private async getLatestOrderDate(): Promise<Date> {
+    return this.payoutOrderRepo.findOne({ where: {}, order: { created: 'DESC' } }).then((o) => o?.created);
+  }
+
+  private verifyDebounceTime(date: Date): boolean {
+    return Util.secondsDiff(date, new Date()) > 5;
+  }
 
   private async checkExistingOrders(): Promise<void> {
     await this.checkPreparationCompletion();
@@ -137,6 +147,10 @@ export class PayoutService {
   }
 
   private async prepareNewOrders(): Promise<void> {
+    const stable = await this.waitForStableInput();
+
+    if (!stable) return;
+
     const orders = await this.payoutOrderRepo.findBy({ status: PayoutOrderStatus.CREATED });
     const groups = this.groupByStrategies(orders, this.prepareStrategies.getPrepareStrategyAlias);
 

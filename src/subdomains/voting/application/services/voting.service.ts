@@ -12,7 +12,7 @@ import { MasternodeVote, StakingStrategy } from 'src/subdomains/staking/domain/e
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { CfpMnVoteDto } from '../dto/cfp-mn-vote.dto';
 import { User } from 'src/subdomains/user/domain/entities/user.entity';
-import { CfpDto, CfpInfo, CfpResultDto, CfpVoteDto, CfpVotesDto } from '../dto/cfp.dto';
+import { CfpInfoDto, CfpInfo, CfpResultDto, CfpVoteDto, CfpVotesDto } from '../dto/cfp.dto';
 import { Distribution } from '../dto/distribution.dto';
 import { VoteRepository } from '../repositories/voting.repository';
 import { VoteDecision, VoteStatus } from '../../domain/enums';
@@ -33,7 +33,6 @@ export class VotingService implements OnModuleInit {
   };
 
   private currentResults: CfpResultDto[] = [];
-  private votingLock = new Lock(86400);
   private client: WhaleClient;
 
   constructor(
@@ -99,6 +98,10 @@ export class VotingService implements OnModuleInit {
   // --- MASTERNODE VOTES --- //
   async getMasternodeVotes(): Promise<CfpMnVoteDto[]> {
     const cfpList = await this.getCfpList();
+    return this.getMasternodeVotesFor(cfpList);
+  }
+
+  private async getMasternodeVotesFor(cfpList: CfpInfo[]): Promise<CfpMnVoteDto[]> {
     const distributions = await this.getVoteDistributions(cfpList);
     const masternodes = await this.masternodeService.getAllVoters();
 
@@ -155,19 +158,40 @@ export class VotingService implements OnModuleInit {
     }
   }
 
-  @Cron(CronExpression.EVERY_5_MINUTES)
-  async processPendingVotes() {
+  @Cron(CronExpression.EVERY_30_MINUTES)
+  async createNewVotes() {
     if (Config.processDisabled(Process.MASTERNODE)) return;
-    if (!this.votingLock.acquire()) return;
 
     try {
-      await this.sendFeeUtxos();
-      await this.doVote();
+      const currentBlock = this.client.currentBlockHeight;
+      const currentProposals = await this.getCfpList();
+      const existingProposals = await this.voteRepo
+        .createQueryBuilder('vote')
+        .select(['proposalId'])
+        .distinct(true)
+        .getRawMany<{ proposalId: string }>();
+
+      // get proposals to vote on
+      const pendingProposals = currentProposals
+        .filter((p) => currentBlock > p.endHeight - 2880)
+        .filter((p1) => !existingProposals.some((p2) => p1.id === p2.proposalId));
+      if (pendingProposals.length === 0) return;
+
+      // create votes
+      const pendingVotes = await this.getMasternodeVotesFor(pendingProposals);
+      await this.createVotes(pendingVotes);
     } catch (e) {
-      console.error(`Exception during vote processing:`, e);
-    } finally {
-      this.votingLock.release();
+      console.error(`Exception during vote creation:`, e);
     }
+  }
+
+  @Cron(CronExpression.EVERY_5_MINUTES)
+  @Lock(86400)
+  async processPendingVotes() {
+    if (Config.processDisabled(Process.MASTERNODE)) return;
+
+    await this.sendFeeUtxos();
+    await this.doVote();
   }
 
   private async sendFeeUtxos() {
@@ -274,10 +298,10 @@ export class VotingService implements OnModuleInit {
     const cfpList = await this.getCurrentCfpList();
     return cfpList
       .filter((cfp) => cfp.status === ProposalStatus.VOTING)
-      .map((cfp) => ({ id: cfp.number, name: cfp.title }));
+      .map((cfp) => ({ id: cfp.number, name: cfp.title, endDate: new Date(cfp.endDate), endHeight: cfp.endHeight }));
   }
 
-  private async getCurrentCfpList(): Promise<CfpDto[]> {
+  private async getCurrentCfpList(): Promise<CfpInfoDto[]> {
     return this.http.get(`${Config.kyc.apiUrl}/statistic/cfp/latest`);
   }
 }

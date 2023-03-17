@@ -11,7 +11,7 @@ import { PayIn, PayInPurpose } from 'src/subdomains/payin/domain/entities/payin.
 import { Between, LessThan } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Staking, StakingReference } from '../../domain/entities/staking.entity';
-import { DepositStatus, StakingStatus, StakingStrategy } from '../../domain/enums';
+import { DepositStatus, StakingStatus } from '../../domain/enums';
 import { StakingAuthorizeService } from '../../infrastructure/staking-authorize.service';
 import { StakingDeFiChainService } from '../../infrastructure/staking-defichain.service';
 import { StakingKycCheckService } from '../../infrastructure/staking-kyc-check.service';
@@ -25,7 +25,6 @@ import { StakingService } from './staking.service';
 
 @Injectable()
 export class StakingDepositService {
-  private readonly lock = new Lock(7200);
   private whaleClient?: WhaleClient;
 
   constructor(
@@ -67,16 +66,14 @@ export class StakingDepositService {
     userId: number,
     walletId: number,
     stakingId: number,
-    dto: CreateDepositDto,
+    { asset, amount, txId }: CreateDepositDto,
   ): Promise<StakingOutputDto> {
     await this.kycCheck.check(userId, walletId);
 
     const staking = await this.authorize.authorize(userId, stakingId);
     if (staking.isBlocked) throw new BadRequestException('Staking is blocked');
 
-    dto.asset ??= staking.strategy === StakingStrategy.LIQUIDITY_MINING ? 'DUSD' : 'DFI';
-
-    const deposit = await this.factory.createDeposit(staking, dto);
+    const deposit = await this.factory.createDeposit(staking, asset, amount, txId);
 
     await this.depositRepository.save(deposit);
 
@@ -86,18 +83,12 @@ export class StakingDepositService {
   //*** JOBS ***//
 
   @Cron(CronExpression.EVERY_MINUTE)
+  @Lock(7200)
   async checkBlockchainDepositInputs(): Promise<void> {
     if (Config.processDisabled(Process.STAKING_DEPOSIT)) return;
-    if (!this.lock.acquire()) return;
 
-    try {
-      await this.recordDepositTransactions();
-      await this.forwardDepositsToStaking();
-    } catch (e) {
-      console.error('Exception during staking deposit checks:', e);
-    } finally {
-      this.lock.release();
-    }
+    await this.recordDepositTransactions();
+    await this.forwardDepositsToStaking();
   }
 
   @Cron(CronExpression.EVERY_HOUR)
@@ -110,7 +101,7 @@ export class StakingDepositService {
         loadEagerRelations: false,
       });
       for (const deposit of openDeposits) {
-        const txId = await this.whaleClient.getTx(deposit.payInTxId).catch(() => null);
+        const txId = await this.whaleClient.getTx(deposit.payInTxId);
         if (!txId) await this.depositRepository.update(deposit.id, { status: DepositStatus.FAILED });
       }
     } catch (e) {
@@ -147,7 +138,11 @@ export class StakingDepositService {
 
     for (const deposit of deposits) {
       try {
-        const payInAsset = await this.payInService.getPayInAsset(staking.depositAddress.address, deposit.payInTxId);
+        const payInAsset = await this.payInService.getPayInAsset(
+          staking.depositAddress.address,
+          deposit.payInTxId,
+          deposit.payInTxSequence,
+        );
         const txId = await this.deFiChainStakingService.forwardDeposit(
           staking.depositAddress.address,
           deposit.amount,
@@ -242,16 +237,21 @@ export class StakingDepositService {
   }
 
   private async createOrUpdateDeposit(staking: Staking, payIn: PayIn): Promise<void> {
-    const existingDeposit = await this.depositRepository.getByPayInTxId(staking.id, payIn.txId);
+    const existingDeposit = await this.depositRepository.getByPayInTx(staking.id, payIn.txId, payIn.txSequence);
     const newDeposit = await this.createNewDeposit(staking, payIn);
 
     const deposit = existingDeposit ?? newDeposit;
-    deposit.updatePreCreatedDeposit(newDeposit.payInTxId, newDeposit.amount, newDeposit.asset);
+    deposit.updatePreCreatedDeposit(
+      newDeposit.payInTxId,
+      newDeposit.payInTxSequence,
+      newDeposit.amount,
+      newDeposit.asset,
+    );
 
     await this.depositRepository.save(deposit);
   }
 
   private async createNewDeposit(staking: Staking, payIn: PayIn): Promise<Deposit> {
-    return this.factory.createDeposit(staking, { amount: payIn.amount, txId: payIn.txId, asset: payIn.asset.name });
+    return this.factory.createDeposit(staking, payIn.asset.name, payIn.amount, payIn.txId, payIn.txSequence);
   }
 }

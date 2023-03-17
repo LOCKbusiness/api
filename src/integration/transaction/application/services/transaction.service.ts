@@ -10,10 +10,11 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { AsyncMap } from 'src/shared/async-map';
+import { TransactionDirection } from '../../domain/enums';
 
 @Injectable()
 export class TransactionService {
-  private readonly transactions = new AsyncMap<string, string>();
+  private readonly transactions = new AsyncMap<string, string>(this.constructor.name);
 
   private client: WhaleClient;
 
@@ -28,12 +29,8 @@ export class TransactionService {
     try {
       const txs = await this.repository.getUndecidedTransactions();
       for (const tx of txs) {
-        try {
-          await this.client.getTx(tx.chainId);
-          await this.repository.save(tx.foundOnBlockchain());
-        } catch {
-          await this.repository.save(tx.notFoundOnBlockchain());
-        }
+        const chainTx = await this.client.getTx(tx.chainId);
+        await this.repository.save(chainTx ? tx.foundOnBlockchain() : tx.notFoundOnBlockchain());
       }
     } catch (e) {
       console.error('Exception during transaction check:', e);
@@ -80,12 +77,12 @@ export class TransactionService {
     this.transactions.resolve(tx.chainId, hex);
   }
 
-  async sign(rawTx: RawTxDto, signature: string, payload?: any): Promise<string> {
+  async sign(rawTx: RawTxDto, signature: string, direction: TransactionDirection, payload?: any): Promise<string> {
     const id = rawTx.id ?? this.receiveIdFor(rawTx);
     const existingTx = await this.repository.findOneBy({ chainId: id });
     if (existingTx && existingTx.signedHex) return Promise.resolve(existingTx.signedHex);
 
-    const newTx = TransactionEntity.create(id, rawTx, payload, signature);
+    const newTx = TransactionEntity.create(id, rawTx, payload, signature, direction);
     const tx = existingTx ? Object.assign(existingTx, newTx) : newTx;
     await this.repository.save(tx);
     console.info(`Added ${id} for signing`);

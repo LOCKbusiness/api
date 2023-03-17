@@ -82,34 +82,6 @@ export class RewardBatch extends IEntity {
   //*** HELPER METHODS ***//
 
   private fixRoundingMismatch(): void {
-    const transactionsTotal = Util.sumObj<Reward>(this.rewards, 'targetAmount');
-
-    const mismatch = Util.round(this.targetAmount - transactionsTotal, 8);
-
-    if (mismatch === 0) {
-      return;
-    }
-
-    if (Math.abs(mismatch) < 0.00001) {
-      let remainsToDistribute = mismatch;
-      const correction = remainsToDistribute > 0 ? 0.00000001 : -0.00000001;
-      const adjustedTransactions = [];
-
-      this.rewards.forEach((r) => {
-        if (remainsToDistribute !== 0) {
-          r.targetAmount = Util.round(r.targetAmount + correction, 8);
-          adjustedTransactions.push(r);
-          remainsToDistribute = Util.round(remainsToDistribute - correction, 8);
-        }
-      });
-
-      console.info(
-        `Fixed total output amount mismatch of ${mismatch} ${
-          this.targetAsset.name
-        }. Added to transaction ID(s): ${adjustedTransactions.map((tx) => tx.id)}`,
-      );
-    } else {
-      throw new Error(`Output amount mismatch is too high. Mismatch: ${mismatch} ${this.targetAsset.name}`);
-    }
+    this.rewards = Util.fixRoundingMismatch(this.rewards, 'targetAmount', this.targetAmount, 10);
   }
 }

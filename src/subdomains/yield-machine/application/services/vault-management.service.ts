@@ -13,8 +13,6 @@ import { YieldMachineService } from './yield-machine.service';
 
 @Injectable()
 export class VaultManagementService {
-  private readonly emergencyVaultCheckLock = new Lock(600);
-
   private whaleClient: WhaleClient;
   constructor(
     private readonly vaultService: VaultService,
@@ -25,43 +23,35 @@ export class VaultManagementService {
   }
 
   @Cron(CronExpression.EVERY_5_MINUTES)
+  @Lock(600)
   async checkVaultsForEmergency() {
     if (Config.processDisabled(Process.VAULT_MANAGEMENT)) return;
-    if (!this.emergencyVaultCheckLock.acquire()) return;
 
-    try {
-      const vaults = await this.vaultService.getAll();
-      const vaultInfos = await Promise.all(
-        vaults.filter((v) => v.vault).map((v) => this.whaleClient.getVault(v.vault)),
-      );
-      const collateralTokens = await this.whaleClient.getAllCollateralTokens();
-      const allEmergencyProcesses: Promise<unknown>[] = [];
+    const vaults = await this.vaultService.getAll();
+    const vaultInfos = await Promise.all(vaults.filter((v) => v.vault).map((v) => this.whaleClient.getVault(v.vault)));
+    const collateralTokens = await this.whaleClient.getAllCollateralTokens();
+    const allEmergencyProcesses: Promise<unknown>[] = [];
 
-      for (const vault of vaultInfos) {
-        const dbVault = vaults.find((v) => v.vault === vault.vaultId);
+    for (const vault of vaultInfos) {
+      const dbVault = vaults.find((v) => v.vault === vault.vaultId);
 
-        const nextCollateralRatio = this.calculateNextCollateralRatio(vault, collateralTokens);
-        const collateralRatioToUse = nextCollateralRatio
-          ? Math.min(+vault.collateralRatio, nextCollateralRatio.toNumber())
-          : +vault.collateralRatio;
+      const nextCollateralRatio = this.calculateNextCollateralRatio(vault, collateralTokens);
+      const collateralRatioToUse = nextCollateralRatio
+        ? Math.min(+vault.collateralRatio, nextCollateralRatio.toNumber())
+        : +vault.collateralRatio;
 
-        if (dbVault.emergencyCollateralRatio > collateralRatioToUse) {
-          const logId = `${dbVault.address} (${dbVault.vault})`;
-          console.warn(`Starting emergency payback for ${logId}`);
+      if (dbVault.emergencyCollateralRatio > collateralRatioToUse) {
+        const logId = `${dbVault.address} (${dbVault.vault})`;
+        console.warn(`Starting emergency payback for ${logId}`);
 
-          allEmergencyProcesses.push(
-            this.executeEmergencyFor(dbVault, logId).catch((e) =>
-              console.error(`Exception during vault emergency check:`, e),
-            ),
-          );
-        }
+        allEmergencyProcesses.push(
+          this.executeEmergencyFor(dbVault, logId).catch((e) =>
+            console.error(`Exception during vault emergency check:`, e),
+          ),
+        );
       }
-      await Promise.all(allEmergencyProcesses);
-    } catch (e) {
-      console.error('Exception during vault emergency check:', e);
-    } finally {
-      this.emergencyVaultCheckLock.release();
     }
+    await Promise.all(allEmergencyProcesses);
   }
 
   private async executeEmergencyFor(vault: Vault, logId: string): Promise<string[]> {

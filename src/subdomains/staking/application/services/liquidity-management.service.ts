@@ -13,14 +13,14 @@ import { TransactionExecutionService } from 'src/integration/transaction/applica
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/domain/enums';
+import { AssetService } from 'src/shared/models/asset/asset.service';
 
 @Injectable()
 export class LiquidityManagementService {
-  private readonly lock = new Lock(1800);
-
   private client: WhaleClient;
 
   constructor(
+    private readonly assetService: AssetService,
     private readonly masternodeService: MasternodeService,
     private readonly withdrawalService: StakingWithdrawalService,
     private readonly transactionExecutionService: TransactionExecutionService,
@@ -30,18 +30,12 @@ export class LiquidityManagementService {
   }
 
   @Cron(CronExpression.EVERY_MINUTE)
+  @Lock(1800)
   async doTasks() {
     if (Config.processDisabled(Process.STAKING_LIQUIDITY_MANAGEMENT)) return;
-    if (!this.lock.acquire()) return;
 
-    try {
-      await this.checkMasternodesInProcess();
-      await this.checkLiquidity();
-    } catch (e) {
-      console.error('Exception during masternodes cronjob:', e);
-    } finally {
-      this.lock.release();
-    }
+    await this.checkMasternodesInProcess();
+    await this.checkLiquidity();
   }
 
   // --- LIQUIDITY MANAGEMENT --- //
@@ -96,8 +90,8 @@ export class LiquidityManagementService {
   private async getCurrentLiquidity(): Promise<{ available: BigNumber; incoming: BigNumber }> {
     const balance = await this.client.getUtxoBalance(Config.staking.liquidity.address);
 
-    const pendingWithdrawals = await this.withdrawalService.getPendingWithdrawals();
-    const pendingWithdrawalAmount = new BigNumber(Util.sumObj(pendingWithdrawals, 'amount'));
+    const dfi = await this.assetService.getDfiCoin();
+    const pendingWithdrawalAmount = await this.withdrawalService.getPendingAmount(dfi);
 
     const resigningMasternodes = await this.masternodeService.getAllResigning();
     const pendingResignAmount = new BigNumber(resigningMasternodes.length * Config.masternode.collateral);

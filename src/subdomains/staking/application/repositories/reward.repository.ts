@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
+import { BaseRepository } from 'src/shared/repositories/base.repository';
 import { Util } from 'src/shared/util';
-import { Between, EntityManager, FindOperator, IsNull, Not, Repository } from 'typeorm';
+import { Between, EntityManager, FindOperator, IsNull, Not } from 'typeorm';
 import { Reward } from '../../domain/entities/reward.entity';
 import { RewardStatus } from '../../domain/enums';
 
 @Injectable()
-export class RewardRepository extends Repository<Reward> {
+export class RewardRepository extends BaseRepository<Reward> {
   constructor(manager: EntityManager) {
     super(Reward, manager);
   }
@@ -17,11 +18,20 @@ export class RewardRepository extends Repository<Reward> {
     });
   }
 
+  async getRewardByKey(key: string, value: any): Promise<Reward> {
+    return this.createQueryBuilder('reward')
+      .select('reward')
+      .leftJoinAndSelect('reward.staking', 'staking')
+      .where(`reward.${key} = :param`, { param: value })
+      .getOne();
+  }
+
   async getByUserId(userId: number, dateFrom?: Date, dateTo?: Date): Promise<Reward[]> {
     return this.find({
       where: { staking: { userId }, ...this.dateQuery(dateFrom, dateTo) },
       relations: ['staking', 'referenceAsset', 'targetAsset'],
       loadEagerRelations: false,
+      order: { id: 'DESC' },
     });
   }
 

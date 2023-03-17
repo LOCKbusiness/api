@@ -8,6 +8,8 @@ import { NetworkName } from '@defichain/jellyfish-network';
 
 export enum Process {
   PAY_IN = 'PayIn',
+  DEX = 'Dex',
+  PAY_OUT = 'PayOut',
   STAKING_DEPOSIT = 'StakingDeposit',
   STAKING_WITHDRAWAL = 'StakingWithdrawal',
   STAKING_LIQUIDITY_MANAGEMENT = 'StakingLiquidityManagement',
@@ -141,7 +143,7 @@ export class Configuration {
   whale = {
     version: 'v0',
     network: this.network,
-    url: 'https://ocean.defichain.com',
+    url: process.env.OCEAN_URLS?.split(',')[0],
   };
 
   payIn = {
@@ -164,6 +166,7 @@ export class Configuration {
       { amount: 1, asset: 'DFI' },
       { amount: 1, asset: 'USDC' },
       { amount: 1, asset: 'USDT' },
+      { amount: 1, asset: 'EUROC' },
       { amount: 0.0001, asset: 'BTC' },
       { amount: 0.0001, asset: 'ETH' },
     ],
@@ -210,7 +213,6 @@ export class Configuration {
     amount: {
       max: 300, // quantity of UTXOs
     },
-    split: 100, // UTXO
     merge: 100, // UTXO
   };
 

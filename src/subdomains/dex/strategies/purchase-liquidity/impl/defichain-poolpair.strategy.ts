@@ -1,6 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { Interval } from '@nestjs/schedule';
-import { Not } from 'typeorm';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { IsNull, Not } from 'typeorm';
 import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
 import { AssetService } from 'src/shared/models/asset/asset.service';
 import { Util } from 'src/shared/util';
@@ -19,11 +19,10 @@ import { PurchaseLiquidityStrategyAlias } from '../purchase-liquidity.facade';
 import { NotificationService } from 'src/integration/notification/services/notification.service';
 import { SettingService } from 'src/shared/services/setting.service';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
+import { Config, Process } from 'src/config/config';
 
 @Injectable()
 export class DeFiChainPoolPairStrategy extends PurchaseLiquidityStrategy {
-  private readonly verifyDerivedOrdersLock = new Lock(1800);
-
   constructor(
     readonly notificationService: NotificationService,
     private readonly settingService: SettingService,
@@ -59,17 +58,20 @@ export class DeFiChainPoolPairStrategy extends PurchaseLiquidityStrategy {
 
     order.purchased(amount);
     order.recordFee(await this.feeAsset(), 0);
+
+    await this.dexService.completeOrders(LiquidityOrderContext.CREATE_POOL_PAIR, order.id.toString());
     await this.liquidityOrderRepo.save(order);
   }
 
-  @Interval(30000)
+  @Cron(CronExpression.EVERY_30_SECONDS)
+  @Lock(1800)
   async verifyDerivedOrders(): Promise<void> {
-    if ((await this.settingService.get('purchase-poolpair-liquidity')) !== 'on') return;
-    if (!this.verifyDerivedOrdersLock.acquire()) return;
+    if (Config.processDisabled(Process.DEX)) return;
 
     const pendingParentOrders = await this.liquidityOrderRepo.findBy({
       context: Not(LiquidityOrderContext.CREATE_POOL_PAIR),
       isReady: false,
+      txId: IsNull(),
     });
 
     for (const parentOrder of pendingParentOrders) {
@@ -83,15 +85,12 @@ export class DeFiChainPoolPairStrategy extends PurchaseLiquidityStrategy {
 
         if (derivedOrders.length === 2) {
           await this.addPoolPair(parentOrder, derivedOrders);
-          await this.dexService.completeOrders(LiquidityOrderContext.CREATE_POOL_PAIR, parentOrder.id.toString());
         }
       } catch (e) {
         console.error(`Error while verifying derived liquidity order. Parent Order ID: ${parentOrder.id}`, e);
         continue;
       }
     }
-
-    this.verifyDerivedOrdersLock.release();
   }
 
   protected getFeeAsset(): Promise<Asset> {

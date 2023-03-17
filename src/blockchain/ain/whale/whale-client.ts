@@ -1,10 +1,11 @@
-import { ApiPagedResponse, WhaleApiClient } from '@defichain/whale-api-client';
+import { ApiPagedResponse, WhaleApiClient, WhaleApiError } from '@defichain/whale-api-client';
 import { AddressToken, AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
 import { CollateralToken, LoanVaultActive, LoanVaultState } from '@defichain/whale-api-client/dist/api/loan';
 import { TokenData } from '@defichain/whale-api-client/dist/api/tokens';
 import { Transaction, TransactionVin } from '@defichain/whale-api-client/dist/api/transactions';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import BigNumber from 'bignumber.js';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { GetConfig } from 'src/config/config';
 import { AsyncMap } from 'src/shared/async-map';
 import { Lock } from 'src/shared/lock';
@@ -13,39 +14,33 @@ import { Util } from 'src/shared/util';
 export class WhaleClient {
   private readonly secondsPerBlock = 30;
   private readonly client: WhaleApiClient;
-  private readonly transactions = new AsyncMap<string, string>();
-  private readonly txLock = new Lock(300);
+  private readonly transactions = new AsyncMap<string, string>(this.constructor.name);
 
-  private currentBlock = 0;
+  readonly #blockHeight: BehaviorSubject<number>;
 
   constructor(scheduler: SchedulerRegistry, client?: WhaleApiClient) {
-    this.client = client ?? this.createWhaleClient();
+    this.client = client ?? new WhaleApiClient(GetConfig().whale);
+    this.#blockHeight = new BehaviorSubject(0);
 
-    const interval = setInterval(() => this.pollTransactions(), 5000);
+    // setup block poller
+    const interval = setInterval(() => this.pollBlockHeight(), 1000);
     scheduler.addInterval(Util.randomId().toString(), interval);
+
+    // check transactions
+    this.#blockHeight.subscribe(() => this.checkTransactions());
   }
 
-  private createWhaleClient(): WhaleApiClient {
-    return new WhaleApiClient(GetConfig().whale);
+  get blockHeight(): Observable<number> {
+    return this.#blockHeight.asObservable();
   }
 
-  async getUtxoBalance(address: string): Promise<BigNumber> {
-    return this.client.address.getBalance(address).then(BigNumber);
-  }
-
-  async getTokenBalances(address: string): Promise<AddressToken[]> {
-    return this.getAll(() => this.client.address.listToken(address));
-  }
-
-  async getTokenBalance(address: string, token: string): Promise<BigNumber> {
-    return this.getTokenBalances(address)
-      .then((tb) => tb.find((b) => b.symbol === token)?.amount ?? 0)
-      .then(BigNumber);
+  get currentBlockHeight(): number {
+    return this.#blockHeight.value;
   }
 
   async getNearestBlockAt(date: Date): Promise<number> {
     let targetTime = new Date();
-    let targetHeight = await this.getBlockHeight();
+    let targetHeight = this.currentBlockHeight;
 
     if (date > targetTime) return targetHeight;
 
@@ -63,8 +58,18 @@ export class WhaleClient {
     return blocks.find((b) => new Date(b.time * 1000) < date)?.height;
   }
 
-  async getBlockHeight(): Promise<number> {
-    return (await this.client.stats.get()).count.blocks;
+  async getUtxoBalance(address: string): Promise<BigNumber> {
+    return this.client.address.getBalance(address).then(BigNumber);
+  }
+
+  async getTokenBalances(address: string): Promise<AddressToken[]> {
+    return this.getAll(() => this.client.address.listToken(address));
+  }
+
+  async getTokenBalance(address: string, token: string): Promise<BigNumber> {
+    return this.getTokenBalances(address)
+      .then((tb) => tb.find((b) => b.symbol === token)?.amount ?? 0)
+      .then(BigNumber);
   }
 
   async getAllUnspent(address: string): Promise<AddressUnspent[]> {
@@ -93,8 +98,11 @@ export class WhaleClient {
     return this.transactions.wait(txId, timeout);
   }
 
-  async getTx(txId: string): Promise<Transaction> {
-    return this.client.transactions.get(txId);
+  async getTx(txId: string): Promise<Transaction | undefined> {
+    return this.client.transactions.get(txId).catch((e: WhaleApiError) => {
+      if (e.code === 404) return undefined;
+      throw e;
+    });
   }
 
   async getTxVins(txId: string): Promise<TransactionVin[]> {
@@ -115,27 +123,20 @@ export class WhaleClient {
     return batches.reduce((prev, curr) => prev.concat(curr), [] as T[]);
   }
 
-  private async pollTransactions() {
-    if (!this.txLock.acquire()) return;
-
+  private async pollBlockHeight() {
     try {
-      if (this.transactions.get().length === 0) return;
-
-      const currentBlock = await this.getBlockHeight();
-      if (currentBlock > this.currentBlock) {
-        await Util.doInBatches(
-          this.transactions.get(),
-          (txIds) => Promise.all(txIds.map((tx) => this.checkTx(tx))),
-          10,
-        );
-
-        this.currentBlock = currentBlock;
-      }
+      const currentBlockHeight = (await this.client.stats.get()).count.blocks;
+      if (currentBlockHeight !== this.#blockHeight.value) this.#blockHeight.next(currentBlockHeight);
     } catch (e) {
-      console.error('Exception during transaction polling:', e);
-    } finally {
-      this.txLock.release();
+      console.error('Exception during block polling:', e);
     }
+  }
+
+  @Lock(300)
+  private async checkTransactions() {
+    if (this.transactions.get().length === 0) return;
+
+    await Util.doInBatches(this.transactions.get(), (txIds) => Promise.all(txIds.map((tx) => this.checkTx(tx))), 10);
   }
 
   private async checkTx(txId: string) {

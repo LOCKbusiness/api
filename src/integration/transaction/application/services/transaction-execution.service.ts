@@ -34,6 +34,8 @@ import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/domain/enums';
 import { RawTxService } from 'src/blockchain/ain/jellyfish/services/raw-tx.service';
 import { TransactionCacheService } from './transaction-cache.service';
 import { AssetType } from 'src/shared/models/asset/asset.entity';
+import { RawTxCheck } from 'src/blockchain/ain/jellyfish/utils/raw-tx-check';
+import { VaultService } from 'src/integration/vault/application/services/vault.service';
 
 @Injectable()
 export class TransactionExecutionService {
@@ -45,6 +47,7 @@ export class TransactionExecutionService {
   constructor(
     private readonly transactionService: TransactionService,
     private readonly transactionCache: TransactionCacheService,
+    private readonly vaultService: VaultService,
     private readonly rawTxService: RawTxService,
     private readonly cryptoService: CryptoService,
     whaleService: WhaleService,
@@ -195,8 +198,10 @@ export class TransactionExecutionService {
 
   private async signAndBroadcast(rawTx: RawTxDto, payload: any, unlockUtxoOnFail = true): Promise<string> {
     try {
+      const direction = RawTxCheck.direction(rawTx, await this.vaultService.getAllIds());
+      if (!direction) throw new Error(`${rawTx.id} is not allowed`);
       const signature = await this.receiveSignatureFor(rawTx);
-      const hex = await this.transactionService.sign(rawTx, signature, payload);
+      const hex = await this.transactionService.sign(rawTx, signature, direction, payload);
       console.info(`${rawTx.id} broadcasting`);
       return await this.whaleClient.sendRaw(hex);
     } catch (e) {

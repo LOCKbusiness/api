@@ -106,7 +106,7 @@ export class Reward extends IEntity {
       throw new Error('Cannot calculate targetAmount, provided batchReferenceAmount is 0');
     }
 
-    this.targetAmount = Util.round((this.outputReferenceAmount / batchReferenceAmount) * batchTargetAmount, 8);
+    this.targetAmount = Util.round((this.outputReferenceAmount / batchReferenceAmount) * batchTargetAmount, 10);
 
     return this;
   }

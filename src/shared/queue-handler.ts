@@ -12,10 +12,13 @@ class QueueItem<T> {
   constructor(private readonly action: () => Promise<T>, timeout?: number) {
     this.promise = new Promise((resolve, reject) => {
       this.resolve = (v) => {
-        resolve(v);
         if (this.timeout) clearTimeout(this.timeout);
+        resolve(v);
       };
-      this.reject = reject;
+      this.reject = (e) => {
+        if (this.timeout) clearTimeout(this.timeout);
+        reject(e);
+      };
     });
     if (timeout) this.timeout = setTimeout(() => this.reject(new Error('Queue timed out')), timeout);
   }
@@ -27,10 +30,13 @@ class QueueItem<T> {
   public async doWork() {
     await this.action().then(this.resolve).catch(this.reject);
   }
+
+  public abort() {
+    this.reject?.(new Error('Queue aborted'));
+  }
 }
 
 export class QueueHandler {
-  private readonly lock = new Lock(1200);
   private readonly queue: QueueItem<any>[] = [];
 
   constructor(scheduler: SchedulerRegistry, private readonly timeout?: number) {
@@ -44,15 +50,16 @@ export class QueueHandler {
     return item.wait();
   }
 
-  async doWork() {
-    if (!this.lock.acquire()) return;
+  clear() {
+    for (const item of this.queue) {
+      item.abort();
+    }
+  }
 
-    try {
-      while (this.queue.length > 0) {
-        await this.queue.shift().doWork();
-      }
-    } finally {
-      this.lock.release();
+  @Lock(1200)
+  private async doWork() {
+    while (this.queue.length > 0) {
+      await this.queue.shift().doWork();
     }
   }
 }

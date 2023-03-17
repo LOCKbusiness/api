@@ -11,8 +11,6 @@ import { PayInRepository } from '../repositories/payin.repository';
 
 @Injectable()
 export class PayInService {
-  private readonly lock = new Lock(7200);
-
   constructor(
     private readonly payInRepository: PayInRepository,
     private readonly factory: PayInFactory,
@@ -25,9 +23,9 @@ export class PayInService {
     return this.payInRepository.findBy({ status: PayInStatus.CONFIRMED });
   }
 
-  async getPayInAsset(address: string, txId: string): Promise<Asset> {
-    const payIn = await this.payInRepository.findOneBy({ address: { address: address }, txId });
-    if (!payIn) throw new Error(`Pay in ${txId} on ${address} not found`);
+  async getPayInAsset(address: string, txId: string, txSequence: number): Promise<Asset> {
+    const payIn = await this.payInRepository.findOneBy({ address: { address }, txId, txSequence });
+    if (!payIn) throw new Error(`Pay in ${txId} (${txSequence}) on ${address} not found`);
 
     return payIn.asset;
   }
@@ -51,18 +49,12 @@ export class PayInService {
   //*** JOBS ***//
 
   @Cron(CronExpression.EVERY_30_SECONDS)
+  @Lock(7200)
   async checkPayInTransactions(): Promise<void> {
     if (Config.processDisabled(Process.PAY_IN)) return;
-    if (!this.lock.acquire()) return;
 
-    try {
-      await this.processNewTransactions();
-      await this.processUnconfirmedTransactions();
-    } catch (e) {
-      console.error('Exception during DeFiChain pay in checks:', e);
-    } finally {
-      this.lock.release();
-    }
+    await this.processNewTransactions();
+    await this.processUnconfirmedTransactions();
   }
 
   //*** HELPER METHODS ***//
@@ -94,10 +86,7 @@ export class PayInService {
     return newTransactions.map((tx) => this.factory.createFromTransaction(tx));
   }
 
-  // TODO - consider more reliable solution - in case of DB fail, some PayIns might be lost
   private async persistPayIns(payIns: PayIn[]): Promise<void> {
-    for (const payIn of payIns) {
-      await this.payInRepository.save(payIn);
-    }
+    await this.payInRepository.saveMany(payIns);
   }
 }

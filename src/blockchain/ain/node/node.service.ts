@@ -77,8 +77,8 @@ export class NodeService {
 
   swapNode(type: NodeType, mode: NodeMode): void {
     if (this.isNodeClientAvailable(type, mode)) {
-      console.log(`Swapped node ${type} to ${mode}`);
       this.#connectedNodes.get(type)?.next(this.#allNodes.get(type)[mode]);
+      console.log(`Swapped node ${type} to ${mode}`);
     } else {
       throw new Error(`Tried to swap to node ${type} to ${mode}, but NodeClient is not available in the pool`);
     }

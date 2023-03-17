@@ -15,8 +15,6 @@ import { WithdrawalRepository } from '../repositories/withdrawal.repository';
 
 @Injectable()
 export class StakingFiatReferenceService {
-  private readonly lock = new Lock(7200);
-
   constructor(
     private readonly depositRepo: DepositRepository,
     private readonly withdrawalRepo: WithdrawalRepository,
@@ -27,22 +25,15 @@ export class StakingFiatReferenceService {
   //*** JOBS ***//
 
   @Cron(CronExpression.EVERY_MINUTE)
+  @Lock(7200)
   async calculateFiatReferenceAmounts(): Promise<void> {
-    if (!this.lock.acquire()) return;
+    const deposits = await this.getDepositsWithoutFiatReferences();
+    const withdrawals = await this.getWithdrawalsWithoutFiatReferences();
+    const rewards = await this.getRewardsWithoutFiatReferences();
 
-    try {
-      const deposits = await this.getDepositsWithoutFiatReferences();
-      const withdrawals = await this.getWithdrawalsWithoutFiatReferences();
-      const rewards = await this.getRewardsWithoutFiatReferences();
-
-      const relevantAssets = this.defineRelevantAssets(deposits, withdrawals, rewards);
-      const prices = await this.getReferencePrices(relevantAssets);
-      await this.calculateFiatReferences(deposits, withdrawals, rewards, prices);
-    } catch (e) {
-      console.error('Exception during staking deposits, withdrawals and rewards fiat reference calculation:', e);
-    } finally {
-      this.lock.release();
-    }
+    const relevantAssets = this.defineRelevantAssets(deposits, withdrawals, rewards);
+    const prices = await this.getReferencePrices(relevantAssets);
+    await this.calculateFiatReferences(deposits, withdrawals, rewards, prices);
   }
 
   //*** HELPER METHODS ***//
@@ -88,10 +79,9 @@ export class StakingFiatReferenceService {
       for (const fiatName of Object.values(Fiat)) {
         try {
           const price = await this.priceProvider.getFiatPrice(fiatName, assetId);
-
           prices.push(price);
         } catch (e) {
-          console.error(`Could not find fiat price for assetId ${assetId} and fiat '${fiatName}'`, e);
+          console.info(`Could not find fiat price for assetId ${assetId} and fiat '${fiatName}':`, e);
           continue;
         }
       }
@@ -113,6 +103,7 @@ export class StakingFiatReferenceService {
 
   private async calculateFiatReferencesForDeposits(deposits: Deposit[], prices: Price[]): Promise<void> {
     const confirmedDeposits = [];
+    const failedDeposits = [];
 
     for (const deposit of deposits) {
       try {
@@ -121,10 +112,11 @@ export class StakingFiatReferenceService {
 
         confirmedDeposits.push(deposit.id);
       } catch (e) {
-        console.error(
+        console.info(
           `Could not calculate fiat reference amount for Deposit Id: ${deposit.id}. Asset Id: ${deposit.asset.id}`,
           e,
         );
+        failedDeposits.push(deposit.id);
         continue;
       }
     }
@@ -134,10 +126,17 @@ export class StakingFiatReferenceService {
         `Successfully added fiat references to ${confirmedDeposits.length} deposit(s). Deposit Id(s):`,
         confirmedDeposits,
       );
+
+    failedDeposits.length > 0 &&
+      console.error(
+        `Failed to add fiat references to ${failedDeposits.length} deposit(s). Deposit Id(s):`,
+        failedDeposits,
+      );
   }
 
   private async calculateFiatReferencesForWithdrawals(withdrawals: Withdrawal[], prices: Price[]): Promise<void> {
     const confirmedWithdrawals = [];
+    const failedWithdrawals = [];
 
     for (const withdrawal of withdrawals) {
       try {
@@ -146,10 +145,11 @@ export class StakingFiatReferenceService {
 
         confirmedWithdrawals.push(withdrawal.id);
       } catch (e) {
-        console.error(
+        console.info(
           `Could not calculate fiat reference amount for Withdrawals Id: ${withdrawal.id}. Asset Id: ${withdrawal.asset.id}`,
           e,
         );
+        failedWithdrawals.push(withdrawal.id);
         continue;
       }
     }
@@ -159,10 +159,17 @@ export class StakingFiatReferenceService {
         `Successfully added fiat references to ${confirmedWithdrawals.length} withdrawal(s). Withdrawal Id(s):`,
         confirmedWithdrawals,
       );
+
+    failedWithdrawals.length > 0 &&
+      console.error(
+        `Failed to add fiat references to ${failedWithdrawals.length} withdrawal(s). Withdrawal Id(s):`,
+        failedWithdrawals,
+      );
   }
 
   private async calculateFiatReferencesForRewards(rewards: Reward[], prices: Price[]): Promise<void> {
     const confirmedRewards = [];
+    const failedRewards = [];
 
     for (const reward of rewards) {
       try {
@@ -171,10 +178,11 @@ export class StakingFiatReferenceService {
 
         confirmedRewards.push(reward.id);
       } catch (e) {
-        console.error(
+        console.info(
           `Could not calculate fiat reference amount for Reward Id: ${reward.id}. Asset Id: ${reward.referenceAsset.id}`,
           e,
         );
+        failedRewards.push(reward.id);
         continue;
       }
     }
@@ -184,5 +192,8 @@ export class StakingFiatReferenceService {
         `Successfully added fiat references to ${confirmedRewards.length} reward(s). Reward Id(s):`,
         confirmedRewards,
       );
+
+    failedRewards.length > 0 &&
+      console.error(`Failed to add fiat references to ${failedRewards.length} reward(s). Reward Id(s):`, failedRewards);
   }
 }

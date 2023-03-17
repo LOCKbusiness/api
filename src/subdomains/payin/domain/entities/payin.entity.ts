@@ -22,6 +22,9 @@ export class PayIn extends IEntity {
   @Column()
   txId: string;
 
+  @Column({ nullable: true, type: 'bigint' })
+  txSequence: number;
+
   @Column()
   txType: string;
 
@@ -49,6 +52,7 @@ export class PayIn extends IEntity {
     address: BlockchainAddress,
     txType: string,
     txId: string,
+    txSequence: number,
     blockHeight: number,
     amount: number,
     asset: Asset,
@@ -59,6 +63,7 @@ export class PayIn extends IEntity {
     payIn.address = address;
     payIn.txType = txType;
     payIn.txId = txId;
+    payIn.txSequence = txSequence;
     payIn.blockHeight = blockHeight;
     payIn.amount = amount;
     payIn.asset = asset;
