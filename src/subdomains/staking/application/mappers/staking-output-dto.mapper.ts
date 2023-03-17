@@ -8,7 +8,7 @@ import { RewardRouteOutputDtoMapper } from './reward-route-output-dto.mapper';
 import { StakingBalanceMapper } from './staking-balance.mapper';
 
 export class StakingOutputDtoMapper {
-  private static balanceSortOrder = ['DFI', 'DUSD', 'BTC', 'ETH', 'USDC', 'USDT'];
+  private static balanceSortOrder = ['DFI', 'DUSD', 'BTC', 'ETH', 'USDC', 'USDT', 'EUROC'];
 
   private static sortOrder(balance: StakingBalanceDto): number {
     const sortOrder = this.balanceSortOrder.indexOf(balance.asset);
