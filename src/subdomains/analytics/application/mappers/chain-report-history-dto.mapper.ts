@@ -3,7 +3,11 @@ import { Deposit } from 'src/subdomains/staking/domain/entities/deposit.entity';
 import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
 import { Withdrawal } from 'src/subdomains/staking/domain/entities/withdrawal.entity';
 import { DepositStatus, RewardStatus, StakingStrategy, WithdrawalStatus } from 'src/subdomains/staking/domain/enums';
-import { ChainReportCsvHistoryDto, ChainReportTransactionType } from '../dto/output/chain-report-history.dto';
+import {
+  ChainReportCsvHistoryDto,
+  ChainReportTarget,
+  ChainReportTransactionType,
+} from '../dto/output/chain-report-history.dto';
 
 export class ChainReportHistoryDtoMapper {
   static mapStakingDeposits(deposits: Deposit[]): ChainReportCsvHistoryDto[] {
@@ -24,6 +28,8 @@ export class ChainReportHistoryDtoMapper {
             ? 'LOCK Yield Machine Deposit'
             : 'LOCK Staking Deposit',
         isReinvest: null,
+        target:
+          d.staking.strategy === StakingStrategy.LIQUIDITY_MINING ? ChainReportTarget.YM : ChainReportTarget.STAKING,
       }));
   }
 
@@ -45,6 +51,7 @@ export class ChainReportHistoryDtoMapper {
             ? 'LOCK Yield Machine Withdrawal'
             : 'LOCK Staking Withdrawal',
         isReinvest: null,
+        target: ChainReportTarget.WALLET,
       }));
   }
 
@@ -69,6 +76,13 @@ export class ChainReportHistoryDtoMapper {
             ? `${r.referenceAsset.name} LOCK Yield Machine Reward`
             : 'LOCK Staking Reward',
         isReinvest: r.isReinvest,
+        target: r.isReinvest
+          ? r.staking.strategy === StakingStrategy.MASTERNODE
+            ? ChainReportTarget.STAKING
+            : ChainReportTarget.YM
+          : r.targetAddress.isEqual(r.staking.withdrawalAddress)
+          ? ChainReportTarget.WALLET
+          : ChainReportTarget.EXTERNAL,
       }));
   }
 
