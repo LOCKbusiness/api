@@ -130,7 +130,7 @@ export class StakingHistoryService {
     withdrawals: Withdrawal[],
     rewards: Reward[],
   ): Promise<ChainReportCsvHistoryDto[]> {
-    const userId = rewards ? rewards[0].staking.userId : null;
+    const userId = rewards.length != 0 ? rewards[0].staking.userId : null;
 
     const stakings = await this.stakingService.getStakingsByUserId(userId);
 
