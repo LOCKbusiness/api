@@ -94,6 +94,12 @@ export class StakingService {
     return this.repository.getByUserId(user.id);
   }
 
+  async getStakingsByUserId(userId: number): Promise<Staking[]> {
+    const user = await this.userService.getUserByKey('id', userId);
+
+    return this.repository.getByUserId(user.id);
+  }
+
   async getUnconfirmedDepositsAndWithdrawalsAmounts(
     stakingId: number,
   ): Promise<{ deposits: AssetBalance[]; withdrawals: AssetBalance[] }> {

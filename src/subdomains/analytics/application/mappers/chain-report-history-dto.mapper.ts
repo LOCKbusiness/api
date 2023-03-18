@@ -55,7 +55,10 @@ export class ChainReportHistoryDtoMapper {
       }));
   }
 
-  static mapStakingRewards(rewards: Reward[]): ChainReportCsvHistoryDto[] {
+  static mapStakingRewards(
+    rewards: Reward[],
+    depositAddressMap: Map<string, StakingStrategy>,
+  ): ChainReportCsvHistoryDto[] {
     return rewards
       .filter((r) => r.status === RewardStatus.CONFIRMED)
       .map((r) => ({
@@ -78,6 +81,10 @@ export class ChainReportHistoryDtoMapper {
         isReinvest: r.isReinvest,
         target: r.isReinvest
           ? r.staking.strategy === StakingStrategy.MASTERNODE
+            ? ChainReportTarget.STAKING
+            : ChainReportTarget.YM
+          : depositAddressMap.has(r.targetAddress.address)
+          ? depositAddressMap.get(r.targetAddress.address) === StakingStrategy.MASTERNODE
             ? ChainReportTarget.STAKING
             : ChainReportTarget.YM
           : r.targetAddress.isEqual(r.staking.withdrawalAddress)

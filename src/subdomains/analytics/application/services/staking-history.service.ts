@@ -14,6 +14,8 @@ import { UserService } from 'src/subdomains/user/application/services/user.servi
 import { HistoryQuery } from '../dto/input/history-query.dto';
 import { RepositoryFactory } from 'src/shared/repositories/repository.factory';
 import { WalletService } from 'src/subdomains/user/application/services/wallet.service';
+import { StakingService } from 'src/subdomains/staking/application/services/staking.service';
+import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
 
 export type HistoryDto<T> = T extends ExportType.COMPACT
   ? CompactHistoryDto
@@ -33,6 +35,7 @@ export class StakingHistoryService {
     private readonly repos: RepositoryFactory,
     private readonly userService: UserService,
     private readonly walletService: WalletService,
+    private readonly stakingService: StakingService,
   ) {}
 
   async getHistoryCsv(query: HistoryQuery, exportType: ExportType): Promise<StreamableFile> {
@@ -54,7 +57,7 @@ export class StakingHistoryService {
       case ExportType.COIN_TRACKING:
         return (await this.getHistoryCT(deposits, withdrawals, rewards)) as HistoryDto<T>[];
       case ExportType.CHAIN_REPORT:
-        return this.getHistoryChainReport(deposits, withdrawals, rewards) as HistoryDto<T>[];
+        return (await this.getHistoryChainReport(deposits, withdrawals, rewards)) as HistoryDto<T>[];
       case ExportType.COMPACT:
         return this.getHistoryCompact(deposits, withdrawals, rewards) as HistoryDto<T>[];
     }
@@ -122,15 +125,24 @@ export class StakingHistoryService {
     return this.filterDuplicateTxCT(transactions);
   }
 
-  private getHistoryChainReport(
+  private async getHistoryChainReport(
     deposits: Deposit[],
     withdrawals: Withdrawal[],
     rewards: Reward[],
-  ): ChainReportCsvHistoryDto[] {
+  ): Promise<ChainReportCsvHistoryDto[]> {
+    const userId = rewards ? rewards[0].staking.userId : null;
+
+    const stakings = await this.stakingService.getStakingsByUserId(userId);
+
+    const depositStrategyMap = stakings.reduce(
+      (map, w) => map.set(w.depositAddress.address, w.strategy),
+      new Map<string, StakingStrategy>(),
+    );
+
     const transactions: ChainReportCsvHistoryDto[] = [
       ChainReportHistoryDtoMapper.mapStakingDeposits(deposits),
       ChainReportHistoryDtoMapper.mapStakingWithdrawals(withdrawals),
-      ChainReportHistoryDtoMapper.mapStakingRewards(rewards),
+      ChainReportHistoryDtoMapper.mapStakingRewards(rewards, depositStrategyMap),
     ]
       .reduce((prev, curr) => prev.concat(curr), [])
       .sort((tx1, tx2) => (tx1.timestamp.getTime() > tx2.timestamp.getTime() ? -1 : 1));
