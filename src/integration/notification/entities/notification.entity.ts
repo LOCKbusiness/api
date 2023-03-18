@@ -21,7 +21,7 @@ export class Notification extends IEntity {
   @Column({ nullable: false })
   context: MailContext;
 
-  @Column({ nullable: false, length: 1023 })
+  @Column({ nullable: false, length: 'MAX' })
   correlationId: string;
 
   @Column({ type: 'datetime2', nullable: false })
