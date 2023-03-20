@@ -4,7 +4,7 @@ import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { DeFiChainUtil } from 'src/blockchain/ain/utils/defichain.util';
 import { Config } from 'src/config/config';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/entities/asset.entity';
 import { SettingService } from 'src/shared/services/setting.service';
 import { Util } from 'src/shared/util';
 import { ChainSwapId, LiquidityOrder } from '../entities/liquidity-order.entity';

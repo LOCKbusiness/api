@@ -1,5 +1,5 @@
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { createDefaultAsset } from 'src/shared/models/asset/__mocks__/asset.entity.mock';
+import { createDefaultAsset } from 'src/shared/__tests__/asset.entity.mock';
 import { PayoutOrder, PayoutOrderContext, PayoutOrderStatus } from '../payout-order.entity';
 
 export function createDefaultPayoutOrder(): PayoutOrder {

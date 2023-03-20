@@ -1,5 +1,5 @@
-import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
-import { AssetService } from 'src/shared/models/asset/asset.service';
+import { Asset, AssetType } from 'src/shared/entities/asset.entity';
+import { AssetService } from 'src/shared/services/asset.service';
 import { LiquidityOrder } from '../../../../entities/liquidity-order.entity';
 import { NotEnoughLiquidityException } from '../../../../exceptions/not-enough-liquidity.exception';
 import { LiquidityOrderFactory } from '../../../../factories/liquidity-order.factory';

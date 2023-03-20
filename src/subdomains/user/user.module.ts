@@ -39,11 +39,10 @@ import { DfxController } from './api/controllers/dfx.controller';
     UserService,
     WalletService,
     WalletProviderService,
-    GeoLocationService,
     RefService,
     KycService,
     AuthService,
   ],
-  exports: [UserService, WalletService, GeoLocationService],
+  exports: [UserService, WalletService],
 })
 export class UserModule {}

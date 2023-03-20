@@ -1,5 +1,5 @@
 import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
-import { IEntity } from 'src/shared/models/entity';
+import { IEntity } from 'src/shared/entities/entity';
 import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { VoteDecision, VoteStatus } from '../enums';
 

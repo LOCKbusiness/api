@@ -5,7 +5,7 @@ import { KycStatus } from '../../domain/enums';
 import { UserRepository } from '../repositories/user.repository';
 import { IsNull, Not } from 'typeorm';
 import { Votes } from 'src/subdomains/voting/application/dto/votes.dto';
-import { BlockchainAddress } from 'src/shared/models/blockchain-address';
+import { BlockchainAddress } from 'src/shared/entities/blockchain-address';
 
 @Injectable()
 export class UserService {

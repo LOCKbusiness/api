@@ -13,7 +13,7 @@ import { TransactionExecutionService } from 'src/integration/transaction/applica
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/domain/enums';
-import { AssetService } from 'src/shared/models/asset/asset.service';
+import { AssetService } from 'src/shared/services/asset.service';
 
 @Injectable()
 export class LiquidityManagementService {

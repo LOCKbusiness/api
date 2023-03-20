@@ -1,8 +1,8 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { IsNull, Not } from 'typeorm';
-import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
-import { AssetService } from 'src/shared/models/asset/asset.service';
+import { Asset, AssetType } from 'src/shared/entities/asset.entity';
+import { AssetService } from 'src/shared/services/asset.service';
 import { Util } from 'src/shared/util';
 import { Lock } from 'src/shared/lock';
 import { LiquidityOrderContext, LiquidityOrder } from '../../../entities/liquidity-order.entity';

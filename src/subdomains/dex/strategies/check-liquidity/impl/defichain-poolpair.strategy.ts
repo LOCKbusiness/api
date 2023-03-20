@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
-import { AssetService } from 'src/shared/models/asset/asset.service';
+import { Asset, AssetType } from 'src/shared/entities/asset.entity';
+import { AssetService } from 'src/shared/services/asset.service';
 import { Util } from 'src/shared/util';
 import { CheckLiquidityRequest, CheckLiquidityResult } from '../../../interfaces';
 import { DexDeFiChainService } from '../../../services/dex-defichain.service';

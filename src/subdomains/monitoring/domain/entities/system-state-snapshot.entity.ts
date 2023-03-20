@@ -1,4 +1,4 @@
-import { IEntity } from 'src/shared/models/entity';
+import { IEntity } from 'src/shared/entities/entity';
 import { Column, Entity } from 'typeorm';
 
 export interface SystemState {

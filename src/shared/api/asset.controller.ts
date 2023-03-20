@@ -5,11 +5,11 @@ import { GetJwt } from 'src/shared/auth/get-jwt.decorator';
 import { JwtPayload } from 'src/shared/auth/jwt-payload.interface';
 import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
-import { AssetDtoMapper } from './asset-dto.mapper';
-import { AssetDto } from './asset.dto';
-import { Asset } from './asset.entity';
-import { AssetService } from './asset.service';
-import { UpdateAssetDto } from './update-asset.dto';
+import { AssetDtoMapper } from '../mappers/asset-dto.mapper';
+import { AssetDto } from '../__tests__/asset.dto';
+import { Asset } from '../entities/asset.entity';
+import { AssetService } from '../services/asset.service';
+import { UpdateAssetDto } from '../dto/update-asset.dto';
 
 @ApiTags('Asset')
 @Controller('asset')

@@ -1,5 +1,5 @@
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { Asset, AssetCategory, AssetType } from '../asset.entity';
+import { Asset, AssetCategory, AssetType } from '../entities/asset.entity';
 
 export function createDefaultAsset(): Asset {
   return createCustomAsset({});

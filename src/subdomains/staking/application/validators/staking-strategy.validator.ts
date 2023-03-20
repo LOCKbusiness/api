@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { AssetQuery } from 'src/shared/models/asset/asset.service';
+import { AssetQuery } from 'src/shared/services/asset.service';
 import { StakingTypes } from '../../domain/entities/staking.entity';
 import { StakingStrategy } from '../../domain/enums';
 

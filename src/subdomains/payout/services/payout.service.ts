@@ -12,7 +12,7 @@ import { Util } from 'src/shared/util';
 import { MailType, MailContext } from 'src/integration/notification/enums';
 import { MailRequest } from 'src/integration/notification/interfaces';
 import { NotificationService } from 'src/integration/notification/services/notification.service';
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/entities/asset.entity';
 import { IsNull, Not } from 'typeorm';
 import { Config, Process } from 'src/config/config';
 

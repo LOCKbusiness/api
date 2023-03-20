@@ -1,4 +1,4 @@
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/entities/asset.entity';
 import { LiquidityOrder } from 'src/subdomains/dex/entities/liquidity-order.entity';
 import { SellLiquidityRequest } from '../../../../interfaces';
 import { SellLiquidityStrategyAlias } from '../../sell-liquidity.facade';

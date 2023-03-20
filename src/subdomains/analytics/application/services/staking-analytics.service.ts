@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Config, Process } from 'src/config/config';
 import { MasternodeService } from 'src/integration/masternode/application/services/masternode.service';
-import { AssetQuery, AssetService } from 'src/shared/models/asset/asset.service';
+import { AssetQuery, AssetService } from 'src/shared/services/asset.service';
 import { StakingStrategyValidator } from 'src/subdomains/staking/application/validators/staking-strategy.validator';
 import { StakingType, StakingTypes } from 'src/subdomains/staking/domain/entities/staking.entity';
 import { StakingStrategy } from 'src/subdomains/staking/domain/enums';

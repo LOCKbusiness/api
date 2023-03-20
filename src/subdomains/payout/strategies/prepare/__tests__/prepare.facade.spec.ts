@@ -1,7 +1,7 @@
 import { mock } from 'jest-mock-extended';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { AssetService } from 'src/shared/models/asset/asset.service';
-import { createCustomAsset } from 'src/shared/models/asset/__mocks__/asset.entity.mock';
+import { AssetService } from 'src/shared/services/asset.service';
+import { createCustomAsset } from 'src/shared/__tests__/asset.entity.mock';
 import { DexService } from 'src/subdomains/dex/services/dex.service';
 import { PayoutOrderRepository } from '../../../repositories/payout-order.repository';
 import { PayoutDeFiChainService } from '../../../services/payout-defichain.service';

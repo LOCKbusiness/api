@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { Price } from 'src/shared/entities/price';
 import { Fiat } from 'src/shared/enums/fiat.enum';
 import { Lock } from 'src/shared/lock';
-import { Price } from 'src/shared/models/price';
 import { IsNull } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Reward } from '../../domain/entities/reward.entity';

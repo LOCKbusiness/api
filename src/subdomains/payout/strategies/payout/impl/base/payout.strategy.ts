@@ -1,4 +1,4 @@
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/entities/asset.entity';
 import { FeeResult } from 'src/subdomains/payout/interfaces';
 import { PayoutOrder } from '../../../../entities/payout-order.entity';
 

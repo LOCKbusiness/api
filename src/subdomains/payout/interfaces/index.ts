@@ -1,4 +1,4 @@
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/entities/asset.entity';
 import { PayoutOrderContext } from '../entities/payout-order.entity';
 
 export interface PayoutRequest {

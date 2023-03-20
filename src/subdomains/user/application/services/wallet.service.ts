@@ -11,7 +11,7 @@ import { WalletProviderService } from './wallet-provider.service';
 import { WalletProvider } from '../../domain/entities/wallet-provider.entity';
 import { WalletDetailedDto } from '../dto/wallet-detailed.dto';
 import { SignUpDto } from '../dto/sign-up.dto';
-import { BlockchainAddress } from 'src/shared/models/blockchain-address';
+import { BlockchainAddress } from 'src/shared/entities/blockchain-address';
 import { Util } from 'src/shared/util';
 
 @Injectable()

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationService } from 'src/integration/notification/services/notification.service';
-import { Asset } from 'src/shared/models/asset/asset.entity';
-import { AssetService } from 'src/shared/models/asset/asset.service';
+import { Asset } from 'src/shared/entities/asset.entity';
+import { AssetService } from 'src/shared/services/asset.service';
 import { SettingService } from 'src/shared/services/setting.service';
 import { DexService } from 'src/subdomains/dex/services/dex.service';
 import { PayoutOrderContext, PayoutOrder } from '../../../entities/payout-order.entity';

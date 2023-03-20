@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
-import { AssetService } from 'src/shared/models/asset/asset.service';
+import { Asset, AssetType } from 'src/shared/entities/asset.entity';
+import { AssetService } from 'src/shared/services/asset.service';
 import { LiquidityOrderFactory } from '../../../factories/liquidity-order.factory';
 import { LiquidityOrderRepository } from '../../../repositories/liquidity-order.repository';
 import { DexDeFiChainService } from '../../../services/dex-defichain.service';

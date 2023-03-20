@@ -1,6 +1,6 @@
 import { mock } from 'jest-mock-extended';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { createCustomAsset } from 'src/shared/models/asset/__mocks__/asset.entity.mock';
+import { createCustomAsset } from 'src/shared/__tests__/asset.entity.mock';
 import { PayoutOrder, PayoutOrderContext, PayoutOrderStatus } from '../../entities/payout-order.entity';
 import { createDefaultPayoutOrder } from '../../entities/__mocks__/payout-order.entity.mock';
 import { createCustomPayoutRequest } from '../../interfaces/__mocks__/payout-request.mock';

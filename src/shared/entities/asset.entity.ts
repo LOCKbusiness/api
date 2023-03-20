@@ -1,7 +1,7 @@
 import { Entity, Column, Index } from 'typeorm';
-import { Blockchain } from '../../enums/blockchain.enum';
-import { IEntity } from '../entity';
-import { AssetQuery } from './asset.service';
+import { Blockchain } from '../enums/blockchain.enum';
+import { IEntity } from './entity';
+import { AssetQuery } from '../services/asset.service';
 
 export enum AssetType {
   COIN = 'Coin',

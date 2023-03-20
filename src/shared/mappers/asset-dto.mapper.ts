@@ -1,5 +1,5 @@
-import { AssetDto } from './asset.dto';
-import { Asset } from './asset.entity';
+import { AssetDto } from '../__tests__/asset.dto';
+import { Asset } from '../entities/asset.entity';
 
 export class AssetDtoMapper {
   static entityToDto(asset: Asset): AssetDto {

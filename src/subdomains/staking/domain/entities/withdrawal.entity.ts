@@ -1,13 +1,13 @@
 import { BadRequestException } from '@nestjs/common';
 import { Config } from 'src/config/config';
 import { Fiat } from 'src/shared/enums/fiat.enum';
-import { Asset } from 'src/shared/models/asset/asset.entity';
-import { IEntity } from 'src/shared/models/entity';
-import { Price } from 'src/shared/models/price';
+import { Asset } from 'src/shared/entities/asset.entity';
+import { IEntity } from 'src/shared/entities/entity';
 import { Util } from 'src/shared/util';
 import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { WithdrawalStatus } from '../enums';
 import { Staking } from './staking.entity';
+import { Price } from 'src/shared/entities/price';
 
 @Entity()
 @Index((w: Withdrawal) => [w.staking, w.status], { unique: true, where: `status = '${WithdrawalStatus.DRAFT}'` })

@@ -1,19 +1,19 @@
-import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
+import { Asset, AssetType } from 'src/shared/entities/asset.entity';
 import { Withdrawal } from './withdrawal.entity';
 import { Column, Entity, Index, ManyToOne, OneToMany } from 'typeorm';
-import { IEntity } from 'src/shared/models/entity';
+import { IEntity } from 'src/shared/entities/entity';
 import { StakingStatus, StakingStrategy, WithdrawalStatus } from '../enums';
 import { BadRequestException } from '@nestjs/common';
 import { Util } from 'src/shared/util';
-import { Fiat } from 'src/shared/enums/fiat.enum';
-import { Price } from 'src/shared/models/price';
+import { Fiat } from 'src/shared/enums/fiat.enum';3
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { AssetQuery } from 'src/shared/models/asset/asset.service';
-import { BlockchainAddress } from 'src/shared/models/blockchain-address';
+import { AssetQuery } from 'src/shared/services/asset.service';
+import { BlockchainAddress } from 'src/shared/entities/blockchain-address';
 import { StakingBalance } from './staking-balance.entity';
 import { StakingBalances } from '../../application/services/staking.service';
 import { RewardStrategy } from './reward-strategy.entity';
 import { RewardRoute } from './reward-route.entity';
+import { Price } from 'src/shared/entities/price';
 
 export interface StakingType {
   asset: Asset;
