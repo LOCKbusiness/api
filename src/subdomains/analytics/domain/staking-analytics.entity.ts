@@ -1,5 +1,5 @@
-import { Asset } from 'src/shared/models/asset/asset.entity';
-import { IEntity } from 'src/shared/models/entity';
+import { Asset } from 'src/shared/entities/asset.entity';
+import { IEntity } from 'src/shared/entities/entity';
 import { Util } from 'src/shared/util';
 import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
 import { Column, Entity, ManyToOne } from 'typeorm';

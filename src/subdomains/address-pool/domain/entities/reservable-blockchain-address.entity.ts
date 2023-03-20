@@ -1,5 +1,5 @@
-import { BlockchainAddress } from 'src/shared/models/blockchain-address';
-import { IEntity } from 'src/shared/models/entity';
+import { BlockchainAddress } from 'src/shared/entities/blockchain-address';
+import { IEntity } from 'src/shared/entities/entity';
 import { Column, Entity, Index, OneToOne } from 'typeorm';
 import { BlockchainAddressReservation } from './blockchain-address-reservation.entity';
 

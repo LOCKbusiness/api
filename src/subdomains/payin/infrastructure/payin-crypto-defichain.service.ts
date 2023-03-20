@@ -5,12 +5,12 @@ import { Config } from 'src/config/config';
 import { AccountHistory } from '@defichain/jellyfish-api-core/dist/category/account';
 import { PayInTransaction } from '../application/interfaces';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
-import { BlockchainAddress } from 'src/shared/models/blockchain-address';
+import { Asset, AssetType } from 'src/shared/entities/asset.entity';
+import { BlockchainAddress } from 'src/shared/entities/blockchain-address';
 import { PayIn } from '../domain/entities/payin.entity';
 import { JellyfishService } from 'src/blockchain/ain/jellyfish/services/jellyfish.service';
 import { WhaleWalletAccount } from '@defichain/whale-api-wallet';
-import { AssetService } from 'src/shared/models/asset/asset.service';
+import { AssetService } from 'src/shared/services/asset.service';
 
 interface HistoryAmount {
   amount: number;

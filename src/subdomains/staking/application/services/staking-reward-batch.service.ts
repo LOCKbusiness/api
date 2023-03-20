@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/entities/asset.entity';
 import { Util } from 'src/shared/util';
 import { Not } from 'typeorm';
 import { RewardBatch, RewardBatchStatus } from '../../domain/entities/reward-batch.entity';

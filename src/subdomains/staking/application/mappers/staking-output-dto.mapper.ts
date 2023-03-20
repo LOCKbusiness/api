@@ -1,5 +1,5 @@
 import { Config } from 'src/config/config';
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/entities/asset.entity';
 import { Staking } from '../../domain/entities/staking.entity';
 import { AssetBalance } from '../dto/output/asset-balance';
 import { StakingBalanceDto } from '../dto/output/staking-balance.dto';

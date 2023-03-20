@@ -1,4 +1,4 @@
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/entities/asset.entity';
 import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
 import { StakingAnalytics } from '../staking-analytics.entity';
 

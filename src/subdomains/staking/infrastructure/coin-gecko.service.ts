@@ -1,11 +1,11 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
-import { AssetService } from 'src/shared/models/asset/asset.service';
-import { Price } from 'src/shared/models/price';
+import { AssetService } from 'src/shared/services/asset.service';
 import { PriceProvider } from '../application/interfaces';
 import { AssetStakingMetadataRepository } from '../application/repositories/asset-staking-metadata.repository';
 import CoinGeckoClient = require('coingecko-api');
 import { Util } from 'src/shared/util';
 import { Fiat } from 'src/shared/enums/fiat.enum';
+import { Price } from 'src/shared/entities/price';
 
 enum Currency {
   BTC = 'BTC',

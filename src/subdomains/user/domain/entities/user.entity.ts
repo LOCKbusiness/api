@@ -1,9 +1,9 @@
-import { IEntity } from 'src/shared/models/entity';
+import { Country } from 'src/shared/entities/country.entity';
+import { IEntity } from 'src/shared/entities/entity';
 import { Votes } from 'src/subdomains/voting/application/dto/votes.dto';
 import { Column, Entity, Index, ManyToOne, OneToMany } from 'typeorm';
 import { KycStatus } from '../enums';
 import { KycCompleted, KycFulfills } from '../utils';
-import { Country } from './country.entity';
 import { Wallet } from './wallet.entity';
 
 @Entity()

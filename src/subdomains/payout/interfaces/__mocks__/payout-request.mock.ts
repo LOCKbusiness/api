@@ -1,4 +1,4 @@
-import { createDefaultAsset } from 'src/shared/models/asset/__mocks__/asset.entity.mock';
+import { createDefaultAsset } from 'src/shared/__tests__/asset.entity.mock';
 import { PayoutRequest } from '..';
 import { PayoutOrderContext } from '../../entities/payout-order.entity';
 

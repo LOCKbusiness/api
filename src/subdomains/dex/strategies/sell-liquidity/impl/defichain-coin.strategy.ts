@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { Asset } from 'src/shared/models/asset/asset.entity';
-import { AssetService } from 'src/shared/models/asset/asset.service';
+import { Asset } from 'src/shared/entities/asset.entity';
+import { AssetService } from 'src/shared/services/asset.service';
 import { LiquidityOrder } from '../../../entities/liquidity-order.entity';
 import { LiquidityOrderFactory } from '../../../factories/liquidity-order.factory';
 import { SellLiquidityRequest } from '../../../interfaces';

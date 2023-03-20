@@ -1,5 +1,5 @@
 import { RawTxDto } from 'src/blockchain/ain/jellyfish/dto/raw-tx.dto';
-import { IEntity } from 'src/shared/models/entity';
+import { IEntity } from 'src/shared/entities/entity';
 import { Column, Entity } from 'typeorm';
 import { TransactionDirection } from '../enums';
 

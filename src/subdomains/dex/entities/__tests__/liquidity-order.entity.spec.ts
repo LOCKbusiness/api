@@ -1,4 +1,4 @@
-import { createCustomAsset } from 'src/shared/models/asset/__mocks__/asset.entity.mock';
+import { createCustomAsset } from 'src/shared/__tests__/asset.entity.mock';
 import { LiquidityOrder } from '../liquidity-order.entity';
 import { createCustomLiquidityOrder, createDefaultLiquidityOrder } from '../__mocks__/liquidity-order.entity.mock';
 

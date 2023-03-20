@@ -1,4 +1,4 @@
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/entities/asset.entity';
 import { Util } from 'src/shared/util';
 import { CheckLiquidityRequest, CheckLiquidityResult } from '../../../interfaces';
 

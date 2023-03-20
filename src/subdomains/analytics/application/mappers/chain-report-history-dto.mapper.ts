@@ -1,4 +1,4 @@
-import { Asset, AssetCategory } from 'src/shared/models/asset/asset.entity';
+import { Asset, AssetCategory } from 'src/shared/entities/asset.entity';
 import { Deposit } from 'src/subdomains/staking/domain/entities/deposit.entity';
 import { Reward } from 'src/subdomains/staking/domain/entities/reward.entity';
 import { Withdrawal } from 'src/subdomains/staking/domain/entities/withdrawal.entity';

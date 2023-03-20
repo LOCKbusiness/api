@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { AssetRepository } from 'src/shared/models/asset/asset.repository';
-import { Asset, AssetType } from './asset.entity';
-import { UpdateAssetDto } from './update-asset.dto';
+import { AssetRepository } from 'src/shared/repositories/asset.repository';
+import { Asset, AssetType } from '../entities/asset.entity';
+import { UpdateAssetDto } from '../dto/update-asset.dto';
 
 export interface AssetQuery {
   name: string;

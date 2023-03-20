@@ -4,14 +4,14 @@ import { In, Like } from 'typeorm';
 import { User } from '../../domain/entities/user.entity';
 import { Wallet } from '../../domain/entities/wallet.entity';
 import { WalletRepository } from '../repositories/wallet.repository';
-import { CountryService } from './country.service';
+import { CountryService } from '../../../../shared/services/country.service';
 import { GeoLocationService } from './geo-location.service';
 import { UserService } from './user.service';
 import { WalletProviderService } from './wallet-provider.service';
 import { WalletProvider } from '../../domain/entities/wallet-provider.entity';
 import { WalletDetailedDto } from '../dto/wallet-detailed.dto';
 import { SignUpDto } from '../dto/sign-up.dto';
-import { BlockchainAddress } from 'src/shared/models/blockchain-address';
+import { BlockchainAddress } from 'src/shared/entities/blockchain-address';
 import { Util } from 'src/shared/util';
 
 @Injectable()

@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { Asset, AssetCategory } from 'src/shared/models/asset/asset.entity';
+import { Asset, AssetCategory } from 'src/shared/entities/asset.entity';
 import { DeFiChainCryptoStrategy } from './impl/defichain-crypto.strategy';
 import { PurchaseLiquidityStrategy } from './impl/base/purchase-liquidity.strategy';
 import { DeFiChainPoolPairStrategy } from './impl/defichain-poolpair.strategy';

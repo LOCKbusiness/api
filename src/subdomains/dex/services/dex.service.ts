@@ -21,7 +21,7 @@ import {
 } from '../interfaces';
 import { PurchaseLiquidityStrategies } from '../strategies/purchase-liquidity/purchase-liquidity.facade';
 import { SellLiquidityStrategies } from '../strategies/sell-liquidity/sell-liquidity.facade';
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/entities/asset.entity';
 import { TransferNotRequiredException } from '../exceptions/transfer-not-required.exception';
 import { Config, Process } from 'src/config/config';
 

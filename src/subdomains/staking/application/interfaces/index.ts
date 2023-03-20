@@ -1,5 +1,5 @@
+import { Price } from 'src/shared/entities/price';
 import { Fiat } from 'src/shared/enums/fiat.enum';
-import { Price } from 'src/shared/models/price';
 
 export const PRICE_PROVIDER = 'PRICE_PROVIDER';
 

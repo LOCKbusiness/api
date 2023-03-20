@@ -1,4 +1,4 @@
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/entities/asset.entity';
 import { LiquidityOrderContext, LiquidityOrderType } from '../entities/liquidity-order.entity';
 
 export type PurchaseLiquidityRequest = GetLiquidityRequest;
