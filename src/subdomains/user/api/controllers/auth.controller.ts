@@ -24,7 +24,6 @@ export class AuthController {
   }
 
   @Post('sign-in')
-  @UseGuards(IpGuard)
   @ApiCreatedResponse({ type: AuthResponseDto })
   signIn(@Body() signInDto: SignInDto): Promise<AuthResponseDto> {
     return this.authService.signIn(signInDto);
