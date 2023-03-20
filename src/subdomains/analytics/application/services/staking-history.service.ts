@@ -130,12 +130,11 @@ export class StakingHistoryService {
     withdrawals: Withdrawal[],
     rewards: Reward[],
   ): Promise<ChainReportCsvHistoryDto[]> {
-    const userId = rewards.length != 0 ? rewards[0].staking.userId : null;
-
-    const stakings = await this.stakingService.getStakingsByUserId(userId);
+    const stakings =
+      rewards.length === 0 ? [] : await this.stakingService.getStakingsByUserId(rewards[0].staking.userId);
 
     const depositStrategyMap = stakings.reduce(
-      (map, w) => map.set(w.depositAddress.address, w.strategy),
+      (map, s) => map.set(s.depositAddress.address, s.strategy),
       new Map<string, StakingStrategy>(),
     );
 

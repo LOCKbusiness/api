@@ -79,11 +79,7 @@ export class ChainReportHistoryDtoMapper {
             ? `${r.referenceAsset.name} LOCK Yield Machine Reward`
             : 'LOCK Staking Reward',
         isReinvest: r.isReinvest,
-        target: r.isReinvest
-          ? r.staking.strategy === StakingStrategy.MASTERNODE
-            ? ChainReportTarget.STAKING
-            : ChainReportTarget.YM
-          : depositAddressMap.has(r.targetAddress.address)
+        target: depositAddressMap.has(r.targetAddress.address)
           ? depositAddressMap.get(r.targetAddress.address) === StakingStrategy.MASTERNODE
             ? ChainReportTarget.STAKING
             : ChainReportTarget.YM
