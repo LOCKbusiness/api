@@ -13,7 +13,6 @@ import { Ref } from './domain/entities/ref.entity';
 import { User } from './domain/entities/user.entity';
 import { WalletProvider } from './domain/entities/wallet-provider.entity';
 import { Wallet } from './domain/entities/wallet.entity';
-import { GeoLocationService } from './application/services/geo-location.service';
 import { KycService } from './application/services/kyc.service';
 import { RefService } from './application/services/ref.service';
 import { UserService } from './application/services/user.service';
