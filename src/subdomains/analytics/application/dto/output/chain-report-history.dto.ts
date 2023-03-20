@@ -9,6 +9,13 @@ export enum ChainReportTransactionType {
   FEE = 'Fee',
 }
 
+export enum ChainReportTarget {
+  STAKING = 'Staking',
+  YM = 'YM',
+  WALLET = 'Wallet',
+  EXTERNAL = 'External',
+}
+
 export class ChainReportCsvHistoryDto {
   @ApiProperty()
   timestamp: Date;
@@ -42,4 +49,7 @@ export class ChainReportCsvHistoryDto {
 
   @ApiPropertyOptional()
   isReinvest: boolean;
+
+  @ApiPropertyOptional({ enum: ChainReportTarget })
+  target: ChainReportTarget;
 }
