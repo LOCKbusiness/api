@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Config } from 'src/config/config';
 import { CountryService } from 'src/shared/services/country.service';
-import { WalletRepository } from 'src/subdomains/user/application/repositories/wallet.repository';
 import { GeoLocationService } from 'src/subdomains/user/application/services/geo-location.service';
-import { EntityManager } from 'typeorm';
 import { WalletRole } from '../auth/wallet-role.enum';
 import { IpLog } from '../entities/ip-log.entity';
 import { IpLogRepository } from '../repositories/ip-log.repository';
@@ -33,11 +31,10 @@ export class IpLogService {
   private async checkIpCountry(userIp: string, address: string): Promise<{ country: string; result: boolean }> {
     if (Config.environment === 'loc') return { country: 'INTERN', result: true };
     const country = await this.geoLocationService.getCountry(userIp);
-    if (!country) return { country, result: true };
     const countryObject = await this.countryService.getCountryBySymbol(country);
 
     const wallet = await this.repos.wallet.findOne({ where: { address: { address } } });
-    if (!countryObject || wallet?.role != WalletRole.USER) return { country, result: true };
+    if (!countryObject || (wallet && wallet.role != WalletRole.USER)) return { country, result: true };
 
     return { country, result: countryObject?.ipEnable };
   }
