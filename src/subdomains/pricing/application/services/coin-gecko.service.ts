@@ -10,9 +10,11 @@ import CoinGeckoClient = require('coingecko-api');
 
 @Injectable()
 export class CoinGeckoService {
+  private readonly refreshTime = 1; // minutes
   private readonly client: CoinGeckoClient;
 
-  private metaData: AssetStakingMetadata[];
+  private metaDataCache?: AssetStakingMetadata[];
+  private priceCache = new Map<string, { updated: Date; price: Price }>();
 
   constructor(private readonly assetStakingMetadataRepo: AssetStakingMetadataRepository) {
     this.client = new CoinGeckoClient();
@@ -20,13 +22,14 @@ export class CoinGeckoService {
 
   async getPrice(asset: Asset, fiat: Fiat): Promise<Price> {
     const { name, coinGeckoId } = await this.getAssetInfo(asset);
+    const identifier = `${coinGeckoId}/${fiat}`;
 
-    const { data } = await this.callApi((c) => c.simple.price({ ids: coinGeckoId, vs_currencies: fiat }));
+    if (!(this.priceCache.get(identifier)?.updated > Util.minutesBefore(this.refreshTime))) {
+      const price = await this.fetchPrice(name, coinGeckoId, fiat);
+      this.priceCache.set(identifier, { updated: new Date(), price });
+    }
 
-    const price = data[coinGeckoId.toLowerCase()]?.[fiat.toLowerCase()];
-    if (!price) throw new ServiceUnavailableException(`Failed to get price for ${name} -> ${fiat}`);
-
-    return Price.create(name, fiat, 1 / price);
+    return this.priceCache.get(identifier).price;
   }
 
   async getPriceAt(asset: Asset, fiat: Fiat, date: Date): Promise<Price> {
@@ -50,8 +53,17 @@ export class CoinGeckoService {
   }
 
   // --- HELPER METHODS --- //
+  private async fetchPrice(name: string, coinGeckoId: string, fiat: Fiat): Promise<Price> {
+    const { data } = await this.callApi((c) => c.simple.price({ ids: coinGeckoId, vs_currencies: fiat }));
+
+    const price = data[coinGeckoId.toLowerCase()]?.[fiat.toLowerCase()];
+    if (!price) throw new ServiceUnavailableException(`Failed to get price for ${name} -> ${fiat}`);
+
+    return Price.create(name, fiat, 1 / price);
+  }
+
   private async getAssetInfo(asset: Asset): Promise<{ name: string; coinGeckoId: string }> {
-    const metadata = (this.metaData ??= await this.assetStakingMetadataRepo.find({ relations: ['asset'] }));
+    const metadata = (this.metaDataCache ??= await this.assetStakingMetadataRepo.find({ relations: ['asset'] }));
 
     const assetStakingMetadata = metadata.find((m) => m.asset.id === asset.id);
     if (!assetStakingMetadata) throw new MetadataNotFoundException(`No metadata found for asset ${asset.id}`);
