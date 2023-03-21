@@ -113,12 +113,10 @@ export class WhaleClient {
   }
 
   async getHealth(): Promise<string | undefined> {
-    const test = this.client.stats
+    return this.client.stats
       .get()
       .then(() => undefined)
       .catch((e) => e.message);
-
-    return test;
   }
 
   // --- HELPER METHODS --- //
