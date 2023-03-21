@@ -27,10 +27,9 @@ export class WhaleHealthObserver extends MetricObserver<WhalesState> {
   @Cron(CronExpression.EVERY_MINUTE)
   @Lock(360)
   async fetch(): Promise<WhalesState> {
-    //if (Config.processDisabled(Process.MONITORING)) return;
+    if (Config.processDisabled(Process.MONITORING)) return;
 
     let state = await this.getState();
-
     state = await this.handleErrors(state);
 
     this.emit(state);
@@ -50,15 +49,15 @@ export class WhaleHealthObserver extends MetricObserver<WhalesState> {
 
   private async handleErrors(state: WhalesState): Promise<WhalesState> {
     // check, if swap required
-    const preferredNode = state.find((n) => !n.isDown);
+    const preferredWhale = state.find((n) => !n.isDown);
 
-    if (!preferredNode) {
-      // all available nodes down
+    if (!preferredWhale) {
+      // all available whales down
       console.error(`ALERT! Whale is fully down.`);
-    } else if (this.whaleService.getCurrentClient().index != preferredNode.index) {
+    } else if (this.whaleService.getCurrentClient().index != preferredWhale.index) {
       // swap required
-      this.whaleService.switchWhale(preferredNode.index);
-      console.warn(`WARN. Whale switched to index ${preferredNode.index}`);
+      this.whaleService.switchWhale(preferredWhale.index);
+      console.warn(`WARN. Whale switched to index ${preferredWhale.index}`);
     }
 
     return state;
