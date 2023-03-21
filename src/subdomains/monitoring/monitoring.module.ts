@@ -12,6 +12,7 @@ import { BlockchainModule } from 'src/blockchain/blockchain.module';
 import { StakingExternalObserver } from './observers/staking-external.observer';
 import { InfrastructureModule } from 'src/integration/infrastructure/infrastructure.module';
 import { SystemStateSnapshot } from './domain/entities/system-state-snapshot.entity';
+import { WhaleHealthObserver } from './observers/whale-health.observer';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { SystemStateSnapshot } from './domain/entities/system-state-snapshot.ent
     NodeHealthObserver,
     StakingCombinedObserver,
     StakingExternalObserver,
+    WhaleHealthObserver,
   ],
   controllers: [MonitoringController],
   exports: [MonitoringService],

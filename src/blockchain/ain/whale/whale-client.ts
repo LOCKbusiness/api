@@ -15,11 +15,14 @@ export class WhaleClient {
   private readonly secondsPerBlock = 30;
   private readonly client: WhaleApiClient;
   private readonly transactions = new AsyncMap<string, string>(this.constructor.name);
+  public readonly index: number;
 
   readonly #blockHeight: BehaviorSubject<number>;
 
-  constructor(scheduler: SchedulerRegistry, client?: WhaleApiClient) {
-    this.client = client ?? new WhaleApiClient(GetConfig().whale);
+  constructor(scheduler: SchedulerRegistry, url: string, client?: WhaleApiClient, index?: number) {
+    this.client =
+      client ?? new WhaleApiClient({ network: GetConfig().whale.network, version: GetConfig().whale.version, url });
+    this.index = index;
     this.#blockHeight = new BehaviorSubject(0);
 
     // setup block poller
@@ -107,6 +110,15 @@ export class WhaleClient {
 
   async getTxVins(txId: string): Promise<TransactionVin[]> {
     return this.client.transactions.getVins(txId);
+  }
+
+  async getHealth(): Promise<string | undefined> {
+    const test = this.client.stats
+      .get()
+      .then(() => undefined)
+      .catch((e) => e.message);
+
+    return test;
   }
 
   // --- HELPER METHODS --- //
