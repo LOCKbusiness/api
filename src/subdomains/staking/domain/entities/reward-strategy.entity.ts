@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { IEntity } from 'src/shared/models/entity';
+import { IEntity } from 'src/shared/entities/entity';
 import { Util } from 'src/shared/util';
 import { Column, Entity, OneToMany } from 'typeorm';
 import { RewardRoute } from './reward-route.entity';

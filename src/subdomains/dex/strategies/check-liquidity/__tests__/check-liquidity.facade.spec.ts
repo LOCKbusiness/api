@@ -1,15 +1,15 @@
 import { mock } from 'jest-mock-extended';
 import { BehaviorSubject } from 'rxjs';
-import { AssetCategory } from 'src/shared/models/asset/asset.entity';
+import { AssetCategory } from 'src/shared/entities/asset.entity';
 import { DexDeFiChainService } from '../../../services/dex-defichain.service';
 import { CheckLiquidityStrategies, CheckLiquidityAlias } from '../check-liquidity.facade';
 import { DeFiChainDefaultStrategy } from '../impl/defichain-default.strategy';
 import { DeFiChainPoolPairStrategy } from '../impl/defichain-poolpair.strategy';
-import { AssetService } from 'src/shared/models/asset/asset.service';
+import { AssetService } from 'src/shared/services/asset.service';
 import { PurchaseLiquidityStrategies } from '../../purchase-liquidity/purchase-liquidity.facade';
 import { NodeService } from 'src/blockchain/ain/node/node.service';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { createCustomAsset } from 'src/shared/models/asset/__mocks__/asset.entity.mock';
+import { createCustomAsset } from 'src/shared/__tests__/asset.entity.mock';
 
 describe('CheckLiquidityStrategies', () => {
   let nodeService: NodeService;

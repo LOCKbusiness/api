@@ -1,7 +1,7 @@
 import BigNumber from 'bignumber.js';
 import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/domain/enums';
 import { Masternode } from 'src/integration/masternode/domain/entities/masternode.entity';
-import { AssetType } from 'src/shared/models/asset/asset.entity';
+import { AssetType } from 'src/shared/entities/asset.entity';
 import { MasternodeVote } from 'src/subdomains/staking/domain/enums';
 
 export interface WalletBaseData {

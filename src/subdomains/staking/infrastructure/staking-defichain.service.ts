@@ -9,7 +9,7 @@ import { fromScriptHex } from '@defichain/jellyfish-address';
 import { NetworkName } from '@defichain/jellyfish-network';
 import { TransactionExecutionService } from 'src/integration/transaction/application/services/transaction-execution.service';
 import BigNumber from 'bignumber.js';
-import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
+import { Asset, AssetType } from 'src/shared/entities/asset.entity';
 import { StakingStrategy } from '../domain/enums';
 import { WhaleWalletAccount } from '@defichain/whale-api-wallet';
 import { JellyfishService } from 'src/blockchain/ain/jellyfish/services/jellyfish.service';
@@ -17,7 +17,7 @@ import { UtxoProviderService } from 'src/blockchain/ain/jellyfish/services/utxo-
 import { RawTxService } from 'src/blockchain/ain/jellyfish/services/raw-tx.service';
 import { RawTxDto } from 'src/blockchain/ain/jellyfish/dto/raw-tx.dto';
 import { StakingTypes } from '../domain/entities/staking.entity';
-import { AssetQuery } from 'src/shared/models/asset/asset.service';
+import { AssetQuery } from 'src/shared/services/asset.service';
 import { Util } from 'src/shared/util';
 
 @Injectable()

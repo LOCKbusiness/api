@@ -1,7 +1,7 @@
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/entities/asset.entity';
 import { Withdrawal } from './withdrawal.entity';
 import { Column, Entity, Index, ManyToOne } from 'typeorm';
-import { IEntity } from 'src/shared/models/entity';
+import { IEntity } from 'src/shared/entities/entity';
 import { BadRequestException } from '@nestjs/common';
 import { Staking } from './staking.entity';
 import { StakingBalances } from '../../application/services/staking.service';

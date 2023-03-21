@@ -3,7 +3,7 @@ import { BadRequestException } from '@nestjs/common/exceptions';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Config, Process } from 'src/config/config';
 import { Lock } from 'src/shared/lock';
-import { AssetService } from 'src/shared/models/asset/asset.service';
+import { AssetService } from 'src/shared/services/asset.service';
 import { Util } from 'src/shared/util';
 import { Reward } from '../../domain/entities/reward.entity';
 import { StakingBalance } from '../../domain/entities/staking-balance.entity';

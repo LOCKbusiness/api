@@ -1,7 +1,7 @@
 import { mock } from 'jest-mock-extended';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { AssetCategory } from 'src/shared/models/asset/asset.entity';
-import { createCustomAsset } from 'src/shared/models/asset/__mocks__/asset.entity.mock';
+import { AssetCategory } from 'src/shared/entities/asset.entity';
+import { createCustomAsset } from 'src/shared/__tests__/asset.entity.mock';
 import { LiquidityOrder, LiquidityOrderContext, LiquidityOrderType } from '../../entities/liquidity-order.entity';
 import { createDefaultLiquidityOrder } from '../../entities/__mocks__/liquidity-order.entity.mock';
 import {

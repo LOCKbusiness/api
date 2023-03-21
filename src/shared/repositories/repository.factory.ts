@@ -5,6 +5,7 @@ import { DepositRepository } from 'src/subdomains/staking/application/repositori
 import { RewardRepository } from 'src/subdomains/staking/application/repositories/reward.repository';
 import { StakingRepository } from 'src/subdomains/staking/application/repositories/staking.repository';
 import { WithdrawalRepository } from 'src/subdomains/staking/application/repositories/withdrawal.repository';
+import { WalletRepository } from 'src/subdomains/user/application/repositories/wallet.repository';
 import { EntityManager } from 'typeorm';
 
 @Injectable()
@@ -15,6 +16,7 @@ export class RepositoryFactory {
   public readonly reward: RewardRepository;
   public readonly masternode: MasternodeRepository;
   public readonly reservableBlockchainAddress: ReservableBlockchainAddressRepository;
+  public readonly wallet: WalletRepository;
 
   constructor(manager: EntityManager) {
     this.staking = new StakingRepository(manager);
@@ -23,5 +25,6 @@ export class RepositoryFactory {
     this.reward = new RewardRepository(manager);
     this.masternode = new MasternodeRepository(manager);
     this.reservableBlockchainAddress = new ReservableBlockchainAddressRepository(manager);
+    this.wallet = new WalletRepository(manager);
   }
 }

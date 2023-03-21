@@ -1,7 +1,7 @@
 import { mock } from 'jest-mock-extended';
 import { NotificationService } from 'src/integration/notification/services/notification.service';
-import { Asset } from 'src/shared/models/asset/asset.entity';
-import { createCustomAsset } from 'src/shared/models/asset/__mocks__/asset.entity.mock';
+import { Asset } from 'src/shared/entities/asset.entity';
+import { createCustomAsset } from 'src/shared/__tests__/asset.entity.mock';
 import { SettingService } from 'src/shared/services/setting.service';
 import { PayoutOrder, PayoutOrderStatus } from '../../../entities/payout-order.entity';
 import {

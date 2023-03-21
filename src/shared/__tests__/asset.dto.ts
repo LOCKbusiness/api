@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { AssetCategory, AssetType } from './asset.entity';
+import { AssetCategory, AssetType } from '../entities/asset.entity';
 
 export class AssetDto {
   @ApiProperty({

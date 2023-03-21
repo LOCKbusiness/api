@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from 'src/shared/repositories/base.repository';
 import { EntityManager } from 'typeorm';
-import { IpLog } from '../../domain/entities/ip-log.entity';
+import { IpLog } from '../entities/ip-log.entity';
 
 @Injectable()
 export class IpLogRepository extends BaseRepository<IpLog> {

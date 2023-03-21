@@ -1,14 +1,14 @@
 import { Fiat } from 'src/shared/enums/fiat.enum';
-import { Asset } from 'src/shared/models/asset/asset.entity';
-import { BlockchainAddress } from 'src/shared/models/blockchain-address';
-import { IEntity } from 'src/shared/models/entity';
-import { Price } from 'src/shared/models/price';
+import { Asset } from 'src/shared/entities/asset.entity';
+import { BlockchainAddress } from 'src/shared/entities/blockchain-address';
+import { IEntity } from 'src/shared/entities/entity';
 import { Util } from 'src/shared/util';
 import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { RewardStatus } from '../enums';
 import { RewardBatch } from './reward-batch.entity';
 import { RewardRoute } from './reward-route.entity';
 import { Staking } from './staking.entity';
+import { Price } from 'src/shared/entities/price';
 
 @Entity()
 @Index((r: Reward) => [r.batch, r.status, r.rewardRoute])

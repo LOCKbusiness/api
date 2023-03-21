@@ -1,6 +1,6 @@
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
-import { BlockchainAddress } from 'src/shared/models/blockchain-address';
-import { IEntity } from 'src/shared/models/entity';
+import { BlockchainAddress } from 'src/shared/entities/blockchain-address';
+import { IEntity } from 'src/shared/entities/entity';
 import { User } from 'src/subdomains/user/domain/entities/user.entity';
 import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { WalletProvider } from './wallet-provider.entity';

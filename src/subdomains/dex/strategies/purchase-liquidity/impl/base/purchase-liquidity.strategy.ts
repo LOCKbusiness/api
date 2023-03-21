@@ -1,7 +1,7 @@
 import { MailContext, MailType } from 'src/integration/notification/enums';
 import { MailRequest } from 'src/integration/notification/interfaces';
 import { NotificationService } from 'src/integration/notification/services/notification.service';
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/entities/asset.entity';
 import { LiquidityOrder } from 'src/subdomains/dex/entities/liquidity-order.entity';
 import { NotEnoughLiquidityException } from '../../../../exceptions/not-enough-liquidity.exception';
 import { PriceSlippageException } from '../../../../exceptions/price-slippage.exception';

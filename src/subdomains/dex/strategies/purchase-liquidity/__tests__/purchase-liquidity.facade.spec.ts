@@ -1,8 +1,8 @@
 import { mock } from 'jest-mock-extended';
 
-import { AssetCategory } from 'src/shared/models/asset/asset.entity';
-import { AssetService } from 'src/shared/models/asset/asset.service';
-import { createCustomAsset } from 'src/shared/models/asset/__mocks__/asset.entity.mock';
+import { AssetCategory } from 'src/shared/entities/asset.entity';
+import { AssetService } from 'src/shared/services/asset.service';
+import { createCustomAsset } from 'src/shared/__tests__/asset.entity.mock';
 import { LiquidityOrderFactory } from '../../../factories/liquidity-order.factory';
 import { LiquidityOrderRepository } from '../../../repositories/liquidity-order.repository';
 import { DexDeFiChainService } from '../../../services/dex-defichain.service';

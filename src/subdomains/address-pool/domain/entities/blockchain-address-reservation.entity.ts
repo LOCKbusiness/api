@@ -1,4 +1,4 @@
-import { IEntity } from 'src/shared/models/entity';
+import { IEntity } from 'src/shared/entities/entity';
 import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
 import { BlockchainAddressReservationPurpose } from '../enums';
 import { ReservableBlockchainAddress } from './reservable-blockchain-address.entity';

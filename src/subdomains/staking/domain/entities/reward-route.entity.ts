@@ -1,6 +1,6 @@
-import { Asset } from 'src/shared/models/asset/asset.entity';
-import { BlockchainAddress } from 'src/shared/models/blockchain-address';
-import { IEntity } from 'src/shared/models/entity';
+import { Asset } from 'src/shared/entities/asset.entity';
+import { BlockchainAddress } from 'src/shared/entities/blockchain-address';
+import { IEntity } from 'src/shared/entities/entity';
 import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { RewardStrategy } from './reward-strategy.entity';
 

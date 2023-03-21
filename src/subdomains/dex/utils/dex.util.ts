@@ -1,4 +1,4 @@
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/entities/asset.entity';
 
 export class DexUtil {
   static parseAssetPair(asset: Asset): [string, string] {

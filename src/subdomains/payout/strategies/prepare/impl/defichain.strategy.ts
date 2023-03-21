@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Asset } from 'src/shared/models/asset/asset.entity';
-import { AssetService } from 'src/shared/models/asset/asset.service';
+import { Asset } from 'src/shared/entities/asset.entity';
+import { AssetService } from 'src/shared/services/asset.service';
 import { Util } from 'src/shared/util';
 import { TransferNotRequiredException } from 'src/subdomains/dex/exceptions/transfer-not-required.exception';
 import { DexService } from 'src/subdomains/dex/services/dex.service';

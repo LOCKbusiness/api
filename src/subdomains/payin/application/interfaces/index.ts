@@ -1,5 +1,5 @@
-import { Asset } from 'src/shared/models/asset/asset.entity';
-import { BlockchainAddress } from 'src/shared/models/blockchain-address';
+import { Asset } from 'src/shared/entities/asset.entity';
+import { BlockchainAddress } from 'src/shared/entities/blockchain-address';
 
 export interface PayInTransaction {
   address: BlockchainAddress;

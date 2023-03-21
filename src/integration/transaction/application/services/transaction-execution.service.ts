@@ -33,7 +33,7 @@ import { TransactionType } from '../../domain/enums';
 import { UtxoSizePriority } from 'src/blockchain/ain/jellyfish/domain/enums';
 import { RawTxService } from 'src/blockchain/ain/jellyfish/services/raw-tx.service';
 import { TransactionCacheService } from './transaction-cache.service';
-import { AssetType } from 'src/shared/models/asset/asset.entity';
+import { AssetType } from 'src/shared/entities/asset.entity';
 import { RawTxCheck } from 'src/blockchain/ain/jellyfish/utils/raw-tx-check';
 import { VaultService } from 'src/integration/vault/application/services/vault.service';
 

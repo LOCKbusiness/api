@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/entities/asset.entity';
 import { PayoutStrategy } from './impl/base/payout.strategy';
 import { DeFiChainDfiStrategy } from './impl/defichain-dfi.strategy';
 import { DeFiChainDefaultStrategy } from './impl/defichain-default.strategy';

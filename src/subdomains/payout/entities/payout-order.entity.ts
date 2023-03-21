@@ -1,7 +1,7 @@
 import { NoTransactionIdException } from 'src/blockchain/ain/exceptions/no-transaction-id.exception';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { Asset } from 'src/shared/models/asset/asset.entity';
-import { IEntity } from 'src/shared/models/entity';
+import { Asset } from 'src/shared/entities/asset.entity';
+import { IEntity } from 'src/shared/entities/entity';
 import { Util } from 'src/shared/util';
 import { Column, Entity, Index, ManyToOne } from 'typeorm';
 

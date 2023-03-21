@@ -4,9 +4,9 @@ import { PayoutOrderRepository } from '../../../repositories/payout-order.reposi
 import { PayoutGroup } from '../../../services/base/payout-jellyfish.service';
 import { PayoutDeFiChainService } from '../../../services/payout-defichain.service';
 import { JellyfishStrategy } from './base/jellyfish.strategy';
-import { AssetService } from 'src/shared/models/asset/asset.service';
+import { AssetService } from 'src/shared/services/asset.service';
 import { FeeResult } from '../../../interfaces';
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/entities/asset.entity';
 import { NotificationService } from 'src/integration/notification/services/notification.service';
 import { SettingService } from 'src/shared/services/setting.service';
 

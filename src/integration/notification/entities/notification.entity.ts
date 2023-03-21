@@ -1,4 +1,4 @@
-import { IEntity } from 'src/shared/models/entity';
+import { IEntity } from 'src/shared/entities/entity';
 import { Entity, Column } from 'typeorm';
 import { MailContext, NotificationType } from '../enums';
 import { NotificationSuppressedException } from '../exceptions/notification-suppressed.exception';

@@ -1,14 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { AssetQuery, AssetService } from 'src/shared/models/asset/asset.service';
+import { AssetQuery, AssetService } from 'src/shared/services/asset.service';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Reward } from '../../domain/entities/reward.entity';
 import { ReservableBlockchainAddress } from '../../../address-pool/domain/entities/reservable-blockchain-address.entity';
 import { Staking, StakingTypes } from '../../domain/entities/staking.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
-import { BlockchainAddress } from 'src/shared/models/blockchain-address';
+import { BlockchainAddress } from 'src/shared/entities/blockchain-address';
 import { CreateRewardRouteDto } from '../dto/input/create-reward-route.dto';
 import { RewardRoute } from '../../domain/entities/reward-route.entity';
-import { Asset, AssetType } from 'src/shared/models/asset/asset.entity';
+import { Asset, AssetType } from 'src/shared/entities/asset.entity';
 import { StakingStrategyValidator } from '../validators/staking-strategy.validator';
 import { StakingStrategy } from '../../domain/enums';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';

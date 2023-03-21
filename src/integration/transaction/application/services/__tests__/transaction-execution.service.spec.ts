@@ -17,7 +17,7 @@ import { Config } from 'src/config/config';
 import { createDefaultMasternode } from 'src/integration/masternode/domain/entities/__mocks__/masternode.entity.mock';
 import { TransactionDirection, TransactionType } from 'src/integration/transaction/domain/enums';
 import { VaultService } from 'src/integration/vault/application/services/vault.service';
-import { AssetType } from 'src/shared/models/asset/asset.entity';
+import { AssetType } from 'src/shared/entities/asset.entity';
 import { TestUtil } from 'src/shared/__tests__/test-util';
 import { SendCoinWithdrawalData } from '../../types/creation-data';
 import { TransactionCacheService } from '../transaction-cache.service';

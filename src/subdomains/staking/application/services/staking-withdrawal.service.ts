@@ -19,9 +19,9 @@ import { WithdrawalOutputDtoMapper } from '../mappers/withdrawal-output-dto.mapp
 import { Between } from 'typeorm';
 import { TransactionDto } from 'src/subdomains/analytics/application/dto/output/transactions.dto';
 import { Config, Process } from 'src/config/config';
-import { BlockchainAddress } from 'src/shared/models/blockchain-address';
+import { BlockchainAddress } from 'src/shared/entities/blockchain-address';
 import { StakingService } from './staking.service';
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/entities/asset.entity';
 
 @Injectable()
 export class StakingWithdrawalService {

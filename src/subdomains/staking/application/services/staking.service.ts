@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AssetService } from 'src/shared/models/asset/asset.service';
+import { AssetService } from 'src/shared/services/asset.service';
 import { Util } from 'src/shared/util';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { Staking } from '../../domain/entities/staking.entity';
@@ -22,7 +22,7 @@ import { AssetBalance } from '../dto/output/asset-balance';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { StakingStrategy } from '../../domain/enums';
-import { Asset } from 'src/shared/models/asset/asset.entity';
+import { Asset } from 'src/shared/entities/asset.entity';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { RewardStrategy } from '../../domain/entities/reward-strategy.entity';
 import { RewardStrategyRepository } from '../repositories/reward-strategy.repository';
@@ -92,6 +92,10 @@ export class StakingService {
     const user = await this.userService.getUserByAddressOrThrow(address);
 
     return this.repository.getByUserId(user.id);
+  }
+
+  async getStakingsByUserId(userId: number): Promise<Staking[]> {
+    return this.repository.getByUserId(userId);
   }
 
   async getUnconfirmedDepositsAndWithdrawalsAmounts(

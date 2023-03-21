@@ -1,6 +1,6 @@
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { AssetCategory } from 'src/shared/models/asset/asset.entity';
-import { createCustomAsset, createDefaultAsset } from 'src/shared/models/asset/__mocks__/asset.entity.mock';
+import { AssetCategory } from 'src/shared/entities/asset.entity';
+import { createCustomAsset, createDefaultAsset } from 'src/shared/__tests__/asset.entity.mock';
 import { LiquidityOrder, LiquidityOrderContext, LiquidityOrderType } from '../liquidity-order.entity';
 
 export function createDefaultLiquidityOrder(): LiquidityOrder {
