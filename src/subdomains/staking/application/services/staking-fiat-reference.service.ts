@@ -75,12 +75,12 @@ export class StakingFiatReferenceService {
     const prices = [];
 
     for (const asset of uniqueAssets) {
-      for (const fiatName of Object.values(Fiat)) {
+      for (const fiat of Object.values(Fiat)) {
         try {
-          const price = await this.priceProvider.getFiatPrice(fiatName, asset);
+          const price = await this.priceProvider.getFiatPrice(asset, fiat);
           prices.push(price);
         } catch (e) {
-          console.info(`Could not find fiat price for asset ${asset.name} and fiat '${fiatName}':`, e);
+          console.info(`Could not find fiat price for asset ${asset.name} and fiat '${fiat}':`, e);
           continue;
         }
       }

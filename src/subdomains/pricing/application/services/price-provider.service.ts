@@ -18,9 +18,9 @@ export class PriceProviderService {
     private readonly deFiChainService: PricingDeFiChainService,
   ) {}
 
-  async getFiatPrice(fiat: Fiat, asset: Asset): Promise<Price> {
+  async getFiatPrice(asset: Asset, fiat: Fiat): Promise<Price> {
     try {
-      return await this.coinGeckoService.getPrice(fiat, asset);
+      return await this.coinGeckoService.getPrice(asset, fiat);
     } catch (e) {
       if (!(e instanceof MetadataNotFoundException)) throw e;
     }
@@ -29,9 +29,9 @@ export class PriceProviderService {
     const refAsset = await this.getFiatReferenceAssetFor(asset.blockchain);
 
     const exchangePrice = await this.deFiChainService.getPrice(asset, refAsset);
-    const fiatPrice = await this.coinGeckoService.getPrice(fiat, refAsset);
+    const fiatPrice = await this.coinGeckoService.getPrice(refAsset, fiat);
 
-    return Price.create(exchangePrice.source, fiatPrice.source, exchangePrice.price / fiatPrice.price);
+    return Price.create(exchangePrice.source, fiatPrice.source, exchangePrice.price * fiatPrice.price);
   }
 
   async getExchangePrice(from: Asset, to: Asset): Promise<Price> {

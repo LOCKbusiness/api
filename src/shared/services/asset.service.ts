@@ -41,7 +41,11 @@ export class AssetService {
     return this.assetRepo.find({ where: query });
   }
 
-  //*** UTILITY METHODS ***//
+  async updatePrice(assetId: number, usdPrice: number): Promise<void> {
+    await this.assetRepo.update(assetId, { approxPriceUsd: usdPrice });
+  }
+
+  // --- UTILITY METHODS --- //
 
   async getDfiCoin(): Promise<Asset> {
     return this.getAssetByQuery({

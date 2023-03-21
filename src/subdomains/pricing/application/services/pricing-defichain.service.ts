@@ -59,12 +59,12 @@ export class PricingDeFiChainService {
 
     const priceRatio = +pool.priceRatio[direction];
     const commission = +(pool.commission ?? 0);
-    const fee =
+    const { inFee, outFee } =
       direction === Direction.AB
-        ? +(pool.tokenA.fee?.inPct ?? 0) + +(pool.tokenB.fee?.outPct ?? 0)
-        : +(pool.tokenA.fee?.outPct ?? 0) + +(pool.tokenB.fee?.inPct ?? 0);
+        ? { inFee: +(pool.tokenA.fee?.inPct ?? 0), outFee: +(pool.tokenB.fee?.outPct ?? 0) }
+        : { inFee: +(pool.tokenB.fee?.inPct ?? 0), outFee: +(pool.tokenA.fee?.outPct ?? 0) };
 
-    return priceRatio / (1 - commission) / (1 - fee);
+    return priceRatio / (1 - commission) / (1 - inFee) / (1 - outFee);
   }
 
   private findPool(from: Asset, to: Asset, pools: PoolPairData[]): { pool: PoolPairData; direction: Direction } {

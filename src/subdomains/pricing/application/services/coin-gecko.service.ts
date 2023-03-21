@@ -18,22 +18,22 @@ export class CoinGeckoService {
     this.client = new CoinGeckoClient();
   }
 
-  async getPrice(fiat: Fiat, asset: Asset): Promise<Price> {
+  async getPrice(asset: Asset, fiat: Fiat): Promise<Price> {
     const { name, coinGeckoId } = await this.getAssetInfo(asset);
 
     const { data } = await this.callApi((c) => c.simple.price({ ids: coinGeckoId, vs_currencies: fiat }));
 
     const price = data[coinGeckoId.toLowerCase()]?.[fiat.toLowerCase()];
-    if (!price) throw new ServiceUnavailableException(`Failed to get price for ${fiat} -> ${name}`);
+    if (!price) throw new ServiceUnavailableException(`Failed to get price for ${name} -> ${fiat}`);
 
-    return Price.create(fiat, name, price);
+    return Price.create(name, fiat, 1 / price);
   }
 
-  async getPriceAt(fiat: Fiat, asset: Asset, date: Date): Promise<Price> {
-    return this.getAvgPrice(fiat, asset, date, Util.hoursAfter(1, date));
+  async getPriceAt(asset: Asset, fiat: Fiat, date: Date): Promise<Price> {
+    return this.getAvgPrice(asset, fiat, date, Util.hoursAfter(1, date));
   }
 
-  async getAvgPrice(fiat: Fiat, asset: Asset, from: Date, to: Date): Promise<Price> {
+  async getAvgPrice(asset: Asset, fiat: Fiat, from: Date, to: Date): Promise<Price> {
     const { name, coinGeckoId } = await this.getAssetInfo(asset);
 
     const { data } = await this.callApi((c) =>
@@ -46,7 +46,7 @@ export class CoinGeckoService {
 
     const price = Util.avg(data.prices.map((p) => p[1]));
 
-    return Price.create(fiat, name, price);
+    return Price.create(name, fiat, 1 / price);
   }
 
   // --- HELPER METHODS --- //
@@ -60,6 +60,6 @@ export class CoinGeckoService {
   }
 
   private callApi<T>(call: (c: CoinGeckoClient) => Promise<T>): Promise<T> {
-    return Util.retry(() => call(this.client), 3);
+    return call(this.client);
   }
 }
