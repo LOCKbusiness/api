@@ -13,8 +13,8 @@ export class PricingDeFiChainService {
   }
 
   async getPrice(from: Asset, to: Asset): Promise<Price> {
-    const { estimatedReturnLessDexFees: price } = await this.client.getPath(from.chainId, to.chainId);
+    const price = await this.client.getSwapPrice(from.chainId, to.chainId);
 
-    return Price.create(from.name, to.name, 1 / +price);
+    return Price.create(from.name, to.name, 1 / price);
   }
 }

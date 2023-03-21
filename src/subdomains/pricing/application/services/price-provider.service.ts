@@ -31,7 +31,7 @@ export class PriceProviderService {
     const exchangePrice = await this.deFiChainService.getPrice(asset, refAsset);
     const fiatPrice = await this.coinGeckoService.getPrice(refAsset, fiat);
 
-    return Price.create(exchangePrice.source, fiatPrice.source, exchangePrice.price * fiatPrice.price);
+    return Price.create(exchangePrice.source, fiatPrice.target, exchangePrice.price * fiatPrice.price);
   }
 
   async getExchangePrice(from: Asset, to: Asset): Promise<Price> {
