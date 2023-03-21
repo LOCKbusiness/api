@@ -20,6 +20,7 @@ export enum Process {
   MONITORING = 'Monitoring',
   UTXO_MANAGEMENT = 'UtxoManagement',
   VAULT_MANAGEMENT = 'VaultManagement',
+  PRICING = 'Pricing',
 }
 
 export function GetConfig(): Configuration {
