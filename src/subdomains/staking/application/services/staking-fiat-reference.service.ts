@@ -1,17 +1,18 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { Price } from 'src/shared/entities/price';
-import { Fiat } from 'src/shared/enums/fiat.enum';
+import { Price } from 'src/subdomains/pricing/domain/entities/price';
+import { Fiat } from 'src/subdomains/pricing/domain/enums/fiat.enum';
 import { Lock } from 'src/shared/lock';
 import { IsNull } from 'typeorm';
 import { Deposit } from '../../domain/entities/deposit.entity';
 import { Reward } from '../../domain/entities/reward.entity';
 import { Withdrawal } from '../../domain/entities/withdrawal.entity';
 import { DepositStatus, RewardStatus, WithdrawalStatus } from '../../domain/enums';
-import { PriceProvider, PRICE_PROVIDER } from '../interfaces';
+import { PriceProviderService } from 'src/subdomains/pricing/application/services/price-provider.service';
 import { DepositRepository } from '../repositories/deposit.repository';
 import { RewardRepository } from '../repositories/reward.repository';
 import { WithdrawalRepository } from '../repositories/withdrawal.repository';
+import { Asset } from 'src/shared/entities/asset.entity';
 
 @Injectable()
 export class StakingFiatReferenceService {
@@ -19,7 +20,7 @@ export class StakingFiatReferenceService {
     private readonly depositRepo: DepositRepository,
     private readonly withdrawalRepo: WithdrawalRepository,
     private readonly rewardRepo: RewardRepository,
-    @Inject(PRICE_PROVIDER) private readonly priceProvider: PriceProvider,
+    private readonly priceProvider: PriceProviderService,
   ) {}
 
   //*** JOBS ***//
@@ -62,26 +63,24 @@ export class StakingFiatReferenceService {
     ]);
   }
 
-  private defineRelevantAssets(deposits: Deposit[], withdrawals: Withdrawal[], rewards: Reward[]): number[] {
+  private defineRelevantAssets(deposits: Deposit[], withdrawals: Withdrawal[], rewards: Reward[]): Asset[] {
     return [
-      ...new Set([
-        ...deposits.map((d) => d.asset.id),
-        ...withdrawals.map((w) => w.asset.id),
-        ...rewards.map((r) => r.referenceAsset.id),
-      ]),
-    ];
+      ...deposits.map((d) => d.asset),
+      ...withdrawals.map((w) => w.asset),
+      ...rewards.map((r) => r.referenceAsset),
+    ].filter((a1, i, self) => self.findIndex((a2) => a1.id === a2.id) === i);
   }
 
-  private async getReferencePrices(uniqueAssetIds: number[]): Promise<Price[]> {
+  private async getReferencePrices(uniqueAssets: Asset[]): Promise<Price[]> {
     const prices = [];
 
-    for (const assetId of uniqueAssetIds) {
+    for (const asset of uniqueAssets) {
       for (const fiatName of Object.values(Fiat)) {
         try {
-          const price = await this.priceProvider.getFiatPrice(fiatName, assetId);
+          const price = await this.priceProvider.getFiatPrice(fiatName, asset);
           prices.push(price);
         } catch (e) {
-          console.info(`Could not find fiat price for assetId ${assetId} and fiat '${fiatName}':`, e);
+          console.info(`Could not find fiat price for asset ${asset.name} and fiat '${fiatName}':`, e);
           continue;
         }
       }

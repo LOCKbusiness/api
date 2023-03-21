@@ -58,6 +58,13 @@ export class AssetService {
       type: AssetType.TOKEN,
     });
   }
+  async getDusdToken(): Promise<Asset> {
+    return this.getAssetByQuery({
+      name: 'DUSD',
+      blockchain: Blockchain.DEFICHAIN,
+      type: AssetType.TOKEN,
+    });
+  }
 
   async getEthCoin(): Promise<Asset> {
     return this.getAssetByQuery({
