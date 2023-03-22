@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Lock } from 'src/shared/lock';
-import { Config, GetConfig, Process } from 'src/config/config';
+import { Config, Process } from 'src/config/config';
 import { MonitoringService } from '../application/services/monitoring.service';
 import { MetricObserver } from '../metric.observer';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
@@ -40,16 +40,16 @@ export class WhaleHealthObserver extends MetricObserver<WhalesState> {
   private async getState(): Promise<WhalesState> {
     const errors = await this.whaleService.checkWhales();
 
-    return GetConfig().whale.urls.map((_url, index) => ({
+    return errors.map(({ index, message }) => ({
       index,
-      isDown: errors.find((e) => e.index == index).message ? true : false,
-      error: errors.find((e) => e.index == index).message,
+      isDown: !!message,
+      error: message,
     }));
   }
 
-  private async handleErrors(state: WhalesState): Promise<WhalesState> {
+  private handleErrors(state: WhalesState): WhalesState {
     // check, if swap required
-    const preferredWhale = state.find((n) => !n.isDown);
+    const preferredWhale = state.sort((a, b) => a.index - b.index).find((n) => !n.isDown);
 
     if (!preferredWhale) {
       // all available whales down
