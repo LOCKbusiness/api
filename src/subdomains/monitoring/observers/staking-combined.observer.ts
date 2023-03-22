@@ -1,4 +1,3 @@
-import { token } from '@defichain/jellyfish-api-core';
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
