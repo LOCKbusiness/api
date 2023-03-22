@@ -1,5 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { StakingStrategy } from 'src/subdomains/staking/domain/enums';
 
 export enum CompactHistoryTransactionType {
   DEPOSIT = 'Deposit',
@@ -14,45 +13,43 @@ export enum CompactHistoryStatus {
   FAILED = 'Failed',
 }
 
-export enum CompactHistoryTarget {
-  REINVEST = 'Reinvest',
+export enum CompactHistoryType {
+  MASTERNODE = 'Masternode',
+  LIQUIDITY_MINING = 'LiquidityMining',
   WALLET = 'Wallet',
   EXTERNAL = 'External',
 }
 
 export class CompactHistoryDto {
   @ApiPropertyOptional()
-  inputAmount: number;
+  inputAmount?: number;
 
   @ApiPropertyOptional()
-  inputAsset: string;
+  inputAsset?: string;
 
   @ApiPropertyOptional()
-  outputAmount: number;
+  outputAmount?: number;
 
   @ApiPropertyOptional()
-  outputAsset: string;
+  outputAsset?: string;
 
   @ApiPropertyOptional()
-  feeAmount: number;
+  feeAmount?: number;
 
   @ApiPropertyOptional()
-  feeAsset: string;
+  feeAsset?: string;
 
   @ApiPropertyOptional()
-  amountInEur: number;
+  amountInEur?: number;
 
   @ApiPropertyOptional()
-  amountInChf: number;
+  amountInChf?: number;
 
   @ApiPropertyOptional()
-  amountInUsd: number;
-
-  @ApiPropertyOptional({ enum: CompactHistoryTarget })
-  payoutTarget: CompactHistoryTarget;
+  amountInUsd?: number;
 
   @ApiPropertyOptional()
-  txId: string;
+  txId?: string;
 
   @ApiProperty()
   date: Date;
@@ -63,6 +60,12 @@ export class CompactHistoryDto {
   @ApiProperty({ enum: CompactHistoryStatus })
   status: CompactHistoryStatus;
 
-  @ApiProperty({ enum: StakingStrategy })
-  stakingStrategy: StakingStrategy;
+  @ApiPropertyOptional({ enum: CompactHistoryType })
+  source?: CompactHistoryType;
+
+  @ApiProperty({ enum: CompactHistoryType })
+  target: CompactHistoryType;
+
+  @ApiProperty()
+  targetAddress: string;
 }
