@@ -53,13 +53,21 @@ export class StakingHistoryService {
     const withdrawals = await this.getWithdrawalsByUserOrAddress(userId, query.depositAddress, query.from, query.to);
     const rewards = await this.getRewardsByUserOrAddress(userId, query.depositAddress, query.from, query.to);
 
+    const stakings =
+      rewards.length === 0 ? [] : await this.stakingService.getStakingsByUserId(rewards[0].staking.userId);
+
+    const addressMap = stakings.reduce(
+      (map, s) => map.set(s.depositAddress.address, s.strategy),
+      new Map<string, StakingStrategy>(),
+    );
+
     switch (exportFormat) {
       case ExportType.COIN_TRACKING:
         return (await this.getHistoryCT(deposits, withdrawals, rewards)) as HistoryDto<T>[];
       case ExportType.CHAIN_REPORT:
-        return (await this.getHistoryChainReport(deposits, withdrawals, rewards)) as HistoryDto<T>[];
+        return this.getHistoryChainReport(deposits, withdrawals, rewards, addressMap) as HistoryDto<T>[];
       case ExportType.COMPACT:
-        return this.getHistoryCompact(deposits, withdrawals, rewards) as HistoryDto<T>[];
+        return this.getHistoryCompact(deposits, withdrawals, rewards, addressMap) as HistoryDto<T>[];
     }
   }
 
@@ -125,23 +133,16 @@ export class StakingHistoryService {
     return this.filterDuplicateTxCT(transactions);
   }
 
-  private async getHistoryChainReport(
+  private getHistoryChainReport(
     deposits: Deposit[],
     withdrawals: Withdrawal[],
     rewards: Reward[],
-  ): Promise<ChainReportCsvHistoryDto[]> {
-    const stakings =
-      rewards.length === 0 ? [] : await this.stakingService.getStakingsByUserId(rewards[0].staking.userId);
-
-    const depositStrategyMap = stakings.reduce(
-      (map, s) => map.set(s.depositAddress.address, s.strategy),
-      new Map<string, StakingStrategy>(),
-    );
-
+    addressMap: Map<string, StakingStrategy>,
+  ): ChainReportCsvHistoryDto[] {
     const transactions: ChainReportCsvHistoryDto[] = [
       ChainReportHistoryDtoMapper.mapStakingDeposits(deposits),
       ChainReportHistoryDtoMapper.mapStakingWithdrawals(withdrawals),
-      ChainReportHistoryDtoMapper.mapStakingRewards(rewards, depositStrategyMap),
+      ChainReportHistoryDtoMapper.mapStakingRewards(rewards, addressMap),
     ]
       .reduce((prev, curr) => prev.concat(curr), [])
       .sort((tx1, tx2) => (tx1.timestamp.getTime() > tx2.timestamp.getTime() ? -1 : 1));
@@ -149,11 +150,16 @@ export class StakingHistoryService {
     return this.filterDuplicateTxChainReport(transactions);
   }
 
-  private getHistoryCompact(deposits: Deposit[], withdrawals: Withdrawal[], rewards: Reward[]): CompactHistoryDto[] {
+  private getHistoryCompact(
+    deposits: Deposit[],
+    withdrawals: Withdrawal[],
+    rewards: Reward[],
+    addressMap: Map<string, StakingStrategy>,
+  ): CompactHistoryDto[] {
     const transactions: CompactHistoryDto[] = [
       CompactHistoryDtoMapper.mapStakingDeposits(deposits),
       CompactHistoryDtoMapper.mapStakingWithdrawals(withdrawals),
-      CompactHistoryDtoMapper.mapStakingRewards(rewards),
+      CompactHistoryDtoMapper.mapStakingRewards(rewards, addressMap),
     ]
       .reduce((prev, curr) => prev.concat(curr), [])
       .sort((tx1, tx2) => (tx1.date.getTime() > tx2.date.getTime() ? -1 : 1));
