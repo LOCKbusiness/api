@@ -25,7 +25,7 @@ describe('WhaleClient', () => {
     TestUtil.setProperty(apiClient, 'tokens', tokens);
     TestUtil.setProperty(apiClient, 'transactions', transactions);
 
-    client = new WhaleClient(scheduler, 'url', apiClient, 0);
+    client = new WhaleClient(scheduler, 'url', 0);
   });
 
   function setupPagedResponse<T>(
