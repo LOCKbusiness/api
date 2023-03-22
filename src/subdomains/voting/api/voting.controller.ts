@@ -7,7 +7,7 @@ import { RoleGuard } from 'src/shared/auth/role.guard';
 import { WalletRole } from 'src/shared/auth/wallet-role.enum';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { CfpMnVoteDto } from '../application/dto/cfp-mn-vote.dto';
-import { CfpResultDto, CfpVotesDto } from '../application/dto/cfp.dto';
+import { CfpAllData, CfpResultDto, CfpVotesDto } from '../application/dto/cfp.dto';
 import { Votes } from '../application/dto/votes.dto';
 import { VoteDecision } from '../domain/enums';
 import { VotingService } from '../application/services/voting.service';
@@ -53,6 +53,12 @@ export class VotingController {
   @ApiOkResponse({ type: CfpVotesDto, isArray: true })
   async getCurrentVotes(): Promise<CfpVotesDto[]> {
     return this.votingService.getCurrentVotes();
+  }
+
+  @Get('result/all')
+  @ApiOkResponse({ type: CfpAllData })
+  async getCurrentAllData(): Promise<CfpAllData> {
+    return this.votingService.getAllData();
   }
 
   // --- ADMIN --- //
