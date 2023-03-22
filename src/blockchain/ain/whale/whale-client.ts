@@ -89,6 +89,10 @@ export class WhaleClient {
     return this.getAll(() => this.client.poolpairs.list(200));
   }
 
+  async getPool(id: string): Promise<PoolPairData> {
+    return this.client.poolpairs.get(id);
+  }
+
   async getSwapPrice(fromTokenId: string, toTokenId: string): Promise<number> {
     return this.client.poolpairs.getBestPath(fromTokenId, toTokenId).then((p) => +p.estimatedReturnLessDexFees);
   }
