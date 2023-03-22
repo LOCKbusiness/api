@@ -7,6 +7,7 @@ import { WhaleService } from './whale.service';
 export class TokenProviderService {
   private client: WhaleClient;
   private tokens = new Map<string, TokenData>();
+
   constructor(whaleService: WhaleService) {
     whaleService.getClient().subscribe((client) => (this.client = client));
   }

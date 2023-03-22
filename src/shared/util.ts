@@ -115,6 +115,16 @@ export class Util {
     return this.hoursAfter(-hours, from);
   }
 
+  static minutesAfter(minutes: number, from?: Date): Date {
+    const date = from ? new Date(from) : new Date();
+    date.setMinutes(date.getMinutes() + minutes);
+    return date;
+  }
+
+  static minutesBefore(minutes: number, from?: Date): Date {
+    return this.minutesAfter(-minutes, from);
+  }
+
   static isoDate(date: Date): string {
     return date.toISOString().split('T')[0];
   }

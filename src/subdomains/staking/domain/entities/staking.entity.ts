@@ -5,7 +5,7 @@ import { IEntity } from 'src/shared/entities/entity';
 import { StakingStatus, StakingStrategy, WithdrawalStatus } from '../enums';
 import { BadRequestException } from '@nestjs/common';
 import { Util } from 'src/shared/util';
-import { Fiat } from 'src/shared/enums/fiat.enum';3
+import { Fiat } from 'src/subdomains/pricing/domain/enums/fiat.enum';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { AssetQuery } from 'src/shared/services/asset.service';
 import { BlockchainAddress } from 'src/shared/entities/blockchain-address';
@@ -13,7 +13,7 @@ import { StakingBalance } from './staking-balance.entity';
 import { StakingBalances } from '../../application/services/staking.service';
 import { RewardStrategy } from './reward-strategy.entity';
 import { RewardRoute } from './reward-route.entity';
-import { Price } from 'src/shared/entities/price';
+import { Price } from 'src/subdomains/pricing/domain/entities/price';
 
 export interface StakingType {
   asset: Asset;
@@ -187,6 +187,6 @@ export class Staking extends IEntity {
       throw new Error(`Cannot calculate reference Fiat amount of ${assetName}/${fiatName} , price value is 0`);
     }
 
-    return Util.round(assetAmount * price.price, 8);
+    return Util.round(assetAmount / price.price, 8);
   }
 }

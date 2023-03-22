@@ -1,6 +1,7 @@
 import { ApiPagedResponse, WhaleApiClient, WhaleApiError } from '@defichain/whale-api-client';
 import { AddressToken, AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
 import { CollateralToken, LoanVaultActive, LoanVaultState } from '@defichain/whale-api-client/dist/api/loan';
+import { PoolPairData } from '@defichain/whale-api-client/dist/api/poolpairs';
 import { TokenData } from '@defichain/whale-api-client/dist/api/tokens';
 import { Transaction, TransactionVin } from '@defichain/whale-api-client/dist/api/transactions';
 import { SchedulerRegistry } from '@nestjs/schedule';
@@ -82,6 +83,18 @@ export class WhaleClient {
 
   async getAllCollateralTokens(): Promise<CollateralToken[]> {
     return this.getAll(() => this.client.loan.listCollateralToken(200));
+  }
+
+  async getAllPools(): Promise<PoolPairData[]> {
+    return this.getAll(() => this.client.poolpairs.list(200));
+  }
+
+  async getPool(id: string): Promise<PoolPairData> {
+    return this.client.poolpairs.get(id);
+  }
+
+  async getSwapPrice(fromTokenId: string, toTokenId: string): Promise<number> {
+    return this.client.poolpairs.getBestPath(fromTokenId, toTokenId).then((p) => +p.estimatedReturnLessDexFees);
   }
 
   async getVault(vaultId: string): Promise<LoanVaultActive> {
