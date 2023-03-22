@@ -79,6 +79,7 @@ export class VotingService implements OnModuleInit {
       c.map((cfp) => ({
         number: cfp.number,
         title: cfp.title,
+        lockVotes: cfp.lockVotes,
         endDate: cfp.endDate,
         endHeight: cfp.endHeight,
         type: cfp.type,

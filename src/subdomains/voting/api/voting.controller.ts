@@ -49,12 +49,6 @@ export class VotingController {
     return this.votingService.result;
   }
 
-  @Get('result/votes')
-  @ApiOkResponse({ type: CfpVotesDto, isArray: true })
-  async getCurrentVotes(): Promise<CfpVotesDto[]> {
-    return this.votingService.getCurrentVotes();
-  }
-
   @Get('result/all')
   @ApiOkResponse({ type: CfpAllData })
   async getCurrentAllData(): Promise<CfpAllData> {
