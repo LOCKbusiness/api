@@ -12,6 +12,7 @@ import { BlockchainModule } from 'src/blockchain/blockchain.module';
 import { StakingExternalObserver } from './observers/staking-external.observer';
 import { InfrastructureModule } from 'src/integration/infrastructure/infrastructure.module';
 import { SystemStateSnapshot } from './domain/entities/system-state-snapshot.entity';
+import { VaultModule } from 'src/integration/vault/vault.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { SystemStateSnapshot } from './domain/entities/system-state-snapshot.ent
     BlockchainModule,
     NotificationModule,
     InfrastructureModule,
+    VaultModule,
   ],
   providers: [
     SystemStateSnapshotRepository,

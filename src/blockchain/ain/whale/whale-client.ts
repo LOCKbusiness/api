@@ -1,6 +1,7 @@
 import { ApiPagedResponse, WhaleApiClient, WhaleApiError } from '@defichain/whale-api-client';
 import { AddressToken, AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
 import { CollateralToken, LoanVaultActive, LoanVaultState } from '@defichain/whale-api-client/dist/api/loan';
+import { PoolPairData } from '@defichain/whale-api-client/dist/api/poolpairs';
 import { TokenData } from '@defichain/whale-api-client/dist/api/tokens';
 import { Transaction, TransactionVin } from '@defichain/whale-api-client/dist/api/transactions';
 import { SchedulerRegistry } from '@nestjs/schedule';
@@ -88,6 +89,10 @@ export class WhaleClient {
     const vault = await this.client.loan.getVault(vaultId);
     if (vault.state === LoanVaultState.IN_LIQUIDATION) return undefined;
     return vault;
+  }
+
+  async getPoolPair(id: string): Promise<PoolPairData> {
+    return this.client.poolpairs.get(id);
   }
 
   async sendRaw(hex: string): Promise<string> {
