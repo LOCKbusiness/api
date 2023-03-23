@@ -30,7 +30,7 @@ export class WhaleHealthObserver extends MetricObserver<WhalesState> {
     if (Config.processDisabled(Process.MONITORING)) return;
 
     let state = await this.getState();
-    state = await this.handleErrors(state);
+    state = this.handleErrors(state);
 
     this.emit(state);
 
