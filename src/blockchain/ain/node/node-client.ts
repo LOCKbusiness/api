@@ -4,7 +4,6 @@ import { MasternodeInfo } from '@defichain/jellyfish-api-core/dist/category/mast
 import { InWalletTransaction, UTXO } from '@defichain/jellyfish-api-core/dist/category/wallet';
 import { JsonRpcClient } from '@defichain/jellyfish-api-jsonrpc';
 import { ServiceUnavailableException } from '@nestjs/common';
-import { SchedulerRegistry } from '@nestjs/schedule';
 import { Config } from 'src/config/config';
 import { QueueHandler } from 'src/shared/queue-handler';
 import { HttpService } from 'src/shared/services/http.service';
@@ -30,14 +29,9 @@ export class NodeClient {
 
   readonly #mode: NodeMode;
 
-  constructor(
-    private readonly http: HttpService,
-    private readonly url: string,
-    scheduler: SchedulerRegistry,
-    mode: NodeMode,
-  ) {
+  constructor(private readonly http: HttpService, private readonly url: string, mode: NodeMode) {
     this.client = this.createJellyfishClient();
-    this.queue = new QueueHandler(scheduler, 180000, 60000);
+    this.queue = new QueueHandler(180000, 60000);
     this.#mode = mode;
 
     this.getInfo().catch((e) => console.error('Failed to get chain info: ', e));

@@ -1,15 +1,9 @@
 import { BigNumber } from '@defichain/jellyfish-api-core';
 import { AccountHistory, AccountResult, UTXO as SpendUTXO } from '@defichain/jellyfish-api-core/dist/category/account';
-import { SchedulerRegistry } from '@nestjs/schedule';
-import { HttpService } from 'src/shared/services/http.service';
 import { EnsureTxIdOrThrow } from '../decorators/ensure-txid-or-throw.decorator';
-import { NodeClient, NodeCommand, NodeMode } from './node-client';
+import { NodeClient, NodeCommand } from './node-client';
 
 export class DeFiClient extends NodeClient {
-  constructor(http: HttpService, url: string, scheduler: SchedulerRegistry, mode: NodeMode) {
-    super(http, url, scheduler, mode);
-  }
-
   // common
   async listHistory(fromBlock: number, toBlock: number, address?: string): Promise<AccountHistory[]> {
     return this.callNode((c) =>

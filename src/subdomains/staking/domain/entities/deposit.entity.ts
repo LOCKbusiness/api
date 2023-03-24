@@ -1,11 +1,11 @@
 import { BadRequestException } from '@nestjs/common';
-import { Fiat } from 'src/shared/enums/fiat.enum';
+import { Fiat } from 'src/subdomains/pricing/domain/enums/fiat.enum';
 import { Asset } from 'src/shared/entities/asset.entity';
 import { IEntity } from 'src/shared/entities/entity';
 import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { DepositStatus } from '../enums';
 import { Staking } from './staking.entity';
-import { Price } from 'src/shared/entities/price';
+import { Price } from 'src/subdomains/pricing/domain/entities/price';
 
 @Entity()
 @Index((d: Deposit) => [d.staking, d.status, d.created])

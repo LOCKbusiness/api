@@ -1,8 +1,10 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Util } from 'src/shared/util';
-import { In } from 'typeorm';
+import { In, LessThan } from 'typeorm';
 import { UtxoReservationRepository } from '../repositories/utxo-reservation.repository';
 import { UtxoReservation } from '../domain/utxo-reservation.entity';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { Lock } from 'src/shared/lock';
 
 @Injectable()
 export class UtxoReservationService implements OnModuleInit {
@@ -39,6 +41,13 @@ export class UtxoReservationService implements OnModuleInit {
     await this.repo.delete({ address, utxo: In(utxos) });
 
     return allLocked;
+  }
+
+  // --- JOBS --- //
+  @Cron(CronExpression.EVERY_HOUR)
+  @Lock()
+  async cleanupOldReservations() {
+    await this.repo.delete({ updated: LessThan(Util.daysBefore(7)) });
   }
 
   // --- HELPER METHODS --- //

@@ -1,6 +1,7 @@
 import { ApiPagedResponse, WhaleApiClient, WhaleApiError } from '@defichain/whale-api-client';
 import { AddressToken, AddressUnspent } from '@defichain/whale-api-client/dist/api/address';
 import { CollateralToken, LoanVaultActive, LoanVaultState } from '@defichain/whale-api-client/dist/api/loan';
+import { PoolPairData } from '@defichain/whale-api-client/dist/api/poolpairs';
 import { TokenData } from '@defichain/whale-api-client/dist/api/tokens';
 import { Transaction, TransactionVin } from '@defichain/whale-api-client/dist/api/transactions';
 import { SchedulerRegistry } from '@nestjs/schedule';
@@ -15,11 +16,11 @@ export class WhaleClient {
   private readonly secondsPerBlock = 30;
   private readonly client: WhaleApiClient;
   private readonly transactions = new AsyncMap<string, string>(this.constructor.name);
-
   readonly #blockHeight: BehaviorSubject<number>;
 
-  constructor(scheduler: SchedulerRegistry, client?: WhaleApiClient) {
-    this.client = client ?? new WhaleApiClient(GetConfig().whale);
+  constructor(scheduler: SchedulerRegistry, url: string, public readonly index: number, client?: WhaleApiClient) {
+    this.client =
+      client ?? new WhaleApiClient({ network: GetConfig().whale.network, version: GetConfig().whale.version, url });
     this.#blockHeight = new BehaviorSubject(0);
 
     // setup block poller
@@ -84,6 +85,18 @@ export class WhaleClient {
     return this.getAll(() => this.client.loan.listCollateralToken(200));
   }
 
+  async getAllPools(): Promise<PoolPairData[]> {
+    return this.getAll(() => this.client.poolpairs.list(200));
+  }
+
+  async getPool(id: string): Promise<PoolPairData> {
+    return this.client.poolpairs.get(id);
+  }
+
+  async getSwapPrice(fromTokenId: string, toTokenId: string): Promise<number> {
+    return this.client.poolpairs.getBestPath(fromTokenId, toTokenId).then((p) => +p.estimatedReturnLessDexFees);
+  }
+
   async getVault(vaultId: string): Promise<LoanVaultActive> {
     const vault = await this.client.loan.getVault(vaultId);
     if (vault.state === LoanVaultState.IN_LIQUIDATION) return undefined;
@@ -107,6 +120,13 @@ export class WhaleClient {
 
   async getTxVins(txId: string): Promise<TransactionVin[]> {
     return this.client.transactions.getVins(txId);
+  }
+
+  async getHealth(): Promise<string | undefined> {
+    return this.client.stats
+      .get()
+      .then(() => undefined)
+      .catch((e) => e.message);
   }
 
   // --- HELPER METHODS --- //

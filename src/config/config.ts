@@ -20,6 +20,7 @@ export enum Process {
   MONITORING = 'Monitoring',
   UTXO_MANAGEMENT = 'UtxoManagement',
   VAULT_MANAGEMENT = 'VaultManagement',
+  PRICING = 'Pricing',
 }
 
 export function GetConfig(): Configuration {
@@ -143,7 +144,7 @@ export class Configuration {
   whale = {
     version: 'v0',
     network: this.network,
-    url: process.env.OCEAN_URLS?.split(',')[0],
+    urls: process.env.OCEAN_URLS?.split(','),
   };
 
   payIn = {

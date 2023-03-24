@@ -20,11 +20,7 @@ import { StakingDeFiChainService } from './infrastructure/staking-defichain.serv
 import { StakingAuthorizeService } from './infrastructure/staking-authorize.service';
 import { StakingKycCheckService } from './infrastructure/staking-kyc-check.service';
 import { IntegrationModule } from 'src/integration/integration.module';
-import { CoinGeckoService } from './infrastructure/coin-gecko.service';
-import { PRICE_PROVIDER } from './application/interfaces';
-import { AssetStakingMetadataRepository } from './application/repositories/asset-staking-metadata.repository';
 import { WithdrawalRepository } from './application/repositories/withdrawal.repository';
-import { AssetStakingMetadata } from './domain/entities/asset-staking-metadata.entity';
 import { Withdrawal } from './domain/entities/withdrawal.entity';
 import { WithdrawalController } from './api/controllers/withdrawal.controller';
 import { DepositRepository } from './application/repositories/deposit.repository';
@@ -48,6 +44,7 @@ import { UtxoManagementService } from './application/services/utxo-management.se
 import { StakingBalance } from './domain/entities/staking-balance.entity';
 import { RewardStrategy } from './domain/entities/reward-strategy.entity';
 import { RewardStrategyRepository } from './application/repositories/reward-strategy.repository';
+import { PricingModule } from '../pricing/pricing.module';
 
 @Module({
   imports: [
@@ -60,7 +57,6 @@ import { RewardStrategyRepository } from './application/repositories/reward-stra
       Reward,
       RewardBatch,
       RewardRoute,
-      AssetStakingMetadata,
     ]),
     BlockchainModule,
     SharedModule,
@@ -70,6 +66,7 @@ import { RewardStrategyRepository } from './application/repositories/reward-stra
     PayoutModule,
     IntegrationModule,
     AddressPoolModule,
+    PricingModule,
   ],
   controllers: [
     StakingController,
@@ -81,17 +78,12 @@ import { RewardStrategyRepository } from './application/repositories/reward-stra
   ],
   providers: [
     StakingRepository,
-    AssetStakingMetadataRepository,
     WithdrawalRepository,
     DepositRepository,
     RewardStrategyRepository,
     RewardBatchRepository,
     RewardRepository,
     RewardRouteRepository,
-    {
-      provide: PRICE_PROVIDER,
-      useClass: CoinGeckoService,
-    },
     StakingService,
     StakingFiatReferenceService,
     StakingDepositService,
@@ -114,7 +106,6 @@ import { RewardStrategyRepository } from './application/repositories/reward-stra
     StakingWithdrawalService,
     StakingRewardService,
     StakingDeFiChainService,
-    { provide: PRICE_PROVIDER, useClass: CoinGeckoService },
   ],
 })
 export class StakingModule {}

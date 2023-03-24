@@ -100,7 +100,7 @@ export class NodeService {
   }
 
   private createNodeClient(url: string | undefined, mode: NodeMode): NodeClient | null {
-    return url ? new DeFiClient(this.http, url, this.scheduler, mode) : null;
+    return url ? new DeFiClient(this.http, url, mode) : null;
   }
 
   private initConnectedNodes(): void {

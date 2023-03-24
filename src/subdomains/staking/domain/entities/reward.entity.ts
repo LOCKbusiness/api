@@ -1,4 +1,4 @@
-import { Fiat } from 'src/shared/enums/fiat.enum';
+import { Fiat } from 'src/subdomains/pricing/domain/enums/fiat.enum';
 import { Asset } from 'src/shared/entities/asset.entity';
 import { BlockchainAddress } from 'src/shared/entities/blockchain-address';
 import { IEntity } from 'src/shared/entities/entity';
@@ -8,7 +8,7 @@ import { RewardStatus } from '../enums';
 import { RewardBatch } from './reward-batch.entity';
 import { RewardRoute } from './reward-route.entity';
 import { Staking } from './staking.entity';
-import { Price } from 'src/shared/entities/price';
+import { Price } from 'src/subdomains/pricing/domain/entities/price';
 
 @Entity()
 @Index((r: Reward) => [r.batch, r.status, r.rewardRoute])

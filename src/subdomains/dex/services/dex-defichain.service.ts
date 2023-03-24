@@ -4,7 +4,7 @@ import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { DeFiChainUtil } from 'src/blockchain/ain/utils/defichain.util';
 import { Config } from 'src/config/config';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
-import { Asset } from 'src/shared/entities/asset.entity';
+import { Asset, AssetCategory } from 'src/shared/entities/asset.entity';
 import { SettingService } from 'src/shared/services/setting.service';
 import { Util } from 'src/shared/util';
 import { ChainSwapId, LiquidityOrder } from '../entities/liquidity-order.entity';
@@ -197,9 +197,10 @@ export class DexDeFiChainService {
 
   async testSwap(sourceAsset: Asset, targetAsset: Asset, amount: number): Promise<number> {
     if (sourceAsset.category !== targetAsset.category) {
-      // always use DFI-DUSD pool
-      const dfiAmount = await this.#dexClient.testCompositeSwap(sourceAsset.name, 'DFI', amount);
-      return this.#dexClient.testCompositeSwap('DFI', targetAsset.name, dfiAmount);
+      const intermediateAsset = targetAsset.category === AssetCategory.CRYPTO ? 'DFI' : 'DUSD';
+
+      const dfiAmount = await this.#dexClient.testCompositeSwap(sourceAsset.name, intermediateAsset, amount);
+      return this.#dexClient.testCompositeSwap(intermediateAsset, targetAsset.name, dfiAmount);
     } else {
       return this.#dexClient.testCompositeSwap(sourceAsset.name, targetAsset.name, amount);
     }
