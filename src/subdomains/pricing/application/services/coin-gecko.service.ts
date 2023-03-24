@@ -10,7 +10,7 @@ import CoinGeckoClient = require('coingecko-api');
 
 @Injectable()
 export class CoinGeckoService {
-  private readonly refreshTime = 1; // minutes
+  private readonly refreshPeriod = 15; // minutes
   private readonly client: CoinGeckoClient;
 
   private metaDataCache?: AssetStakingMetadata[];
@@ -24,7 +24,7 @@ export class CoinGeckoService {
     const { name, coinGeckoId } = await this.getAssetInfo(asset);
     const identifier = `${coinGeckoId}/${fiat}`;
 
-    if (!(this.priceCache.get(identifier)?.updated > Util.minutesBefore(this.refreshTime))) {
+    if (!(this.priceCache.get(identifier)?.updated > Util.minutesBefore(this.refreshPeriod))) {
       const price = await this.fetchPrice(name, coinGeckoId, fiat);
       this.priceCache.set(identifier, { updated: new Date(), price });
     }
