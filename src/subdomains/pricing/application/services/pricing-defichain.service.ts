@@ -37,11 +37,11 @@ export class PricingDeFiChainService {
     const pool = await this.client.getPool(from.chainId);
 
     const assetA = await this.assetService.getAssetByChainId(Blockchain.DEFICHAIN, pool.tokenA.id);
-    const amountA = Math.sqrt(+pool.priceRatio.ab);
+    const amountA = +pool.tokenA.reserve / +pool.totalLiquidity.token;
     const priceA = await this.getPriceValue(assetA, to);
 
     const assetB = await this.assetService.getAssetByChainId(Blockchain.DEFICHAIN, pool.tokenB.id);
-    const amountB = Math.sqrt(+pool.priceRatio.ba);
+    const amountB = +pool.tokenB.reserve / +pool.totalLiquidity.token;
     const priceB = await this.getPriceValue(assetB, to);
 
     return amountA * priceA + amountB * priceB;
