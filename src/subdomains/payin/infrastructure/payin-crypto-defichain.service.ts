@@ -38,10 +38,7 @@ export class PayInDeFiChainService {
     jellyfishService: JellyfishService,
     private readonly assetService: AssetService,
   ) {
-    nodeService.getConnectedNode(NodeType.INPUT).subscribe((client) => {
-      console.log(`New inp client received: ${client.mode}`);
-      this.client = client;
-    });
+    nodeService.getConnectedNode(NodeType.INPUT).subscribe((client) => (this.client = client));
 
     this.forwardAccount = jellyfishService.createWallet(Config.payIn.forward.phrase).get(0);
   }
