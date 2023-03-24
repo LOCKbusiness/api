@@ -177,7 +177,7 @@ export class Staking extends IEntity {
   //*** HELPER STATIC METHODS ***//
 
   static calculateFiatReferenceAmount(fiatName: Fiat, assetName: string, assetAmount: number, prices: Price[]): number {
-    const price = prices.find((p) => p.source === fiatName && p.target === assetName);
+    const price = prices.find((p) => p.source === assetName && p.target === fiatName);
 
     if (!price) {
       throw new Error(`Cannot calculate reference Fiat amount, ${assetName}/${fiatName} price is missing`);
