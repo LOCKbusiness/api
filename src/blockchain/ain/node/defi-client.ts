@@ -161,6 +161,11 @@ export class DeFiClient extends NodeClient {
   @EnsureTxIdOrThrow()
   async signAndSend(hex: string): Promise<string> {
     const signedTx = await this.signTx(hex);
-    return this.sendRawTx(signedTx.hex);
+    try {
+      return await this.sendRawTx(signedTx.hex);
+    } catch (e) {
+      console.info('Failed to send raw transaction:', signedTx, e);
+      throw e;
+    }
   }
 }

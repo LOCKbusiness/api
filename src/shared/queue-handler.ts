@@ -26,7 +26,8 @@ class QueueItem<T> {
   }
 
   public async doWork(timeout: number) {
-    await Util.timeout(this.action(), timeout).then(this.resolve).catch(this.reject);
+    const promise = timeout ? Util.timeout(this.action(), timeout) : this.action();
+    await promise.then(this.resolve).catch(this.reject);
   }
 
   public abort() {
@@ -37,11 +38,13 @@ class QueueItem<T> {
 export class QueueHandler {
   private readonly queue: QueueItem<any>[] = [];
 
+  private isRunning = true;
+
   /**
    * @param queueTimeout Max. item in queue time (incl. execution time)
    * @param itemTimeout Max. item execution time
    */
-  constructor(private readonly queueTimeout: number, private readonly itemTimeout: number) {
+  constructor(private readonly queueTimeout?: number, private readonly itemTimeout?: number) {
     void this.doWork();
   }
 
@@ -57,8 +60,12 @@ export class QueueHandler {
     }
   }
 
+  stop() {
+    this.isRunning = false;
+  }
+
   private async doWork() {
-    while (true) {
+    while (this.isRunning) {
       try {
         if (this.queue.length > 0) {
           await this.queue.shift().doWork(this.itemTimeout);
