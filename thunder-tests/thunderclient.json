@@ -623,5 +623,19 @@
     "headers": [],
     "params": [],
     "tests": []
+  },
+  {
+    "_id": "045be652-e2a6-403a-aa0a-9e3c45a3418b",
+    "colId": "42e25591-d14f-4269-8ed7-8b3106cf8395",
+    "containerId": "04c91ac6-df78-46a0-bc52-69233d7443ae",
+    "name": "Load",
+    "url": "{{url}}/v1/utxo-reservation/load",
+    "method": "PUT",
+    "sortNum": 310000,
+    "created": "2023-03-29T13:52:39.485Z",
+    "modified": "2023-03-29T13:52:59.688Z",
+    "headers": [],
+    "params": [],
+    "tests": []
   }
 ]

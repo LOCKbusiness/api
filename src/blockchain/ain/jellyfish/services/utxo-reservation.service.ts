@@ -16,6 +16,20 @@ export class UtxoReservationService implements OnModuleInit {
     void this.load();
   }
 
+  async load() {
+    const allUtxos = await this.repo.find();
+    const map = Util.groupBy<UtxoReservation, string>(allUtxos, 'address');
+
+    this.cache.clear();
+
+    for (const [address, utxos] of map.entries()) {
+      this.cache.set(
+        address,
+        utxos.map((r) => r.utxo),
+      );
+    }
+  }
+
   get(address: string): string[] {
     return this.cache.get(address) ?? [];
   }
@@ -48,18 +62,5 @@ export class UtxoReservationService implements OnModuleInit {
   @Lock()
   async cleanupOldReservations() {
     await this.repo.delete({ updated: LessThan(Util.daysBefore(7)) });
-  }
-
-  // --- HELPER METHODS --- //
-  private async load() {
-    const allUtxos = await this.repo.find();
-    const map = Util.groupBy<UtxoReservation, string>(allUtxos, 'address');
-
-    for (const [address, utxos] of map.entries()) {
-      this.cache.set(
-        address,
-        utxos.map((r) => r.utxo),
-      );
-    }
   }
 }
