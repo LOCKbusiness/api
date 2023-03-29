@@ -5,8 +5,15 @@ import { RawTxBase } from './raw-tx-base';
 import { RawTxUtil } from './raw-tx-util';
 
 export class RawTxPool extends RawTxBase {
-  async add(from: string, tokenA: number, amountA: BigNumber, tokenB: number, amountB: BigNumber): Promise<RawTxDto> {
-    return this.handle(() => this.createAdd(from, tokenA, amountA, tokenB, amountB));
+  async add(
+    from: string,
+    executingAddress: string,
+    tokenA: number,
+    amountA: BigNumber,
+    tokenB: number,
+    amountB: BigNumber,
+  ): Promise<RawTxDto> {
+    return this.handle(() => this.createAdd(from, tokenA, amountA, tokenB, amountB, executingAddress));
   }
 
   async remove(from: string, token: number, amount: BigNumber): Promise<RawTxDto> {
@@ -19,18 +26,22 @@ export class RawTxPool extends RawTxBase {
     amountA: BigNumber,
     tokenB: number,
     amountB: BigNumber,
+    executingAddress?: string,
   ): Promise<RawTxDto> {
     const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
+    const [executingScript, executingPubKeyHash] = executingAddress
+      ? RawTxUtil.parseAddress(executingAddress)
+      : [undefined, undefined];
 
     const tokenBalanceA: TokenBalanceUInt32 = { token: tokenA, amount: amountA };
     const tokenBalanceB: TokenBalanceUInt32 = { token: tokenB, amount: amountB };
 
-    const utxo = await this.utxoProvider.provideForDefiTx(from);
+    const utxo = await this.utxoProvider.provideForDefiTx(executingAddress ?? from);
     return RawTxUtil.generateDefiTx(
-      fromScript,
-      fromPubKeyHash,
+      executingScript ?? fromScript,
+      executingPubKeyHash ?? fromPubKeyHash,
       utxo,
-      RawTxUtil.createVoutAddPoolLiquidity(fromScript, [tokenBalanceA, tokenBalanceB]),
+      RawTxUtil.createVoutAddPoolLiquidity(fromScript, executingScript ?? fromScript, [tokenBalanceA, tokenBalanceB]),
     );
   }
 

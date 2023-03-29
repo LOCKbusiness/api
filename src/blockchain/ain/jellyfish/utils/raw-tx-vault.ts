@@ -17,12 +17,26 @@ export class RawTxVault extends RawTxBase {
     return this.handle(() => this.generateTx(from, vault, token, amount, RawTxUtil.createVoutDepositToVault));
   }
 
-  async withdraw(to: string, vault: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.handle(() => this.generateTx(to, vault, token, amount, RawTxUtil.createVoutWithdrawFromVault));
+  async withdraw(
+    to: string,
+    executingAddress: string,
+    vault: string,
+    token: number,
+    amount: BigNumber,
+  ): Promise<RawTxDto> {
+    return this.handle(() =>
+      this.generateTx(to, vault, token, amount, RawTxUtil.createVoutWithdrawFromVault, executingAddress),
+    );
   }
 
-  async takeLoan(to: string, vault: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.handle(() => this.generateTx(to, vault, token, amount, RawTxUtil.createVoutTakeLoan));
+  async takeLoan(
+    to: string,
+    exeuctingAddress: string,
+    vault: string,
+    token: number,
+    amount: BigNumber,
+  ): Promise<RawTxDto> {
+    return this.handle(() => this.generateTx(to, vault, token, amount, RawTxUtil.createVoutTakeLoan, exeuctingAddress));
   }
 
   async paybackLoan(from: string, vault: string, token: number, amount: BigNumber): Promise<RawTxDto> {
@@ -53,11 +67,20 @@ export class RawTxVault extends RawTxBase {
     token: number,
     amount: BigNumber,
     createVout: (vault: string, script: Script, token: number, amount: BigNumber) => Vout,
+    executingAddress?: string,
   ): Promise<RawTxDto> {
     const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
+    const [executingScript, executingPubKeyHash] = executingAddress
+      ? RawTxUtil.parseAddress(executingAddress)
+      : [undefined];
 
-    const utxo = await this.utxoProvider.provideForDefiTx(from);
-    return RawTxUtil.generateDefiTx(fromScript, fromPubKeyHash, utxo, createVout(vault, fromScript, token, amount));
+    const utxo = await this.utxoProvider.provideForDefiTx(executingAddress ?? from);
+    return RawTxUtil.generateDefiTx(
+      executingScript ?? fromScript,
+      executingPubKeyHash ?? fromPubKeyHash,
+      utxo,
+      createVout(vault, fromScript, token, amount),
+    );
   }
 
   private vaultFee(): BigNumber {
