@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { verify, sign } from 'bitcoinjs-message';
 import { MainNet } from '@defichain/jellyfish-network';
 import { isEthereumAddress } from 'class-validator';
-import { verifyMessage } from 'ethers/lib/utils';
+import { verifyMessage } from 'ethers';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { JellyfishService } from 'src/blockchain/ain/jellyfish/services/jellyfish.service';
 
