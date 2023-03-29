@@ -31,12 +31,12 @@ export class RawTxVault extends RawTxBase {
 
   async takeLoan(
     to: string,
-    exeuctingAddress: string,
+    executingAddress: string,
     vault: string,
     token: number,
     amount: BigNumber,
   ): Promise<RawTxDto> {
-    return this.handle(() => this.generateTx(to, vault, token, amount, RawTxUtil.createVoutTakeLoan, exeuctingAddress));
+    return this.handle(() => this.generateTx(to, vault, token, amount, RawTxUtil.createVoutTakeLoan, executingAddress));
   }
 
   async paybackLoan(from: string, vault: string, token: number, amount: BigNumber): Promise<RawTxDto> {
