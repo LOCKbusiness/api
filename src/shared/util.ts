@@ -196,8 +196,9 @@ export class Util {
     return Promise.race([promise, timeoutPromise]);
   }
 
-  static removeNullFields(entity: any): void {
+  static removeNullFields<T>(entity: T): T {
     Object.keys(entity).forEach((k) => !entity[k] && delete entity[k]);
+    return entity;
   }
 
   static createHash(data: BinaryLike, algo: CryptoAlgorithm = 'sha256'): string {
