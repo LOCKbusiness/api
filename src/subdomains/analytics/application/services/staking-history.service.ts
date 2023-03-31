@@ -71,9 +71,9 @@ export class StakingHistoryService {
         break;
     }
 
-    if (dataType === ExportDataType.CSV) return this.getHistoryCsv(txArray, exportFormat);
-    txArray.forEach((tx) => Util.removeNullFields(tx));
-    return txArray;
+    return dataType === ExportDataType.CSV
+      ? this.getHistoryCsv(txArray, exportFormat)
+      : txArray.map((tx) => Util.removeNullFields(tx));
   }
 
   // --- HELPER METHODS --- //
