@@ -12,7 +12,7 @@ import { MasternodeVote, StakingStrategy } from 'src/subdomains/staking/domain/e
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { CfpMnVoteDto } from '../dto/cfp-mn-vote.dto';
 import { User } from 'src/subdomains/user/domain/entities/user.entity';
-import { CfpInfoDto, CfpInfo, CfpResultDto, CfpVoteDto, CfpVotesDto, CfpAllData } from '../dto/cfp.dto';
+import { CfpInfoInputDto, CfpInfo, CfpResultDto, CfpVoteDto, CfpVotesDto, CfpAllData } from '../dto/cfp.dto';
 import { Distribution } from '../dto/distribution.dto';
 import { VoteRepository } from '../repositories/voting.repository';
 import { VoteDecision, VoteStatus } from '../../domain/enums';
@@ -61,11 +61,16 @@ export class VotingService implements OnModuleInit {
     try {
       const cfpList = await this.getCfpList();
       const distributions = await this.getVoteDistributions(cfpList);
+      const voterCount = await this.masternodeService.getAllVoters().then((l) => l.length);
 
       this.currentResults = distributions.map((d) => ({
         id: d.cfpId,
         name: cfpList.find((c) => c.id === d.cfpId).name,
-        result: d.distribution,
+        result: {
+          yes: d.distribution.yes * voterCount,
+          no: d.distribution.no * voterCount,
+          neutral: d.distribution.neutral * voterCount,
+        },
       }));
     } catch (e) {
       console.error(`Exception during voting evaluation:`, e);
@@ -79,35 +84,12 @@ export class VotingService implements OnModuleInit {
       c.map((cfp) => ({
         number: cfp.number,
         title: cfp.title,
-        lockVotes: cfp.lockVotes,
-        endDate: cfp.endDate,
-        endHeight: cfp.endHeight,
         type: cfp.type,
-        status: cfp.status,
+        hasLockVoted: cfp.lockVotes.total != 0,
       })),
     );
 
     return { voterCount, cfpInfos, voteResult };
-  }
-
-  async getCurrentVotes(): Promise<CfpVotesDto[]> {
-    const cfpList = await this.getCfpList();
-    const userWithVotes = await this.userService.getAllUserWithVotes();
-    const stakings = await this.repos.staking.getByStrategy(StakingStrategy.MASTERNODE);
-
-    const cfpVotesList: CfpVotesDto[] = [];
-
-    for (const staking of stakings) {
-      const user = userWithVotes.find((user) => user.id === staking.userId);
-
-      cfpVotesList.push({
-        depositAddress: staking.depositAddress.address,
-        balance: staking.defaultBalance?.balance,
-        votes: user ? this.getUserVotes(user, cfpList) : [],
-      });
-    }
-
-    return cfpVotesList;
   }
 
   get result(): CfpResultDto[] {
@@ -319,6 +301,26 @@ export class VotingService implements OnModuleInit {
   }
 
   // --- CFP HELPERS --- //
+  private async getCurrentVotes(): Promise<CfpVotesDto[]> {
+    const cfpList = await this.getCfpList();
+    const userWithVotes = await this.userService.getAllUserWithVotes();
+    const stakings = await this.repos.staking.getByStrategy(StakingStrategy.MASTERNODE);
+
+    const cfpVotesList: CfpVotesDto[] = [];
+
+    for (const staking of stakings) {
+      const user = userWithVotes.find((user) => user.id === staking.userId);
+
+      cfpVotesList.push({
+        depositAddress: staking.depositAddress.address,
+        balance: staking.defaultBalance.balance,
+        votes: user ? this.getUserVotes(user, cfpList) : [],
+      });
+    }
+
+    return cfpVotesList;
+  }
+
   private async getCfpList(): Promise<CfpInfo[]> {
     const cfpList = await this.getCurrentCfpList();
     return cfpList
@@ -326,7 +328,7 @@ export class VotingService implements OnModuleInit {
       .map((cfp) => ({ id: cfp.number, name: cfp.title, endDate: new Date(cfp.endDate), endHeight: cfp.endHeight }));
   }
 
-  private async getCurrentCfpList(): Promise<CfpInfoDto[]> {
+  private async getCurrentCfpList(): Promise<CfpInfoInputDto[]> {
     return this.http.get(`${Config.kyc.apiUrl}/statistic/cfp/latest`);
   }
 }

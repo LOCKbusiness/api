@@ -30,7 +30,7 @@ class CfpDto {
   name: string;
 }
 
-export class CfpInfoDto {
+export class CfpInfoInputDto {
   @ApiProperty()
   number: string;
 
@@ -51,6 +51,13 @@ export class CfpInfoDto {
 
   @ApiProperty({ enum: ProposalStatus })
   status: ProposalStatus;
+}
+
+export class CfpInfoOutputDto {
+  number: string;
+  title: string;
+  type: cfpType;
+  hasLockVoted: boolean;
 }
 
 export class CfpInfo {
@@ -82,12 +89,7 @@ export class CfpResultDto extends CfpDto {
 }
 
 export class CfpAllData {
-  @ApiProperty()
   voterCount: number;
-
-  @ApiProperty({ type: CfpInfoDto, isArray: true })
-  cfpInfos: CfpInfoDto[];
-
-  @ApiProperty({ type: CfpVotesDto, isArray: true })
+  cfpInfos: CfpInfoOutputDto[];
   voteResult: CfpVotesDto[];
 }
