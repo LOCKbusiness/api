@@ -30,6 +30,10 @@ export class PayInService {
     return payIn.asset;
   }
 
+  async hasPayInFor(txId: string, txSequence: number) {
+    return this.payInRepository.exist({ where: { txId, txSequence } });
+  }
+
   async acknowledgePayIn(payIn: PayIn, purpose: PayInPurpose): Promise<void> {
     const _payIn = await this.payInRepository.findOneBy({ id: payIn.id });
 

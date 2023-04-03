@@ -101,8 +101,19 @@ export class StakingDepositService {
         loadEagerRelations: false,
       });
       for (const deposit of openDeposits) {
+        // check, if transaction was actually executed
         const txId = await this.whaleClient.getTx(deposit.payInTxId);
-        if (!txId) await this.depositRepository.update(deposit.id, { status: DepositStatus.FAILED });
+        if (!txId) {
+          await this.depositRepository.update(deposit.id, { status: DepositStatus.FAILED });
+          continue;
+        }
+
+        // check, if transaction arrived at a deposit address
+        const payInExists = await this.payInService.hasPayInFor(deposit.payInTxId, deposit.payInTxSequence);
+        if (!payInExists) {
+          await this.depositRepository.update(deposit.id, { status: DepositStatus.INVALID });
+          continue;
+        }
       }
     } catch (e) {
       console.error('Exception during cleanup deposit:', e);

@@ -18,6 +18,7 @@ export enum DepositStatus {
   PENDING = 'Pending',
   FAILED = 'Failed',
   CONFIRMED = 'Confirmed',
+  INVALID = 'Invalid',
 }
 
 export enum RewardStatus {
