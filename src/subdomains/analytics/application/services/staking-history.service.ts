@@ -11,7 +11,7 @@ import { CoinTrackingHistoryDtoMapper } from '../mappers/coin-tracking-history-d
 import { ChainReportCsvHistoryDto, ChainReportTransactionType } from '../dto/output/chain-report-history.dto';
 import { ChainReportHistoryDtoMapper } from '../mappers/chain-report-history-dto.mapper';
 import { UserService } from 'src/subdomains/user/application/services/user.service';
-import { HistoryQuery } from '../dto/input/history-query.dto';
+import { ExportDataType, HistoryQuery } from '../dto/input/history-query.dto';
 import { RepositoryFactory } from 'src/shared/repositories/repository.factory';
 import { WalletService } from 'src/subdomains/user/application/services/wallet.service';
 import { StakingService } from 'src/subdomains/staking/application/services/staking.service';
@@ -38,15 +38,11 @@ export class StakingHistoryService {
     private readonly stakingService: StakingService,
   ) {}
 
-  async getHistoryCsv(query: HistoryQuery, exportType: ExportType): Promise<StreamableFile> {
-    const tx = await this.getHistory(query, exportType);
-    if (tx.length === 0) throw new NotFoundException('No transactions found');
-    return new StreamableFile(
-      Readable.from([exportType === ExportType.CHAIN_REPORT ? this.toCsv(tx, ';', true) : this.toCsv(tx)]),
-    );
-  }
-
-  async getHistory<T extends ExportType>(query: HistoryQuery, exportFormat: T): Promise<HistoryDto<T>[]> {
+  async getHistory<T extends ExportType>(
+    query: HistoryQuery,
+    exportFormat: T,
+    dataType: ExportDataType,
+  ): Promise<HistoryDto<T>[] | StreamableFile> {
     const userId = query.userAddress ? (await this.userService.getUserByAddressOrThrow(query.userAddress)).id : null;
 
     const deposits = await this.getDepositsByUserOrAddress(userId, query.depositAddress, query.from, query.to);
@@ -61,17 +57,33 @@ export class StakingHistoryService {
       new Map<string, StakingStrategy>(),
     );
 
+    let txArray: HistoryDto<T>[];
+
     switch (exportFormat) {
       case ExportType.COIN_TRACKING:
-        return (await this.getHistoryCT(deposits, withdrawals, rewards)) as HistoryDto<T>[];
+        txArray = (await this.getHistoryCT(deposits, withdrawals, rewards)) as HistoryDto<T>[];
+        break;
       case ExportType.CHAIN_REPORT:
-        return this.getHistoryChainReport(deposits, withdrawals, rewards, addressMap) as HistoryDto<T>[];
+        txArray = this.getHistoryChainReport(deposits, withdrawals, rewards, addressMap) as HistoryDto<T>[];
+        break;
       case ExportType.COMPACT:
-        return this.getHistoryCompact(deposits, withdrawals, rewards, addressMap) as HistoryDto<T>[];
+        txArray = this.getHistoryCompact(deposits, withdrawals, rewards, addressMap) as HistoryDto<T>[];
+        break;
     }
+
+    return dataType === ExportDataType.CSV
+      ? this.getHistoryCsv(txArray, exportFormat)
+      : txArray.map((tx) => Util.removeNullFields(tx));
   }
 
   // --- HELPER METHODS --- //
+  private getHistoryCsv<T>(tx: HistoryDto<T>[], exportType: ExportType): StreamableFile {
+    if (tx.length === 0) throw new NotFoundException('No transactions found');
+    return new StreamableFile(
+      Readable.from([exportType === ExportType.CHAIN_REPORT ? this.toCsv(tx, ';', true) : this.toCsv(tx)]),
+    );
+  }
+
   private async getDepositsByUserOrAddress(
     userId: number,
     depositAddress: string,

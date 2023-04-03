@@ -1,6 +1,5 @@
 import { BlockchainInfo } from '@defichain/jellyfish-api-core/dist/category/blockchain';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { SchedulerRegistry } from '@nestjs/schedule';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Config } from 'src/config/config';
 import { HttpService } from 'src/shared/services/http.service';
@@ -30,7 +29,7 @@ export class NodeService {
   readonly #allNodes: Map<NodeType, Record<NodeMode, NodeClient | null>> = new Map();
   readonly #connectedNodes: Map<NodeType, BehaviorSubject<NodeClient | null>> = new Map();
 
-  constructor(private readonly http: HttpService, private readonly scheduler: SchedulerRegistry) {
+  constructor(private readonly http: HttpService) {
     this.initAllNodes();
     this.initConnectedNodes();
   }

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SharedModule } from 'src/shared/shared.module';
+import { UtxoReservationController } from './jellyfish/api/controllers/utxo-reservation.controller';
 import { UtxoReservation } from './jellyfish/domain/utxo-reservation.entity';
 import { UtxoReservationRepository } from './jellyfish/repositories/utxo-reservation.repository';
 import { JellyfishService } from './jellyfish/services/jellyfish.service';
@@ -37,6 +38,6 @@ import { WhaleService } from './whale/whale.service';
     TokenProviderService,
     DeFiChainUtil,
   ],
-  controllers: [NodeController],
+  controllers: [NodeController, UtxoReservationController],
 })
 export class AinModule {}

@@ -136,12 +136,24 @@ export class TransactionExecutionService {
   }
 
   async withdrawFromVault(data: WithdrawFromVaultData): Promise<string> {
-    const rawTx = await this.rawTxService.Vault.withdraw(data.to, data.vault, data.token, data.amount);
+    const rawTx = await this.rawTxService.Vault.withdraw(
+      data.to,
+      data.executingAddress,
+      data.vault,
+      data.token,
+      data.amount,
+    );
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.WITHDRAW_FROM_VAULT));
   }
 
   async takeLoan(data: TakeLoanData): Promise<string> {
-    const rawTx = await this.rawTxService.Vault.takeLoan(data.to, data.vault, data.token, data.amount);
+    const rawTx = await this.rawTxService.Vault.takeLoan(
+      data.to,
+      data.executingAddress,
+      data.vault,
+      data.token,
+      data.amount,
+    );
     return this.signAndBroadcast(rawTx, this.createPayloadFor(data, TransactionType.TAKE_LOAN));
   }
 
@@ -153,6 +165,7 @@ export class TransactionExecutionService {
   async addPoolLiquidity(data: AddPoolLiquidityData): Promise<string> {
     const rawTx = await this.rawTxService.Pool.add(
       data.from,
+      data.executingAddress,
       data.partA.token,
       data.partA.amount,
       data.partB.token,

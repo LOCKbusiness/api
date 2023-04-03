@@ -48,18 +48,12 @@ export class HistoryController {
     exportType: T,
     res: any,
   ): Promise<HistoryDto<T>[] | StreamableFile> {
-    switch (query.type) {
-      case ExportDataType.CSV:
-        const csvFile = await this.historyService.getHistoryCsv(query, exportType);
-
-        res.set({
-          'Content-Type': 'text/csv',
-          'Content-Disposition': `attachment; filename="LOCK_${exportType}_history_${this.formatDate()}.csv"`,
-        });
-        return csvFile;
-
-      case ExportDataType.JSON:
-        return this.historyService.getHistory(query, exportType);
-    }
+    const tx = await this.historyService.getHistory(query, exportType, query.type);
+    if (query.type === ExportDataType.CSV)
+      res.set({
+        'Content-Type': 'text/csv',
+        'Content-Disposition': `attachment; filename="LOCK_${exportType}_history_${this.formatDate()}.csv"`,
+      });
+    return tx;
   }
 }

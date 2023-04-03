@@ -82,10 +82,12 @@ export interface DepositToVaultData extends VaultData {
 
 export interface WithdrawFromVaultData extends VaultData {
   to: string;
+  executingAddress: string;
 }
 
 export interface TakeLoanData extends VaultData {
   to: string;
+  executingAddress: string;
 }
 
 export interface PaybackLoanData extends VaultData {
@@ -99,6 +101,7 @@ export interface TokenBalance {
 
 export interface AddPoolLiquidityData extends WalletBaseData {
   from: string;
+  executingAddress: string;
   partA: TokenBalance;
   partB: TokenBalance;
 }

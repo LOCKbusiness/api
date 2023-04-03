@@ -146,8 +146,8 @@ export class RawTxUtil {
 
   // --- POOL VOUTS --- //
 
-  static createVoutAddPoolLiquidity(from: Script, balances: TokenBalanceUInt32[]): Vout {
-    return RawTxUtil.createDefiTxVout(DefiTxHelper.addPoolLiquidity([{ script: from, balances }], from));
+  static createVoutAddPoolLiquidity(share: Script, from: Script, balances: TokenBalanceUInt32[]): Vout {
+    return RawTxUtil.createDefiTxVout(DefiTxHelper.addPoolLiquidity([{ script: from, balances }], share));
   }
 
   static createVoutRemovePoolLiquidity(from: Script, token: number, amount: BigNumber): Vout {

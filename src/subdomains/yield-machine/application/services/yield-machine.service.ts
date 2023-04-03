@@ -91,18 +91,19 @@ export class YieldMachineService {
 
   depositToVault(vault: Vault, parameters: DepositToVaultParameters, token: number): Promise<string> {
     return this.transactionExecutionService.depositToVault({
-      from: vault.address,
+      from: Config.yieldMachine.liquidity.address,
       vault: vault.vault,
       token,
       amount: new BigNumber(parameters.amount),
-      ownerWallet: vault.wallet,
-      accountIndex: vault.accountIndex,
+      ownerWallet: Config.yieldMachine.liquidity.wallet,
+      accountIndex: Config.yieldMachine.liquidity.account,
     });
   }
 
   private withdrawFromVault(vault: Vault, parameters: WithdrawFromVaultParameters, token?: number): Promise<string> {
     return this.transactionExecutionService.withdrawFromVault({
-      to: vault.address,
+      to: Config.yieldMachine.liquidity.address,
+      executingAddress: vault.address,
       vault: vault.vault,
       token: token ?? vault.blockchainPairTokenBId,
       amount: new BigNumber(parameters.amount),
@@ -113,7 +114,8 @@ export class YieldMachineService {
 
   private takeLoan(vault: Vault, parameters: TakeLoanParameters): Promise<string> {
     return this.transactionExecutionService.takeLoan({
-      to: vault.takeLoanAddress ?? vault.address,
+      to: Config.yieldMachine.liquidity.address,
+      executingAddress: vault.address,
       vault: vault.vault,
       token: vault.blockchainPairTokenAId,
       amount: new BigNumber(parameters.amount),
@@ -124,18 +126,19 @@ export class YieldMachineService {
 
   paybackLoan(vault: Vault, parameters: PaybackLoanParameters): Promise<string> {
     return this.transactionExecutionService.paybackLoan({
-      from: vault.address,
+      from: Config.yieldMachine.liquidity.address,
       vault: vault.vault,
       token: vault.blockchainPairTokenAId,
       amount: new BigNumber(parameters.amount),
-      ownerWallet: vault.wallet,
-      accountIndex: vault.accountIndex,
+      ownerWallet: Config.yieldMachine.liquidity.wallet,
+      accountIndex: Config.yieldMachine.liquidity.account,
     });
   }
 
   private addPoolLiquidity(vault: Vault, parameters: AddPoolLiquidityParameters): Promise<string> {
     return this.transactionExecutionService.addPoolLiquidity({
       from: vault.address,
+      executingAddress: Config.yieldMachine.liquidity.address,
       partA: {
         token: vault.blockchainPairTokenAId,
         amount: new BigNumber(parameters.partAAmount),
@@ -144,8 +147,8 @@ export class YieldMachineService {
         token: vault.blockchainPairTokenBId,
         amount: new BigNumber(parameters.partBAmount),
       },
-      ownerWallet: vault.wallet,
-      accountIndex: vault.accountIndex,
+      ownerWallet: Config.yieldMachine.liquidity.wallet,
+      accountIndex: Config.yieldMachine.liquidity.account,
     });
   }
 
