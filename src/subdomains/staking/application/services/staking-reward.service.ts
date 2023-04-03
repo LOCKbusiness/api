@@ -81,7 +81,7 @@ export class StakingRewardService {
     }
 
     // save in one transaction
-    return this.rewardRepo.saveMany(rewards);
+    return this.rewardRepo.saveMany(rewards, Infinity);
   }
 
   async setRewardsStatus({ ids, status }: SetRewardsStatusDto): Promise<void> {
