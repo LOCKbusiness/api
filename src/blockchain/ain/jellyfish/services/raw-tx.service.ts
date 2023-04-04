@@ -30,12 +30,10 @@ export class RawTxService {
     this.Vault = new RawTxVault((c) => this.call(c), utxoProvider);
   }
 
-  async unlockUtxosOf(rawTx: RawTxDto): Promise<void> {
-    return this.call(() => this.executeUnlockUtxos(rawTx.prevouts, rawTx.scriptHex));
-  }
-
-  private async executeUnlockUtxos(prevouts: Prevout[], scriptHex: string): Promise<void> {
-    await this.utxoProvider.unlockSpentBasedOn(RawTxUtil.parseAddressFromScriptHex(scriptHex), prevouts);
+  async unlockUtxosOf({ scriptHex, prevouts }: RawTxDto): Promise<void> {
+    return this.call(() =>
+      this.utxoProvider.unlockSpentBasedOn(RawTxUtil.parseAddressFromScriptHex(scriptHex), prevouts),
+    );
   }
 
   // --- HELPER METHODS --- //
