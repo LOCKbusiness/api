@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Prevout } from '@defichain/jellyfish-transaction-builder';
 import { QueueHandler } from 'src/shared/queue-handler';
 import { RawTxDto } from '../dto/raw-tx.dto';
 import { RawTxAccount } from '../utils/raw-tx-account';
