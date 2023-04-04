@@ -70,6 +70,7 @@ export class VotingService implements OnModuleInit {
           yes: d.distribution.yes * voterCount,
           no: d.distribution.no * voterCount,
           neutral: d.distribution.neutral * voterCount,
+          total: voterCount,
         },
       }));
     } catch (e) {
@@ -82,7 +83,7 @@ export class VotingService implements OnModuleInit {
     const voterCount = await this.masternodeService.getAllVoters().then((l) => l.length);
     const cfpInfos = await this.getCurrentCfpList().then((c) =>
       c.map((cfp) => ({
-        number: cfp.number,
+        id: cfp.number,
         title: cfp.title,
         type: cfp.type,
         hasLockVoted: cfp.lockVotes.total != 0,
@@ -278,6 +279,7 @@ export class VotingService implements OnModuleInit {
           yes: total ? Util.round(yes / total, 2) : 0,
           no: total ? Util.round(no / total, 2) : 0,
           neutral: total ? Util.round(neutral / total, 2) : 1,
+          total: total,
         },
       };
     });

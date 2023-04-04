@@ -1,24 +1,17 @@
 import { ProposalStatus } from '@defichain/jellyfish-api-core/dist/category/governance';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { VoteDecision } from '../../domain/enums';
 import { Distribution } from './distribution.dto';
 
-export enum cfpType {
+export enum CfpType {
   CFP = 'cfp',
   DFIP = 'dfip',
 }
 
 class ServiceVotesDto {
-  @ApiProperty()
   total: number;
-
-  @ApiProperty()
   yes: number;
-
-  @ApiProperty()
   neutral: number;
-
-  @ApiProperty()
   no: number;
 }
 
@@ -31,32 +24,19 @@ class CfpDto {
 }
 
 export class CfpInfoInputDto {
-  @ApiProperty()
   number: string;
-
-  @ApiProperty()
   title: string;
-
-  @ApiProperty({ enum: cfpType })
-  type: cfpType;
-
-  @ApiPropertyOptional({ type: ServiceVotesDto })
+  type: CfpType;
   lockVotes?: ServiceVotesDto;
-
-  @ApiProperty()
   endDate: string;
-
-  @ApiProperty()
   endHeight: number;
-
-  @ApiProperty({ enum: ProposalStatus })
   status: ProposalStatus;
 }
 
 export class CfpInfoOutputDto {
-  number: string;
+  id: string;
   title: string;
-  type: cfpType;
+  type: CfpType;
   hasLockVoted: boolean;
 }
 
