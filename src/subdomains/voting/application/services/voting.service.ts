@@ -12,7 +12,7 @@ import { MasternodeVote, StakingStrategy } from 'src/subdomains/staking/domain/e
 import { UserService } from 'src/subdomains/user/application/services/user.service';
 import { CfpMnVoteDto } from '../dto/cfp-mn-vote.dto';
 import { User } from 'src/subdomains/user/domain/entities/user.entity';
-import { CfpInfoDto, CfpInfo, CfpResultDto, CfpVoteDto, CfpVotesDto } from '../dto/cfp.dto';
+import { CfpInfoInputDto, CfpInfo, CfpResultDto, CfpVoteDto, CfpVotesDto, CfpAllData } from '../dto/cfp.dto';
 import { Distribution } from '../dto/distribution.dto';
 import { VoteRepository } from '../repositories/voting.repository';
 import { VoteDecision, VoteStatus } from '../../domain/enums';
@@ -60,35 +60,36 @@ export class VotingService implements OnModuleInit {
     try {
       const cfpList = await this.getCfpList();
       const distributions = await this.getVoteDistributions(cfpList);
+      const voterCount = await this.masternodeService.getAllVoters().then((l) => l.length);
 
       this.currentResults = distributions.map((d) => ({
         id: d.cfpId,
         name: cfpList.find((c) => c.id === d.cfpId).name,
-        result: d.distribution,
+        result: {
+          yes: d.distribution.yes * voterCount,
+          no: d.distribution.no * voterCount,
+          neutral: d.distribution.neutral * voterCount,
+          total: voterCount,
+        },
       }));
     } catch (e) {
       console.error(`Exception during voting evaluation:`, e);
     }
   }
 
-  async getCurrentVotes(): Promise<CfpVotesDto[]> {
-    const cfpList = await this.getCfpList();
-    const userWithVotes = await this.userService.getAllUserWithVotes();
-    const stakings = await this.repos.staking.getByStrategy(StakingStrategy.MASTERNODE);
+  async getAllData(): Promise<CfpAllData> {
+    const voteResult = await this.getCurrentVotes();
+    const voterCount = await this.masternodeService.getAllVoters().then((l) => l.length);
+    const cfpInfos = await this.getCurrentCfpList().then((c) =>
+      c.map((cfp) => ({
+        id: cfp.number,
+        title: cfp.title,
+        type: cfp.type,
+        hasLockVoted: cfp.lockVotes.total != 0,
+      })),
+    );
 
-    const cfpVotesList: CfpVotesDto[] = [];
-
-    for (const staking of stakings) {
-      const user = userWithVotes.find((user) => user.id === staking.userId);
-
-      cfpVotesList.push({
-        depositAddress: staking.depositAddress.address,
-        balance: staking.defaultBalance.balance,
-        votes: user ? this.getUserVotes(user, cfpList) : [],
-      });
-    }
-
-    return cfpVotesList;
+    return { voterCount, cfpInfos, voteResult };
   }
 
   get result(): CfpResultDto[] {
@@ -271,6 +272,7 @@ export class VotingService implements OnModuleInit {
           yes: total ? Util.round(yes / total, 2) : 0,
           no: total ? Util.round(no / total, 2) : 0,
           neutral: total ? Util.round(neutral / total, 2) : 1,
+          total: total,
         },
       };
     });
@@ -294,6 +296,26 @@ export class VotingService implements OnModuleInit {
   }
 
   // --- CFP HELPERS --- //
+  private async getCurrentVotes(): Promise<CfpVotesDto[]> {
+    const cfpList = await this.getCfpList();
+    const userWithVotes = await this.userService.getAllUserWithVotes();
+    const stakings = await this.repos.staking.getByStrategy(StakingStrategy.MASTERNODE);
+
+    const cfpVotesList: CfpVotesDto[] = [];
+
+    for (const staking of stakings) {
+      const user = userWithVotes.find((user) => user.id === staking.userId);
+
+      cfpVotesList.push({
+        depositAddress: staking.depositAddress.address,
+        balance: staking.defaultBalance.balance,
+        votes: user ? this.getUserVotes(user, cfpList) : [],
+      });
+    }
+
+    return cfpVotesList;
+  }
+
   private async getCfpList(): Promise<CfpInfo[]> {
     const cfpList = await this.getCurrentCfpList();
     return cfpList
@@ -301,7 +323,7 @@ export class VotingService implements OnModuleInit {
       .map((cfp) => ({ id: cfp.number, name: cfp.title, endDate: new Date(cfp.endDate), endHeight: cfp.endHeight }));
   }
 
-  private async getCurrentCfpList(): Promise<CfpInfoDto[]> {
+  private async getCurrentCfpList(): Promise<CfpInfoInputDto[]> {
     return this.http.get(`${Config.kyc.apiUrl}/statistic/cfp/latest`);
   }
 }
