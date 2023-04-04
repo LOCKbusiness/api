@@ -26,6 +26,7 @@ import { CountryRepository } from './repositories/country.repository';
 import { IpLogRepository } from './repositories/ip-log.repository';
 import { Setting } from './entities/setting.entity';
 import { Country } from './entities/country.entity';
+import { SettingController } from './api/setting.controller';
 
 @Module({
   imports: [
@@ -38,7 +39,7 @@ import { Country } from './entities/country.entity';
     ScheduleModule.forRoot(),
     ThrottlerModule.forRoot(),
   ],
-  controllers: [AssetController],
+  controllers: [AssetController, SettingController],
   providers: [
     RepositoryFactory,
     AssetRepository,
