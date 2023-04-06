@@ -13,7 +13,7 @@ import { Price } from 'src/subdomains/pricing/domain/entities/price';
 @Entity()
 @Index((r: Reward) => [r.batch, r.status, r.rewardRoute])
 export class Reward extends IEntity {
-  //*** CREATION ***//
+  // --- CREATION --- //
 
   @ManyToOne(() => RewardBatch, (batch) => batch.rewards, { eager: true, nullable: true })
   batch: RewardBatch;
@@ -48,7 +48,7 @@ export class Reward extends IEntity {
   @ManyToOne(() => Asset, { eager: true, nullable: false })
   targetAsset: Asset;
 
-  //*** PAYOUT PROPS ***//
+  // --- PAYOUT PROPS --- //
 
   @Column({ type: 'float', nullable: true })
   targetAmount: number;
@@ -59,12 +59,12 @@ export class Reward extends IEntity {
   @Column({ nullable: true })
   outputDate: Date;
 
-  //*** REINVEST PROPS ***//
+  // --- REINVEST PROPS --- //
 
   @Column({ nullable: true })
   isReinvest: boolean;
 
-  //*** REFERENCE DATA ***//
+  // --- REFERENCE DATA --- //
 
   @Column({ type: 'float', nullable: true, default: null })
   amountEur: number;
@@ -75,7 +75,7 @@ export class Reward extends IEntity {
   @Column({ type: 'float', nullable: true, default: null })
   amountChf: number;
 
-  //*** FACTORY METHODS ***//
+  // --- FACTORY METHODS --- //
 
   static create(
     staking: Staking,
@@ -99,7 +99,7 @@ export class Reward extends IEntity {
     return reward;
   }
 
-  //*** PUBLIC API ***//
+  // --- PUBLIC API --- //
 
   calculateOutputAmount(batchReferenceAmount: number, batchTargetAmount: number): this {
     if (batchReferenceAmount === 0) {
@@ -144,5 +144,12 @@ export class Reward extends IEntity {
     );
 
     return this;
+  }
+
+  get approxTargetAmount(): number {
+    return Util.round(
+      (this.outputReferenceAmount * this.referenceAsset.approxPriceUsd) / this.targetAsset.approxPriceUsd,
+      10,
+    );
   }
 }
