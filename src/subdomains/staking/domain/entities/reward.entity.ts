@@ -146,10 +146,12 @@ export class Reward extends IEntity {
     return this;
   }
 
-  get approxTargetAmount(): number {
-    return Util.round(
-      (this.outputReferenceAmount * this.referenceAsset.approxPriceUsd) / this.targetAsset.approxPriceUsd,
-      10,
-    );
+  get approxTargetAmount(): number | undefined {
+    return this.outputReferenceAmount != null && this.referenceAsset.approxPriceUsd && this.targetAsset.approxPriceUsd
+      ? Util.round(
+          (this.outputReferenceAmount * this.referenceAsset.approxPriceUsd) / this.targetAsset.approxPriceUsd,
+          10,
+        )
+      : undefined;
   }
 }
