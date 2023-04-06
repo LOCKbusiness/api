@@ -206,7 +206,7 @@ export class Util {
   }
 
   static removeNullFields<T>(entity: T): T {
-    Object.keys(entity).forEach((k) => !entity[k] && delete entity[k]);
+    Object.keys(entity).forEach((k) => entity[k] == null && delete entity[k]);
     return entity;
   }
 
