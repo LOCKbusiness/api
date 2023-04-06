@@ -9,4 +9,7 @@ export class Distribution {
 
   @ApiProperty()
   neutral: number;
+
+  @ApiProperty()
+  total: number;
 }

@@ -14,6 +14,7 @@ export class CompactHistoryDtoMapper {
     [key in WithdrawalStatus | DepositStatus | RewardStatus]: CompactHistoryStatus | null;
   } = {
     [DepositStatus.OPEN]: null,
+    [DepositStatus.INVALID]: CompactHistoryStatus.FAILED,
     [WithdrawalStatus.DRAFT]: null,
     [WithdrawalStatus.PENDING]: CompactHistoryStatus.PENDING,
     [WithdrawalStatus.PAYING_OUT]: CompactHistoryStatus.PENDING,

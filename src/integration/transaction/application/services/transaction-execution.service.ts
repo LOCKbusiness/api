@@ -213,8 +213,10 @@ export class TransactionExecutionService {
     try {
       const direction = RawTxCheck.direction(rawTx, await this.vaultService.getAllIds());
       if (!direction) throw new Error(`${rawTx.id} is not allowed`);
+
       const signature = await this.receiveSignatureFor(rawTx);
       const hex = await this.transactionService.sign(rawTx, signature, direction, payload);
+
       console.info(`${rawTx.id} broadcasting`);
       return await this.whaleClient.sendRaw(hex);
     } catch (e) {

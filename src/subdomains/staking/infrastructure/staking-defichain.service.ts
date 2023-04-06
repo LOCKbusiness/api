@@ -117,30 +117,25 @@ export class StakingDeFiChainService {
       amount,
     );
 
-    try {
-      const txId = await this.sendFromAccount(this.forwardWallet, rawTx);
+    const txId = await this.sendFromAccount(this.forwardWallet, rawTx);
 
-      await this.whaleClient.waitForTx(txId, Config.payIn.forward.timeout);
-    } catch (e) {
-      await this.rawTxService.unlockUtxosOf(rawTx);
-      throw e;
-    }
+    await this.whaleClient.waitForTx(txId, Config.payIn.forward.timeout);
   }
 
   async sendFeeUtxos(to: string[], amount: BigNumber): Promise<string> {
     const rawTx = await this.rawTxService.Utxo.sendFeeUtxos(await this.forwardWallet.getAddress(), to, amount);
 
+    return this.sendFromAccount(this.forwardWallet, rawTx);
+  }
+
+  private async sendFromAccount(account: WhaleWalletAccount, rawTx: RawTxDto) {
     try {
-      return await this.sendFromAccount(this.forwardWallet, rawTx);
+      const signedTx = await this.jellyfishService.signRawTx(rawTx, account);
+      return await this.whaleClient.sendRaw(signedTx);
     } catch (e) {
       await this.rawTxService.unlockUtxosOf(rawTx);
       throw e;
     }
-  }
-
-  private async sendFromAccount(account: WhaleWalletAccount, rawTx: RawTxDto) {
-    const signedTx = await this.jellyfishService.signRawTx(rawTx, account);
-    return this.whaleClient.sendRaw(signedTx);
   }
 
   private async send(rawTx: RawTxDto): Promise<string> {

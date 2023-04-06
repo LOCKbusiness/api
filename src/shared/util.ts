@@ -186,6 +186,15 @@ export class Util {
     return results;
   }
 
+  static async doInBatchesAndJoin<T, U>(
+    list: T[],
+    action: (batch: T[]) => Promise<U[]>,
+    batchSize: number,
+  ): Promise<U[]> {
+    const batches = await this.doInBatches(list, action, batchSize);
+    return batches.reduce((prev, curr) => prev.concat(curr), []);
+  }
+
   static async delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
