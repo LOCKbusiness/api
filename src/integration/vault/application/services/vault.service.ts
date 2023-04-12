@@ -5,7 +5,6 @@ import { Vault } from '../../domain/entities/vault.entity';
 import { VaultRepository } from '../repositories/vault.repository';
 import LocVaults from '../repositories/vault-loc.json';
 import DevVaults from '../repositories/vault-dev.json';
-import StgVaults from '../repositories/vault-stg.json';
 import PrdVaults from '../repositories/vault-prd.json';
 import { VaultDto } from '../../dto/vault.dto';
 
@@ -49,8 +48,6 @@ export class VaultService {
         return LocVaults as VaultDto[];
       case 'dev':
         return DevVaults as VaultDto[];
-      case 'stg':
-        return StgVaults as VaultDto[];
       case 'prd':
         return PrdVaults as VaultDto[];
     }
