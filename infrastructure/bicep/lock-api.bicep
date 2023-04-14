@@ -50,7 +50,6 @@ param liquidityAccountIndex string
 param yieldMachineLiquidityAddress string
 param yieldMachineLiquidityWalletName string
 param yieldMachineLiquidityAccountIndex string
-param yieldMachineRewardAddress string
 
 @secure()
 param forwardPhrase string
@@ -400,10 +399,6 @@ resource apiAppService 'Microsoft.Web/sites@2018-11-01' = if (env != 'loc') {
         {
           name: 'YIELD_MACHINE_LIQUIDITY_ACCOUNT_INDEX'
           value: yieldMachineLiquidityAccountIndex
-        }
-        {
-          name: 'YIELD_MACHINE_REWARD_ADDRESS'
-          value: yieldMachineRewardAddress
         }
         {
           name: 'FORWARD_PHRASE'
