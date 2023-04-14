@@ -23,10 +23,14 @@ import { StakingRewardBatchService } from './staking-reward-batch.service';
 import { StakingRewardDexService } from './staking-reward-dex.service';
 import { StakingRewardOutService } from './staking-reward-out.service';
 import { StakingService } from './staking.service';
+import { StakingAnalytics } from 'src/subdomains/analytics/domain/staking-analytics.entity';
+import { RepositoryFactory } from 'src/shared/repositories/repository.factory';
+import { MoreThan } from 'typeorm';
 
 @Injectable()
 export class StakingRewardService {
   constructor(
+    private readonly repos: RepositoryFactory,
     private readonly authorize: StakingAuthorizeService,
     private readonly factory: StakingFactory,
     private readonly stakingRepo: StakingRepository,
@@ -52,6 +56,9 @@ export class StakingRewardService {
   async createDailyRewards(): Promise<Reward[]> {
     const customRewardRouteIds = [2534, 2535, 8607, 8608, 8609, 8610];
 
+    // all staking assets with active yield
+    const analytics = await this.repos.analytics.find({ where: { apy: MoreThan(0) } });
+
     // load all active routes with active stakings (balance > 0)
     const activeRoutes = await this.rewardRouteRepo
       .createQueryBuilder('route')
@@ -62,6 +69,7 @@ export class StakingRewardService {
       .innerJoinAndSelect('balance.asset', 'asset')
       .where('route.rewardPercent > 0')
       .andWhere('balance.balance > 0')
+      .andWhere('balance.assetId IN (:...assetIds)', { assetIds: analytics.map((a) => a.asset.id) })
       .orWhere('route.id IN (:...ids)', { ids: customRewardRouteIds })
       .andWhere('targetAsset.id = asset.id')
       .getMany();
