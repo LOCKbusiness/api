@@ -138,11 +138,11 @@ export class StakingHistoryService {
       CoinTrackingHistoryDtoMapper.mapStakingDeposits(deposits),
       CoinTrackingHistoryDtoMapper.mapStakingWithdrawals(withdrawals),
       CoinTrackingHistoryDtoMapper.mapStakingRewards(rewards, providerMap),
-    ]
-      .reduce((prev, curr) => prev.concat(curr), [])
-      .sort((tx1, tx2) => (tx1.date.getTime() > tx2.date.getTime() ? -1 : 1));
+    ].reduce((prev, curr) => prev.concat(curr), []);
 
-    return this.filterDuplicateTxCT(transactions);
+    return this.filterDuplicateTxCT(transactions).sort((tx1, tx2) =>
+      tx1.date.getTime() > tx2.date.getTime() ? -1 : 1,
+    );
   }
 
   private getHistoryChainReport(
@@ -155,11 +155,11 @@ export class StakingHistoryService {
       ChainReportHistoryDtoMapper.mapStakingDeposits(deposits),
       ChainReportHistoryDtoMapper.mapStakingWithdrawals(withdrawals),
       ChainReportHistoryDtoMapper.mapStakingRewards(rewards, addressMap),
-    ]
-      .reduce((prev, curr) => prev.concat(curr), [])
-      .sort((tx1, tx2) => (tx1.timestamp.getTime() > tx2.timestamp.getTime() ? -1 : 1));
+    ].reduce((prev, curr) => prev.concat(curr), []);
 
-    return this.filterDuplicateTxChainReport(transactions);
+    return this.filterDuplicateTxChainReport(transactions).sort((tx1, tx2) =>
+      tx1.timestamp.getTime() > tx2.timestamp.getTime() ? -1 : 1,
+    );
   }
 
   private getHistoryCompact(
@@ -172,11 +172,11 @@ export class StakingHistoryService {
       CompactHistoryDtoMapper.mapStakingDeposits(deposits),
       CompactHistoryDtoMapper.mapStakingWithdrawals(withdrawals),
       CompactHistoryDtoMapper.mapStakingRewards(rewards, addressMap),
-    ]
-      .reduce((prev, curr) => prev.concat(curr), [])
-      .sort((tx1, tx2) => (tx1.date.getTime() > tx2.date.getTime() ? -1 : 1));
+    ].reduce((prev, curr) => prev.concat(curr), []);
 
-    return this.filterDuplicateTxCompact(transactions);
+    return this.filterDuplicateTxCompact(transactions).sort((tx1, tx2) =>
+      tx1.date.getTime() > tx2.date.getTime() ? -1 : 1,
+    );
   }
 
   private toCsv(list: any[], separator = ',', toGermanLocalDateString = false): string {
