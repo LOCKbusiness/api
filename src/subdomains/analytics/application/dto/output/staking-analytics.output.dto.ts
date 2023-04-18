@@ -18,6 +18,9 @@ export class StakingAnalyticsOutputDto {
   tvl: number;
 
   @ApiProperty()
+  tvlUsd: number;
+
+  @ApiProperty()
   asset: string;
 
   @ApiProperty({ enum: StakingStrategy })

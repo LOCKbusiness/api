@@ -10,6 +10,7 @@ export class StakingAnalyticsOutputDtoMapper {
     dto.apy = analytics.apy;
     dto.operatorCount = analytics.operatorCount;
     dto.tvl = analytics.tvl;
+    dto.tvlUsd = analytics.tvl * analytics.asset.approxPriceUsd;
     dto.asset = analytics.asset.name;
     dto.strategy = analytics.strategy;
 
