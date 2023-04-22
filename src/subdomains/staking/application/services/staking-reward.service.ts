@@ -23,7 +23,6 @@ import { StakingRewardBatchService } from './staking-reward-batch.service';
 import { StakingRewardDexService } from './staking-reward-dex.service';
 import { StakingRewardOutService } from './staking-reward-out.service';
 import { StakingService } from './staking.service';
-import { StakingAnalytics } from 'src/subdomains/analytics/domain/staking-analytics.entity';
 import { RepositoryFactory } from 'src/shared/repositories/repository.factory';
 import { MoreThan } from 'typeorm';
 
