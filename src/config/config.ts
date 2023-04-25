@@ -22,9 +22,7 @@ export enum Process {
   UTXO_MANAGEMENT = 'UtxoManagement',
   VAULT_MANAGEMENT = 'VaultManagement',
   PRICING = 'Pricing',
-  CLEAN_UP_RESERVATION = 'CleanUpReservation',
   CALCULATE_FIAT_REFERENCE = 'CalculateFiatReference',
-  CHECK_REFS = 'CheckRefs',
 }
 
 export function GetConfig(): Configuration {

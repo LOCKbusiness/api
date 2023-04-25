@@ -4,7 +4,6 @@ import { Util } from 'src/shared/util';
 import { IsNull, LessThan } from 'typeorm';
 import { Ref } from '../../domain/entities/ref.entity';
 import { RefRepository } from '../repositories/ref-repository';
-import { Config, Process } from 'src/config/config';
 
 @Injectable()
 export class RefService {
@@ -13,7 +12,6 @@ export class RefService {
   @Cron(CronExpression.EVERY_HOUR)
   async checkRefs(): Promise<void> {
     try {
-      if (Config.processDisabled(Process.CHECK_REFS)) return;
       // registered refs expire after 3 days
       const expirationDate = Util.daysBefore(3);
 

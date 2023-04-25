@@ -62,7 +62,6 @@ export class UtxoReservationService implements OnModuleInit {
   @Cron(CronExpression.EVERY_HOUR)
   @Lock()
   async cleanupOldReservations() {
-    if (Config.processDisabled(Process.CLEAN_UP_RESERVATION)) return;
     await this.repo.delete({ updated: LessThan(Util.daysBefore(7)) });
   }
 }
