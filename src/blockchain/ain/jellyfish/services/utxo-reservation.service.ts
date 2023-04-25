@@ -5,7 +5,6 @@ import { UtxoReservationRepository } from '../repositories/utxo-reservation.repo
 import { UtxoReservation } from '../domain/utxo-reservation.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Lock } from 'src/shared/lock';
-import { Config, Process } from 'src/config/config';
 
 @Injectable()
 export class UtxoReservationService implements OnModuleInit {
