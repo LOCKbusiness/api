@@ -13,6 +13,7 @@ import { DepositRepository } from '../repositories/deposit.repository';
 import { RewardRepository } from '../repositories/reward.repository';
 import { WithdrawalRepository } from '../repositories/withdrawal.repository';
 import { Asset } from 'src/shared/entities/asset.entity';
+import { Config, Process } from 'src/config/config';
 
 @Injectable()
 export class StakingFiatReferenceService {
@@ -28,6 +29,7 @@ export class StakingFiatReferenceService {
   @Cron(CronExpression.EVERY_MINUTE)
   @Lock(7200)
   async calculateFiatReferenceAmounts(): Promise<void> {
+    if (Config.processDisabled(Process.CALCULATE_FIAT_REFERENCE)) return;
     const deposits = await this.getDepositsWithoutFiatReferences();
     const withdrawals = await this.getWithdrawalsWithoutFiatReferences();
     const rewards = await this.getRewardsWithoutFiatReferences();
