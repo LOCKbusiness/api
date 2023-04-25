@@ -14,6 +14,7 @@ export enum Process {
   STAKING_WITHDRAWAL = 'StakingWithdrawal',
   STAKING_LIQUIDITY_MANAGEMENT = 'StakingLiquidityManagement',
   STAKING_REWARD_PAYOUT = 'StakingRewardPayout',
+  STAKING_UPDATE_BALANCES = 'StakingUpdateBalances',
   MASTERNODE = 'Masternode',
   TRANSACTION = 'Transaction',
   ANALYTICS = 'Analytics',
@@ -21,6 +22,9 @@ export enum Process {
   UTXO_MANAGEMENT = 'UtxoManagement',
   VAULT_MANAGEMENT = 'VaultManagement',
   PRICING = 'Pricing',
+  CLEAN_UP_RESERVATION = 'CleanUpReservation',
+  CALCULATE_FIAT_REFERENCE = 'CalculateFiatReference',
+  CHECK_REFS = 'CheckRefs',
 }
 
 export function GetConfig(): Configuration {

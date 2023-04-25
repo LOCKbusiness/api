@@ -26,6 +26,7 @@ import { Asset } from 'src/shared/entities/asset.entity';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { RewardStrategy } from '../../domain/entities/reward-strategy.entity';
 import { RewardStrategyRepository } from '../repositories/reward-strategy.repository';
+import { Config, Process } from 'src/config/config';
 
 export interface StakingBalances {
   currentBalance: number;
@@ -129,6 +130,7 @@ export class StakingService {
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async updateBalances(): Promise<void> {
     try {
+      if (Config.processDisabled(Process.STAKING_UPDATE_BALANCES)) return;
       const stakingIds = await this.repository
         .createQueryBuilder('staking')
         .innerJoin('staking.balances', 'balance')
