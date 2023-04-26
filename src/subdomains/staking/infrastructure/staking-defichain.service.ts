@@ -182,7 +182,6 @@ export class StakingDeFiChainService {
   }
 
   private getPossibleWithdrawalsFor(balance: BigNumber, asset: AssetQuery, withdrawals: Withdrawal[]): Withdrawal[] {
-    // TODO: subtract paying out withdrawal amount
     const priorityThreshold = Util.daysBefore(1);
 
     const sortedWithdrawals = withdrawals.filter((w) => w.asset.isEqual(asset)).sort((a, b) => a.amount - b.amount);
