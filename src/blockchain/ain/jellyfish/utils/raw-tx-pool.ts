@@ -12,12 +12,15 @@ export class RawTxPool extends RawTxBase {
     amountA: BigNumber,
     tokenB: number,
     amountB: BigNumber,
+    lockUtxo: boolean,
   ): Promise<RawTxDto> {
-    return this.handle(() => this.createAdd(shareAddress, tokenA, amountA, tokenB, amountB, executingAddress));
+    return this.handle(() =>
+      this.createAdd(shareAddress, tokenA, amountA, tokenB, amountB, executingAddress, lockUtxo),
+    );
   }
 
-  async remove(from: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.handle(() => this.createRemove(from, token, amount));
+  async remove(from: string, token: number, amount: BigNumber, lockUtxo: boolean): Promise<RawTxDto> {
+    return this.handle(() => this.createRemove(from, token, amount, lockUtxo));
   }
 
   private async createAdd(
@@ -27,6 +30,7 @@ export class RawTxPool extends RawTxBase {
     tokenB: number,
     amountB: BigNumber,
     executingAddress: string,
+    lockUtxo: boolean,
   ): Promise<RawTxDto> {
     const [shareScript] = RawTxUtil.parseAddress(shareAddress);
     const [executingScript, executingPubKeyHash] = RawTxUtil.parseAddress(executingAddress);
@@ -34,7 +38,7 @@ export class RawTxPool extends RawTxBase {
     const tokenBalanceA: TokenBalanceUInt32 = { token: tokenA, amount: amountA };
     const tokenBalanceB: TokenBalanceUInt32 = { token: tokenB, amount: amountB };
 
-    const utxo = await this.utxoProvider.provideForDefiTx(executingAddress);
+    const utxo = await this.utxoProvider.provideForDefiTx(executingAddress, lockUtxo);
     return RawTxUtil.generateDefiTx(
       executingScript,
       executingPubKeyHash,
@@ -43,10 +47,10 @@ export class RawTxPool extends RawTxBase {
     );
   }
 
-  private async createRemove(from: string, token: number, amount: BigNumber): Promise<RawTxDto> {
+  private async createRemove(from: string, token: number, amount: BigNumber, lockUtxo: boolean): Promise<RawTxDto> {
     const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
 
-    const utxo = await this.utxoProvider.provideForDefiTx(from);
+    const utxo = await this.utxoProvider.provideForDefiTx(from, lockUtxo);
     return RawTxUtil.generateDefiTx(
       fromScript,
       fromPubKeyHash,

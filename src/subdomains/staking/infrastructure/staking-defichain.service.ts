@@ -72,10 +72,11 @@ export class StakingDeFiChainService {
         address,
         Config.staking.liquidity.address,
         new BigNumber(amount),
+        false,
         new BigNumber(Config.payIn.forward.accountToUtxoFee),
       );
     } else {
-      return this.rawTxService.Utxo.forward(address, Config.staking.liquidity.address, new BigNumber(amount));
+      return this.rawTxService.Utxo.forward(address, Config.staking.liquidity.address, new BigNumber(amount), false);
     }
   }
 
@@ -89,6 +90,7 @@ export class StakingDeFiChainService {
             Config.yieldMachine.liquidity.address,
             +asset.chainId,
             new BigNumber(amount),
+            false,
             new BigNumber(Config.payIn.forward.accountToAccountFee),
           )
         : await this.rawTxService.Utxo.sendAsAccount(
@@ -96,6 +98,7 @@ export class StakingDeFiChainService {
             Config.yieldMachine.liquidity.address,
             +asset.chainId,
             new BigNumber(amount),
+            false,
           );
     return this.send(rawTx);
   }
@@ -115,6 +118,7 @@ export class StakingDeFiChainService {
       await this.forwardWallet.getAddress(),
       depositAddress,
       amount,
+      true,
     );
 
     const txId = await this.sendFromAccount(this.forwardWallet, rawTx);
@@ -123,7 +127,7 @@ export class StakingDeFiChainService {
   }
 
   async sendFeeUtxos(to: string[], amount: BigNumber): Promise<string> {
-    const rawTx = await this.rawTxService.Utxo.sendFeeUtxos(await this.forwardWallet.getAddress(), to, amount);
+    const rawTx = await this.rawTxService.Utxo.sendFeeUtxos(await this.forwardWallet.getAddress(), to, amount, true);
 
     return this.sendFromAccount(this.forwardWallet, rawTx);
   }
@@ -178,6 +182,7 @@ export class StakingDeFiChainService {
   }
 
   private getPossibleWithdrawalsFor(balance: BigNumber, asset: AssetQuery, withdrawals: Withdrawal[]): Withdrawal[] {
+    // TODO: subtract paying out withdrawal amount
     const priorityThreshold = Util.daysBefore(1);
 
     const sortedWithdrawals = withdrawals.filter((w) => w.asset.isEqual(asset)).sort((a, b) => a.amount - b.amount);

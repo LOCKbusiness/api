@@ -9,12 +9,12 @@ import { RawTxBase } from './raw-tx-base';
 import { RawTxUtil } from './raw-tx-util';
 
 export class RawTxVault extends RawTxBase {
-  async create(owner: string): Promise<RawTxDto> {
-    return this.handle(() => this.createTx(owner));
+  async create(owner: string, lockUtxo: boolean): Promise<RawTxDto> {
+    return this.handle(() => this.createTx(owner, lockUtxo));
   }
 
-  async deposit(from: string, vault: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.handle(() => this.generateTx(from, vault, token, amount, RawTxUtil.createVoutDepositToVault));
+  async deposit(from: string, vault: string, token: number, amount: BigNumber, lockUtxo: boolean): Promise<RawTxDto> {
+    return this.handle(() => this.generateTx(from, vault, token, amount, RawTxUtil.createVoutDepositToVault, lockUtxo));
   }
 
   async withdraw(
@@ -23,9 +23,10 @@ export class RawTxVault extends RawTxBase {
     vault: string,
     token: number,
     amount: BigNumber,
+    lockUtxo: boolean,
   ): Promise<RawTxDto> {
     return this.handle(() =>
-      this.generateTx(to, vault, token, amount, RawTxUtil.createVoutWithdrawFromVault, executingAddress),
+      this.generateTx(to, vault, token, amount, RawTxUtil.createVoutWithdrawFromVault, lockUtxo, executingAddress),
     );
   }
 
@@ -35,19 +36,28 @@ export class RawTxVault extends RawTxBase {
     vault: string,
     token: number,
     amount: BigNumber,
+    lockUtxo: boolean,
   ): Promise<RawTxDto> {
-    return this.handle(() => this.generateTx(to, vault, token, amount, RawTxUtil.createVoutTakeLoan, executingAddress));
+    return this.handle(() =>
+      this.generateTx(to, vault, token, amount, RawTxUtil.createVoutTakeLoan, lockUtxo, executingAddress),
+    );
   }
 
-  async paybackLoan(from: string, vault: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.handle(() => this.generateTx(from, vault, token, amount, RawTxUtil.createVoutPaybackLoan));
+  async paybackLoan(
+    from: string,
+    vault: string,
+    token: number,
+    amount: BigNumber,
+    lockUtxo: boolean,
+  ): Promise<RawTxDto> {
+    return this.handle(() => this.generateTx(from, vault, token, amount, RawTxUtil.createVoutPaybackLoan, lockUtxo));
   }
 
-  private async createTx(owner: string): Promise<RawTxDto> {
+  private async createTx(owner: string, lockUtxo: boolean): Promise<RawTxDto> {
     const [ownerScript, ownerPubKeyHash] = RawTxUtil.parseAddress(owner);
     const vaultFee = this.vaultFee();
 
-    const utxo = await this.utxoProvider.provideUntilAmount(owner, vaultFee, {
+    const utxo = await this.utxoProvider.provideUntilAmount(owner, vaultFee, lockUtxo, {
       useFeeBuffer: true,
       sizePriority: UtxoSizePriority.FITTING,
       customFeeBuffer: Config.blockchain.minDefiTxFeeBuffer,
@@ -67,6 +77,7 @@ export class RawTxVault extends RawTxBase {
     token: number,
     amount: BigNumber,
     createVout: (vault: string, script: Script, token: number, amount: BigNumber) => Vout,
+    lockUtxo: boolean,
     executingAddress?: string,
   ): Promise<RawTxDto> {
     const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
@@ -74,7 +85,7 @@ export class RawTxVault extends RawTxBase {
       ? RawTxUtil.parseAddress(executingAddress)
       : [undefined];
 
-    const utxo = await this.utxoProvider.provideForDefiTx(executingAddress ?? from);
+    const utxo = await this.utxoProvider.provideForDefiTx(executingAddress ?? from, lockUtxo);
     return RawTxUtil.generateDefiTx(
       executingScript ?? fromScript,
       executingPubKeyHash ?? fromPubKeyHash,
