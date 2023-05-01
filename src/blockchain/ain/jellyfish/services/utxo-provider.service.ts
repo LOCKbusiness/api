@@ -23,20 +23,30 @@ export class UtxoProviderService {
     return unspent.some((u) => amount.isEqualTo(new BigNumber(u.vout.value)));
   }
 
-  async provideExactAmount(address: string, amount: BigNumber): Promise<UtxoInformation> {
-    return this.provide(address, (unspent) => UtxoProviderService.provideExactAmount(address, unspent, amount));
+  async provideExactAmount(address: string, amount: BigNumber, lock: boolean): Promise<UtxoInformation> {
+    return this.provide(address, lock, (unspent) => UtxoProviderService.provideExactAmount(address, unspent, amount));
   }
 
-  async provideUntilAmount(address: string, amount: BigNumber, config: UtxoConfig): Promise<UtxoInformation> {
-    return this.provide(address, (unspent) => UtxoProviderService.provideUntilAmount(unspent, amount, config));
+  async provideUntilAmount(
+    address: string,
+    amount: BigNumber,
+    lock: boolean,
+    config: UtxoConfig,
+  ): Promise<UtxoInformation> {
+    return this.provide(address, lock, (unspent) => UtxoProviderService.provideUntilAmount(unspent, amount, config));
   }
 
-  async provideNumber(address: string, numberOfUtxos: number, config: UtxoConfig): Promise<UtxoInformation> {
-    return this.provide(address, (unspent) => UtxoProviderService.provideNumber(unspent, numberOfUtxos, config));
+  async provideNumber(
+    address: string,
+    numberOfUtxos: number,
+    lock: boolean,
+    config: UtxoConfig,
+  ): Promise<UtxoInformation> {
+    return this.provide(address, lock, (unspent) => UtxoProviderService.provideNumber(unspent, numberOfUtxos, config));
   }
 
-  async provideForDefiTx(address: string): Promise<UtxoInformation> {
-    return this.provide(address, (unspent) =>
+  async provideForDefiTx(address: string, lock: boolean): Promise<UtxoInformation> {
+    return this.provide(address, lock, (unspent) =>
       UtxoProviderService.provideUntilAmount(unspent, new BigNumber(0), {
         useFeeBuffer: true,
         sizePriority: UtxoSizePriority.FITTING,
@@ -52,12 +62,13 @@ export class UtxoProviderService {
   // --- HELPER METHODS --- //
   private async provide(
     address: string,
+    lock: boolean,
     utxoFilter: (unspent: AddressUnspent[]) => AddressUnspent[],
   ): Promise<UtxoInformation> {
     const unspent = await this.retrieveAllUnspent(address);
     const used = utxoFilter(unspent);
 
-    await this.utxoManager.lock(address, used);
+    if (lock) await this.utxoManager.lock(address, used);
 
     return UtxoProviderService.parseUnspent(used);
   }

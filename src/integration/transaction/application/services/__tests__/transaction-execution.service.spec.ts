@@ -141,7 +141,7 @@ describe('TransactionExecutionService', () => {
     });
 
     expect(txId).toStrictEqual('tx-id');
-    expect(rawTxMasternode.create).toBeCalledWith(masternode);
+    expect(rawTxMasternode.create).toBeCalledWith(masternode, false);
     expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
     expect(transactionService.sign).toBeCalledWith(
       rawTxCreateMasternode,
@@ -167,7 +167,7 @@ describe('TransactionExecutionService', () => {
     });
 
     expect(txId).toStrictEqual('tx-id');
-    expect(rawTxMasternode.resign).toBeCalledWith(masternode);
+    expect(rawTxMasternode.resign).toBeCalledWith(masternode, false);
     expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
     expect(transactionService.sign).toBeCalledWith(
       rawTxResignMasternode,
@@ -199,6 +199,7 @@ describe('TransactionExecutionService', () => {
       withdrawal.to,
       withdrawal.amount,
       UtxoSizePriority.FITTING,
+      true,
     );
     expect(transactionCache.set).toBeCalledWith(
       TransactionType.WITHDRAWAL,
@@ -265,6 +266,7 @@ describe('TransactionExecutionService', () => {
       'owner-address',
       new BigNumber(42),
       UtxoSizePriority.BIG,
+      true,
     );
     expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
     expect(transactionService.sign).toBeCalledWith(
@@ -292,7 +294,7 @@ describe('TransactionExecutionService', () => {
     });
 
     expect(txId).toStrictEqual('tx-id');
-    expect(rawTxUtxo.forward).toBeCalledWith('owner-address', 'some-test-liquidity-address', new BigNumber(42));
+    expect(rawTxUtxo.forward).toBeCalledWith('owner-address', 'some-test-liquidity-address', new BigNumber(42), false);
     expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
     expect(transactionService.sign).toBeCalledWith(
       rawTxSendToLiq,
@@ -320,7 +322,7 @@ describe('TransactionExecutionService', () => {
       }),
     ).rejects.toBe('Error');
 
-    expect(rawTxMasternode.create).toBeCalledWith(masternode);
+    expect(rawTxMasternode.create).toBeCalledWith(masternode, false);
     expect(nodeClient.dumpPrivKey).toBeCalledWith('some-test-address');
     expect(transactionService.sign).toBeCalledWith(
       rawTxCreateMasternode,
@@ -352,6 +354,7 @@ describe('TransactionExecutionService', () => {
       withdrawal.to,
       withdrawal.amount,
       UtxoSizePriority.FITTING,
+      true,
     );
     expect(transactionCache.set).toBeCalledWith(
       TransactionType.WITHDRAWAL,
