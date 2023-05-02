@@ -10,9 +10,10 @@ export class RawTxAccount extends RawTxBase {
     to: string,
     token: number,
     amount: BigNumber,
+    lockUtxo: boolean,
     useFeeExactAmount?: BigNumber,
   ): Promise<RawTxDto> {
-    return this.handle(() => this.createSend(from, to, token, amount, useFeeExactAmount));
+    return this.handle(() => this.createSend(from, to, token, amount, lockUtxo, useFeeExactAmount));
   }
 
   private async createSend(
@@ -20,14 +21,15 @@ export class RawTxAccount extends RawTxBase {
     to: string,
     token: number,
     amount: BigNumber,
+    lockUtxo: boolean,
     useFeeExactAmount?: BigNumber,
   ): Promise<RawTxDto> {
     const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
     const [toScript] = RawTxUtil.parseAddress(to);
 
     const utxo = useFeeExactAmount
-      ? await this.utxoProvider.provideExactAmount(from, useFeeExactAmount)
-      : await this.utxoProvider.provideForDefiTx(from);
+      ? await this.utxoProvider.provideExactAmount(from, useFeeExactAmount, lockUtxo)
+      : await this.utxoProvider.provideForDefiTx(from, lockUtxo);
 
     const vins = RawTxUtil.createVins(utxo.prevouts);
     const vouts = [RawTxUtil.createVoutAnyAccountToAccount(fromScript, toScript, token, amount)];
@@ -41,14 +43,26 @@ export class RawTxAccount extends RawTxBase {
       : RawTxUtil.generateTxAndCalcFee(utxo, vins, vouts, witnesses);
   }
 
-  async swap(from: string, fromToken: number, fromAmount: BigNumber, toToken: number): Promise<RawTxDto> {
-    return this.handle(() => this.createSwap(from, fromToken, fromAmount, toToken));
+  async swap(
+    from: string,
+    fromToken: number,
+    fromAmount: BigNumber,
+    toToken: number,
+    lockUtxo: boolean,
+  ): Promise<RawTxDto> {
+    return this.handle(() => this.createSwap(from, fromToken, fromAmount, toToken, lockUtxo));
   }
 
-  private async createSwap(from: string, fromToken: number, fromAmount: BigNumber, toToken: number): Promise<RawTxDto> {
+  private async createSwap(
+    from: string,
+    fromToken: number,
+    fromAmount: BigNumber,
+    toToken: number,
+    lockUtxo: boolean,
+  ): Promise<RawTxDto> {
     const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
 
-    const utxo = await this.utxoProvider.provideForDefiTx(from);
+    const utxo = await this.utxoProvider.provideForDefiTx(from, lockUtxo);
     return RawTxUtil.generateDefiTx(
       fromScript,
       fromPubKeyHash,
@@ -63,22 +77,29 @@ export class RawTxAccount extends RawTxBase {
     );
   }
 
-  async toUtxo(from: string, to: string, amount: BigNumber, useFeeExactAmount?: BigNumber): Promise<RawTxDto> {
-    return this.handle(() => this.createToUtxo(from, to, amount, useFeeExactAmount));
+  async toUtxo(
+    from: string,
+    to: string,
+    amount: BigNumber,
+    lockUtxo: boolean,
+    useFeeExactAmount?: BigNumber,
+  ): Promise<RawTxDto> {
+    return this.handle(() => this.createToUtxo(from, to, amount, lockUtxo, useFeeExactAmount));
   }
 
   private async createToUtxo(
     from: string,
     to: string,
     amount: BigNumber,
+    lockUtxo: boolean,
     useFeeExactAmount?: BigNumber,
   ): Promise<RawTxDto> {
     const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
     const [toScript] = RawTxUtil.parseAddress(to);
 
     const utxo = useFeeExactAmount
-      ? await this.utxoProvider.provideExactAmount(from, useFeeExactAmount)
-      : await this.utxoProvider.provideForDefiTx(from);
+      ? await this.utxoProvider.provideExactAmount(from, useFeeExactAmount, lockUtxo)
+      : await this.utxoProvider.provideForDefiTx(from, lockUtxo);
 
     const vins = RawTxUtil.createVins(utxo.prevouts);
     const vouts = [RawTxUtil.createVoutAccountToUtxo(fromScript, amount, useFeeExactAmount ? 1 : 2)];

@@ -9,9 +9,9 @@ import { RawTxUtil } from './raw-tx-util';
 
 export class RawTxUtxo extends RawTxBase {
   // SEND UTXOS //
-  async sendFeeUtxo(from: string, to: string, amount: BigNumber): Promise<RawTxDto> {
+  async sendFeeUtxo(from: string, to: string, amount: BigNumber, lockUtxo: boolean): Promise<RawTxDto> {
     return this.handle(() =>
-      this.send(from, to, amount, true, {
+      this.send(from, to, amount, true, lockUtxo, {
         useFeeBuffer: true,
         sizePriority: UtxoSizePriority.SMALL,
         customFeeBuffer: Config.blockchain.minDefiTxFeeBuffer,
@@ -19,21 +19,33 @@ export class RawTxUtxo extends RawTxBase {
     );
   }
 
-  async sendFeeUtxos(from: string, to: string[], amount: BigNumber): Promise<RawTxDto> {
-    return this.handle(() => this.sendMany(from, to, amount));
+  async sendFeeUtxos(from: string, to: string[], amount: BigNumber, lockUtxo: boolean): Promise<RawTxDto> {
+    return this.handle(() => this.sendMany(from, to, amount, lockUtxo));
   }
 
-  async sendWithChange(from: string, to: string, amount: BigNumber, sizePriority: UtxoSizePriority): Promise<RawTxDto> {
-    return this.handle(() => this.send(from, to, amount, true, { useFeeBuffer: true, sizePriority }));
+  async sendWithChange(
+    from: string,
+    to: string,
+    amount: BigNumber,
+    sizePriority: UtxoSizePriority,
+    lockUtxo: boolean,
+  ): Promise<RawTxDto> {
+    return this.handle(() => this.send(from, to, amount, true, lockUtxo, { useFeeBuffer: true, sizePriority }));
   }
 
-  async sendAsAccount(from: string, to: string, token: number, amount: BigNumber): Promise<RawTxDto> {
-    return this.handle(() => this.createSendAsAccount(from, to, token, amount));
+  async sendAsAccount(
+    from: string,
+    to: string,
+    token: number,
+    amount: BigNumber,
+    lockUtxo: boolean,
+  ): Promise<RawTxDto> {
+    return this.handle(() => this.createSendAsAccount(from, to, token, amount, lockUtxo));
   }
 
-  async forward(from: string, to: string, amount: BigNumber): Promise<RawTxDto> {
+  async forward(from: string, to: string, amount: BigNumber, lockUtxo: boolean): Promise<RawTxDto> {
     return this.handle(() =>
-      this.send(from, to, amount, false, {
+      this.send(from, to, amount, false, lockUtxo, {
         useFeeBuffer: false,
       }),
     );
@@ -44,14 +56,15 @@ export class RawTxUtxo extends RawTxBase {
     to: string,
     amount: BigNumber,
     useChangeOutput: boolean,
+    lockUtxo: boolean,
     config: UtxoConfig,
   ): Promise<RawTxDto> {
     const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
     const [toScript] = RawTxUtil.parseAddress(to);
 
     const utxo = useChangeOutput
-      ? await this.utxoProvider.provideUntilAmount(from, amount, config)
-      : await this.utxoProvider.provideExactAmount(from, amount);
+      ? await this.utxoProvider.provideUntilAmount(from, amount, lockUtxo, config)
+      : await this.utxoProvider.provideExactAmount(from, amount, lockUtxo);
 
     const vins = RawTxUtil.createVins(utxo.prevouts);
     const vouts = [RawTxUtil.createVoutReturn(toScript, amount)];
@@ -65,11 +78,11 @@ export class RawTxUtxo extends RawTxBase {
     return RawTxUtil.generateTxAndCalcFee(utxo, vins, vouts, witnesses);
   }
 
-  private async sendMany(from: string, to: string[], amount: BigNumber): Promise<RawTxDto> {
+  private async sendMany(from: string, to: string[], amount: BigNumber, lockUtxo: boolean): Promise<RawTxDto> {
     const [fromScript, fromPubKeyHash] = RawTxUtil.parseAddress(from);
 
     const neededUtxoAmount = amount.multipliedBy(to.length);
-    const utxo = await this.utxoProvider.provideUntilAmount(from, neededUtxoAmount, {
+    const utxo = await this.utxoProvider.provideUntilAmount(from, neededUtxoAmount, lockUtxo, {
       sizePriority: UtxoSizePriority.FITTING,
     });
 
@@ -88,11 +101,17 @@ export class RawTxUtxo extends RawTxBase {
     return RawTxUtil.generateTxAndCalcFee(utxo, vins, vouts, witnesses);
   }
 
-  private async createSendAsAccount(from: string, to: string, token: number, amount: BigNumber): Promise<RawTxDto> {
+  private async createSendAsAccount(
+    from: string,
+    to: string,
+    token: number,
+    amount: BigNumber,
+    lockUtxo: boolean,
+  ): Promise<RawTxDto> {
     const [, fromPubKeyHash] = RawTxUtil.parseAddress(from);
     const [toScript] = RawTxUtil.parseAddress(to);
 
-    const utxo = await this.utxoProvider.provideExactAmount(from, amount);
+    const utxo = await this.utxoProvider.provideExactAmount(from, amount, lockUtxo);
 
     const vins = RawTxUtil.createVins(utxo.prevouts);
     const voutsTemp = [RawTxUtil.createVoutUtxoToAccount(toScript, token, amount)];
@@ -109,23 +128,24 @@ export class RawTxUtxo extends RawTxBase {
   }
 
   // MANAGE UTXOS //
-  async split(address: string, split: number): Promise<RawTxDto> {
-    return this.handle(() => this.management(address, 1, split, { sizePriority: UtxoSizePriority.BIG }));
+  async split(address: string, split: number, lockUtxo: boolean): Promise<RawTxDto> {
+    return this.handle(() => this.management(address, 1, split, lockUtxo, { sizePriority: UtxoSizePriority.BIG }));
   }
 
-  async merge(address: string, merge: number): Promise<RawTxDto> {
-    return this.handle(() => this.management(address, merge, 1, { sizePriority: UtxoSizePriority.SMALL }));
+  async merge(address: string, merge: number, lockUtxo: boolean): Promise<RawTxDto> {
+    return this.handle(() => this.management(address, merge, 1, lockUtxo, { sizePriority: UtxoSizePriority.SMALL }));
   }
 
   private async management(
     address: string,
     inputCount: number,
     outputCount: number,
+    lockUtxo: boolean,
     config: UtxoConfig,
   ): Promise<RawTxDto> {
     const [script, pubKeyHash] = RawTxUtil.parseAddress(address);
 
-    const utxo = await this.utxoProvider.provideNumber(address, inputCount, config);
+    const utxo = await this.utxoProvider.provideNumber(address, inputCount, lockUtxo, config);
 
     const vins = RawTxUtil.createVins(utxo.prevouts);
     const vouts =

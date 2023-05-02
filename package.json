@@ -9,17 +9,14 @@
     "prebuild": "rimraf dist",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
+    "start": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --no-fix",
     "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest --silent",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "check": "npm run lint && npm run test"
   },
   "dependencies": {
     "@defichain/jellyfish-address": "^3.30.1",
@@ -55,7 +52,7 @@
     "handlebars": "^4.7.7",
     "helmet": "^6.0.1",
     "morgan": "^1.10.0",
-    "mssql": "^7.3.0",
+    "mssql": "^9.1.1",
     "nestjs-i18n": "^10.2.6",
     "nestjs-real-ip": "^2.2.0",
     "nodemailer": "^6.9.1",
