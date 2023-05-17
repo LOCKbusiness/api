@@ -68,7 +68,7 @@ export class UtxoProviderService {
     const unspent = await this.retrieveAllUnspent(address);
     const used = utxoFilter(unspent);
 
-    if (lock) await this.utxoManager.lock(address, used);
+    await this.utxoManager.lock(address, used, !lock);
 
     return UtxoProviderService.parseUnspent(used);
   }
