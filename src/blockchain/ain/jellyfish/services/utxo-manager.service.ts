@@ -4,6 +4,7 @@ import { WhaleClient } from '../../whale/whale-client';
 import { WhaleService } from '../../whale/whale.service';
 import { Injectable } from '@nestjs/common';
 import { UtxoReservationService } from './utxo-reservation.service';
+import { Util } from 'src/shared/util';
 
 interface UnspentCacheEntry {
   updatedHeight: number;
@@ -29,9 +30,10 @@ export class UtxoManagerService {
     return unspent.filter((u) => !reserved.includes(this.idForUnspent(u)));
   }
 
-  async lock(address: string, utxos: AddressUnspent[]): Promise<void> {
+  async lock(address: string, utxos: AddressUnspent[], tempLock: boolean): Promise<void> {
+    const expires = tempLock ? Util.minutesAfter(5) : Util.daysAfter(7);
     const ids = utxos.map(this.idForUnspent);
-    await this.utxoReservationService.lock(address, ids);
+    await this.utxoReservationService.lock(address, ids, expires);
   }
 
   async unlock(address: string, utxos: Prevout[]): Promise<string[]> {

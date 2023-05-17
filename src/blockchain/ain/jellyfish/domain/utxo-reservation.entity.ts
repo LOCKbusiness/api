@@ -9,4 +9,7 @@ export class UtxoReservation extends IEntity {
 
   @Column()
   utxo: string;
+
+  @Column({ type: 'datetime2' })
+  expires: Date;
 }
