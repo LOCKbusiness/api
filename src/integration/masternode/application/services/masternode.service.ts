@@ -20,9 +20,11 @@ import { Util } from 'src/shared/util';
 import { DeFiClient } from 'src/blockchain/ain/node/defi-client';
 import { MasternodeOwnerService } from './masternode-owner.service';
 import { MasternodeOwnerDto } from '../dto/masternode-owner.dto';
+import { LockLogger } from 'src/shared/services/lock-logger';
 
 @Injectable()
 export class MasternodeService {
+  private readonly logger = new LockLogger(MasternodeService);
   private client: DeFiClient;
 
   constructor(
@@ -68,7 +70,7 @@ export class MasternodeService {
 
       if (masternodesToDelete.length > 0) await this.repository.delete(masternodesToDelete.map((mn) => mn.id));
     } catch (e) {
-      console.error('Exception during operator sync:', e);
+      this.logger.error('Exception during operator sync:', e);
     }
   }
 
@@ -98,7 +100,7 @@ export class MasternodeService {
         if (masternodeInfo.mintedBlocks > 0)
           await this.repository.update(masternode.id, { firstBlockFound: new Date() });
       } catch (e) {
-        console.error(`Exception during masternode block check with masternode id: ${masternode.id}. Error:`, e);
+        this.logger.error(`Exception during masternode block check with masternode id: ${masternode.id}. Error:`, e);
       }
     }
   }
@@ -115,7 +117,7 @@ export class MasternodeService {
     });
 
     if (masternodes.length !== count) {
-      console.error(
+      this.logger.error(
         `Could not get enough idle masternodes, requested ${count}, returning available: ${masternodes.length}`,
       );
     }
@@ -133,7 +135,7 @@ export class MasternodeService {
     );
 
     if (owners.length !== count) {
-      console.error(`Could not get enough owners, requested ${count}, returning available: ${owners.length}`);
+      this.logger.error(`Could not get enough owners, requested ${count}, returning available: ${owners.length}`);
     }
 
     return owners;

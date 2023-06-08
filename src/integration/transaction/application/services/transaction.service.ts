@@ -11,9 +11,11 @@ import { WhaleClient } from 'src/blockchain/ain/whale/whale-client';
 import { WhaleService } from 'src/blockchain/ain/whale/whale.service';
 import { AsyncMap } from 'src/shared/async-map';
 import { TransactionDirection } from '../../domain/enums';
+import { LockLogger } from 'src/shared/services/lock-logger';
 
 @Injectable()
 export class TransactionService {
+  private readonly logger = new LockLogger(TransactionService);
   private readonly transactions = new AsyncMap<string, string>(this.constructor.name);
 
   private client: WhaleClient;
@@ -33,7 +35,7 @@ export class TransactionService {
         await this.repository.save(chainTx ? tx.foundOnBlockchain() : tx.notFoundOnBlockchain());
       }
     } catch (e) {
-      console.error('Exception during transaction check:', e);
+      this.logger.error('Exception during transaction check:', e);
     }
   }
 
@@ -50,7 +52,7 @@ export class TransactionService {
     if (!tx) throw new NotFoundException('Transaction not found');
     if (tx.isVerified) return;
 
-    console.info(`${tx.chainId} verified`);
+    this.logger.info(`${tx.chainId} verified`);
     await this.repository.save(tx.verified(signature));
   }
 
@@ -59,7 +61,7 @@ export class TransactionService {
     if (!tx) throw new NotFoundException('Transaction not found');
     if (tx.isInvalidated) return;
 
-    console.info(`${tx.chainId} invalidated with reason: ${reason}`);
+    this.logger.info(`${tx.chainId} invalidated with reason: ${reason}`);
     await this.repository.save(tx.invalidated(reason));
 
     this.transactions.reject(tx.chainId, `${tx.chainId} ${reason}`);
@@ -71,7 +73,7 @@ export class TransactionService {
     if (tx.isInvalidated) throw new BadRequestException('Transaction is invalidated');
     if (tx.isSigned) return;
 
-    console.info(`${tx.chainId} signed`);
+    this.logger.info(`${tx.chainId} signed`);
     await this.repository.save(tx.signed(hex));
 
     this.transactions.resolve(tx.chainId, hex);
@@ -85,7 +87,7 @@ export class TransactionService {
     const newTx = TransactionEntity.create(id, rawTx, payload, signature, direction);
     const tx = existingTx ? Object.assign(existingTx, newTx) : newTx;
     await this.repository.save(tx);
-    console.info(`Added ${id} for signing`);
+    this.logger.info(`Added ${id} for signing`);
 
     return this.transactions.wait(id, Config.staking.timeout.signature);
   }

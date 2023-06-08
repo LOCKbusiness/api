@@ -16,9 +16,11 @@ import { RepositoryFactory } from 'src/shared/repositories/repository.factory';
 import { UpdateStakingAnalyticsDto } from '../dto/input/update-staking-analytics.dto';
 import { StakingAnalyticsUpdateQuery } from '../dto/input/staking-analytics-update-query.dto';
 import { StakingAnalyticsFilterQuery } from '../dto/input/staking-analytics-filter-query.dto';
+import { LockLogger } from 'src/shared/services/lock-logger';
 
 @Injectable()
 export class StakingAnalyticsService implements OnModuleInit {
+  private readonly logger = new LockLogger(StakingAnalyticsService);
   constructor(
     private readonly repos: RepositoryFactory,
     private readonly repository: StakingAnalyticsRepository,
@@ -84,7 +86,7 @@ export class StakingAnalyticsService implements OnModuleInit {
         await this.repository.save(analytics);
       }
     } catch (e) {
-      console.error('Exception during staking analytics update:', e);
+      this.logger.error('Exception during staking analytics update:', e);
     }
   }
 

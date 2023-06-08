@@ -10,9 +10,12 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { GetConfig } from 'src/config/config';
 import { AsyncMap } from 'src/shared/async-map';
 import { Lock } from 'src/shared/lock';
+import { LockLogger } from 'src/shared/services/lock-logger';
 import { Util } from 'src/shared/util';
 
 export class WhaleClient {
+  private readonly logger = new LockLogger(WhaleClient);
+
   private readonly secondsPerBlock = 30;
   private readonly client: WhaleApiClient;
   private readonly transactions = new AsyncMap<string, string>(this.constructor.name);
@@ -148,7 +151,7 @@ export class WhaleClient {
       const currentBlockHeight = (await this.client.stats.get()).count.blocks;
       if (currentBlockHeight !== this.#blockHeight.value) this.#blockHeight.next(currentBlockHeight);
     } catch (e) {
-      console.error('Exception during block polling:', e);
+      this.logger.error('Exception during block polling:', e);
     }
   }
 

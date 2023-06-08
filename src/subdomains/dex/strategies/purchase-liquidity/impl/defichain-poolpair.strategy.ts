@@ -20,9 +20,12 @@ import { NotificationService } from 'src/integration/notification/services/notif
 import { SettingService } from 'src/shared/services/setting.service';
 import { Blockchain } from 'src/shared/enums/blockchain.enum';
 import { Config, Process } from 'src/config/config';
+import { LockLogger } from 'src/shared/services/lock-logger';
+import { DeFiChainNonPoolPairStrategy } from './base/defichain-non-poolpair.strategy';
 
 @Injectable()
 export class DeFiChainPoolPairStrategy extends PurchaseLiquidityStrategy {
+  private readonly logger = new LockLogger(DeFiChainNonPoolPairStrategy);
   constructor(
     readonly notificationService: NotificationService,
     private readonly settingService: SettingService,
@@ -87,7 +90,7 @@ export class DeFiChainPoolPairStrategy extends PurchaseLiquidityStrategy {
           await this.addPoolPair(parentOrder, derivedOrders);
         }
       } catch (e) {
-        console.error(`Error while verifying derived liquidity order. Parent Order ID: ${parentOrder.id}`, e);
+        this.logger.error(`Error while verifying derived liquidity order. Parent Order ID: ${parentOrder.id}`, e);
         continue;
       }
     }
@@ -155,7 +158,7 @@ export class DeFiChainPoolPairStrategy extends PurchaseLiquidityStrategy {
     const leftOrder = derivedOrders.find((o) => o.targetAsset.name === leftAsset);
     const rightOrder = derivedOrders.find((o) => o.targetAsset.name === rightAsset);
 
-    console.info(
+    this.logger.info(
       `Creating poolpair token of ${leftOrder.targetAsset.name} ${leftOrder.targetAmount} and ${rightOrder.targetAsset.name} ${rightOrder.targetAmount}`,
     );
     try {
@@ -190,7 +193,7 @@ export class DeFiChainPoolPairStrategy extends PurchaseLiquidityStrategy {
 
     order.addBlockchainTransactionMetadata(txId);
 
-    console.info(
+    this.logger.info(
       `Booked poolpair purchase of ${leftAmount} ${leftAssetName} and ${rightAmount} ${rightAssetName} . Context: ${order.context}. CorrelationId: ${order.correlationId}.`,
     );
   }
@@ -200,7 +203,7 @@ export class DeFiChainPoolPairStrategy extends PurchaseLiquidityStrategy {
   }
 
   private async cleanupOrders(parentOrder: LiquidityOrder): Promise<void> {
-    console.log(`Pool pair liquidity order failed. Cleaning up parent order ID: ${parentOrder.id}.`);
+    this.logger.info(`Pool pair liquidity order failed. Cleaning up parent order ID: ${parentOrder.id}.`);
 
     await this.liquidityOrderRepo.delete({
       context: LiquidityOrderContext.CREATE_POOL_PAIR,

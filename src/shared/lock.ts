@@ -1,4 +1,7 @@
+import { LockLogger } from './services/lock-logger';
+
 class LockClass {
+  private readonly logger = new LockLogger(LockClass);
   private lockedSince?: number;
 
   static create(timeoutSeconds = Infinity): (name: string, task: () => Promise<void>) => Promise<void> {
@@ -14,7 +17,7 @@ class LockClass {
     try {
       await task();
     } catch (e) {
-      name && console.error(`Error during ${name}:`, e);
+      name && this.logger.error(`Error during ${name}:`, e);
     } finally {
       this.release();
     }
