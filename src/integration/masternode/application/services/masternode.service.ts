@@ -25,6 +25,7 @@ import { LockLogger } from 'src/shared/services/lock-logger';
 @Injectable()
 export class MasternodeService {
   private readonly logger = new LockLogger(MasternodeService);
+
   private client: DeFiClient;
 
   constructor(

@@ -6,6 +6,7 @@ import { LockLogger } from 'src/shared/services/lock-logger';
 
 export abstract class SellLiquidityStrategy {
   private readonly logger = new LockLogger(SellLiquidityStrategy);
+
   private _name: SellLiquidityStrategyAlias;
   private _feeAsset: Asset;
 

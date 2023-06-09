@@ -19,6 +19,7 @@ type SubsystemObservers = Map<MetricName, MetricObserver<unknown>>;
 @Injectable()
 export class MonitoringService implements OnModuleInit {
   private readonly logger = new LockLogger(MonitoringService);
+
   #$state: BehaviorSubject<SystemState> = new BehaviorSubject({});
   #observers: Map<SubsystemName, SubsystemObservers> = new Map();
 

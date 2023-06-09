@@ -29,6 +29,7 @@ import { LockLogger } from 'src/shared/services/lock-logger';
 @Injectable()
 export class DexService {
   private readonly logger = new LockLogger(DexService);
+
   constructor(
     private readonly checkStrategies: CheckLiquidityStrategies,
     private readonly purchaseStrategies: PurchaseLiquidityStrategies,

@@ -20,6 +20,7 @@ import { LockLogger } from 'src/shared/services/lock-logger';
 @Injectable()
 export class PayoutService {
   private readonly logger = new LockLogger(PayoutService);
+
   constructor(
     private readonly payoutStrategies: PayoutStrategiesFacade,
     private readonly prepareStrategies: PrepareStrategiesFacade,

@@ -17,7 +17,8 @@ type WhalesState = WhaleState[];
 
 @Injectable()
 export class WhaleHealthObserver extends MetricObserver<WhalesState> {
-  private readonly logger = new LockLogger(WhaleHealthObserver);
+  protected readonly logger = new LockLogger(WhaleHealthObserver);
+
   constructor(readonly monitoringService: MonitoringService, private readonly whaleService: WhaleService) {
     super(monitoringService, 'whale', 'health');
   }
@@ -55,11 +56,11 @@ export class WhaleHealthObserver extends MetricObserver<WhalesState> {
 
     if (!preferredWhale) {
       // all available whales down
-      this.logger.error(`ALERT! Whale is fully down.`);
+      this.logger.critical(`Whale is fully down.`);
     } else if (this.whaleService.getCurrentClient().index != preferredWhale.index) {
       // swap required
       this.whaleService.switchWhale(preferredWhale.index);
-      this.logger.warn(`WARN. Whale switched to index ${preferredWhale.index}`);
+      this.logger.warn(`Whale switched to index ${preferredWhale.index}`);
     }
 
     return state;

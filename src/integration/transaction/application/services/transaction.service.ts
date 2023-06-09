@@ -16,6 +16,7 @@ import { LockLogger } from 'src/shared/services/lock-logger';
 @Injectable()
 export class TransactionService {
   private readonly logger = new LockLogger(TransactionService);
+
   private readonly transactions = new AsyncMap<string, string>(this.constructor.name);
 
   private client: WhaleClient;
@@ -52,7 +53,7 @@ export class TransactionService {
     if (!tx) throw new NotFoundException('Transaction not found');
     if (tx.isVerified) return;
 
-    this.logger.info(`${tx.chainId} verified`);
+    this.logger.verbose(`${tx.chainId} verified`);
     await this.repository.save(tx.verified(signature));
   }
 
@@ -61,7 +62,7 @@ export class TransactionService {
     if (!tx) throw new NotFoundException('Transaction not found');
     if (tx.isInvalidated) return;
 
-    this.logger.info(`${tx.chainId} invalidated with reason: ${reason}`);
+    this.logger.verbose(`${tx.chainId} invalidated with reason: ${reason}`);
     await this.repository.save(tx.invalidated(reason));
 
     this.transactions.reject(tx.chainId, `${tx.chainId} ${reason}`);
@@ -73,7 +74,7 @@ export class TransactionService {
     if (tx.isInvalidated) throw new BadRequestException('Transaction is invalidated');
     if (tx.isSigned) return;
 
-    this.logger.info(`${tx.chainId} signed`);
+    this.logger.verbose(`${tx.chainId} signed`);
     await this.repository.save(tx.signed(hex));
 
     this.transactions.resolve(tx.chainId, hex);
@@ -87,7 +88,7 @@ export class TransactionService {
     const newTx = TransactionEntity.create(id, rawTx, payload, signature, direction);
     const tx = existingTx ? Object.assign(existingTx, newTx) : newTx;
     await this.repository.save(tx);
-    this.logger.info(`Added ${id} for signing`);
+    this.logger.verbose(`Added ${id} for signing`);
 
     return this.transactions.wait(id, Config.staking.timeout.signature);
   }

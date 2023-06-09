@@ -21,6 +21,7 @@ import { LockLogger } from 'src/shared/services/lock-logger';
 @Injectable()
 export class StakingAnalyticsService implements OnModuleInit {
   private readonly logger = new LockLogger(StakingAnalyticsService);
+
   constructor(
     private readonly repos: RepositoryFactory,
     private readonly repository: StakingAnalyticsRepository,

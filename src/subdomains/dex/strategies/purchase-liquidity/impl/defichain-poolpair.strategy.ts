@@ -26,6 +26,7 @@ import { DeFiChainNonPoolPairStrategy } from './base/defichain-non-poolpair.stra
 @Injectable()
 export class DeFiChainPoolPairStrategy extends PurchaseLiquidityStrategy {
   private readonly logger = new LockLogger(DeFiChainNonPoolPairStrategy);
+
   constructor(
     readonly notificationService: NotificationService,
     private readonly settingService: SettingService,

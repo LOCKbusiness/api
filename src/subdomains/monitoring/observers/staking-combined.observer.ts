@@ -34,7 +34,8 @@ type LastOutputDates = {
 
 @Injectable()
 export class StakingCombinedObserver extends MetricObserver<StakingData> {
-  private readonly logger = new LockLogger(StakingCombinedObserver);
+  protected readonly logger = new LockLogger(StakingCombinedObserver);
+
   private client: WhaleClient;
 
   constructor(

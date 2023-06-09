@@ -1,8 +1,11 @@
 import { NotImplementedException } from '@nestjs/common';
 import { BehaviorSubject, Observable, skip } from 'rxjs';
 import { MonitoringService } from './application/services/monitoring.service';
+import { LockLogger } from 'src/shared/services/lock-logger';
 
 export abstract class MetricObserver<T> {
+  protected abstract readonly logger: LockLogger;
+
   #subsystemName: string;
   #metricName: string;
 
@@ -23,15 +26,15 @@ export abstract class MetricObserver<T> {
   // default implementation - override in specific observers to implement custom fetch mechanism for metric
   fetch(): Promise<T> {
     const errorMessage = `Fetch method is not supported by subsystem: '${this.subsystem}'', metric: '${this.metric}'`;
-    console.warn(errorMessage);
+    this.logger.warn(errorMessage);
 
     throw new NotImplementedException(errorMessage);
   }
 
   // default implementation - override in specific observers to implement custom webhook for metric
   async onWebhook(data: unknown): Promise<void> {
-    const errorMessage = `Webhook is not supported by subsystem: '${this.subsystem}'', metric: '${this.metric}'. Ignoring incoming data`;
-    console.warn(errorMessage, data);
+    const errorMessage = `Webhook is not supported by subsystem: '${this.subsystem}'', metric: '${this.metric}'. Ignoring incoming data: ${data}`;
+    this.logger.warn(errorMessage);
 
     throw new NotImplementedException(errorMessage);
   }

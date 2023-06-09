@@ -30,7 +30,8 @@ type NodesState = NodePoolState[];
 
 @Injectable()
 export class NodeHealthObserver extends MetricObserver<NodesState> {
-  private readonly logger = new LockLogger(NodeHealthObserver);
+  protected readonly logger = new LockLogger(NodeHealthObserver);
+
   constructor(
     readonly monitoringService: MonitoringService,
     private readonly nodeService: NodeService,
@@ -109,12 +110,12 @@ export class NodeHealthObserver extends MetricObserver<NodesState> {
     if (!preferredNode) {
       // all available nodes down
       if (!previousPoolState || previousPoolState.nodes.some((n) => !n.isDown)) {
-        this.logger.error(`ALERT! Node '${poolState.type}' is fully down.`);
+        this.logger.critical(`Node '${poolState.type}' is fully down`);
       }
     } else if (preferredNode.mode !== connectedNode.mode) {
       // swap required
       this.nodeService.swapNode(poolState.type, preferredNode.mode);
-      this.logger.warn(`WARN. Node '${poolState.type}' switched from ${connectedNode.mode} to ${preferredNode.mode}`);
+      this.logger.warn(`Node '${poolState.type}' switched from ${connectedNode.mode} to ${preferredNode.mode}`);
 
       // clear the queue if node is down
       const connectedState = this.getNodeStateInPool(poolState, connectedNode.mode);
@@ -135,9 +136,9 @@ export class NodeHealthObserver extends MetricObserver<NodesState> {
       }
 
       if (node.errors.length > 0) {
-        node.errors.forEach((error) => this.logger.error(`ERR. ${error}`));
+        node.errors.forEach((error) => this.logger.error(`${error}`));
       } else {
-        this.logger.info(`OK. Node '${node.type}' ${node.mode} is up`);
+        this.logger.info(`Node '${node.type}' ${node.mode} is up`);
       }
     }
 
@@ -148,7 +149,7 @@ export class NodeHealthObserver extends MetricObserver<NodesState> {
       await this.azureService.restartWebApp(`node-${node.type}`, node.mode === NodeMode.PASSIVE ? 'stg' : undefined);
 
       // send notification
-      const message = `ALERT! Restarting node ${node.type} ${node.mode} (down since ${node.downSince})`;
+      const message = `Restarting node ${node.type} ${node.mode} (down since ${node.downSince})`;
       this.logger.error(message);
 
       await this.notificationService.sendMail({

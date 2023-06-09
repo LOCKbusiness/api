@@ -6,6 +6,7 @@ import { NodeService, NodeType } from 'src/blockchain/ain/node/node.service';
 import { Config, Process } from 'src/config/config';
 import { MonitoringService } from '../application/services/monitoring.service';
 import { MetricObserver } from '../metric.observer';
+import { LockLogger } from 'src/shared/services/lock-logger';
 
 interface NodeBalanceData {
   balance: {
@@ -24,6 +25,8 @@ interface NodeBalanceData {
 
 @Injectable()
 export class NodeBalanceObserver extends MetricObserver<NodeBalanceData> {
+  protected readonly logger = new LockLogger(NodeBalanceObserver);
+
   private inpClient: DeFiClient;
   private rewClient: DeFiClient;
 

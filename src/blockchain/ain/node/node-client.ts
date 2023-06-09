@@ -25,6 +25,7 @@ export enum NodeMode {
 
 export class NodeClient {
   private readonly logger = new LockLogger(NodeClient);
+
   protected chain = Config.network;
   private readonly client: ApiClient;
   private readonly queue: QueueHandler;
@@ -149,7 +150,7 @@ export class NodeClient {
       if (unlock) await this.unlock();
       return await this.call(call);
     } catch (e) {
-      this.logger.info('Exception during node call:', e);
+      this.logger.verbose('Exception during node call:', e);
       throw new ServiceUnavailableException(e);
     }
   }
@@ -165,7 +166,7 @@ export class NodeClient {
       return await this.queue.handle(() => call(this.client));
     } catch (e) {
       if (e instanceof SyntaxError && tryCount > 1) {
-        this.logger.info('Retrying node call ...');
+        this.logger.verbose('Retrying node call ...');
         return this.call<T>(call, tryCount - 1);
       }
 

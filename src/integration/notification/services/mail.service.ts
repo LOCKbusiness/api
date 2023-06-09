@@ -16,6 +16,7 @@ export interface MailOptions {
 @Injectable()
 export class MailService {
   private readonly logger = new LockLogger(MailService);
+
   constructor(private readonly mailerService: MailerService) {}
 
   async send(mail: Mail): Promise<void> {

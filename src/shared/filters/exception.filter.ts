@@ -4,6 +4,7 @@ import { LockLogger } from '../services/lock-logger';
 @Catch()
 export class AllExceptionFilter implements ExceptionFilter {
   private readonly logger = new LockLogger(AllExceptionFilter);
+
   catch(exception: { message: string }, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();

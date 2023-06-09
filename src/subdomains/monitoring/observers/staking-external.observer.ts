@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { NodeService } from 'src/blockchain/ain/node/node.service';
 import { MonitoringService } from '../application/services/monitoring.service';
 import { MetricObserver } from '../metric.observer';
+import { LockLogger } from 'src/shared/services/lock-logger';
 
 interface StakingExternalData {
   [deviceId: string]: Date;
@@ -9,6 +10,8 @@ interface StakingExternalData {
 
 @Injectable()
 export class StakingExternalObserver extends MetricObserver<StakingExternalData> {
+  protected readonly logger = new LockLogger(StakingExternalObserver);
+
   constructor(monitoringService: MonitoringService, readonly nodeService: NodeService) {
     super(monitoringService, 'staking', 'external');
   }
