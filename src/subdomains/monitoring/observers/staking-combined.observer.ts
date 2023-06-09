@@ -15,6 +15,7 @@ import {
 import { In, IsNull, Not } from 'typeorm';
 import { MonitoringService } from '../application/services/monitoring.service';
 import { MetricObserver } from '../metric.observer';
+import { LockLogger } from 'src/shared/services/lock-logger';
 
 interface StakingData {
   balance: { actual: number; should: number; difference: number };
@@ -33,6 +34,8 @@ type LastOutputDates = {
 
 @Injectable()
 export class StakingCombinedObserver extends MetricObserver<StakingData> {
+  protected readonly logger = new LockLogger(StakingCombinedObserver);
+
   private client: WhaleClient;
 
   constructor(
@@ -55,7 +58,7 @@ export class StakingCombinedObserver extends MetricObserver<StakingData> {
 
       return data;
     } catch (e) {
-      console.error('Exception during monitoring staking combined:', e);
+      this.logger.error('Exception during monitoring staking combined:', e);
     }
   }
 

@@ -9,6 +9,7 @@ import { QueueHandler } from 'src/shared/queue-handler';
 import { HttpService } from 'src/shared/services/http.service';
 import { Util } from 'src/shared/util';
 import { EnsureTxIdOrThrow } from '../decorators/ensure-txid-or-throw.decorator';
+import { LockLogger } from 'src/shared/services/lock-logger';
 
 export enum NodeCommand {
   UNLOCK = 'walletpassphrase',
@@ -23,6 +24,8 @@ export enum NodeMode {
 }
 
 export class NodeClient {
+  private readonly logger = new LockLogger(NodeClient);
+
   protected chain = Config.network;
   private readonly client: ApiClient;
   private readonly queue: QueueHandler;
@@ -34,7 +37,7 @@ export class NodeClient {
     this.queue = new QueueHandler(180000, 60000);
     this.#mode = mode;
 
-    this.getInfo().catch((e) => console.error('Failed to get chain info: ', e));
+    this.getInfo().catch((e) => this.logger.error('Failed to get chain info: ', e));
   }
 
   clearRequestQueue() {
@@ -147,7 +150,7 @@ export class NodeClient {
       if (unlock) await this.unlock();
       return await this.call(call);
     } catch (e) {
-      console.log('Exception during node call:', e);
+      this.logger.verbose('Exception during node call:', e);
       throw new ServiceUnavailableException(e);
     }
   }
@@ -163,7 +166,7 @@ export class NodeClient {
       return await this.queue.handle(() => call(this.client));
     } catch (e) {
       if (e instanceof SyntaxError && tryCount > 1) {
-        console.log('Retrying node call ...');
+        this.logger.verbose('Retrying node call ...');
         return this.call<T>(call, tryCount - 1);
       }
 
